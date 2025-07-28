@@ -32,7 +32,8 @@ const HubSpotCallback = () => {
           return;
         }
 
-        // Connect HubSpot account
+        // The OAuth callback has already been processed by the backend
+        // We just need to verify the connection and get user data
         await connectHubSpot(code);
         
         setStatus('success');

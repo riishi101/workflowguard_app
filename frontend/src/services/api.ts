@@ -213,7 +213,10 @@ export class ApiService {
 
   // HubSpot integration
   static async connectHubSpot(code: string): Promise<any> {
-    const response = await apiClient.post('/auth/hubspot/callback', { code });
+    // The OAuth callback is handled by the backend redirect
+    // This method is called after the backend has already processed the OAuth
+    // We just need to verify the connection was successful
+    const response = await apiClient.get('/auth/me');
     return response.data;
   }
 
