@@ -7,6 +7,21 @@ import axios from 'axios';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Get('hubspot/url')
+  async getHubSpotAuthUrl() {
+    try {
+      const clientId = process.env.HUBSPOT_CLIENT_ID;
+      const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
+      const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+      
+      const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+      
+      return { url: authUrl };
+    } catch (error) {
+      throw new HttpException('Failed to generate HubSpot OAuth URL', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Get('hubspot')
   async initiateHubSpotOAuth(@Res() res: Response) {
     // This would redirect to HubSpot's OAuth consent page
