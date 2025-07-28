@@ -15,7 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
-  connectHubSpot: (code: string) => Promise<void>;
+  connectHubSpot: (code: string, token?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,9 +83,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const connectHubSpot = async (code: string) => {
+  const connectHubSpot = async (code: string, token?: string) => {
     try {
-      await ApiService.connectHubSpot(code);
+      await ApiService.connectHubSpot(code, token);
       // Refresh user data after HubSpot connection
       const userData = await ApiService.getCurrentUser();
       setUser(userData);

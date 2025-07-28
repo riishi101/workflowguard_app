@@ -74,6 +74,29 @@ export class AuthService {
     return this.prisma.user.findUnique({ where: { id: payload.sub } });
   }
 
+  async verifyToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.validateJwtPayload(payload);
+      if (!user) {
+        return null;
+      }
+      // Remove password from user object before returning
+      const { password: _, ...userWithoutPassword } = user as any;
+      return userWithoutPassword;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  generateToken(user: any) {
+    return this.jwtService.sign({ 
+      sub: user.id, 
+      email: user.email, 
+      role: user.role 
+    });
+  }
+
   async updateUserHubspotPortalId(userId: string, hubspotPortalId: string) {
     try {
       console.log('Updating user hubspotPortalId:', userId, hubspotPortalId);

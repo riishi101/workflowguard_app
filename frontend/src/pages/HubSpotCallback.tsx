@@ -34,7 +34,8 @@ const HubSpotCallback = () => {
 
         // The OAuth callback has already been processed by the backend
         // We just need to verify the connection and get user data
-        await connectHubSpot(code);
+        const token = searchParams.get('token');
+        await connectHubSpot(code, token || undefined);
         
         setStatus('success');
         toast.success('Successfully connected to HubSpot!');

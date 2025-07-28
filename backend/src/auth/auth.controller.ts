@@ -56,8 +56,8 @@ export class AuthController {
   async handleHubSpotCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
       console.log('HubSpot callback received with code:', code);
-      
-      if (!code) {
+
+    if (!code) {
         console.error('No authorization code provided');
         return res.redirect('https://www.workflowguard.pro?error=no_code');
       }
@@ -79,14 +79,14 @@ export class AuthController {
       // 1. Exchange code for tokens
       console.log('Exchanging code for tokens...');
       const tokenRes = await axios.post('https://api.hubapi.com/oauth/v1/token', null, {
-        params: {
-          grant_type: 'authorization_code',
+            params: {
+              grant_type: 'authorization_code',
           client_id: clientId,
           client_secret: clientSecret,
           redirect_uri: redirectUri,
-          code,
-        },
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              code,
+            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
       console.log('Token response received:', !!tokenRes.data);
@@ -101,8 +101,8 @@ export class AuthController {
       // 2. Fetch user email from HubSpot
       console.log('Fetching user info from HubSpot...');
       const userRes = await axios.get('https://api.hubapi.com/integrations/v1/me', {
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
       
       console.log('User response received:', !!userRes.data);
       console.log('User response data:', JSON.stringify(userRes.data, null, 2));
@@ -119,8 +119,9 @@ export class AuthController {
 
       // 3. Create or update user in your DB with hubspotPortalId
       console.log('Creating/updating user in database...');
+      let user;
       try {
-        const user = await this.authService.findOrCreateUser(email);
+        user = await this.authService.findOrCreateUser(email);
         console.log('User found/created:', user.id);
         
         await this.authService.updateUserHubspotPortalId(user.id, hub_id);
@@ -129,11 +130,16 @@ export class AuthController {
         console.error('Database operation failed:', dbError);
         // Continue with OAuth flow even if DB fails
         console.log('Continuing OAuth flow despite DB error');
+        // Create a minimal user object for token generation
+        user = { id: 'temp-user', email, role: 'user' };
       }
 
-      // 4. Redirect to frontend with success
+      // 4. Generate JWT token for the user
+      const token = this.authService.generateToken(user);
+
+      // 5. Redirect to frontend with success and token
       console.log('OAuth callback completed successfully');
-      return res.redirect('https://www.workflowguard.pro/auth/hubspot/callback?code=' + code + '&success=true');
+      return res.redirect(`https://www.workflowguard.pro/auth/hubspot/callback?code=${code}&success=true&token=${encodeURIComponent(token)}`);
       
     } catch (error) {
       console.error('OAuth callback error:', error);
@@ -200,15 +206,25 @@ export class AuthController {
   @Get('me')
   async getCurrentUser(@Req() req: Request) {
     try {
-      // For now, return a mock user since we don't have JWT auth fully implemented
-      // This will be replaced with proper JWT token validation
-      return {
-        id: 'mock-user-id',
-        email: 'user@workflowguard.pro',
-        name: 'WorkflowGuard User',
-        role: 'user'
-      };
+      // Get the authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new HttpException('No authorization token provided', HttpStatus.UNAUTHORIZED);
+      }
+
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      
+      // Verify the JWT token and get user data
+      const user = await this.authService.verifyToken(token);
+      if (!user) {
+        throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
+      }
+
+      return user;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Failed to get current user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -212,23 +212,19 @@ export class ApiService {
   }
 
   // HubSpot integration
-  static async connectHubSpot(code: string): Promise<any> {
-    // The OAuth callback is handled by the backend redirect
-    // This method is called after the backend has already processed the OAuth
-    // We just need to verify the connection was successful
+  static async connectHubSpot(code: string, token?: string): Promise<any> {
+    // If we have a token from the OAuth callback, store it
+    if (token) {
+      this.setAuthToken(token);
+    }
+    
+    // Verify the connection by calling /auth/me with the token
     try {
       const response = await apiClient.get('/auth/me');
       return response.data;
     } catch (error) {
-      // If /auth/me fails, that's okay - the OAuth was still successful
-      // The backend has already processed the OAuth and redirected us
-      console.log('OAuth completed successfully, /auth/me endpoint not critical');
-      return {
-        id: 'oauth-user',
-        email: 'user@workflowguard.pro',
-        name: 'HubSpot User',
-        role: 'user'
-      };
+      console.error('Failed to verify OAuth connection:', error);
+      throw new Error('Failed to verify HubSpot connection');
     }
   }
 
