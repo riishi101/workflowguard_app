@@ -17,6 +17,8 @@ const Index = () => {
     const code = searchParams.get('code');
     const success = searchParams.get('success');
 
+    console.log('Index.tsx useEffect - URL params:', { error, code, success });
+
     if (error) {
       // Handle OAuth errors
       setShowWelcome(false);
@@ -45,11 +47,14 @@ const Index = () => {
       }, 2000);
     } else if (code && success) {
       // Successful OAuth callback - redirect to HubSpot callback page
+      console.log('Index.tsx - OAuth success detected, redirecting to callback');
       setShowWelcome(false);
       setShowConnect(false);
       
       // Redirect to HubSpot callback page to handle the OAuth completion
       navigate("/auth/hubspot/callback");
+    } else {
+      console.log('Index.tsx - No OAuth params, showing welcome modal');
     }
   }, [searchParams, navigate]);
 

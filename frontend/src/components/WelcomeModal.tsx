@@ -15,6 +15,8 @@ const WelcomeModal = ({
   onClose,
   onConnectHubSpot,
 }: WelcomeModalProps) => {
+  console.log('WelcomeModal render - open:', open);
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-8 bg-gray-50 border-0">

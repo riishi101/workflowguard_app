@@ -139,7 +139,9 @@ export class AuthController {
 
       // 5. Redirect to frontend with success and token
       console.log('OAuth callback completed successfully');
-      return res.redirect(`https://www.workflowguard.pro/auth/hubspot/callback?code=${code}&success=true&token=${encodeURIComponent(token)}`);
+      const redirectUrl = `https://www.workflowguard.pro/auth/hubspot/callback?code=${code}&success=true&token=${encodeURIComponent(token)}`;
+      console.log('Redirecting to:', redirectUrl);
+      return res.redirect(redirectUrl);
       
     } catch (error) {
       console.error('OAuth callback error:', error);
