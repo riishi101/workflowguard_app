@@ -39,8 +39,8 @@ const ProfileTab = () => {
           <AvatarFallback className="text-xl">JS</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">John Smith</h2>
-          <p className="text-base text-gray-600">john.smith@example.com</p>
+          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
+          <p className="text-sm text-gray-600">john.smith@example.com</p>
         </div>
       </div>
 
@@ -53,7 +53,7 @@ const ProfileTab = () => {
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-6">
           <div>
-            <Label htmlFor="full-name" className="text-base font-medium text-gray-700">
+            <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
               Full Name
             </Label>
             <Input
@@ -68,7 +68,7 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-base font-medium text-gray-700">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
               Email Address
             </Label>
             <div className="flex items-center gap-3 mt-2">
@@ -85,7 +85,7 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="job-title" className="text-base font-medium text-gray-700">
+            <Label htmlFor="job-title" className="text-sm font-medium text-gray-700">
               Job Title
             </Label>
             <Input
@@ -118,7 +118,7 @@ const ProfileTab = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     Connected to HubSpot
                   </h3>
-                  <p className="text-base text-gray-600">
+                  <p className="text-sm text-gray-600">
                     Your HubSpot account is successfully connected and syncing
                     workflows.
                   </p>
@@ -156,7 +156,7 @@ const ProfileTab = () => {
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-6">
           <div>
-            <Label htmlFor="timezone" className="text-base font-medium text-gray-700">
+            <Label htmlFor="timezone" className="text-sm font-medium text-gray-700">
               Timezone
             </Label>
             <Select
@@ -184,7 +184,7 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="language" className="text-base font-medium text-gray-700">
+            <Label htmlFor="language" className="text-sm font-medium text-gray-700">
               Language
             </Label>
             <Select
@@ -219,7 +219,7 @@ const ProfileTab = () => {
               <h4 className="text-lg font-semibold text-gray-900 mb-1">
                 Two-Factor Authentication
               </h4>
-              <p className="text-base text-gray-600">
+              <p className="text-sm text-gray-600">
                 Add an extra layer of security to your account
               </p>
             </div>
@@ -233,7 +233,7 @@ const ProfileTab = () => {
               <h4 className="text-lg font-semibold text-gray-900 mb-1">
                 Change Password
               </h4>
-              <p className="text-base text-gray-600">
+              <p className="text-sm text-gray-600">
                 Update your account password regularly
               </p>
             </div>
@@ -254,7 +254,7 @@ const ProfileTab = () => {
         <CardContent className="p-6 pt-0">
           <Alert className="mb-6">
             <AlertTriangle className="h-5 w-5" />
-            <AlertDescription className="text-base">
+            <AlertDescription className="text-sm">
               These actions cannot be undone. Please proceed with caution.
             </AlertDescription>
           </Alert>

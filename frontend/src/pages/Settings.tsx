@@ -25,19 +25,19 @@ const Settings = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+      <main className="max-w-7xl mx-auto px-6 py-6 flex-1">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             App Settings
           </h1>
-          <p className="text-gray-600 text-lg leading-relaxed">
+          <p className="text-gray-600 text-sm">
             Manage app-level configurations, subscriptions, and user access for
             WorkflowGuard.
           </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-gray-50 p-2 rounded-xl mb-8">
+          <TabsList className="grid w-full grid-cols-6 bg-gray-50 p-2 rounded-xl mb-6">
             <TabsTrigger
               value="plan-billing"
               className="flex items-center gap-3 text-sm font-medium py-3 px-4"
@@ -82,7 +82,7 @@ const Settings = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <TabsContent value="plan-billing">
               <PlanBillingTab />
             </TabsContent>
