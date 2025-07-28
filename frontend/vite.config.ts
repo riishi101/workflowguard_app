@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
       },
-      includeAssets: ["favicon.ico", "icon.svg"],
+      includeAssets: ["favicon.ico"],
       manifest: {
         name: "WorkflowGuard",
         short_name: "WorkflowGuard",
@@ -29,9 +29,9 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         icons: [
           {
-            src: "icon.svg",
+            src: "/favicon.ico",
             sizes: "any",
-            type: "image/svg+xml",
+            type: "image/x-icon",
             purpose: "any",
           },
         ],
