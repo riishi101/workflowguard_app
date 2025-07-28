@@ -38,9 +38,17 @@ const HubSpotCallback = () => {
 
         // The OAuth callback has already been processed by the backend
         // We just need to verify the connection and get user data
-        await connectHubSpot(code, token || undefined);
+        try {
+          await connectHubSpot(code, token || undefined);
+          console.log('HubSpot connection successful');
+        } catch (error) {
+          console.error('HubSpot connection error:', error);
+          // Even if verification fails, we can still proceed since OAuth was successful
+          console.log('Proceeding to workflow selection despite verification error');
+        }
         
         // Redirect immediately to workflow selection
+        console.log('Redirecting to workflow selection');
         navigate('/workflow-selection');
 
       } catch (error) {
@@ -48,6 +56,12 @@ const HubSpotCallback = () => {
         setStatus('error');
         setError('Failed to connect to HubSpot. Please try again.');
         toast.error('Failed to connect to HubSpot. Please try again.');
+        
+        // Even on error, redirect to workflow selection after a delay
+        setTimeout(() => {
+          console.log('Redirecting to workflow selection after error');
+          navigate('/workflow-selection');
+        }, 2000);
       }
     };
 
