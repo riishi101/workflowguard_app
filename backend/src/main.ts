@@ -35,17 +35,22 @@ async function bootstrap() {
   app.use(limiter);
 
   // CORS configuration
+  const corsOrigins = [
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'https://www.workflowguard.pro',
+    'https://workflowguard.pro',
+    process.env.FRONTEND_URL
+  ].filter((v): v is string => typeof v === 'string');
+  
+  console.log('CORS origins configured:', corsOrigins);
+  
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:8080',
-      'https://www.workflowguard.pro',
-      'https://workflowguard.pro',
-      process.env.FRONTEND_URL
-    ].filter((v): v is string => typeof v === 'string'),
+    origin: corsOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
   });
   
   // Enable global validation
@@ -60,6 +65,12 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix('api');
+
+  // Add request logging middleware
+  app.use((req: any, res: any, next: any) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    next();
+  });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
