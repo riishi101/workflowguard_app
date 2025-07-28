@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, Query, Res, Req } from '@nestjs/common';
+import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import axios from 'axios';
@@ -194,6 +194,22 @@ export class AuthController {
       return await this.authService.findOrCreateUser(email);
     } catch (error) {
       throw new HttpException('Failed to find or create user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get('me')
+  async getCurrentUser(@Req() req: Request) {
+    try {
+      // For now, return a mock user since we don't have JWT auth fully implemented
+      // This will be replaced with proper JWT token validation
+      return {
+        id: 'mock-user-id',
+        email: 'user@workflowguard.pro',
+        name: 'WorkflowGuard User',
+        role: 'user'
+      };
+    } catch (error) {
+      throw new HttpException('Failed to get current user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
