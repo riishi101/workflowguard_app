@@ -151,46 +151,45 @@ const HelpSupport = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-6xl mx-auto px-8 py-12 flex-1">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Help & Support Center
           </h1>
-          <p className="text-gray-600 text-lg leading-relaxed">
+          <p className="text-gray-600 text-sm">
             Find answers to your questions, explore tutorials, and connect with
             our support team
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="relative mb-16">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
+        <div className="relative mb-8">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <Input
             placeholder="Search for articles, topics, or FAQs..."
-            className="pl-12 py-4 text-lg h-14"
+            className="pl-10 py-3 text-base"
           />
         </div>
 
         {/* Popular Topics */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Popular Topics
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {popularTopics.map((topic, index) => {
               const IconComponent = topic.icon;
               return (
                 <Card
                   key={index}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors shadow-sm border-gray-200"
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
                       <IconComponent
-                        className={`w-6 h-6 ${topic.color} flex-shrink-0`}
+                        className={`w-5 h-5 ${topic.color} flex-shrink-0`}
                       />
-                      <span className="text-base font-medium text-gray-900">
+                      <span className="text-sm font-medium text-gray-900">
                         {topic.title}
                       </span>
                     </div>
@@ -202,11 +201,11 @@ const HelpSupport = () => {
         </div>
 
         {/* Common Questions */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Common Questions
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {commonQuestions.map((question) => (
               <Collapsible
                 key={question.id}
@@ -216,19 +215,19 @@ const HelpSupport = () => {
                 }
               >
                 <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between p-6 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-                    <span className="text-base font-medium text-gray-900 text-left">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span className="text-sm font-medium text-gray-900 text-left">
                       {question.question}
                     </span>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-500 transition-transform ${
+                      className={`w-4 h-4 text-gray-500 transition-transform ${
                         openQuestion === question.id ? "rotate-180" : ""
                       }`}
                     />
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="px-6 py-4 text-base text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-xl leading-relaxed">
+                  <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
                     {question.answer}
                   </div>
                 </CollapsibleContent>
@@ -238,28 +237,28 @@ const HelpSupport = () => {
         </div>
 
         {/* Comprehensive Guides & Documentation */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Comprehensive Guides & Documentation
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {documentationCards.map((card, index) => {
               const IconComponent = card.icon;
               return (
                 <Card
                   key={index}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors shadow-sm border-gray-200"
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <CardContent className="p-8">
-                    <div className="flex items-start gap-4">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-3">
                       <IconComponent
-                        className={`w-7 h-7 ${card.color} flex-shrink-0 mt-1`}
+                        className={`w-6 h-6 ${card.color} flex-shrink-0 mt-1`}
                       />
                       <div>
-                        <h3 className="font-semibold text-gray-900 mb-3 text-lg">
+                        <h3 className="font-semibold text-gray-900 mb-2">
                           {card.title}
                         </h3>
-                        <p className="text-base text-gray-600 leading-relaxed">
+                        <p className="text-sm text-gray-600">
                           {card.description}
                         </p>
                       </div>
@@ -273,27 +272,27 @@ const HelpSupport = () => {
 
         {/* Stay Informed & Connect */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Stay Informed & Connect
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {connectSections.map((section, index) => {
               const IconComponent = section.icon;
               return (
-                <div key={index} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <IconComponent className="w-6 h-6 text-blue-500" />
-                    <h3 className="font-semibold text-gray-900 text-lg">
+                <div key={index} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="w-5 h-5 text-blue-500" />
+                    <h3 className="font-semibold text-gray-900">
                       {section.title}
                     </h3>
                   </div>
-                  <p className="text-base text-gray-600 leading-relaxed">{section.description}</p>
+                  <p className="text-sm text-gray-600">{section.description}</p>
                   <Button
                     variant="link"
-                    className="p-0 h-auto text-blue-600 font-medium text-base"
+                    className="p-0 h-auto text-blue-600 font-medium text-sm"
                   >
                     {section.link}
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                    <ExternalLink className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
               );

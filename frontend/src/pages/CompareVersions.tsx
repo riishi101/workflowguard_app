@@ -44,15 +44,23 @@ const allVersions = [
   },
 ];
 
+// Define step interface
+interface WorkflowStep {
+  type: string;
+  title: string;
+  icon: any;
+  isNew?: boolean;
+}
+
 // Mock workflow data for comparison
-const workflowVersionsData = {
+const workflowVersionsData: Record<string, { steps: WorkflowStep[] }> = {
   "1": {
     steps: [
       { type: "email", title: "Send Welcome Email", icon: Mail },
       { type: "delay", title: "Wait 5 days", icon: Clock },
       { type: "email", title: "Send Follow-up Email", icon: Mail },
       { type: "meeting", title: "Schedule Meeting", icon: Calendar },
-    ],
+    ] as WorkflowStep[],
   },
   "2": {
     steps: [
@@ -61,7 +69,7 @@ const workflowVersionsData = {
       { type: "email", title: "Send Follow-up Email", icon: Mail },
       { type: "meeting", title: "Schedule Meeting", icon: Calendar },
       { type: "email", title: "Send Thank You Email", icon: Mail, isNew: true },
-    ],
+    ] as WorkflowStep[],
   },
 };
 
@@ -86,7 +94,7 @@ const CompareVersions = () => {
     navigate("/workflow-history");
   };
 
-  const getStepColor = (step: any) => {
+  const getStepColor = (step: WorkflowStep) => {
     if (step.isNew) return "bg-red-50 border-red-200";
     if (step.type === "email") return "bg-green-50 border-green-200";
     if (step.type === "delay") return "bg-yellow-50 border-yellow-200";
@@ -94,7 +102,7 @@ const CompareVersions = () => {
     return "bg-gray-50 border-gray-200";
   };
 
-  const getStepTextColor = (step: any) => {
+  const getStepTextColor = (step: WorkflowStep) => {
     if (step.isNew) return "text-red-800";
     if (step.type === "email") return "text-green-800";
     if (step.type === "delay") return "text-yellow-800";
@@ -106,98 +114,94 @@ const CompareVersions = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-6 flex-1">
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-          <span>Dashboard</span>
-          <span>&gt;</span>
-          <span>Workflow History</span>
-          <span>&gt;</span>
-          <span className="text-gray-900 font-medium">Compare Versions</span>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-6">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="outline"
+              onClick={handleBackToHistory}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to History
+            </Button>
+          </div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Compare Workflow Versions: Customer Onboarding
+            Compare Workflow Versions
           </h1>
-          <p className="text-sm text-gray-600">
-            Last modified: June 21, 2025, 9:00 AM IST
+          <p className="text-gray-600 text-sm">
+            Compare two versions of your workflow to see what changed
           </p>
         </div>
 
-        {/* Version Selectors and Controls */}
-        <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version A:
-              </span>
+        {/* Version Selection */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Version A</h3>
               <Select value={versionA} onValueChange={setVersionA}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {allVersions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {version.date}
+                      {version.type} - {version.date}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {versionAData && (
+                <div className="mt-2 text-xs text-gray-500">
+                  Created by {versionAData.creator}
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version B:
-              </span>
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Version B</h3>
               <Select value={versionB} onValueChange={setVersionB}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {allVersions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {version.date}
+                      {version.type} - {version.date}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {versionBData && (
+                <div className="mt-2 text-xs text-gray-500">
+                  Created by {versionBData.creator}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+          <div className="mt-4 flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Switch
                 checked={syncScroll}
                 onCheckedChange={setSyncScroll}
                 id="sync-scroll"
               />
               <label htmlFor="sync-scroll" className="text-sm text-gray-700">
-                Sync Scroll
+                Sync scrolling
               </label>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <Minus className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
 
-        {/* Comparison Content */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        {/* Comparison View */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Version A */}
-          <div className="border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-gray-900">
-                Version A - {versionAData?.date}
-              </h3>
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-900">Version A</h3>
               <p className="text-sm text-gray-600">
-                Created by {versionAData?.creator}
+                {versionAData?.type} - {versionAData?.date}
               </p>
             </div>
             <div className="p-4 space-y-3">
@@ -206,14 +210,14 @@ const CompareVersions = () => {
                 return (
                   <div
                     key={index}
-                    className={`p-3 rounded-lg border flex items-center space-x-3 ${getStepColor(step)}`}
+                    className={`p-3 rounded-lg border ${getStepColor(step)}`}
                   >
-                    <IconComponent
-                      className={`w-5 h-5 ${getStepTextColor(step)}`}
-                    />
-                    <span className={`font-medium ${getStepTextColor(step)}`}>
-                      {step.title}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <IconComponent className="w-4 h-4 flex-shrink-0" />
+                      <span className={`text-sm font-medium ${getStepTextColor(step)}`}>
+                        {step.title}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -221,13 +225,11 @@ const CompareVersions = () => {
           </div>
 
           {/* Version B */}
-          <div className="border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-gray-900">
-                Version B - {versionBData?.type} ({versionBData?.date})
-              </h3>
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-900">Version B</h3>
               <p className="text-sm text-gray-600">
-                Last modified by {versionBData?.creator}
+                {versionBData?.type} - {versionBData?.date}
               </p>
             </div>
             <div className="p-4 space-y-3">
@@ -236,19 +238,19 @@ const CompareVersions = () => {
                 return (
                   <div
                     key={index}
-                    className={`p-3 rounded-lg border flex items-center space-x-3 ${getStepColor(step)}`}
+                    className={`p-3 rounded-lg border ${getStepColor(step)}`}
                   >
-                    <IconComponent
-                      className={`w-5 h-5 ${getStepTextColor(step)}`}
-                    />
-                    <span className={`font-medium ${getStepTextColor(step)}`}>
-                      {step.title}
-                    </span>
-                    {step.isNew && (
-                      <Badge variant="destructive" className="text-xs">
-                        New
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <IconComponent className="w-4 h-4 flex-shrink-0" />
+                      <span className={`text-sm font-medium ${getStepTextColor(step)}`}>
+                        {step.title}
+                      </span>
+                      {step.isNew && (
+                        <Badge className="bg-red-100 text-red-800 text-xs">
+                          New
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -256,16 +258,14 @@ const CompareVersions = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-          <Button variant="outline" onClick={handleBackToHistory}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Version History
-          </Button>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" className="text-blue-600">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Restore Version A
+        {/* Actions */}
+        <div className="mt-6 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Found {versionBSteps.steps.length - versionASteps.steps.length} changes
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="text-gray-600">
+              Export Comparison
             </Button>
             <Button className="bg-blue-500 hover:bg-blue-600 text-white">
               <RotateCcw className="w-4 h-4 mr-2" />

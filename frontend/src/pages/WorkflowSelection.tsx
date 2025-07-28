@@ -104,35 +104,31 @@ const WorkflowSelection = () => {
     setSelectedWorkflows((prev) =>
       prev.includes(workflowId)
         ? prev.filter((id) => id !== workflowId)
-        : [...prev, workflowId],
+        : [...prev, workflowId]
     );
   };
 
   const handleStartProtecting = async () => {
-    try {
-      // Create workflows in our system
-      const promises = selectedWorkflows.map(async (workflowId) => {
-        const workflow = workflows.find(w => w.id === workflowId);
-        if (workflow) {
-          return ApiService.createWorkflow({
-            name: workflow.name,
-            hubspotId: workflow.hubspotId,
-            ownerId: user?.id || 'default',
-          });
-        }
-      });
+    if (selectedWorkflows.length === 0) {
+      toast.error('Please select at least one workflow to protect.');
+      return;
+    }
 
-      await Promise.all(promises);
-      
-      // Set workflow selection state
+    try {
+      // Save selected workflows to state
       WorkflowState.setWorkflowSelection(true);
       WorkflowState.setSelectedCount(selectedWorkflows.length);
       
-      toast.success(`Successfully protected ${selectedWorkflows.length} workflows!`);
+      // In a real app, this would call an API to start monitoring
+      console.log('Starting protection for workflows:', selectedWorkflows);
+      
+      toast.success(`Successfully started protecting ${selectedWorkflows.length} workflows!`);
+      
+      // Navigate to dashboard
       navigate("/dashboard");
     } catch (error) {
-      console.error('Error creating workflows:', error);
-      toast.error('Failed to protect workflows. Please try again.');
+      console.error('Error starting workflow protection:', error);
+      toast.error('Failed to start workflow protection. Please try again.');
     }
   };
 
@@ -151,7 +147,7 @@ const WorkflowSelection = () => {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <TopNavigation />
-        <main className="max-w-6xl mx-auto px-6 py-8 flex-1 flex items-center justify-center">
+        <main className="max-w-7xl mx-auto px-6 py-8 flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
             <h2 className="text-lg font-semibold text-gray-900">
@@ -171,7 +167,7 @@ const WorkflowSelection = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-6xl mx-auto px-6 py-8 flex-1">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Select Workflows to Protect
@@ -244,81 +240,65 @@ const WorkflowSelection = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="w-12 px-4 py-3"></th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
-                    Workflow Name
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
-                    HubSpot Folder
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
-                    HubSpot Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
-                    Last Modified
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredWorkflows.map((workflow) => (
-                  <tr key={workflow.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <Checkbox
-                        checked={selectedWorkflows.includes(workflow.id)}
-                        onCheckedChange={() =>
-                          handleWorkflowToggle(workflow.id)
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      {workflow.name}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {workflow.folder}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          workflow.status === "Active" ? "default" : "secondary"
-                        }
-                        className={
-                          workflow.status === "Active"
-                            ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                        }
-                      >
-                        {workflow.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {workflow.lastModified}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="p-4">
+            <div className="space-y-3">
+              {filteredWorkflows.map((workflow) => (
+                <div
+                  key={workflow.id}
+                  className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Checkbox
+                    id={workflow.id}
+                    checked={selectedWorkflows.includes(workflow.id)}
+                    onCheckedChange={() => handleWorkflowToggle(workflow.id)}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {workflow.name}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {workflow.folder} • Last modified: {workflow.lastModified}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant={workflow.status === "Active" ? "default" : "secondary"}
+                          className={
+                            workflow.status === "Active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }
+                        >
+                          {workflow.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+          <div className="px-4 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Selected {selectedWorkflows.length} of {workflows.length}{" "}
-              workflows. You have 500 workflows remaining in your trial.
+              {selectedWorkflows.length} of {filteredWorkflows.length} workflows selected
             </p>
             <div className="flex items-center gap-3">
-              <Button onClick={handleSkipForNow} variant="outline" size="sm">
-                Skip for now
+              <Button
+                variant="outline"
+                onClick={handleSkipForNow}
+                className="text-gray-600"
+              >
+                Skip for Now
               </Button>
               <Button
                 onClick={handleStartProtecting}
                 disabled={selectedWorkflows.length === 0}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
-                size="sm"
               >
-                Start Protecting Workflows
+                Start Protecting {selectedWorkflows.length > 0 && `(${selectedWorkflows.length})`}
               </Button>
             </div>
           </div>

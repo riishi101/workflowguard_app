@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import TopNavigation from "@/components/TopNavigation";
+import Footer from "@/components/Footer";
 import { HelpCircle, Settings, Lightbulb } from "lucide-react";
 
 const SetupGuide = () => {
@@ -6,44 +8,14 @@ const SetupGuide = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-sm flex items-center justify-center">
-                <svg
-                  className="w-2 h-2 text-blue-500"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              </div>
-            </div>
-            <span className="font-semibold text-gray-900">WorkflowGuard</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
-              <HelpCircle className="w-4 h-4" />
-              Help
-            </button>
-            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
-          </div>
-        </div>
-      </header>
+      <TopNavigation />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
-        {/* Title Section */}
-        <div className="mb-12">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-4">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             HubSpot Setup Guide: Get Started with WorkflowGuard
           </h1>
-          <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
+          <p className="text-gray-600 text-sm">
             This guide will walk you through the essential steps to connect your
             HubSpot account and begin protecting your invaluable workflows with
             WorkflowGuard's robust version control and monitoring features.
@@ -52,7 +24,7 @@ const SetupGuide = () => {
         </div>
 
         {/* Steps */}
-        <div className="space-y-12">
+        <div className="space-y-8">
           {/* Step 1: Welcome */}
           <div className="flex gap-6">
             <div className="flex-shrink-0">
@@ -61,10 +33,10 @@ const SetupGuide = () => {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Welcome to WorkflowGuard!
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed mb-4">
+              <p className="text-sm text-gray-600 mb-4">
                 Congratulations on installing WorkflowGuard! We're excited to
                 help you safeguard your HubSpot automations. Let's get your
                 account connected.
@@ -96,51 +68,27 @@ const SetupGuide = () => {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Connect Your HubSpot Account
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                To begin monitoring your HubSpot workflows, you need to grant
-                WorkflowGuard access to your HubSpot portal. This allows us to
-                read your workflow definitions for versioning and to perform
-                rollbacks when needed.
+              <p className="text-sm text-gray-600 mb-4">
+                The first step is to securely connect your HubSpot account to
+                WorkflowGuard. This allows us to access and monitor your
+                workflows.
               </p>
-
-              {/* Mockup Image Placeholder */}
-              <div className="bg-gray-100 border border-gray-200 rounded-lg p-8 text-center">
-                <div className="bg-white rounded-lg shadow-sm border p-6 max-w-md mx-auto">
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                      W
-                    </div>
-                    <span className="text-lg">+</span>
-                    <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                      H
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    WorkflowGuard + HubSpot
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Choose an account
-                  </p>
-                  <div className="space-y-2 text-left">
-                    <div className="bg-gray-50 p-2 rounded text-xs">
-                      Account Information
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded text-xs">
-                      Workflow Management
-                    </div>
-                  </div>
-                  <button className="w-full bg-orange-500 text-white py-2 px-4 rounded text-sm font-medium mt-4">
-                    Connect
-                  </button>
-                </div>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-2">What happens during connection:</h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Secure OAuth authentication with HubSpot</li>
+                  <li>• Read-only access to your workflows</li>
+                  <li>• No modifications to your existing workflows</li>
+                  <li>• Automatic workflow discovery and listing</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Step 3: Grant Permissions */}
+          {/* Step 3: Select Workflows */}
           <div className="flex gap-6">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
@@ -148,57 +96,26 @@ const SetupGuide = () => {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                Grant WorkflowGuard Permissions
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                Select Workflows to Protect
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                After clicking "Connect to HubSpot" in the previous step, you'll
-                be redirected to HubSpot's authorization screen. Here, you'll
-                select the HubSpot account you wish to connect and approve the
-                necessary permissions for WorkflowGuard to operate.
+              <p className="text-sm text-gray-600 mb-4">
+                Choose which workflows you want WorkflowGuard to monitor. You can
+                select individual workflows or entire folders.
               </p>
-
-              {/* Mockup Image Placeholder */}
-              <div className="bg-gray-100 border border-gray-200 rounded-lg p-8 text-center">
-                <div className="bg-white rounded-lg shadow-sm border p-6 max-w-lg mx-auto">
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                      W
-                    </div>
-                    <span className="text-lg">+</span>
-                    <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-sm">
-                      H
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    WorkflowGuard + HubSpot
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    WorkflowGuard is requesting permission to access
-                  </p>
-                  <div className="space-y-3 text-left mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">Read your workflows</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">Update your workflows</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm">Read contact data</span>
-                    </div>
-                  </div>
-                  <button className="w-full bg-orange-500 text-white py-2 px-4 rounded text-sm font-medium">
-                    Grant access
-                  </button>
-                </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-medium text-green-900 mb-2">Best Practices:</h3>
+                <ul className="text-sm text-green-800 space-y-1">
+                  <li>• Start with critical workflows that handle customer data</li>
+                  <li>• Include workflows with complex logic or frequent changes</li>
+                  <li>• Consider workflows used by multiple team members</li>
+                  <li>• Don't worry - you can add or remove workflows anytime</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Step 4: Account Connected */}
+          {/* Step 4: Configure Monitoring */}
           <div className="flex gap-6">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
@@ -206,89 +123,26 @@ const SetupGuide = () => {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                Your HubSpot Account is Connected!
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                Configure Monitoring Settings
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                Great job! Your HubSpot account is now linked with
-                WorkflowGuard. You'll automatically see all available workflows
-                from your connected HubSpot portal. Now, simply select the
-                workflows you wish to protect and begin monitoring.
+              <p className="text-sm text-gray-600 mb-4">
+                Set up how WorkflowGuard should monitor your workflows. You can
+                customize snapshot frequency and notification preferences.
               </p>
-
-              {/* Mockup Image Placeholder */}
-              <div className="bg-gray-100 border border-gray-200 rounded-lg p-8">
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">
-                    Select Workflows to Protect
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Choose the workflows you want WorkflowGuard to monitor and
-                    protect from your available workflows below.
-                  </p>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 border rounded">
-                      <input
-                        type="checkbox"
-                        checked
-                        readOnly
-                        className="w-4 h-4"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">
-                          Lead Nurturing Campaign
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Marketing | Active | Last modified today
-                        </div>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        Active
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 border rounded">
-                      <input
-                        type="checkbox"
-                        checked
-                        readOnly
-                        className="w-4 h-4"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">
-                          Customer Onboarding
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Sales Automation | Active | Last modified yesterday
-                        </div>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        Active
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 border rounded">
-                      <input type="checkbox" readOnly className="w-4 h-4" />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">
-                          Deal Pipeline Automation
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Sales | Active | Last modified 2 days ago
-                        </div>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        Active
-                      </span>
-                    </div>
-                  </div>
-                  <button className="w-full bg-blue-500 text-white py-2 px-4 rounded text-sm font-medium mt-4">
-                    Start Protecting Workflows
-                  </button>
-                </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="font-medium text-yellow-900 mb-2">Default Settings:</h3>
+                <ul className="text-sm text-yellow-800 space-y-1">
+                  <li>• Automatic snapshots on workflow changes</li>
+                  <li>• Daily backup snapshots</li>
+                  <li>• Email notifications for significant changes</li>
+                  <li>• 90-day version history retention</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Step 5: Manage Connected Portals */}
+          {/* Step 5: Start Monitoring */}
           <div className="flex gap-6">
             <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
@@ -296,87 +150,50 @@ const SetupGuide = () => {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                Manage Your Connected HubSpot Portals
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                Start Monitoring and Protecting
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed mb-6">
-                You can always review and manage your connected HubSpot accounts
-                directly within WorkflowGuard's profile settings. This section
-                allows you to check connection status, disconnect, or reconnect
-                to HubSpot if needed.
+              <p className="text-sm text-gray-600 mb-4">
+                Once configured, WorkflowGuard will begin monitoring your selected
+                workflows. You'll receive notifications about changes and can
+                restore previous versions when needed.
               </p>
-
-              {/* Mockup Image Placeholder */}
-              <div className="bg-gray-100 border border-gray-200 rounded-lg p-8">
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">
-                    App Settings
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="border-b pb-4">
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        Personal Details
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Update your account information
-                      </div>
-                    </div>
-                    <div className="border-b pb-4">
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        HubSpot Account Connection
-                      </h4>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm font-medium">Connected</span>
-                        <span className="text-sm text-gray-500">
-                          • Last connected: 2025-07-15 10:30 AM
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div>Portal ID: 243112608</div>
-                        <div>Connected as: john.smith@example.com</div>
-                        <div>Role: Admin</div>
-                      </div>
-                      <button className="text-sm text-red-600 hover:text-red-700 mt-2">
-                        Disconnect HubSpot
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <h3 className="font-medium text-purple-900 mb-2">What you'll get:</h3>
+                <ul className="text-sm text-purple-800 space-y-1">
+                  <li>• Real-time change detection and alerts</li>
+                  <li>• Complete version history for each workflow</li>
+                  <li>• One-click rollback to previous versions</li>
+                  <li>• Detailed change comparison tools</li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            © 2024 WorkflowGuard. All rights reserved.
-          </div>
-          <div className="flex items-center gap-6">
+        {/* Next Steps */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Ready to Get Started?
+          </h2>
+          <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/terms-of-service")}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => navigate("/workflow-selection")}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
             >
-              Terms of Service
+              Connect HubSpot Account
             </button>
             <button
-              onClick={() => navigate("/privacy-policy")}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => navigate("/help-support")}
+              className="text-blue-600 hover:text-blue-700 font-medium"
             >
-              Privacy Policy
-            </button>
-            <button
-              onClick={() => navigate("/contact")}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Contact Us
+              Need Help? Contact Support
             </button>
           </div>
         </div>
-      </footer>
+      </main>
+
+      <Footer />
     </div>
   );
 };

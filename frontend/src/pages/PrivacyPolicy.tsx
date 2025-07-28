@@ -1,207 +1,253 @@
 import { useNavigate } from "react-router-dom";
-import { HelpCircle, Settings } from "lucide-react";
+import TopNavigation from "@/components/TopNavigation";
+import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
-              <div className="w-3 h-3 bg-white rounded-sm flex items-center justify-center">
-                <svg
-                  className="w-2 h-2 text-blue-500"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              </div>
-            </div>
-            <span className="font-semibold text-gray-900">WorkflowGuard</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
-              <HelpCircle className="w-4 h-4" />
-              Help
-            </button>
-            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
-          </div>
-        </div>
-      </header>
+      <TopNavigation />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
-        {/* Title Section */}
-        <div className="mb-12">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Privacy Policy
           </h1>
-          <p className="text-sm text-gray-500 mb-6">
-            Last Updated: July 17, 2025
-          </p>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Your privacy is critically important to us. This Privacy Policy
-            explains how WorkflowGuard collects, uses, discloses, and protects
-            information about you.
+          <p className="text-gray-600 text-sm">
+            Last updated: May 24, 2024
           </p>
         </div>
 
-        {/* Content Sections */}
-        <div className="space-y-8 text-sm text-gray-600 leading-relaxed">
-          {/* 1. Introduction */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              1. Introduction
-            </h2>
-            <p>
-              This Privacy Policy describes our policies and procedures on the
-              collection, use, and disclosure of your information when you use
-              the Service and tells you about your privacy rights and how the
-              law protects you.
-            </p>
-          </section>
+        <div className="prose prose-gray max-w-none">
+          <div className="space-y-6">
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                1. Information We Collect
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We collect information you provide directly to us, such as when
+                  you create an account, connect your HubSpot account, or contact
+                  our support team.
+                </p>
+                <p>
+                  <strong>Account Information:</strong> When you create an account,
+                  we collect your name, email address, and company information.
+                </p>
+                <p>
+                  <strong>HubSpot Integration:</strong> When you connect your
+                  HubSpot account, we access your workflow data to provide our
+                  services. We only read workflow information and do not modify
+                  your workflows.
+                </p>
+                <p>
+                  <strong>Usage Data:</strong> We collect information about how
+                  you use our service, including which features you use and how
+                  often you access the platform.
+                </p>
+              </div>
+            </section>
 
-          {/* 2. Information We Collect */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              2. Information We Collect
-            </h2>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                2. How We Use Your Information
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>We use the information we collect to:</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Provide and maintain our services</li>
+                  <li>Process your payments and manage your subscription</li>
+                  <li>Send you important updates about our service</li>
+                  <li>Provide customer support and respond to your inquiries</li>
+                  <li>Improve our services and develop new features</li>
+                  <li>Ensure the security and integrity of our platform</li>
+                </ul>
+              </div>
+            </section>
 
-            {/* 2.1 Information You Provide to Us */}
-            <div className="mb-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-3">
-                2.1 Information You Provide to Us
-              </h3>
-              <p className="mb-3">
-                While using our Service, we may ask you to provide us with
-                certain personally identifiable information that can be used to
-                contact or identify you ("Personal Data").
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Email address</li>
-                <li>First name and last name</li>
-                <li>Usage data</li>
-                <li>Account preferences</li>
-              </ul>
-            </div>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                3. Information Sharing
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We do not sell, trade, or otherwise transfer your personal
+                  information to third parties, except in the following
+                  circumstances:
+                </p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>
+                    <strong>Service Providers:</strong> We may share information
+                    with trusted third-party service providers who help us operate
+                    our platform (e.g., payment processors, hosting providers)
+                  </li>
+                  <li>
+                    <strong>Legal Requirements:</strong> We may disclose
+                    information if required by law or to protect our rights and
+                    safety
+                  </li>
+                  <li>
+                    <strong>Business Transfers:</strong> In the event of a merger
+                    or acquisition, your information may be transferred to the new
+                    entity
+                  </li>
+                </ul>
+              </div>
+            </section>
 
-            {/* 2.2 Information We Collect Automatically */}
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-3">
-                2.2 Information We Collect Automatically
-              </h3>
-              <p className="mb-3">
-                When you access or use our Service, we automatically collect
-                certain information.
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Device information</li>
-                <li>IP address</li>
-                <li>Browser type</li>
-                <li>Operating system</li>
-                <li>Access times</li>
-              </ul>
-            </div>
-          </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                4. Data Security
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We implement appropriate technical and organizational measures to
+                  protect your personal information against unauthorized access,
+                  alteration, disclosure, or destruction.
+                </p>
+                <p>
+                  Your data is encrypted in transit and at rest. We use industry
+                  standard security practices and regularly review our security
+                  measures.
+                </p>
+              </div>
+            </section>
 
-          {/* 3. How We Use Your Information */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              3. How We Use Your Information
-            </h2>
-            <p className="mb-3">
-              We use the collected data for various purposes:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>To provide and maintain our Service</li>
-              <li>To notify you about changes to our Service</li>
-              <li>To provide customer support</li>
-              <li>To gather analysis or valuable information</li>
-              <li>To detect, prevent and address technical issues</li>
-            </ul>
-          </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                5. Your Rights
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>You have the right to:</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Access and review your personal information</li>
+                  <li>Correct inaccurate or incomplete information</li>
+                  <li>Request deletion of your personal information</li>
+                  <li>Object to our processing of your information</li>
+                  <li>Request a copy of your data in a portable format</li>
+                  <li>Withdraw consent for data processing</li>
+                </ul>
+                <p>
+                  To exercise these rights, please contact us at{" "}
+                  <a
+                    href="mailto:privacy@workflowguard.pro"
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    privacy@workflowguard.pro
+                  </a>
+                </p>
+              </div>
+            </section>
 
-          {/* 4. Data Security */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              4. Data Security
-            </h2>
-            <p>
-              The security of your data is important to us, but remember that no
-              method of transmission over the Internet or method of electronic
-              storage is 100% secure. While we strive to use commercially
-              acceptable means to protect your Personal Data, we cannot
-              guarantee its absolute security.
-            </p>
-          </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                6. Data Retention
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We retain your personal information for as long as necessary to
+                  provide our services and fulfill the purposes outlined in this
+                  policy.
+                </p>
+                <p>
+                  When you delete your account, we will delete your personal
+                  information within 30 days, except where we are required to
+                  retain certain information for legal or legitimate business
+                  purposes.
+                </p>
+              </div>
+            </section>
 
-          {/* 5. Your Data Rights */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              5. Your Data Rights
-            </h2>
-            <p className="mb-3">
-              Under certain circumstances, you have rights under data protection
-              laws in relation to your personal data:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>The right to access your personal data</li>
-              <li>The right to correct your personal data</li>
-              <li>The right to delete your personal data</li>
-              <li>The right to restrict processing of your personal data</li>
-              <li>The right to data portability</li>
-            </ul>
-          </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                7. Cookies and Tracking
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We use cookies and similar technologies to enhance your
+                  experience on our platform. These technologies help us:
+                </p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Remember your preferences and settings</li>
+                  <li>Analyze how our platform is used</li>
+                  <li>Provide personalized content and features</li>
+                  <li>Ensure the security of our platform</li>
+                </ul>
+                <p>
+                  You can control cookie settings through your browser
+                  preferences, though disabling cookies may affect some platform
+                  functionality.
+                </p>
+              </div>
+            </section>
 
-          {/* 6. Contact Us */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              6. Contact Us
-            </h2>
-            <p className="mb-3">
-              If you have any questions about this Privacy Policy, please
-              contact us:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>By email: privacy@workflowguard.com</li>
-              <li>
-                By visiting this page on our website:
-                https://workflowguard.com/contact
-              </li>
-            </ul>
-          </section>
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                8. International Data Transfers
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  Your information may be transferred to and processed in
+                  countries other than your own. We ensure that such transfers
+                  comply with applicable data protection laws and implement
+                  appropriate safeguards to protect your information.
+                </p>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                9. Children's Privacy
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  Our services are not intended for children under the age of 13.
+                  We do not knowingly collect personal information from children
+                  under 13. If you believe we have collected information from a
+                  child under 13, please contact us immediately.
+                </p>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                10. Changes to This Policy
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  We may update this Privacy Policy from time to time. We will
+                  notify you of any material changes by posting the new policy on
+                  this page and updating the "Last updated" date.
+                </p>
+                <p>
+                  Your continued use of our services after any changes indicates
+                  your acceptance of the updated policy.
+                </p>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                11. Contact Us
+              </h2>
+              <div className="text-sm text-gray-600 space-y-2">
+                <p>
+                  If you have any questions about this Privacy Policy or our
+                  data practices, please contact us:
+                </p>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="font-medium">WorkflowGuard</p>
+                  <p>Email: privacy@workflowguard.pro</p>
+                  <p>Address: [Your Business Address]</p>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            © 2025 WorkflowGuard. All rights reserved.
-          </div>
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => navigate("/terms-of-service")}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Terms of Service
-            </button>
-            <button
-              onClick={() => navigate("/contact")}
-              className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Contact Us
-            </button>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
