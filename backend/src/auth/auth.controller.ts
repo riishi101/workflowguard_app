@@ -62,22 +62,73 @@ export class AuthController {
         throw new HttpException('Authorization code not provided', HttpStatus.BAD_REQUEST);
       }
 
-      // For immediate testing - return success without full OAuth flow
-      console.log('OAuth callback received successfully');
+      // Full OAuth flow with proper environment variables
+      const clientId = process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528';
+      const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
+      const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
       
-      // Create a mock user for testing
-      const mockEmail = `user-${Date.now()}@workflowguard.test`;
-      const mockUser = await this.authService.findOrCreateUser(mockEmail, 'Test User');
+      console.log('Using clientId:', clientId);
+      console.log('Using redirectUri:', redirectUri);
+      console.log('Client secret available:', !!clientSecret);
+
+      if (!clientSecret) {
+        console.error('HUBSPOT_CLIENT_SECRET is not set');
+        throw new HttpException('HubSpot client secret not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      // 1. Exchange code for tokens
+      console.log('Exchanging code for tokens...');
+      const tokenRes = await axios.post('https://api.hubapi.com/oauth/v1/token', null, {
+        params: {
+          grant_type: 'authorization_code',
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          code,
+        },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      console.log('Token response received:', !!tokenRes.data);
+      const { access_token, refresh_token, hub_id } = tokenRes.data;
+      console.log('Token exchange successful, hub_id:', hub_id);
+
+      if (!access_token) {
+        console.error('No access token received from HubSpot');
+        throw new HttpException('Failed to get access token from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      // 2. Fetch user email from HubSpot
+      console.log('Fetching user info from HubSpot...');
+      const userRes = await axios.get('https://api.hubapi.com/integrations/v1/me', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
       
-      console.log('Mock user created:', mockUser.id);
+      console.log('User response received:', !!userRes.data);
+      const email = userRes.data.user || userRes.data.email;
+      console.log('User email from HubSpot:', email);
+
+      if (!email) {
+        console.error('No email found in HubSpot user response');
+        throw new HttpException('Failed to get user email from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      // 3. Create or update user in your DB with hubspotPortalId
+      console.log('Creating/updating user in database...');
+      const user = await this.authService.findOrCreateUser(email);
+      console.log('User found/created:', user.id);
       
+      await this.authService.updateUserHubspotPortalId(user.id, hub_id);
+      console.log('User hubspotPortalId updated');
+
+      // 4. Redirect to frontend with success
+      console.log('OAuth callback completed successfully');
       return {
-        message: 'OAuth callback received successfully',
-        code: code,
-        user_id: mockUser.id,
-        email: mockEmail,
-        success: true,
-        testing: true
+        message: 'OAuth callback received',
+        hub_id,
+        email,
+        user_id: user.id,
+        success: true
       };
       
     } catch (error) {
