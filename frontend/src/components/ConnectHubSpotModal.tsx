@@ -19,8 +19,11 @@ const ConnectHubSpotModal = ({
   onConnect,
 }: ConnectHubSpotModalProps) => {
   const { connectHubSpot } = useAuth();
+  
+  console.log('ConnectHubSpotModal render - open:', open);
 
   const handleConnect = async () => {
+    console.log('ConnectHubSpotModal - handleConnect called');
     try {
       console.log('Starting HubSpot connection...');
       console.log('ApiService.getHubSpotAuthUrl() called');
