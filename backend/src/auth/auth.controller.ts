@@ -14,10 +14,25 @@ export class AuthController {
       const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
       const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
       
-      const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+      // Debug logging
+      console.log('HUBSPOT_CLIENT_ID:', clientId);
+      console.log('HUBSPOT_REDIRECT_URI:', redirectUri);
+      
+      let authUrl;
+      
+      if (!clientId) {
+        // Fallback to known working URL for testing
+        console.log('Using fallback OAuth URL');
+        authUrl = 'https://app-na2.hubspot.com/oauth/authorize?client_id=6be1632d-8007-45e4-aecb-6ec93e6ff528&redirect_uri=https://api.workflowguard.pro/api/auth/hubspot/callback&scope=crm.schemas.deals.read%20automation%20oauth%20crm.objects.companies.read%20crm.objects.deals.read%20crm.schemas.contacts.read%20crm.objects.contacts.read%20crm.schemas.companies.read';
+      } else {
+        authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+      }
+      
+      console.log('Generated OAuth URL:', authUrl);
       
       return { url: authUrl };
     } catch (error) {
+      console.error('Error generating HubSpot OAuth URL:', error);
       throw new HttpException('Failed to generate HubSpot OAuth URL', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
