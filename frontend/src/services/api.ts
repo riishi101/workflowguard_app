@@ -28,10 +28,10 @@ console.log('Current hostname:', window.location.hostname);
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+      'Content-Type': 'application/json',
   },
 });
-
+    
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
@@ -96,11 +96,11 @@ export interface CreateWorkflowDto {
 }
 
 export interface CreateWorkflowVersionDto {
-  workflowId: string;
-  versionNumber: number;
-  snapshotType: string;
-  createdBy: string;
-  data: any;
+    workflowId: string;
+    versionNumber: number;
+    snapshotType: string;
+    createdBy: string;
+    data: any;
 }
 
 export interface CompareResult {

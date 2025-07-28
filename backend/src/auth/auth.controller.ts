@@ -62,7 +62,18 @@ export class AuthController {
         throw new HttpException('Authorization code not provided', HttpStatus.BAD_REQUEST);
       }
 
-      // Check if required environment variables are set
+      // For testing purposes, return success without token exchange
+      console.log('OAuth callback received successfully');
+      
+      return {
+        message: 'OAuth callback received successfully',
+        code: code,
+        success: true,
+        testing: true
+      };
+      
+      /* 
+      // Full OAuth flow (commented out for testing)
       const clientId = process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528';
       const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
       const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
@@ -130,6 +141,7 @@ export class AuthController {
         user_id: user.id,
         success: true
       };
+      */
     } catch (error) {
       console.error('OAuth callback error:', error);
       

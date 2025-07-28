@@ -260,64 +260,64 @@ const WorkflowHistoryDetail = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredVersions.map((version) => (
-                <tr key={version.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {version.version}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {version.dateTime}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs bg-red-100 text-red-800">
+                  <tr key={version.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {version.version}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {version.dateTime}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs bg-red-100 text-red-800">
                           {version.modifiedBy.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-gray-900">
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-gray-900">
                         {version.modifiedBy.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {version.changeSummary}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        View Changes
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        Rollback
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copy Version ID
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </td>
-                </tr>
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {version.changeSummary}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          View Changes
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          Rollback
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy Version ID
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </td>
+                  </tr>
               ))}
             </tbody>
           </table>
@@ -341,24 +341,24 @@ const WorkflowHistoryDetail = () => {
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Previous</span>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
+            <Button
+              variant="ghost"
+              size="sm"
                 className="bg-blue-500 text-white hover:bg-blue-600"
-              >
+            >
                 1
-              </Button>
+            </Button>
               <Button variant="ghost" size="sm">
                 2
-              </Button>
+            </Button>
               <Button variant="ghost" size="sm">
                 3
-              </Button>
+            </Button>
               <span className="text-sm text-gray-400">...</span>
               <Button variant="ghost" size="sm">
                 10
-              </Button>
-            </div>
+            </Button>
+          </div>
             <span className="text-sm text-gray-600">Next</span>
           </div>
         </div>

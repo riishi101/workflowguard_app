@@ -125,7 +125,7 @@ const Dashboard = () => {
         <div className="text-center">
           <p className="text-red-500 mb-4">Failed to load workflows</p>
           <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
+          </div>
       </div>
     );
   }
@@ -208,18 +208,18 @@ const Dashboard = () => {
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                All Protected Workflows
-              </h2>
-              <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-gray-900">
+              All Protected Workflows
+            </h2>
+            <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Workflow
-                </Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Workflow
+              </Button>
                 <Button variant="outline" size="sm">
                   <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
+                Export
+              </Button>
               </div>
             </div>
           </div>
@@ -246,14 +246,14 @@ const Dashboard = () => {
                 </Select>
                 <Select defaultValue="status">
                   <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
                     <SelectItem value="status">Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
                 <Select defaultValue="folder">
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="HubSpot Folder" />
@@ -300,29 +300,29 @@ const Dashboard = () => {
                         href={workflow.link}
                         className="text-sm font-medium text-blue-600 hover:underline"
                       >
-                        {workflow.name}
+                          {workflow.name}
                       </a>
-                    </td>
+                        </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {workflow.lastSnapshot}
-                    </td>
+                        </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {workflow.versions} versions
-                    </td>
+                        </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback className="text-xs">
+                              <AvatarFallback className="text-xs">
                             {workflow.lastModifiedBy.initials}
-                          </AvatarFallback>
-                        </Avatar>
+                              </AvatarFallback>
+                            </Avatar>
                         <span className="text-sm text-gray-600">
                           {workflow.lastModifiedBy.name}
-                        </span>
-                      </div>
-                    </td>
+                            </span>
+                          </div>
+                        </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -333,19 +333,19 @@ const Dashboard = () => {
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View History
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                           className="text-orange-600 hover:text-orange-700"
                           onClick={() => handleRollbackLatest(workflow)}
                         >
                           <RotateCcw className="w-4 h-4 mr-1" />
                           Rollback Latest
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
                 ))}
               </tbody>
             </table>
@@ -372,9 +372,9 @@ const Dashboard = () => {
                 <Button variant="ghost" size="sm">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <Button
+              <Button
                   variant="ghost"
-                  size="sm"
+                size="sm"
                   className="bg-blue-500 text-white hover:bg-blue-600"
                 >
                   1
@@ -388,10 +388,10 @@ const Dashboard = () => {
                 <span className="text-sm text-gray-400">...</span>
                 <Button variant="ghost" size="sm">
                   10
-                </Button>
+              </Button>
                 <Button variant="ghost" size="sm">
                   <ChevronRight className="w-4 h-4" />
-                </Button>
+              </Button>
               </div>
             </div>
           </div>
@@ -399,10 +399,10 @@ const Dashboard = () => {
       </main>
 
       {/* Rollback Confirmation Modal */}
-      <RollbackConfirmModal
-        open={showRollbackModal}
+        <RollbackConfirmModal
+          open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
-        onConfirm={handleConfirmRollback}
+          onConfirm={handleConfirmRollback}
         workflowName={selectedWorkflow?.name}
       />
 
