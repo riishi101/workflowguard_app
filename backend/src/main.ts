@@ -39,6 +39,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:8080',
+      'https://www.workflowguard.pro',
+      'https://workflowguard.pro',
       process.env.FRONTEND_URL
     ].filter((v): v is string => typeof v === 'string'),
     credentials: true,
