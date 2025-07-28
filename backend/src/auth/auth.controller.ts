@@ -1,12 +1,14 @@
 import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
+import { Public } from './public.decorator';
 import axios from 'axios';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Get('hubspot/url')
   async getHubSpotAuthUrl() {
     try {
@@ -49,9 +51,12 @@ export class AuthController {
     res.redirect(authUrl);
   }
 
+  @Public()
   @Get('hubspot/callback')
   async handleHubSpotCallback(@Query('code') code: string, @Query('state') state: string) {
     try {
+      console.log('HubSpot callback received with code:', code);
+      
       if (!code) {
         throw new HttpException('Authorization code not provided', HttpStatus.BAD_REQUEST);
       }
@@ -60,34 +65,39 @@ export class AuthController {
       const tokenRes = await axios.post('https://api.hubapi.com/oauth/v1/token', null, {
         params: {
           grant_type: 'authorization_code',
-          client_id: process.env.HUBSPOT_CLIENT_ID,
+          client_id: process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528',
           client_secret: process.env.HUBSPOT_CLIENT_SECRET,
-          redirect_uri: process.env.HUBSPOT_REDIRECT_URI,
+          redirect_uri: process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback',
           code,
         },
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
       const { access_token, refresh_token, hub_id } = tokenRes.data;
+      console.log('Token exchange successful, hub_id:', hub_id);
 
       // 2. Fetch user email from HubSpot
       const userRes = await axios.get('https://api.hubapi.com/integrations/v1/me', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
       const email = userRes.data.user || userRes.data.email;
+      console.log('User email from HubSpot:', email);
 
       // 3. Create or update user in your DB with hubspotPortalId
       const user = await this.authService.findOrCreateUser(email);
       await this.authService.updateUserHubspotPortalId(user.id, hub_id);
+      console.log('User created/updated in DB:', user.id);
 
-      // 4. (Optional) Create session/JWT, redirect, etc.
+      // 4. Redirect to frontend with success
       return {
         message: 'OAuth callback received',
         hub_id,
         email,
-        // ...other info...
+        user_id: user.id,
+        success: true
       };
     } catch (error) {
+      console.error('OAuth callback error:', error);
       throw new HttpException('OAuth callback failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
