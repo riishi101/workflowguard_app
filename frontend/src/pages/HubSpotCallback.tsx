@@ -17,6 +17,10 @@ const HubSpotCallback = () => {
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
+        const success = searchParams.get('success');
+        const token = searchParams.get('token');
+
+        console.log('HubSpotCallback received:', { code, error, success, token });
 
         if (error) {
           setStatus('error');
@@ -34,16 +38,10 @@ const HubSpotCallback = () => {
 
         // The OAuth callback has already been processed by the backend
         // We just need to verify the connection and get user data
-        const token = searchParams.get('token');
         await connectHubSpot(code, token || undefined);
         
-        setStatus('success');
-        toast.success('Successfully connected to HubSpot!');
-        
-        // Redirect to workflow selection after a brief delay
-        setTimeout(() => {
-          navigate('/workflow-selection');
-        }, 1500);
+        // Redirect immediately to workflow selection
+        navigate('/workflow-selection');
 
       } catch (error) {
         console.error('HubSpot callback error:', error);

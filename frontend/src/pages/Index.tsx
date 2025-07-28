@@ -44,12 +44,12 @@ const Index = () => {
         navigate("/workflow-selection");
       }, 2000);
     } else if (code && success) {
-      // Successful OAuth callback
+      // Successful OAuth callback - redirect to HubSpot callback page
       setShowWelcome(false);
       setShowConnect(false);
       
-      // Redirect to workflow selection
-      navigate("/workflow-selection");
+      // Redirect to HubSpot callback page to handle the OAuth completion
+      navigate("/auth/hubspot/callback");
     }
   }, [searchParams, navigate]);
 
