@@ -42,21 +42,32 @@ export class AuthService {
   }
 
   async findOrCreateUser(email: string, name?: string) {
-    let user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email,
-          name,
-          role: 'viewer',
-        },
+    try {
+      console.log('Finding or creating user with email:', email);
+      
+      let user = await this.prisma.user.findUnique({
+        where: { email },
       });
-    }
 
-    return user;
+      if (!user) {
+        console.log('User not found, creating new user');
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            name,
+            role: 'viewer',
+          },
+        });
+        console.log('New user created with ID:', user.id);
+      } else {
+        console.log('Existing user found with ID:', user.id);
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in findOrCreateUser:', error);
+      throw error;
+    }
   }
 
   async validateJwtPayload(payload: { sub: string; email: string; role: string }) {
@@ -64,9 +75,19 @@ export class AuthService {
   }
 
   async updateUserHubspotPortalId(userId: string, hubspotPortalId: string) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { hubspotPortalId },
-    });
+    try {
+      console.log('Updating user hubspotPortalId:', userId, hubspotPortalId);
+      
+      const result = await this.prisma.user.update({
+        where: { id: userId },
+        data: { hubspotPortalId },
+      });
+      
+      console.log('User hubspotPortalId updated successfully');
+      return result;
+    } catch (error) {
+      console.error('Error updating user hubspotPortalId:', error);
+      throw error;
+    }
   }
 }

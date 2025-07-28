@@ -58,37 +58,71 @@ export class AuthController {
       console.log('HubSpot callback received with code:', code);
       
       if (!code) {
+        console.error('No authorization code provided');
         throw new HttpException('Authorization code not provided', HttpStatus.BAD_REQUEST);
       }
 
+      // Check if required environment variables are set
+      const clientId = process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528';
+      const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
+      const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
+      
+      console.log('Using clientId:', clientId);
+      console.log('Using redirectUri:', redirectUri);
+      console.log('Client secret available:', !!clientSecret);
+
+      if (!clientSecret) {
+        console.error('HUBSPOT_CLIENT_SECRET is not set');
+        throw new HttpException('HubSpot client secret not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
       // 1. Exchange code for tokens
+      console.log('Exchanging code for tokens...');
       const tokenRes = await axios.post('https://api.hubapi.com/oauth/v1/token', null, {
         params: {
           grant_type: 'authorization_code',
-          client_id: process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528',
-          client_secret: process.env.HUBSPOT_CLIENT_SECRET,
-          redirect_uri: process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback',
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
           code,
         },
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
 
+      console.log('Token response received:', !!tokenRes.data);
       const { access_token, refresh_token, hub_id } = tokenRes.data;
       console.log('Token exchange successful, hub_id:', hub_id);
 
+      if (!access_token) {
+        console.error('No access token received from HubSpot');
+        throw new HttpException('Failed to get access token from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
       // 2. Fetch user email from HubSpot
+      console.log('Fetching user info from HubSpot...');
       const userRes = await axios.get('https://api.hubapi.com/integrations/v1/me', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
+      
+      console.log('User response received:', !!userRes.data);
       const email = userRes.data.user || userRes.data.email;
       console.log('User email from HubSpot:', email);
 
+      if (!email) {
+        console.error('No email found in HubSpot user response');
+        throw new HttpException('Failed to get user email from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
       // 3. Create or update user in your DB with hubspotPortalId
+      console.log('Creating/updating user in database...');
       const user = await this.authService.findOrCreateUser(email);
+      console.log('User found/created:', user.id);
+      
       await this.authService.updateUserHubspotPortalId(user.id, hub_id);
-      console.log('User created/updated in DB:', user.id);
+      console.log('User hubspotPortalId updated');
 
       // 4. Redirect to frontend with success
+      console.log('OAuth callback completed successfully');
       return {
         message: 'OAuth callback received',
         hub_id,
@@ -98,6 +132,19 @@ export class AuthController {
       };
     } catch (error) {
       console.error('OAuth callback error:', error);
+      
+      // Log more details about the error
+      if (error.response) {
+        console.error('Error response status:', error.response.status);
+        console.error('Error response data:', error.response.data);
+      }
+      
+      if (error.request) {
+        console.error('Error request:', error.request);
+      }
+      
+      console.error('Error message:', error.message);
+      
       throw new HttpException('OAuth callback failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
