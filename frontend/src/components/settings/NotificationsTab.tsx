@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -6,21 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Lock } from "lucide-react";
-import UpgradeRequiredModal from '../UpgradeRequiredModal';
-import apiService from '@/services/api';
-import { useToast } from '@/components/ui/use-toast';
-
-interface NotificationSettings {
-  notificationsEnabled: boolean;
-  notificationEmail: string;
-  workflowDeleted: boolean;
-  enrollmentTriggerModified: boolean;
-  workflowRolledBack: boolean;
-  criticalActionModified: boolean;
-}
 
 const NotificationsTab = () => {
-  const { toast } = useToast();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationEmail, setNotificationEmail] = useState("");
   const [notifications, setNotifications] = useState({
@@ -29,96 +16,12 @@ const NotificationsTab = () => {
     workflowRolledBack: false,
     criticalActionModified: false,
   });
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [planChecked, setPlanChecked] = useState(false);
-  const [canEdit, setCanEdit] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function checkPlan() {
-      try {
-        const plan = await apiService.getMyPlan();
-        if ((plan as any).features && (plan as any).features.includes('custom_notifications')) {
-          setCanEdit(true);
-        } else {
-          setShowUpgradeModal(true);
-        }
-      } catch (e) {
-        setShowUpgradeModal(true);
-      } finally {
-        setPlanChecked(true);
-      }
-    }
-    checkPlan();
-  }, []);
-
-  useEffect(() => {
-    if (canEdit) {
-      setLoading(true);
-      apiService.getNotificationSettings()
-        .then((settings: NotificationSettings) => {
-          setNotificationsEnabled(settings.notificationsEnabled);
-          setNotificationEmail(settings.notificationEmail);
-          setNotifications({
-            workflowDeleted: settings.workflowDeleted,
-            enrollmentTriggerModified: settings.enrollmentTriggerModified,
-            workflowRolledBack: settings.workflowRolledBack,
-            criticalActionModified: settings.criticalActionModified,
-          });
-        })
-        .catch(() => {
-          toast({ title: 'Error', description: 'Failed to load notification settings', variant: 'destructive' });
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, [canEdit]);
-
-  const handleCloseModal = () => {
-    setShowUpgradeModal(false);
-    // Optionally, navigate back to settings or another tab
-  };
-
-  if (!planChecked || loading) return null;
-
-  if (showUpgradeModal) {
-    return (
-      <UpgradeRequiredModal
-        isOpen={showUpgradeModal}
-        onClose={handleCloseModal}
-      />
-    );
-  }
 
   const handleNotificationToggle = (key: string) => {
     setNotifications((prev) => ({
       ...prev,
       [key]: !prev[key as keyof typeof prev],
     }));
-  };
-
-  const handleSave = async () => {
-    try {
-      await apiService.updateNotificationSettings({
-        notificationsEnabled,
-        notificationEmail,
-        workflowDeleted: notifications.workflowDeleted,
-        enrollmentTriggerModified: notifications.enrollmentTriggerModified,
-        workflowRolledBack: notifications.workflowRolledBack,
-        criticalActionModified: notifications.criticalActionModified,
-      });
-      toast({
-        title: 'Notification settings saved',
-        description: 'Your notification preferences have been updated.',
-      });
-    } catch (e: any) {
-      toast({
-        title: 'Error',
-        description: e.message || 'Failed to save notification settings',
-        variant: 'destructive',
-      });
-    }
   };
 
   return (
@@ -152,7 +55,7 @@ const NotificationsTab = () => {
                 id="enable-notifications"
                 checked={notificationsEnabled}
                 onCheckedChange={setNotificationsEnabled}
-                disabled={!canEdit}
+                disabled
               />
             </div>
 
@@ -164,7 +67,7 @@ const NotificationsTab = () => {
                   onCheckedChange={() =>
                     handleNotificationToggle("workflowDeleted")
                   }
-                  disabled={!canEdit}
+                  disabled
                 />
                 <Label
                   htmlFor="workflow-deleted"
@@ -181,7 +84,7 @@ const NotificationsTab = () => {
                   onCheckedChange={() =>
                     handleNotificationToggle("enrollmentTriggerModified")
                   }
-                  disabled={!canEdit}
+                  disabled
                 />
                 <Label
                   htmlFor="enrollment-trigger"
@@ -198,7 +101,7 @@ const NotificationsTab = () => {
                   onCheckedChange={() =>
                     handleNotificationToggle("workflowRolledBack")
                   }
-                  disabled={!canEdit}
+                  disabled
                 />
                 <Label
                   htmlFor="workflow-rolled-back"
@@ -215,7 +118,7 @@ const NotificationsTab = () => {
                   onCheckedChange={() =>
                     handleNotificationToggle("criticalActionModified")
                   }
-                  disabled={!canEdit}
+                  disabled
                 />
                 <Label
                   htmlFor="critical-action"
@@ -236,7 +139,7 @@ const NotificationsTab = () => {
                 placeholder="Enter email addresses or select users"
                 value={notificationEmail}
                 onChange={(e) => setNotificationEmail(e.target.value)}
-                disabled={!canEdit}
+                disabled
                 className="max-w-md"
               />
             </div>
@@ -244,7 +147,7 @@ const NotificationsTab = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleSave} disabled={!canEdit}>
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white" disabled>
             Save Changes
           </Button>
         </div>

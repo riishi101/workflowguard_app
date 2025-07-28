@@ -1,75 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Copy, Lock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import apiService from '@/services/api';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, Copy } from "lucide-react";
 
-const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
-  const { toast } = useToast();
+const SsoConfiguration = () => {
   const [ssoEnabled, setSsoEnabled] = useState(false);
   const [protocol, setProtocol] = useState("saml");
   const [metadataMethod, setMetadataMethod] = useState("upload");
   const [justInTimeEnabled, setJustInTimeEnabled] = useState(false);
-  const [ssoUrl, setSsoUrl] = useState("");
-  const [issuerId, setIssuerId] = useState("");
+  const [ssoUrl, setSsoUrl] = useState("https://your-idp.com/saml/sso");
+  const [issuerId, setIssuerId] = useState("http://www.okta.com/your_app_id");
   const [certificate, setCertificate] = useState("");
-  const [metadataUrl, setMetadataUrl] = useState("");
-  const [metadata, setMetadata] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    apiService.getSsoConfig()
-      .then((data: { provider: string; metadata: string; enabled: boolean }) => {
-        setSsoEnabled(data.enabled);
-        setProtocol(data.provider);
-        setMetadata(data.metadata);
-      })
-      .catch((e) => setError(e.message || 'Failed to load SSO config'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await apiService.updateSsoConfig({
-        provider: protocol,
-        metadata,
-        enabled: ssoEnabled,
-      });
-      toast({ title: 'SSO config updated', description: 'Your SSO configuration has been updated.' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to update SSO config', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const [metadataUrl, setMetadataUrl] = useState(
+    "https://your-idp.com/saml/metadata",
+  );
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
-  if (!planChecked || loading) return <div className="py-8 text-center text-gray-500">Loading SSO config...</div>;
-  if (error) return <div className="py-8 text-center text-red-500">{error}</div>;
-
   return (
     <div className="space-y-12">
-      {!canEdit && (
-        <Alert className="border-orange-200 bg-orange-50 flex items-center gap-2">
-          <Lock className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            SSO configuration is available on the Enterprise Plan. Upgrade to enable and manage SSO.
-          </AlertDescription>
-        </Alert>
-      )}
       {/* Header */}
       <div className="pt-10 pb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -97,7 +52,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
           checked={ssoEnabled}
           onCheckedChange={setSsoEnabled}
           className="data-[state=checked]:bg-blue-500"
-          disabled={!canEdit}
         />
       </div>
 
@@ -118,7 +72,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
               value={protocol}
               onValueChange={setProtocol}
               className="grid grid-cols-2 gap-6"
-              disabled={!canEdit}
             >
               <div>
                 <RadioGroupItem value="saml" id="saml" className="sr-only" />
@@ -198,7 +151,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
               value={metadataMethod}
               onValueChange={setMetadataMethod}
               className="grid grid-cols-2 gap-6"
-              disabled={!canEdit}
             >
               <div>
                 <RadioGroupItem
@@ -229,7 +181,7 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     <span className="font-semibold">Upload Metadata XML</span>
                   </div>
                   {metadataMethod === "upload" && (
-                    <Button variant="outline" size="sm" className="w-full" disabled={!canEdit}>
+                    <Button variant="outline" size="sm" className="w-full">
                       <Upload className="w-4 h-4 mr-2" />
                       Choose File
                     </Button>
@@ -268,9 +220,8 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                         value={metadataUrl}
                         onChange={(e) => setMetadataUrl(e.target.value)}
                         className="flex-1"
-                        disabled={!canEdit}
                       />
-                      <Button variant="outline" size="sm" disabled={!canEdit}>
+                      <Button variant="outline" size="sm">
                         Fetch Metadata
                       </Button>
                     </div>
@@ -303,7 +254,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                   value={ssoUrl}
                   onChange={(e) => setSsoUrl(e.target.value)}
                   placeholder="https://your-idp.com/saml/sso"
-                  disabled={!canEdit}
                 />
               </div>
               <div className="space-y-3">
@@ -318,7 +268,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                   value={issuerId}
                   onChange={(e) => setIssuerId(e.target.value)}
                   placeholder="http://www.okta.com/your_app_id"
-                  disabled={!canEdit}
                 />
               </div>
             </div>
@@ -335,7 +284,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                 onChange={(e) => setCertificate(e.target.value)}
                 placeholder="Paste your IdP's public certificate here..."
                 rows={5}
-                disabled={!canEdit}
               />
             </div>
           </div>
@@ -361,7 +309,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     value="https://app.workflowguard.ai/saml/metadata"
                     readOnly
                     className="bg-gray-50"
-                    disabled={!canEdit}
                   />
                   <Button
                     variant="outline"
@@ -371,7 +318,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                         "https://app.workflowguard.ai/saml/metadata",
                       )
                     }
-                    disabled={!canEdit}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -386,7 +332,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     value="https://app.workflowguard.ai/saml/acs"
                     readOnly
                     className="bg-gray-50"
-                    disabled={!canEdit}
                   />
                   <Button
                     variant="outline"
@@ -394,7 +339,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     onClick={() =>
                       copyToClipboard("https://app.workflowguard.ai/saml/acs")
                     }
-                    disabled={!canEdit}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -409,7 +353,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     value="https://app.workflowguard.ai/saml/slo"
                     readOnly
                     className="bg-gray-50"
-                    disabled={!canEdit}
                   />
                   <Button
                     variant="outline"
@@ -417,7 +360,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                     onClick={() =>
                       copyToClipboard("https://app.workflowguard.ai/saml/slo")
                     }
-                    disabled={!canEdit}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -442,7 +384,6 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
                 checked={justInTimeEnabled}
                 onCheckedChange={setJustInTimeEnabled}
                 className="data-[state=checked]:bg-blue-500"
-                disabled={!canEdit}
               />
             </div>
 
@@ -480,8 +421,8 @@ const SsoConfiguration = ({ canEdit = true, planChecked = true }) => {
             <Button variant="outline" size="default">
               Test SSO Connection
             </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleSave} disabled={saving || !canEdit}>
-              {saving ? 'Saving...' : 'Save Changes'}
+            <Button className="bg-blue-500 hover:bg-blue-600" size="default">
+              Save Configuration
             </Button>
           </div>
         </>

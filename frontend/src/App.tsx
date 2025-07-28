@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import WorkflowSelection from "./pages/WorkflowSelection";
 import Dashboard from "./pages/Dashboard";
@@ -11,53 +12,53 @@ import WorkflowHistoryDetail from "./pages/WorkflowHistoryDetail";
 import CompareVersions from "./pages/CompareVersions";
 import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ContactUs from "./pages/ContactUs";
+import SetupGuide from "./pages/SetupGuide";
+import ManageSubscription from "./pages/ManageSubscription";
 import NotFound from "./pages/NotFound";
-import OverageDashboard from "./pages/OverageDashboard";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
-import RealtimeDashboard from "./pages/RealtimeDashboard";
-import EmptyDashboard from './components/EmptyDashboard';
-import EmptyWorkflowHistory from './components/EmptyWorkflowHistory';
-import { AuthProvider, useAuth } from './components/AuthContext';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import FullScreenProgress from "@/components/ui/FullScreenProgress";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
-const App = () => {
-  const { loading } = useAuth();
-  if (loading) {
-    return <FullScreenProgress value={75} label="Securing workflows..." />;
-  }
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/workflow-selection" element={<WorkflowSelection />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/workflow-history" element={<WorkflowHistory />} />
-              <Route path="/workflow-history/:id" element={<WorkflowHistoryDetail />} />
-              <Route path="/compare-versions/:idA/:idB" element={<CompareVersions />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/overages" element={<OverageDashboard />} />
-              <Route path="/analytics" element={<AnalyticsDashboard />} />
-              <Route path="/realtime-dashboard" element={<RealtimeDashboard />} />
-              <Route path="/help" element={<HelpSupport />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Router>
-        </AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/workflow-selection" element={<WorkflowSelection />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/workflow-history" element={<WorkflowHistory />} />
+            <Route
+              path="/workflow-history/:workflowId"
+              element={<WorkflowHistoryDetail />}
+            />
+            <Route path="/compare-versions" element={<CompareVersions />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/help" element={<HelpSupport />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/setup-guide" element={<SetupGuide />} />
+            <Route path="/manage-subscription" element={<ManageSubscription />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;

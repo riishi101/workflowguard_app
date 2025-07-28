@@ -1,5 +1,5 @@
-import React from 'react';
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,7 +12,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import TopNavigation from "@/components/TopNavigation";
-import apiService from "@/services/api";
+import EmptyDashboard from "@/components/EmptyDashboard";
+import RollbackConfirmModal from "@/components/RollbackConfirmModal";
+import Footer from "@/components/Footer";
+import { WorkflowState } from "@/lib/workflowState";
+import { useWorkflows, useRollbackWorkflow } from "@/hooks/useWorkflows";
+import { useLatestWorkflowVersion } from "@/hooks/useWorkflowVersions";
+import { toast } from "sonner";
 import {
   Search,
   Plus,
@@ -26,312 +32,114 @@ import {
   RotateCcw,
   Loader2,
 } from "lucide-react";
-import EmptyDashboard from '../components/EmptyDashboard';
-import { useRequireAuth, usePlan } from '../components/AuthContext';
-import RoleGuard from '../components/RoleGuard';
-import UpgradeRequiredModal from '@/components/UpgradeRequiredModal';
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import CreateNewWorkflowModal from "@/components/CreateNewWorkflowModal";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
-import RollbackConfirmModal from "@/components/RollbackConfirmModal";
 
-// Define the workflow type with proper validation
-interface Workflow {
-  id: string;
-  name: string;
-  hubspotId: string;
-  ownerId: string;
-  createdAt: string;
-  updatedAt: string;
-  owner?: {
-    name?: string;
-    email: string;
-  };
-  versions?: Array<{
-    id: string;
-    createdAt: string;
-  }>;
-  status?: string;
-}
-
-// Helper to validate workflow data
-function isValidWorkflow(obj: any): obj is Workflow {
-  return (
-    obj &&
-    typeof obj.id === 'string' &&
-    typeof obj.name === 'string' &&
-    typeof obj.hubspotId === 'string' &&
-    typeof obj.ownerId === 'string' &&
-    typeof obj.createdAt === 'string' &&
-    typeof obj.updatedAt === 'string'
-  );
-}
-
-const PAGE_SIZE = 10;
-const STATUS_COLORS = {
-  Active: "bg-green-100 text-green-800",
-  Inactive: "bg-gray-100 text-gray-800",
-  Error: "bg-red-100 text-red-800",
-  Syncing: "bg-yellow-100 text-yellow-800",
-} as const;
+// Mock data for fallback
+const mockWorkflows = [
+  {
+    id: "1",
+    name: "Customer Onboarding",
+    lastSnapshot: "Today, 2:30 PM",
+    versions: 12,
+    lastModifiedBy: { name: "Sarah Johnson", initials: "SJ" },
+    link: "#",
+  },
+  {
+    id: "2",
+    name: "Lead Nurturing - Webinar",
+    lastSnapshot: "Today, 2:30 PM",
+    versions: 8,
+    lastModifiedBy: { name: "Mike Wilson", initials: "MW" },
+    link: "#",
+  },
+  {
+    id: "3",
+    name: "Sales Outreach Sequence",
+    lastSnapshot: "Today, 2:30 PM",
+    versions: 15,
+    lastModifiedBy: { name: "Tom Brown", initials: "TB" },
+    link: "#",
+  },
+];
 
 const Dashboard = () => {
-  useRequireAuth();
-  const { plan, loading } = usePlan();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [workflowsLoading, setWorkflowsLoading] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [hasWorkflows, setHasWorkflows] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
-  const [rollbackWorkflow, setRollbackWorkflow] = useState<Workflow | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
+
+  // API hooks
+  const { data: workflows = [], isLoading, error } = useWorkflows();
+  const rollbackMutation = useRollbackWorkflow();
 
   useEffect(() => {
-    fetchWorkflows();
+    // Check if user has selected workflows
+    setHasWorkflows(WorkflowState.hasSelectedWorkflows());
   }, []);
 
-  // Fallback: Load selected workflows from localStorage if API returns none
-  useEffect(() => {
-    if (!loading && workflows.length === 0) {
-      const stored = localStorage.getItem('selectedWorkflows');
-      if (stored) {
-        try {
-          const selected = JSON.parse(stored);
-          if (Array.isArray(selected) && selected.length > 0) {
-            setWorkflows(selected.map(id => ({
-              id,
-              name: `Workflow ${id}`,
-              hubspotId: id,
-              ownerId: '',
-              createdAt: '',
-              updatedAt: '',
-              owner: { email: 'user@example.com' },
-              versions: []
-            })));
-          } else {
-            setWorkflows([]); // Explicitly set to empty to trigger empty state
-          }
-        } catch (err) {
-          console.error('Error parsing stored workflows:', err);
-          setWorkflows([]);
-        }
-      } else {
-        setWorkflows([]); // Explicitly set to empty to trigger empty state
-      }
-    }
-  }, [loading, workflows.length]);
+  // Use mock data if API fails or no data
+  const displayWorkflows = workflows.length > 0 ? workflows : mockWorkflows;
 
-  const fetchWorkflows = async () => {
-    try {
-      setWorkflowsLoading(true);
-      setError(null);
-      const data = await apiService.getWorkflows() as any[];
-      
-      // Defensive: Validate and filter out malformed data
-      const validWorkflows = Array.isArray(data)
-        ? data.filter(isValidWorkflow)
-        : [];
-      
-      if (Array.isArray(data) && validWorkflows.length !== data.length) {
-        toast({
-          title: "Warning",
-          description: "Some workflows were ignored due to invalid data.",
-          variant: "destructive",
-        });
-      }
-      
-      setWorkflows(validWorkflows);
-    } catch (err: any) {
-      // Improved error handling
-      const apiError = err?.response?.data?.message || err?.message || String(err);
-      setError(`Failed to fetch workflows: ${apiError}`);
-      console.error("Error fetching workflows:", err);
-    } finally {
-      setWorkflowsLoading(false);
-    }
-  };
-
-  const filteredWorkflows = workflows.filter(workflow => {
-    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || (workflow.status || "Active").toLowerCase() === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const getLastSnapshot = (workflow: Workflow) => {
-    if (workflow.versions && workflow.versions.length > 0) {
-      const latestVersion = workflow.versions[0];
-      try {
-        return new Date(latestVersion.createdAt).toLocaleString();
-      } catch (err) {
-        console.error('Error parsing date:', err);
-        return "Invalid date";
-      }
-    }
-    return "No snapshots";
-  };
-
-  const getVersionsCount = (workflow: Workflow) => {
-    return workflow.versions?.length || 0;
-  };
-
-  const getLastModifiedBy = (workflow: Workflow) => {
-    if (workflow.owner?.name) {
-      const names = workflow.owner.name.split(" ");
-      const initials = names.map(n => n[0]).join("").toUpperCase();
-      return { name: workflow.owner.name, initials };
-    }
-    return { name: workflow.owner?.email || "Unknown", initials: "U" };
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredWorkflows.length / PAGE_SIZE);
-  const paginatedWorkflows = filteredWorkflows.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
-
-  // Bulk selection logic
-  const allSelected = paginatedWorkflows.length > 0 && paginatedWorkflows.every(w => selectedIds.includes(w.id));
-  const handleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(selectedIds.filter(id => !paginatedWorkflows.some(w => w.id === id)));
-    } else {
-      setSelectedIds([
-        ...selectedIds,
-        ...paginatedWorkflows.filter(w => !selectedIds.includes(w.id)).map(w => w.id),
-      ]);
-    }
-  };
-  
-  const handleSelectOne = (id: string) => {
-    setSelectedIds(selectedIds.includes(id)
-      ? selectedIds.filter(i => i !== id)
-      : [...selectedIds, id]);
-  };
-  
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return;
-    
-    setActionLoading(true);
-    try {
-      // In production, this would call an API to delete workflows
-      setWorkflows(workflows.filter(w => !selectedIds.includes(w.id)));
-      setSelectedIds([]);
-      toast({
-        title: "Workflows Deleted",
-        description: `${selectedIds.length} workflow(s) have been deleted.`,
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: "Failed to delete workflows. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleAddWorkflow = () => {
-    setShowCreateModal(true);
-  };
-
-  const handleExport = async () => {
-    setActionLoading(true);
-    try {
-      // In production, this would generate and download a CSV/JSON file
-      const exportData = workflows.map(w => ({
-        name: w.name,
-        hubspotId: w.hubspotId,
-        status: w.status || 'Active',
-        lastSnapshot: getLastSnapshot(w),
-        versions: getVersionsCount(w),
-      }));
-      
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `workflows-export-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Export Successful",
-        description: "Workflow data has been exported.",
-      });
-    } catch (err) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export workflow data.",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Handler for rollback logic
-  const handleConfirmRollback = async () => {
-    if (!rollbackWorkflow) return;
-    // TODO: Replace with real API call
-    toast({
-      title: "Rollback Triggered",
-      description: `Workflow '${rollbackWorkflow.name}' will be rolled back to the latest snapshot.`,
+  const handleViewHistory = (workflowId: string, workflowName: string) => {
+    navigate(`/workflow-history/${workflowId}`, {
+      state: { workflowName },
     });
-    // Optionally update state/UI here
-    setRollbackWorkflow(null);
-    setShowRollbackModal(false);
   };
 
-  if (loading || workflowsLoading) {
+  const handleRollbackLatest = (workflow: any) => {
+    setSelectedWorkflow(workflow);
+    setShowRollbackModal(true);
+  };
+
+    const handleConfirmRollback = async () => {
+    if (!selectedWorkflow) return;
+    
+    try {
+      await rollbackMutation.mutateAsync({
+        workflowId: selectedWorkflow.id,
+        versionId: selectedWorkflow.latestVersionId,
+      });
+      
+      toast.success(`Successfully rolled back ${selectedWorkflow.name}`);
+      setShowRollbackModal(false);
+      setSelectedWorkflow(null);
+    } catch (error) {
+      toast.error("Failed to rollback workflow. Please try again.");
+      console.error("Rollback error:", error);
+    }
+  };
+
+  // Show loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
-        <TopNavigation />
-        <main className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner />
-        </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading workflows...</span>
       </div>
     );
   }
 
+  // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-white">
-        <TopNavigation />
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <div className="text-center py-12">
-            <p className="text-red-500 mb-4">{error}</p>
-            <Button onClick={fetchWorkflows} variant="outline">
-              Try Again
-            </Button>
-          </div>
-        </main>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">Failed to load workflows</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
       </div>
     );
   }
 
-  if (!loading && !error && workflows.length === 0) {
+  // Show empty state if no workflows are selected
+  if (!hasWorkflows) {
     return <EmptyDashboard />;
   }
 
-  const isAtLimit = plan && plan.maxWorkflows !== null && plan.workflowsMonitoredCount >= plan.maxWorkflows;
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Dashboard Overview
@@ -343,16 +151,16 @@ const Dashboard = () => {
             <CheckCircle className="w-5 h-5 text-green-500" />
             <div>
               <p className="text-sm font-medium text-green-900">
-                All {workflows.length} active workflows are being monitored
+                All 156 active workflows are being monitored
               </p>
               <p className="text-xs text-green-700">
-                Last Snapshot: {workflows.length > 0 ? getLastSnapshot(workflows[0]) : "No snapshots"}
+                Last Snapshot: Today, 2:30 PM IST
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -360,10 +168,10 @@ const Dashboard = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{workflows.length}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">156</div>
               <div className="text-sm text-gray-600">Active Workflows</div>
               <div className="text-xs text-gray-500 mt-1">
-                Monitored workflows
+                +1% from last month
               </div>
             </div>
           </div>
@@ -388,7 +196,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{plan?.maxWorkflows || 500}</div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">500</div>
               <div className="text-sm text-gray-600">Monitored Services</div>
               <div className="text-xs text-gray-500 mt-1">
                 Max. plan capacity
@@ -398,233 +206,207 @@ const Dashboard = () => {
         </div>
 
         <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              All Protected Workflows
-            </h2>
-            <div className="flex items-center gap-3">
-              <RoleGuard roles={['admin', 'restorer']}>
-                <Button
-                  onClick={isAtLimit ? () => setShowUpgradeModal(true) : handleAddWorkflow}
-                  disabled={isAtLimit || actionLoading}
-                >
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                All Protected Workflows
+              </h2>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Workflow
                 </Button>
-              </RoleGuard>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExport}
-                disabled={actionLoading || workflows.length === 0}
-              >
-                {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                Export
-              </Button>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Search and Filter Bar */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center gap-4">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search workflows by name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
-                  aria-label="Search workflows by name"
                 />
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-32" aria-label="Status filter">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-3">
+                <Select defaultValue="modified">
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Last Modified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="modified">Last Modified</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="versions">Versions</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="status">
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="folder">
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="HubSpot Folder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="folder">HubSpot Folder</SelectItem>
+                    <SelectItem value="sales">Sales</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" className="text-blue-600">
+                  Clear Filters
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Bulk Actions Bar */}
-          {selectedIds.length > 0 && (
-            <div className="px-6 py-2 bg-blue-50 border-b border-blue-200 flex items-center gap-4">
-              <span className="text-sm text-blue-900" aria-live="polite">
-                {selectedIds.length} selected
-              </span>
-              <RoleGuard roles={['admin', 'restorer']}>
-                <Button 
-                  onClick={handleBulkDelete} 
-                  disabled={selectedIds.length === 0 || actionLoading} 
-                  className="text-red-600 border-red-200"
-                >
-                  {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Delete
-                </Button>
-              </RoleGuard>
-            </div>
-          )}
-
-          <div className="overflow-x-auto">
+          <div className="overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 w-8" scope="col">
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={handleSelectAll}
-                      aria-label="Select all workflows"
-                    />
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Workflow Name
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Last Snapshot
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
-                    Versions
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                    Versions Available
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Last Modified By
                   </th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700" scope="col">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedWorkflows.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="text-lg font-semibold text-gray-700 mb-2">No workflows found</div>
-                        <div className="text-gray-500 mb-6">
-                          Try adjusting your search or filters.
-                        </div>
-                        <Button variant="default" size="lg" onClick={handleAddWorkflow}>
-                          + Add Workflow
+              <tbody className="divide-y divide-gray-200">
+                {workflows.map((workflow) => (
+                  <tr key={workflow.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <a
+                        href={workflow.link}
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
+                        {workflow.name}
+                      </a>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {workflow.lastSnapshot}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {workflow.versions} versions
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs">
+                            {workflow.lastModifiedBy.initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-gray-600">
+                          {workflow.lastModifiedBy.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() =>
+                            handleViewHistory(workflow.id, workflow.name)
+                          }
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View History
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-orange-600 hover:text-orange-700"
+                          onClick={() => handleRollbackLatest(workflow)}
+                        >
+                          <RotateCcw className="w-4 h-4 mr-1" />
+                          Rollback Latest
                         </Button>
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  paginatedWorkflows.map((workflow, idx) => {
-                    const lastModifiedBy = getLastModifiedBy(workflow);
-                    return (
-                      <tr key={workflow.id} className="hover:bg-gray-50" tabIndex={0} aria-rowindex={idx + 2}>
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(workflow.id)}
-                            onChange={() => handleSelectOne(workflow.id)}
-                            aria-label={`Select workflow ${workflow.name}`}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {workflow.name}
-                          <div className="text-xs text-gray-500">ID: {workflow.hubspotId}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge className={STATUS_COLORS[workflow.status as keyof typeof STATUS_COLORS] || STATUS_COLORS['Active']}>
-                            {workflow.status || 'Active'}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {getLastSnapshot(workflow)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge>
-                            {getVersionsCount(workflow)} versions
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <Avatar className="w-6 h-6 mr-2">
-                              <AvatarFallback className="text-xs">
-                                {lastModifiedBy.initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm text-gray-900">
-                              {lastModifiedBy.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" aria-label={`View details for ${workflow.name}`} onClick={() => navigate(`/workflow-history/${workflow.id}`)}>
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <RoleGuard roles={['admin', 'restorer']}>
-                              <Button variant="ghost" size="sm" aria-label={`Rollback ${workflow.name}`} onClick={() => { setRollbackWorkflow(workflow); setShowRollbackModal(true); }}>
-                                <RotateCcw className="w-4 h-4" />
-                              </Button>
-                            </RoleGuard>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                ))}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                aria-label="Go to previous page"
-              >
-                <ChevronLeft className="w-4 h-4" /> Previous
-              </Button>
-              <span className="text-sm text-gray-600" aria-live="polite">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                aria-label="Go to next page"
-              >
-                Next <ChevronRight className="w-4 h-4" />
-              </Button>
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Rows per page:
+              <Select defaultValue="10">
+                <SelectTrigger className="w-16 ml-2 inline-flex">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </p>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">156 workflows</span>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm">
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-blue-500 text-white hover:bg-blue-600"
+                >
+                  1
+                </Button>
+                <Button variant="ghost" size="sm">
+                  2
+                </Button>
+                <Button variant="ghost" size="sm">
+                  3
+                </Button>
+                <span className="text-sm text-gray-400">...</span>
+                <Button variant="ghost" size="sm">
+                  10
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-
-        <UpgradeRequiredModal
-          isOpen={showUpgradeModal}
-          onClose={() => setShowUpgradeModal(false)}
-        />
-
-        <CreateNewWorkflowModal
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          version={{ id: 'dummy', createdAt: new Date().toISOString(), createdBy: 'System' }}
-          onCreated={fetchWorkflows}
-        />
-
-        <RollbackConfirmModal
-          open={showRollbackModal}
-          onClose={() => { setShowRollbackModal(false); setRollbackWorkflow(null); }}
-          onConfirm={handleConfirmRollback}
-          workflowName={rollbackWorkflow?.name}
-        />
       </main>
+
+      {/* Rollback Confirmation Modal */}
+      <RollbackConfirmModal
+        open={showRollbackModal}
+        onClose={() => setShowRollbackModal(false)}
+        onConfirm={handleConfirmRollback}
+        workflowName={selectedWorkflow?.name}
+      />
+
+      <Footer />
     </div>
   );
 };

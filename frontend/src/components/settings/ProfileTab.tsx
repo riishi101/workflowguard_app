@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,39 +12,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import apiService from '@/services/api';
+import { AlertTriangle, CheckCircle } from "lucide-react";
 
 const ProfileTab = () => {
-  const { toast } = useToast();
   const [profile, setProfile] = useState({
-    fullName: "",
-    email: "",
-    jobTitle: "",
-    timezone: "",
-    language: "",
+    fullName: "John Smith",
+    email: "john.smith@example.com",
+    jobTitle: "Senior Product Manager",
+    timezone: "Pacific Time (PT) UTC-7",
+    language: "English (US)",
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    apiService.getMe()
-      .then((data: { name?: string; email?: string; jobTitle?: string; timezone?: string; language?: string }) => {
-        setProfile({
-          fullName: data.name || "",
-          email: data.email || "",
-          jobTitle: data.jobTitle || "",
-          timezone: data.timezone || "",
-          language: data.language || "",
-        });
-      })
-      .catch((e) => setError(e.message || 'Failed to load profile'))
-      .finally(() => setLoading(false));
-  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setProfile((prev) => ({
@@ -52,41 +29,6 @@ const ProfileTab = () => {
       [field]: value,
     }));
   };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await apiService.updateMe({
-        name: profile.fullName,
-        email: profile.email,
-        jobTitle: profile.jobTitle,
-        timezone: profile.timezone,
-        language: profile.language,
-      });
-      toast({ title: 'Profile updated', description: 'Your profile has been updated.' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to update profile', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-    setDeleting(true);
-    try {
-      await apiService.deleteMe();
-      toast({ title: 'Account deleted', description: 'Your account has been deleted.' });
-      // Optionally redirect or log out
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message || 'Failed to delete account', variant: 'destructive' });
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  if (loading) return <div className="py-8 text-center text-gray-500">Loading profile...</div>;
-  if (error) return <div className="py-8 text-center text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -97,8 +39,8 @@ const ProfileTab = () => {
           <AvatarFallback className="text-lg">JS</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">{profile.fullName}</h2>
-          <p className="text-gray-600">{profile.email}</p>
+          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
+          <p className="text-gray-600">john.smith@example.com</p>
         </div>
       </div>
 
@@ -144,6 +86,70 @@ const ProfileTab = () => {
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
               className="mt-1"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* HubSpot Account Connection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>HubSpot Account Connection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">
+                  Connected
+                </span>
+                <span className="text-sm text-gray-500">
+                  • Last connected: 2025-07-15 10:30 AM
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Portal ID:
+                  </span>
+                  <span className="text-sm text-gray-900 font-mono">
+                    243112608
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Connected as:
+                  </span>
+                  <span className="text-sm text-gray-900">
+                    john.smith@example.com
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Role:
+                  </span>
+                  <span className="text-sm text-gray-900">Viewer</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
+                  Disconnect HubSpot
+                </Button>
+              </div>
+
+              <p className="text-sm text-gray-500 pt-1">
+                Disconnecting will disable all HubSpot-related features and
+                monitoring.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -217,15 +223,15 @@ const ProfileTab = () => {
               certain.
             </AlertDescription>
           </Alert>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>{deleting ? 'Deleting...' : 'Delete Account'}</Button>
+          <Button variant="destructive">Delete Account</Button>
         </CardContent>
       </Card>
 
       {/* Save Changes */}
       <div className="flex items-center justify-end gap-3 pt-6 border-t">
         <Button variant="outline">Cancel</Button>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Changes'}
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+          Save Changes
         </Button>
       </div>
     </div>

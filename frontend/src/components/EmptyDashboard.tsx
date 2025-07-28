@@ -20,13 +20,14 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { WorkflowState } from "@/lib/workflowState";
 
 const EmptyDashboard = () => {
   const navigate = useNavigate();
-  const [versions, setVersions] = useState([]);
 
   const handleAddWorkflow = () => {
+    // Reset workflow state when going back to selection
+    WorkflowState.reset();
     navigate("/workflow-selection");
   };
 

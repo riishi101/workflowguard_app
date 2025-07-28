@@ -8,6 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import TopNavigation from "@/components/TopNavigation";
+import Footer from "@/components/Footer";
 import {
   Search,
   Link,
@@ -25,11 +26,32 @@ import {
   Map,
   ExternalLink,
 } from "lucide-react";
-import { useRequireAuth } from '../components/AuthContext';
 
 const HelpSupport = () => {
-  useRequireAuth();
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
+
+  const popularTopics = [
+    {
+      icon: Link,
+      title: "How to connect your HubSpot account",
+      color: "text-blue-500",
+    },
+    {
+      icon: RotateCcw,
+      title: "Restoring a workflow to a previous state",
+      color: "text-blue-500",
+    },
+    {
+      icon: Users,
+      title: "Managing user permissions",
+      color: "text-blue-500",
+    },
+    {
+      icon: MessageSquare,
+      title: "Integrating with Slack",
+      color: "text-blue-500",
+    },
+  ];
 
   const commonQuestions = [
     {
@@ -64,62 +86,80 @@ const HelpSupport = () => {
     },
   ];
 
-  // New FAQ questions as provided by the user
-  const faqs = [
+  const documentationCards = [
     {
-      question: "How do I connect my HubSpot account to WorkflowGuard?",
-      answer: "Go to the app dashboard and click 'Connect your HubSpot Account.' Follow the OAuth prompts to authorize WorkflowGuard. Once connected, you can start protecting your workflows."
+      icon: FileText,
+      title: "User Manual",
+      description:
+        "Complete step-by-step guide to using all WorkflowGuard features.",
+      color: "text-blue-500",
     },
     {
-      question: "How do I rollback a workflow to a previous version?",
-      answer: "Navigate to Workflow History, select the workflow, and choose the version you want to restore. Click 'Rollback' and confirm your action. The workflow will be reverted to the selected version."
+      icon: Lightbulb,
+      title: "Feature Spotlights",
+      description:
+        "In-depth tutorials highlighting specific features and capabilities.",
+      color: "text-blue-500",
     },
     {
-      question: "What data does WorkflowGuard back up?",
-      answer: "WorkflowGuard backs up your HubSpot workflow definitions, including triggers, actions, and settings. It does not back up workflow execution data or HubSpot contacts."
+      icon: Rocket,
+      title: "Advanced Use Cases",
+      description: "Real-world examples and complex workflow implementations.",
+      color: "text-blue-500",
     },
     {
-      question: "How do I manage my WorkflowGuard subscription?",
-      answer: "Go to Settings > My Plan & Billing. Here you can view your current plan, usage, and manage your subscription through HubSpot's billing portal."
+      icon: AlertTriangle,
+      title: "Troubleshooting",
+      description:
+        "Common issues and their solutions to keep your workflows running smoothly.",
+      color: "text-blue-500",
     },
     {
-      question: "How are notifications configured for workflow changes?",
-      answer: "Admins can configure notifications in Settings > Notifications. You can set up email, webhook, or Slack notifications for workflow changes, rollbacks, and overages."
+      icon: Code,
+      title: "API Docs",
+      description:
+        "Technical documentation for developers integrating with our API.",
+      color: "text-blue-500",
+    },
+  ];
+
+  const connectSections = [
+    {
+      icon: Activity,
+      title: "System Status",
+      description:
+        "Check real-time status of all WorkflowGuard services and get updates on any ongoing issues.",
+      link: "View Status",
     },
     {
-      question: "How do I add or remove workflows from monitoring?",
-      answer: "On the Dashboard, click 'Add Workflow' to select new workflows to protect. To remove, go to the workflow list, select the workflow, and choose 'Remove from Monitoring.'"
+      icon: MessageCircle,
+      title: "Community Forum",
+      description:
+        "Join discussions, share tips, and get help from other WorkflowGuard users and experts.",
+      link: "Join Forum",
     },
     {
-      question: "What are the different types of workflow versions (e.g., snapshot, manual save)?",
-      answer: "WorkflowGuard creates automatic snapshots on publish, daily, and when major changes are detected. You can also create manual saves at any time for important milestones."
-    },
-    {
-      question: "Can I download a workflow's JSON data?",
-      answer: "Yes, from the Workflow History or Details page, click 'Download JSON' to export the workflow definition for backup or review."
-    },
-    {
-      question: "What are the different user roles (Viewer, Restorer, Admin) and their permissions?",
-      answer: "Viewers can see workflows and history. Restorers can rollback workflows. Admins can manage users, settings, and all workflows. Roles are managed in Settings > User Permissions."
-    },
-    {
-      question: "How does WorkflowGuard ensure data security?",
-      answer: "All data is encrypted in transit and at rest. Access is role-based, and regular security audits are performed. WorkflowGuard never shares your data with third parties."
+      icon: Map,
+      title: "Feature Request & Roadmap",
+      description:
+        "Submit feature requests, vote on upcoming features, and see what's planned for WorkflowGuard.",
+      link: "View Roadmap",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8 flex-1">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Help & Support Center
           </h1>
           <p className="text-gray-600 text-sm">
-            Find answers to your questions in our FAQ below.
+            Find answers to your questions, explore tutorials, and connect with
+            our support team
           </p>
         </div>
 
@@ -132,19 +172,137 @@ const HelpSupport = () => {
           />
         </div>
 
-        {/* FAQ Section Only */}
+        {/* Popular Topics */}
         <div className="mb-12">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-4">
-                <div className="font-medium text-gray-900 mb-1">{faq.question}</div>
-                <div className="text-gray-700 text-sm">{faq.answer}</div>
-              </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            Popular Topics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {popularTopics.map((topic, index) => {
+              const IconComponent = topic.icon;
+              return (
+                <Card
+                  key={index}
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <IconComponent
+                        className={`w-5 h-5 ${topic.color} flex-shrink-0`}
+                      />
+                      <span className="text-sm font-medium text-gray-900">
+                        {topic.title}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Common Questions */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            Common Questions
+          </h2>
+          <div className="space-y-3">
+            {commonQuestions.map((question) => (
+              <Collapsible
+                key={question.id}
+                open={openQuestion === question.id}
+                onOpenChange={(isOpen) =>
+                  setOpenQuestion(isOpen ? question.id : null)
+                }
+              >
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span className="text-sm font-medium text-gray-900 text-left">
+                      {question.question}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-500 transition-transform ${
+                        openQuestion === question.id ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
+                    {question.answer}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             ))}
           </div>
         </div>
+
+        {/* Comprehensive Guides & Documentation */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            Comprehensive Guides & Documentation
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {documentationCards.map((card, index) => {
+              const IconComponent = card.icon;
+              return (
+                <Card
+                  key={index}
+                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-3">
+                      <IconComponent
+                        className={`w-6 h-6 ${card.color} flex-shrink-0 mt-1`}
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">
+                          {card.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Stay Informed & Connect */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">
+            Stay Informed & Connect
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {connectSections.map((section, index) => {
+              const IconComponent = section.icon;
+              return (
+                <div key={index} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="w-5 h-5 text-blue-500" />
+                    <h3 className="font-semibold text-gray-900">
+                      {section.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600">{section.description}</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-blue-600 font-medium text-sm"
+                  >
+                    {section.link}
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </main>
+
+      <Footer />
     </div>
   );
 };
