@@ -108,7 +108,13 @@ export class AuthController {
       console.log('User response data:', JSON.stringify(userRes.data, null, 2));
       
       // Try different possible email fields
-      const email = userRes.data.user || userRes.data.email || userRes.data.userEmail || userRes.data.portalId;
+      let email = userRes.data.user || userRes.data.email || userRes.data.userEmail;
+      
+      // If no email found, use portalId as email (convert to string)
+      if (!email && userRes.data.portalId) {
+        email = `portal-${userRes.data.portalId}@hubspot.test`;
+      }
+      
       console.log('User email from HubSpot:', email);
 
       if (!email) {
