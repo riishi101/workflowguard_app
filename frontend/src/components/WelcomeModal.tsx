@@ -101,7 +101,10 @@ const WelcomeModal = ({
           </p>
 
           <Button
-            onClick={onConnectHubSpot}
+            onClick={() => {
+              console.log('WelcomeModal - Connect button clicked');
+              onConnectHubSpot();
+            }}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium"
           >
             Connect Your HubSpot Account

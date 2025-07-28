@@ -59,6 +59,7 @@ const Index = () => {
   }, [searchParams, navigate]);
 
   const handleConnectHubSpot = () => {
+    console.log('Index.tsx - handleConnectHubSpot called');
     setShowWelcome(false);
     setShowConnect(true);
   };
