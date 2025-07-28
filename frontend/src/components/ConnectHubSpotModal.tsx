@@ -1,8 +1,10 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
 import { Lock, Info } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ConnectHubSpotModalProps {
   open: boolean;
@@ -15,11 +17,30 @@ const ConnectHubSpotModal = ({
   onClose,
   onConnect,
 }: ConnectHubSpotModalProps) => {
+  const { connectHubSpot } = useAuth();
+
+  const handleConnect = async () => {
+    try {
+      // Get HubSpot OAuth URL
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/hubspot/url`);
+      const { url } = await response.json();
+      
+      // Redirect to HubSpot OAuth
+      window.location.href = url;
+    } catch (error) {
+      console.error('Failed to get HubSpot OAuth URL:', error);
+      toast.error('Failed to connect to HubSpot. Please try again.');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-8 bg-gray-50 border-0">
         <VisuallyHidden>
           <DialogTitle>Connect Your HubSpot Account</DialogTitle>
+          <DialogDescription>
+            Authorize WorkflowGuard to access your HubSpot Workflows for protection and version control.
+          </DialogDescription>
         </VisuallyHidden>
         <div className="text-center space-y-6">
           <div className="flex justify-center">
@@ -74,7 +95,7 @@ const ConnectHubSpotModal = ({
           </div>
 
           <Button
-            onClick={onConnect}
+            onClick={handleConnect}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
           >
             <img

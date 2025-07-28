@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import WorkflowSelection from "./pages/WorkflowSelection";
+import HubSpotCallback from "./pages/HubSpotCallback";
 import Dashboard from "./pages/Dashboard";
 import WorkflowHistory from "./pages/WorkflowHistory";
 import WorkflowHistoryDetail from "./pages/WorkflowHistoryDetail";
@@ -37,6 +38,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/auth/hubspot/callback" element={<HubSpotCallback />} />
             <Route path="/workflow-selection" element={<WorkflowSelection />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/workflow-history" element={<WorkflowHistory />} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,50 +14,101 @@ import { Badge } from "@/components/ui/badge";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
-import { Search, Info } from "lucide-react";
+import { Search, Info, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import ApiService from "@/services/api";
 
-const workflows = [
-  {
-    id: "1",
-    name: "Customer Onboarding",
-    folder: "Sales Automation",
-    status: "Active",
-    lastModified: "2024-01-15 14:30",
-  },
-  {
-    id: "2",
-    name: "Lead Nurturing - SaaS",
-    folder: "Marketing",
-    status: "Active",
-    lastModified: "2024-01-14 09:15",
-  },
-  {
-    id: "3",
-    name: "Email Campaign Follow-up",
-    folder: "Marketing",
-    status: "Inactive",
-    lastModified: "2024-01-13 16:45",
-  },
-  {
-    id: "4",
-    name: "Deal Pipeline Automation",
-    folder: "Sales",
-    status: "Active",
-    lastModified: "2024-01-12 11:20",
-  },
-  {
-    id: "5",
-    name: "Customer Feedback Loop",
-    folder: "Customer Success",
-    status: "Active",
-    lastModified: "2024-01-11 13:50",
-  },
-];
+interface Workflow {
+  id: string;
+  name: string;
+  folder: string;
+  status: string;
+  lastModified: string;
+  hubspotId: string;
+}
 
 const WorkflowSelection = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    const fetchWorkflows = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch workflows from HubSpot via our API
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/workflows/hubspot`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('workflowGuard_token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch workflows');
+        }
+
+        const data = await response.json();
+        setWorkflows(data);
+      } catch (error) {
+        console.error('Error fetching workflows:', error);
+        setError('Failed to load workflows from HubSpot');
+        toast.error('Failed to load workflows. Please try again.');
+        
+        // Fallback to mock data for demo
+        setWorkflows([
+          {
+            id: "1",
+            name: "Customer Onboarding",
+            folder: "Sales Automation",
+            status: "Active",
+            lastModified: "2024-01-15 14:30",
+            hubspotId: "workflow_1"
+          },
+          {
+            id: "2",
+            name: "Lead Nurturing - SaaS",
+            folder: "Marketing",
+            status: "Active",
+            lastModified: "2024-01-14 09:15",
+            hubspotId: "workflow_2"
+          },
+          {
+            id: "3",
+            name: "Email Campaign Follow-up",
+            folder: "Marketing",
+            status: "Inactive",
+            lastModified: "2024-01-13 16:45",
+            hubspotId: "workflow_3"
+          },
+          {
+            id: "4",
+            name: "Deal Pipeline Automation",
+            folder: "Sales",
+            status: "Active",
+            lastModified: "2024-01-12 11:20",
+            hubspotId: "workflow_4"
+          },
+          {
+            id: "5",
+            name: "Customer Feedback Loop",
+            folder: "Customer Success",
+            status: "Active",
+            lastModified: "2024-01-11 13:50",
+            hubspotId: "workflow_5"
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWorkflows();
+  }, []);
 
   const handleWorkflowToggle = (workflowId: string) => {
     setSelectedWorkflows((prev) =>
@@ -67,11 +118,32 @@ const WorkflowSelection = () => {
     );
   };
 
-  const handleStartProtecting = () => {
-    // Set workflow selection state
-    WorkflowState.setWorkflowSelection(true);
-    WorkflowState.setSelectedCount(selectedWorkflows.length);
-    navigate("/dashboard");
+  const handleStartProtecting = async () => {
+    try {
+      // Create workflows in our system
+      const promises = selectedWorkflows.map(async (workflowId) => {
+        const workflow = workflows.find(w => w.id === workflowId);
+        if (workflow) {
+          return ApiService.createWorkflow({
+            name: workflow.name,
+            hubspotId: workflow.hubspotId,
+            ownerId: user?.id || 'default',
+          });
+        }
+      });
+
+      await Promise.all(promises);
+      
+      // Set workflow selection state
+      WorkflowState.setWorkflowSelection(true);
+      WorkflowState.setSelectedCount(selectedWorkflows.length);
+      
+      toast.success(`Successfully protected ${selectedWorkflows.length} workflows!`);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Error creating workflows:', error);
+      toast.error('Failed to protect workflows. Please try again.');
+    }
   };
 
   const handleSkipForNow = () => {
@@ -84,6 +156,26 @@ const WorkflowSelection = () => {
   const filteredWorkflows = workflows.filter((workflow) =>
     workflow.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <TopNavigation />
+        <main className="max-w-6xl mx-auto px-6 py-8 flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Loading Workflows...
+            </h2>
+            <p className="text-sm text-gray-600">
+              Fetching your HubSpot workflows
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -110,6 +202,17 @@ const WorkflowSelection = () => {
             </p>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-900">
+                {error} Using demo data for now.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="p-4 border-b border-gray-200">
