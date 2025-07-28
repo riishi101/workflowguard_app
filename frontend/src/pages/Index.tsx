@@ -1,13 +1,57 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import WelcomeModal from "@/components/WelcomeModal";
 import ConnectHubSpotModal from "@/components/ConnectHubSpotModal";
 import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(true);
   const [showConnect, setShowConnect] = useState(false);
+
+  useEffect(() => {
+    // Check for error parameters in URL
+    const error = searchParams.get('error');
+    const code = searchParams.get('code');
+    const success = searchParams.get('success');
+
+    if (error) {
+      // Handle OAuth errors
+      setShowWelcome(false);
+      setShowConnect(false);
+      
+      switch (error) {
+        case 'user_error':
+          toast.error('Failed to get user information from HubSpot. Please try again.');
+          break;
+        case 'token_error':
+          toast.error('Failed to authenticate with HubSpot. Please try again.');
+          break;
+        case 'config_error':
+          toast.error('HubSpot configuration error. Please contact support.');
+          break;
+        case 'oauth_failed':
+          toast.error('OAuth process failed. Please try again.');
+          break;
+        default:
+          toast.error('An error occurred during HubSpot connection.');
+      }
+      
+      // Redirect to workflow selection after error
+      setTimeout(() => {
+        navigate("/workflow-selection");
+      }, 2000);
+    } else if (code && success) {
+      // Successful OAuth callback
+      setShowWelcome(false);
+      setShowConnect(false);
+      
+      // Redirect to workflow selection
+      navigate("/workflow-selection");
+    }
+  }, [searchParams, navigate]);
 
   const handleConnectHubSpot = () => {
     setShowWelcome(false);

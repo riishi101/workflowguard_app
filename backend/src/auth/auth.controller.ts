@@ -105,11 +105,15 @@ export class AuthController {
       });
       
       console.log('User response received:', !!userRes.data);
-      const email = userRes.data.user || userRes.data.email;
+      console.log('User response data:', JSON.stringify(userRes.data, null, 2));
+      
+      // Try different possible email fields
+      const email = userRes.data.user || userRes.data.email || userRes.data.userEmail || userRes.data.portalId;
       console.log('User email from HubSpot:', email);
 
       if (!email) {
         console.error('No email found in HubSpot user response');
+        console.error('Available fields:', Object.keys(userRes.data));
         return res.redirect('https://www.workflowguard.pro?error=user_error');
       }
 
