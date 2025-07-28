@@ -13,8 +13,8 @@ const getApiBaseUrl = () => {
     return 'https://api.workflowguard.pro/api';
   }
   
-  // Default to localhost for development
-  return 'http://localhost:3000/api';
+  // Default to production API for development (since backend is on Render)
+  return 'https://api.workflowguard.pro/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

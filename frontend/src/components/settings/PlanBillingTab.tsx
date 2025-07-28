@@ -9,69 +9,69 @@ const PlanBillingTab = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Trial Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center justify-between">
         <div>
-          <p className="text-blue-900 font-medium text-sm">
+          <p className="text-blue-900 font-semibold text-lg mb-2">
             You are currently on a 21-day free trial with access to Professional
             Plan features!
           </p>
-          <p className="text-blue-800 text-sm">
+          <p className="text-blue-800 text-base">
             Trial ends in 5 days. Upgrade now to continue using WorkflowGuard.
           </p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700 text-white">
+        <Button className="bg-green-600 hover:bg-green-700 text-white h-12 px-8 text-base font-medium">
           Upgrade Now
         </Button>
       </div>
 
       {/* Current Subscription */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Your Subscription Overview</CardTitle>
-          <Button variant="outline" className="text-blue-600">
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="flex flex-row items-center justify-between pb-6">
+          <CardTitle className="text-xl font-semibold text-gray-900">Your Subscription Overview</CardTitle>
+          <Button variant="outline" className="text-blue-600 h-12 px-6 text-base">
             Manage Subscription
           </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold">Professional Plan</h3>
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-2xl font-bold text-gray-900">Professional Plan</h3>
                 <Badge
                   variant="secondary"
-                  className="bg-blue-100 text-blue-800"
+                  className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1"
                 >
                   Trial
                 </Badge>
               </div>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-lg">
                 $59/month (billed annually)
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-8">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-base text-gray-700 font-medium">
                   Workflows Monitored
                 </span>
-                <span className="text-sm font-medium">47/500</span>
+                <span className="text-base font-semibold text-gray-900">47/500</span>
               </div>
-              <Progress value={9.4} className="h-2" />
+              <Progress value={9.4} className="h-3" />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Version History</span>
-                <span className="text-sm font-medium">90 days retained</span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-base text-gray-700 font-medium">Version History</span>
+                <span className="text-base font-semibold text-gray-900">90 days retained</span>
               </div>
             </div>
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Next billing on:</span>
-                <span className="text-sm font-medium">July 1, 2024</span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-base text-gray-700 font-medium">Next billing on:</span>
+                <span className="text-base font-semibold text-gray-900">July 1, 2024</span>
               </div>
             </div>
           </div>
@@ -80,120 +80,120 @@ const PlanBillingTab = () => {
 
       {/* Explore Other Plans */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <h3 className="text-2xl font-bold text-gray-900 mb-8">
           Explore Other Plans
         </h3>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-8">
           {/* Starter Plan */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Starter</CardTitle>
-              <div className="text-3xl font-bold">
-                $29<span className="text-base font-normal">/month</span>
+          <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-2xl font-bold text-gray-900">Starter</CardTitle>
+              <div className="text-4xl font-bold text-gray-900">
+                $29<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Up to 25 workflows/month</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Basic Monitoring</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>30 days history</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Email Support</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full h-12 text-base font-medium">
                 Select Plan
               </Button>
             </CardContent>
           </Card>
 
           {/* Professional Plan */}
-          <Card className="border-blue-500 border-2">
-            <CardHeader>
-              <CardTitle className="text-xl">Professional</CardTitle>
-              <div className="text-3xl font-bold">
-                $59<span className="text-base font-normal">/month</span>
+          <Card className="border-blue-500 border-2 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-2xl font-bold text-gray-900">Professional</CardTitle>
+              <div className="text-4xl font-bold text-gray-900">
+                $59<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Up to 500 workflows/month</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Advanced Monitoring</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>90 days history</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Priority Support</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Custom Notifications</span>
                 </div>
               </div>
-              <Button className="w-full bg-blue-500 hover:bg-blue-600">
+              <Button className="w-full bg-blue-500 hover:bg-blue-600 h-12 text-base font-medium">
                 Current Plan
               </Button>
             </CardContent>
           </Card>
 
           {/* Enterprise Plan */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Enterprise</CardTitle>
-              <div className="text-3xl font-bold">
-                $99<span className="text-base font-normal">/month</span>
+          <Card className="shadow-sm border-gray-200 hover:shadow-md transition-shadow">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-2xl font-bold text-gray-900">Enterprise</CardTitle>
+              <div className="text-4xl font-bold text-gray-900">
+                $99<span className="text-lg font-normal text-gray-600">/month</span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Unlimited workflows</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Advanced Monitoring</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Unlimited history</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>24/7 Support</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>API Access</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>User Permissions</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                <div className="flex items-center gap-3 text-base">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                   <span>Audit Logs</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full h-12 text-base font-medium">
                 Select Plan
               </Button>
             </CardContent>
@@ -202,22 +202,22 @@ const PlanBillingTab = () => {
       </div>
 
       {/* Manage Your Subscription & Plan */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Your Subscription & Plan</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl font-semibold text-gray-900">Manage Your Subscription & Plan</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-base text-gray-600 mb-6 leading-relaxed">
             To change your plan, update payment methods, or manage your
             subscription details, you will be redirected to your HubSpot
             account.
           </p>
           <Button
             onClick={() => navigate("/manage-subscription")}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-blue-500 hover:bg-blue-600 text-white h-12 px-8 text-base font-medium"
           >
             <span>Manage Subscription in HubSpot</span>
-            <ExternalLink className="w-4 h-4 ml-2" />
+            <ExternalLink className="w-5 h-5 ml-3" />
           </Button>
         </CardContent>
       </Card>

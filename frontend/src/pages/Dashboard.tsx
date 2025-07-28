@@ -172,7 +172,7 @@ const Dashboard = () => {
                           <div className="text-base text-gray-700 font-medium">Active Workflows</div>
             <div className="text-sm text-gray-500 mt-2">
               +1% from last month
-            </div>
+              </div>
             </div>
           </div>
 

@@ -31,78 +31,78 @@ const ProfileTab = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Profile Header */}
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
+      <div className="flex items-center gap-6">
+        <Avatar className="h-20 w-20">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
-          <AvatarFallback className="text-lg">JS</AvatarFallback>
+          <AvatarFallback className="text-xl font-semibold">JS</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
-          <p className="text-gray-600">john.smith@example.com</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">John Smith</h2>
+          <p className="text-gray-600 text-lg">john.smith@example.com</p>
         </div>
       </div>
 
       {/* Personal Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Personal Details</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl font-semibold text-gray-900">Personal Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="full-name">Full Name</Label>
+            <Label htmlFor="full-name" className="text-sm font-medium text-gray-700 mb-2 block">Full Name</Label>
             <Input
               id="full-name"
               value={profile.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              className="mt-1"
+              className="mt-1 h-12 text-base"
             />
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 mt-2">
               This is how your name appears across the platform
             </p>
           </div>
 
           <div>
-            <Label htmlFor="email">Email Address</Label>
-            <div className="flex items-center gap-2 mt-1">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">Email Address</Label>
+            <div className="flex items-center gap-3 mt-1">
               <Input
                 id="email"
                 value={profile.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className="flex-1"
+                className="flex-1 h-12 text-base"
               />
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="h-12 px-6">
                 Verify Email
               </Button>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="job-title">Job Title</Label>
+            <Label htmlFor="job-title" className="text-sm font-medium text-gray-700 mb-2 block">Job Title</Label>
             <Input
               id="job-title"
               value={profile.jobTitle}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="mt-1"
+              className="mt-1 h-12 text-base"
             />
           </div>
         </CardContent>
       </Card>
 
       {/* HubSpot Account Connection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>HubSpot Account Connection</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl font-semibold text-gray-900">HubSpot Account Connection</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-6">
             <div className="flex-shrink-0">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+              <CheckCircle className="w-6 h-6 text-green-500 mt-1" />
             </div>
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900">
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="text-base font-semibold text-gray-900">
                   Connected
                 </span>
                 <span className="text-sm text-gray-500">
@@ -110,42 +110,42 @@ const ProfileTab = () => {
                 </span>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 font-medium min-w-[80px]">
                     Portal ID:
                   </span>
-                  <span className="text-sm text-gray-900 font-mono">
+                  <span className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded">
                     243112608
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 font-medium min-w-[80px]">
                     Connected as:
                   </span>
                   <span className="text-sm text-gray-900">
                     john.smith@example.com
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 font-medium min-w-[80px]">
                     Role:
                   </span>
                   <span className="text-sm text-gray-900">Viewer</span>
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 h-10 px-4"
                 >
                   Disconnect HubSpot
                 </Button>
               </div>
 
-              <p className="text-sm text-gray-500 pt-1">
+              <p className="text-sm text-gray-500 pt-2">
                 Disconnecting will disable all HubSpot-related features and
                 monitoring.
               </p>
@@ -155,18 +155,18 @@ const ProfileTab = () => {
       </Card>
 
       {/* Regional Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Regional Settings</CardTitle>
+      <Card className="shadow-sm border-gray-200">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl font-semibold text-gray-900">Regional Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="timezone">Time Zone</Label>
+            <Label htmlFor="timezone" className="text-sm font-medium text-gray-700 mb-2 block">Time Zone</Label>
             <Select
               value={profile.timezone}
               onValueChange={(value) => handleInputChange("timezone", value)}
             >
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 h-12 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -187,12 +187,12 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="language">Display Language</Label>
+            <Label htmlFor="language" className="text-sm font-medium text-gray-700 mb-2 block">Display Language</Label>
             <Select
               value={profile.language}
               onValueChange={(value) => handleInputChange("language", value)}
             >
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 h-12 text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -208,29 +208,33 @@ const ProfileTab = () => {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-800 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
+      <Card className="border-red-200 shadow-sm">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl font-semibold text-red-800 flex items-center gap-3">
+            <AlertTriangle className="w-6 h-6" />
             Delete Account
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="border-red-200 bg-red-50 mb-4">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
+          <Alert className="border-red-200 bg-red-50 mb-6">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertDescription className="text-red-800 text-base">
               Once you delete your account, there is no going back. Please be
               certain.
             </AlertDescription>
           </Alert>
-          <Button variant="destructive">Delete Account</Button>
+          <Button variant="destructive" className="h-12 px-6 text-base">
+            Delete Account
+          </Button>
         </CardContent>
       </Card>
 
       {/* Save Changes */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t">
-        <Button variant="outline">Cancel</Button>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+      <div className="flex items-center justify-end gap-4 pt-8 border-t border-gray-200">
+        <Button variant="outline" className="h-12 px-8 text-base">
+          Cancel
+        </Button>
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white h-12 px-8 text-base">
           Save Changes
         </Button>
       </div>
