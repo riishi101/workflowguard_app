@@ -169,10 +169,10 @@ const Dashboard = () => {
             </div>
             <div>
               <div className="text-3xl font-bold text-gray-900 mb-1">156</div>
-              <div className="text-sm text-gray-600">Active Workflows</div>
-              <div className="text-xs text-gray-500 mt-1">
-                +1% from last month
-              </div>
+                          <div className="text-base text-gray-700 font-medium">Active Workflows</div>
+            <div className="text-sm text-gray-500 mt-2">
+              +1% from last month
+            </div>
             </div>
           </div>
 
@@ -224,18 +224,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="p-8 border-b border-gray-200">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="relative flex-1 max-w-lg">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   placeholder="Search workflows by name..."
-                  className="pl-10"
+                  className="pl-12 h-12 text-base"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-4">
                 <Select defaultValue="modified">
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-48 h-12 text-base">
                     <SelectValue placeholder="Last Modified" />
                   </SelectTrigger>
                   <SelectContent>
@@ -245,7 +245,7 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
                 <Select defaultValue="status">
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40 h-12 text-base">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -255,7 +255,7 @@ const Dashboard = () => {
                 </SelectContent>
               </Select>
                 <Select defaultValue="folder">
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-48 h-12 text-base">
                     <SelectValue placeholder="HubSpot Folder" />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,7 +264,7 @@ const Dashboard = () => {
                     <SelectItem value="marketing">Marketing</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" className="text-blue-600">
+                <Button variant="outline" size="default" className="text-blue-600 h-12 px-6">
                   Clear Filters
                 </Button>
               </div>
@@ -275,19 +275,19 @@ const Dashboard = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Workflow Name
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Last Snapshot
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Versions Available
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Last Modified By
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Actions
                   </th>
                 </tr>
@@ -295,7 +295,7 @@ const Dashboard = () => {
               <tbody className="divide-y divide-gray-200">
                 {workflows.map((workflow) => (
                   <tr key={workflow.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-8 py-6">
                       <a
                         href={workflow.link}
                         className="text-sm font-medium text-blue-600 hover:underline"

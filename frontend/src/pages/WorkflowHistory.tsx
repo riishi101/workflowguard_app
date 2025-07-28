@@ -221,109 +221,129 @@ const WorkflowHistory = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="w-12 px-6 py-3"></th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="w-16 px-8 py-6"></th>
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Date & Time
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Type
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Initiator
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Notes
                   </th>
-                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {versions.map((version) => (
-                  <tr key={version.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <Checkbox
-                        checked={version.selected}
-                        onCheckedChange={() => handleVersionToggle(version.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {version.date}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant="secondary"
-                        className={getTypeColor(version.type)}
-                      >
-                        {version.type}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <span>👤</span>
-                        <span>{version.initiator}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <span>📝</span>
-                        <span
-                          className={
-                            version.notes === "No notes available"
-                              ? "italic"
-                              : ""
-                          }
+                {versions.length > 0 ? (
+                  versions.map((version) => (
+                    <tr key={version.id} className="hover:bg-gray-50">
+                      <td className="px-8 py-6">
+                        <Checkbox
+                          checked={version.selected}
+                          onCheckedChange={() => handleVersionToggle(version.id)}
+                        />
+                      </td>
+                      <td className="px-8 py-6 text-base text-gray-900">
+                        {version.date}
+                      </td>
+                      <td className="px-8 py-6">
+                        <Badge
+                          variant="secondary"
+                          className={getTypeColor(version.type)}
                         >
-                          {version.notes}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDetails(version)}
-                          className="text-blue-600"
-                        >
-                          View Details
+                          {version.type}
+                        </Badge>
+                      </td>
+                      <td className="px-8 py-6 text-base text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span>👤</span>
+                          <span>{version.initiator}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-base text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span>📝</span>
+                          <span
+                            className={
+                              version.notes === "No notes available"
+                                ? "italic"
+                                : ""
+                            }
+                          >
+                            {version.notes}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="default"
+                            onClick={() => handleViewDetails(version)}
+                            className="text-blue-600"
+                          >
+                            View Details
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="default">
+                                <MoreHorizontal className="w-5 h-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(version)}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleCreateNew(version)}
+                              >
+                                <RotateCcw className="w-4 h-4 mr-2" />
+                                Create New from This
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRestore(version)}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Restore This Version
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-8 py-16 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gray-400 rounded-full"></div>
+                        </div>
+                        <div className="text-center">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            No workflow history yet
+                          </h3>
+                          <p className="text-gray-600 max-w-md">
+                            When you make changes to this workflow, we'll automatically save versions here for you to track and restore.
+                          </p>
+                        </div>
+                        <Button variant="outline" className="mt-4">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Go to Workflow in HubSpot
                         </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetails(version)}
-                            >
-                              <Eye className="w-4 h-4 mr-3" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRestore(version)}
-                            >
-                              <RotateCcw className="w-4 h-4 mr-3" />
-                              Restore this Version
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="w-4 h-4 mr-3" />
-                              Download Workflow JSON
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleCreateNew(version)}
-                            >
-                              <Copy className="w-4 h-4 mr-3" />
-                              Set as Base for New Workflow
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
