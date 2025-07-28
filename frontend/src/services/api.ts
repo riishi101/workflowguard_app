@@ -1,7 +1,28 @@
 import axios from 'axios';
 
 // API base URL - will be set from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro/api';
+// Check if we're in production and use appropriate URL
+const getApiBaseUrl = () => {
+  // If VITE_API_URL is set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // If we're in production (not localhost), use production URL
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://api.workflowguard.pro/api';
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug logging to see what URL is being used
+console.log('API_BASE_URL:', API_BASE_URL);
+console.log('VITE_API_URL env var:', import.meta.env.VITE_API_URL);
+console.log('Current hostname:', window.location.hostname);
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -14,6 +35,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
+    console.log('Making request to:', config.baseURL + config.url);
     const token = localStorage.getItem('workflowGuard_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -21,6 +43,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -29,6 +52,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('Response error:', error);
     if (error.response?.status === 401) {
       // Handle unauthorized access
       localStorage.removeItem('workflowGuard_token');

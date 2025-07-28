@@ -22,10 +22,16 @@ const ConnectHubSpotModal = ({
 
   const handleConnect = async () => {
     try {
+      console.log('Starting HubSpot connection...');
+      console.log('ApiService.getHubSpotAuthUrl() called');
+      
       // Get HubSpot OAuth URL using ApiService
       const { url } = await ApiService.getHubSpotAuthUrl();
       
+      console.log('Received OAuth URL:', url);
+      
       // Redirect to HubSpot OAuth
+      console.log('Redirecting to:', url);
       window.location.href = url;
     } catch (error) {
       console.error('Failed to get HubSpot OAuth URL:', error);
