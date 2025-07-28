@@ -42,17 +42,7 @@ const WorkflowSelection = () => {
       try {
         setIsLoading(true);
         // Fetch workflows from HubSpot via our API
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/workflows/hubspot`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('workflowGuard_token')}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch workflows');
-        }
-
-        const data = await response.json();
+        const data = await ApiService.getHubSpotWorkflows();
         setWorkflows(data);
       } catch (error) {
         console.error('Error fetching workflows:', error);

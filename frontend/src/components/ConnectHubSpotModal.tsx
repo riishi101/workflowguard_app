@@ -5,6 +5,7 @@ import { Lock, Info } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import ApiService from "@/services/api";
 
 interface ConnectHubSpotModalProps {
   open: boolean;
@@ -21,9 +22,8 @@ const ConnectHubSpotModal = ({
 
   const handleConnect = async () => {
     try {
-      // Get HubSpot OAuth URL
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/hubspot/url`);
-      const { url } = await response.json();
+      // Get HubSpot OAuth URL using ApiService
+      const { url } = await ApiService.getHubSpotAuthUrl();
       
       // Redirect to HubSpot OAuth
       window.location.href = url;

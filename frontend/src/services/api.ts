@@ -198,6 +198,11 @@ export class ApiService {
     return response.data;
   }
 
+  static async getHubSpotWorkflows(): Promise<any[]> {
+    const response = await apiClient.get('/workflows/hubspot');
+    return response.data;
+  }
+
   // Utility methods
   static setAuthToken(token: string): void {
     localStorage.setItem('workflowGuard_token', token);
