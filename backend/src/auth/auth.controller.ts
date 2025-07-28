@@ -119,11 +119,17 @@ export class AuthController {
 
       // 3. Create or update user in your DB with hubspotPortalId
       console.log('Creating/updating user in database...');
-      const user = await this.authService.findOrCreateUser(email);
-      console.log('User found/created:', user.id);
-      
-      await this.authService.updateUserHubspotPortalId(user.id, hub_id);
-      console.log('User hubspotPortalId updated');
+      try {
+        const user = await this.authService.findOrCreateUser(email);
+        console.log('User found/created:', user.id);
+        
+        await this.authService.updateUserHubspotPortalId(user.id, hub_id);
+        console.log('User hubspotPortalId updated');
+      } catch (dbError) {
+        console.error('Database operation failed:', dbError);
+        // Continue with OAuth flow even if DB fails
+        console.log('Continuing OAuth flow despite DB error');
+      }
 
       // 4. Redirect to frontend with success
       console.log('OAuth callback completed successfully');
@@ -131,11 +137,13 @@ export class AuthController {
       
     } catch (error) {
       console.error('OAuth callback error:', error);
+      console.error('Error stack:', error.stack);
       
       // Log more details about the error
       if (error.response) {
         console.error('Error response status:', error.response.status);
         console.error('Error response data:', error.response.data);
+        console.error('Error response headers:', error.response.headers);
       }
       
       if (error.request) {
@@ -143,6 +151,7 @@ export class AuthController {
       }
       
       console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
       
       return res.redirect('https://www.workflowguard.pro?error=oauth_failed');
     }
