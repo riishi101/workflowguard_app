@@ -53,13 +53,13 @@ export class AuthController {
 
   @Public()
   @Get('hubspot/callback')
-  async handleHubSpotCallback(@Query('code') code: string, @Query('state') state: string) {
+  async handleHubSpotCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
       console.log('HubSpot callback received with code:', code);
       
       if (!code) {
         console.error('No authorization code provided');
-        throw new HttpException('Authorization code not provided', HttpStatus.BAD_REQUEST);
+        return res.redirect('https://www.workflowguard.pro?error=no_code');
       }
 
       // Full OAuth flow with proper environment variables
@@ -73,7 +73,7 @@ export class AuthController {
 
       if (!clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
-        throw new HttpException('HubSpot client secret not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+        return res.redirect('https://www.workflowguard.pro?error=config_error');
       }
 
       // 1. Exchange code for tokens
@@ -95,7 +95,7 @@ export class AuthController {
 
       if (!access_token) {
         console.error('No access token received from HubSpot');
-        throw new HttpException('Failed to get access token from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+        return res.redirect('https://www.workflowguard.pro?error=token_error');
       }
 
       // 2. Fetch user email from HubSpot
@@ -110,7 +110,7 @@ export class AuthController {
 
       if (!email) {
         console.error('No email found in HubSpot user response');
-        throw new HttpException('Failed to get user email from HubSpot', HttpStatus.INTERNAL_SERVER_ERROR);
+        return res.redirect('https://www.workflowguard.pro?error=user_error');
       }
 
       // 3. Create or update user in your DB with hubspotPortalId
@@ -123,13 +123,7 @@ export class AuthController {
 
       // 4. Redirect to frontend with success
       console.log('OAuth callback completed successfully');
-      return {
-        message: 'OAuth callback received',
-        hub_id,
-        email,
-        user_id: user.id,
-        success: true
-      };
+      return res.redirect('https://www.workflowguard.pro/auth/hubspot/callback?code=' + code + '&success=true');
       
     } catch (error) {
       console.error('OAuth callback error:', error);
@@ -146,7 +140,7 @@ export class AuthController {
       
       console.error('Error message:', error.message);
       
-      throw new HttpException('OAuth callback failed', HttpStatus.INTERNAL_SERVER_ERROR);
+      return res.redirect('https://www.workflowguard.pro?error=oauth_failed');
     }
   }
 
