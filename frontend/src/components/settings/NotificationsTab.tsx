@@ -1,195 +1,157 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Mail, MessageSquare, Smartphone } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lock } from "lucide-react";
 
 const NotificationsTab = () => {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationEmail, setNotificationEmail] = useState("");
   const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
-    smsNotifications: false,
-    workflowChanges: true,
-    securityAlerts: true,
-    billingUpdates: false,
-    marketingEmails: false,
-    frequency: "immediate",
+    workflowDeleted: false,
+    enrollmentTriggerModified: false,
+    workflowRolledBack: false,
+    criticalActionModified: false,
   });
 
-  const handleToggle = (key: string) => {
-    setNotifications(prev => ({
+  const handleNotificationToggle = (key: string) => {
+    setNotifications((prev) => ({
       ...prev,
-      [key]: !prev[key as keyof typeof prev]
+      [key]: !prev[key as keyof typeof prev],
     }));
   };
 
   return (
     <div className="space-y-6">
-      {/* Notification Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Preferences</CardTitle>
-          <CardDescription>
-            Choose how and when you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Upgrade Banner */}
+      <Alert className="border-orange-200 bg-orange-50">
+        <Lock className="h-4 w-4 text-orange-600" />
+        <AlertDescription className="text-orange-800">
+          Upgrade to Professional Plan to configure notifications
+        </AlertDescription>
+      </Alert>
+
+      {/* Workflow Change Notifications */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Workflow Change Notifications
+          </h3>
+
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-gray-600" />
               <div>
-                <Label className="text-sm font-medium">Email Notifications</Label>
-                <p className="text-xs text-gray-500">Receive notifications via email</p>
-              </div>
+                <Label htmlFor="enable-notifications" className="font-medium">
+                  Enable Notifications
+                </Label>
+                <p className="text-sm text-gray-600">
+                  Receive email alerts for critical workflow events
+                </p>
               </div>
               <Switch
-              checked={notifications.emailNotifications}
-              onCheckedChange={() => handleToggle("emailNotifications")}
+                id="enable-notifications"
+                checked={notificationsEnabled}
+                onCheckedChange={setNotificationsEnabled}
+                disabled
               />
             </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <div>
-                <Label className="text-sm font-medium">Push Notifications</Label>
-                <p className="text-xs text-gray-500">Receive browser push notifications</p>
-              </div>
-            </div>
-            <Switch
-              checked={notifications.pushNotifications}
-              onCheckedChange={() => handleToggle("pushNotifications")}
-            />
-              </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Smartphone className="w-5 h-5 text-gray-600" />
-              <div>
-                <Label className="text-sm font-medium">SMS Notifications</Label>
-                <p className="text-xs text-gray-500">Receive notifications via SMS</p>
-              </div>
-            </div>
-            <Switch
-              checked={notifications.smsNotifications}
-              onCheckedChange={() => handleToggle("smsNotifications")}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Notification Types */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Types</CardTitle>
-          <CardDescription>
-            Select which types of notifications you want to receive
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-medium">Workflow Changes</Label>
-              <p className="text-xs text-gray-500">When workflows are modified or updated</p>
-            </div>
-            <Switch
-              checked={notifications.workflowChanges}
-              onCheckedChange={() => handleToggle("workflowChanges")}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-medium">Security Alerts</Label>
-              <p className="text-xs text-gray-500">Important security and access notifications</p>
-            </div>
-            <Switch
-              checked={notifications.securityAlerts}
-              onCheckedChange={() => handleToggle("securityAlerts")}
-            />
+            <div className="space-y-4 pl-4 border-l-2 border-gray-100">
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="workflow-deleted"
+                  checked={notifications.workflowDeleted}
+                  onCheckedChange={() =>
+                    handleNotificationToggle("workflowDeleted")
+                  }
+                  disabled
+                />
+                <Label
+                  htmlFor="workflow-deleted"
+                  className="text-sm text-gray-700"
+                >
+                  Notify me when a workflow is Deleted
+                </Label>
               </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-medium">Billing Updates</Label>
-              <p className="text-xs text-gray-500">Payment and subscription notifications</p>
-            </div>
-            <Switch
-              checked={notifications.billingUpdates}
-              onCheckedChange={() => handleToggle("billingUpdates")}
-            />
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="enrollment-trigger"
+                  checked={notifications.enrollmentTriggerModified}
+                  onCheckedChange={() =>
+                    handleNotificationToggle("enrollmentTriggerModified")
+                  }
+                  disabled
+                />
+                <Label
+                  htmlFor="enrollment-trigger"
+                  className="text-sm text-gray-700"
+                >
+                  Notify me when an Enrollment Trigger is Modified
+                </Label>
               </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-medium">Marketing Emails</Label>
-              <p className="text-xs text-gray-500">Product updates and promotional content</p>
-            </div>
-            <Switch
-              checked={notifications.marketingEmails}
-              onCheckedChange={() => handleToggle("marketingEmails")}
-            />
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="workflow-rolled-back"
+                  checked={notifications.workflowRolledBack}
+                  onCheckedChange={() =>
+                    handleNotificationToggle("workflowRolledBack")
+                  }
+                  disabled
+                />
+                <Label
+                  htmlFor="workflow-rolled-back"
+                  className="text-sm text-gray-700"
+                >
+                  Notify me when a workflow is Rolled Back
+                </Label>
+              </div>
 
-      {/* Notification Frequency */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Frequency</CardTitle>
-          <CardDescription>
-            Choose how often you want to receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="frequency" className="text-sm font-medium">
-                Frequency
+              <div className="flex items-center space-x-3">
+                <Checkbox
+                  id="critical-action"
+                  checked={notifications.criticalActionModified}
+                  onCheckedChange={() =>
+                    handleNotificationToggle("criticalActionModified")
+                  }
+                  disabled
+                />
+                <Label
+                  htmlFor="critical-action"
+                  className="text-sm text-gray-700"
+                >
+                  Notify me when a Critical Action is Modified (e.g., Send
+                  Email, Update Property, Create Task)
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notification-email" className="font-medium">
+                Send notifications to:
               </Label>
-              <Select
-                value={notifications.frequency}
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, frequency: value }))}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediate">Immediate</SelectItem>
-                  <SelectItem value="hourly">Hourly Digest</SelectItem>
-                  <SelectItem value="daily">Daily Digest</SelectItem>
-                  <SelectItem value="weekly">Weekly Digest</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="notification-email"
+                placeholder="Enter email addresses or select users"
+                value={notificationEmail}
+                onChange={(e) => setNotificationEmail(e.target.value)}
+                disabled
+                className="max-w-md"
+              />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Test Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Test Notifications</CardTitle>
-          <CardDescription>
-            Send test notifications to verify your settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3">
-            <Button variant="outline" size="sm">
-              Test Email
-            </Button>
-            <Button variant="outline" size="sm">
-              Test Push
-            </Button>
-            <Button variant="outline" size="sm">
-              Test SMS
+        <div className="flex justify-end">
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white" disabled>
+            Save Changes
           </Button>
         </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };

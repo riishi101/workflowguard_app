@@ -1,65 +1,18 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import WelcomeModal from "@/components/WelcomeModal";
 import ConnectHubSpotModal from "@/components/ConnectHubSpotModal";
+import LoginForm from "@/components/LoginForm";
 import Footer from "@/components/Footer";
-import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { isAuthenticated, loading } = useAuth();
   const [showWelcome, setShowWelcome] = useState(true);
   const [showConnect, setShowConnect] = useState(false);
 
-  useEffect(() => {
-    // Check for error parameters in URL
-    const error = searchParams.get('error');
-    const code = searchParams.get('code');
-    const success = searchParams.get('success');
-
-    console.log('Index.tsx useEffect - URL params:', { error, code, success });
-
-    if (error) {
-      // Handle OAuth errors
-      setShowWelcome(false);
-      setShowConnect(false);
-      
-      switch (error) {
-        case 'user_error':
-          toast.error('Failed to get user information from HubSpot. Please try again.');
-          break;
-        case 'token_error':
-          toast.error('Failed to authenticate with HubSpot. Please try again.');
-          break;
-        case 'config_error':
-          toast.error('HubSpot configuration error. Please contact support.');
-          break;
-        case 'oauth_failed':
-          toast.error('OAuth process failed. Please try again.');
-          break;
-        default:
-          toast.error('An error occurred during HubSpot connection.');
-      }
-      
-      // Redirect to workflow selection after error
-      setTimeout(() => {
-        navigate("/workflow-selection");
-      }, 2000);
-    } else if (code && success) {
-      // Successful OAuth callback - redirect to HubSpot callback page
-      console.log('Index.tsx - OAuth success detected, redirecting to callback');
-      setShowWelcome(false);
-      setShowConnect(false);
-      
-      // Redirect to HubSpot callback page to handle the OAuth completion
-      navigate("/auth/hubspot/callback");
-    } else {
-      console.log('Index.tsx - No OAuth params, showing welcome modal');
-    }
-  }, [searchParams, navigate]);
-
   const handleConnectHubSpot = () => {
-    console.log('Index.tsx - handleConnectHubSpot called');
     setShowWelcome(false);
     setShowConnect(true);
   };
@@ -76,6 +29,21 @@ const Index = () => {
   const handleCloseConnect = () => {
     setShowConnect(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginForm />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">

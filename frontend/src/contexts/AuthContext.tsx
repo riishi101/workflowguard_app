@@ -1,21 +1,13 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import ApiService from '@/services/api';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { ApiService, User } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-  connectHubSpot: (code: string, token?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,74 +26,55 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const isAuthenticated = !!user;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
-      try {
-        const token = ApiService.getAuthToken();
-        if (token) {
-          const userData = await ApiService.getCurrentUser();
-          setUser(userData);
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          const response = await ApiService.getCurrentUser();
+          setUser(response.data);
+        } catch (error) {
+          localStorage.removeItem('authToken');
         }
-      } catch (error) {
-        // Token is invalid, remove it
-        ApiService.removeAuthToken();
-      } finally {
-        setIsLoading(false);
       }
+      setLoading(false);
     };
 
-    checkAuth();
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const { token, user: userData } = await ApiService.login({ email, password });
-      ApiService.setAuthToken(token);
-      setUser(userData);
-    } catch (error) {
-      throw new Error('Login failed. Please check your credentials.');
-    }
+    const response = await ApiService.login(email, password);
+    localStorage.setItem('authToken', response.data.token);
+    setUser(response.data.user);
   };
 
   const register = async (email: string, password: string, name: string) => {
-    try {
-      const { token, user: userData } = await ApiService.register({ email, password, name });
-      ApiService.setAuthToken(token);
-      setUser(userData);
-    } catch (error) {
-      throw new Error('Registration failed. Please try again.');
-    }
+    const response = await ApiService.register({ email, password, name });
+    localStorage.setItem('authToken', response.data.token);
+    setUser(response.data.user);
   };
 
-  const logout = () => {
-    ApiService.removeAuthToken();
-    setUser(null);
-  };
-
-  const connectHubSpot = async (code: string, token?: string) => {
+  const logout = async () => {
     try {
-      await ApiService.connectHubSpot(code, token);
-      // Refresh user data after HubSpot connection
-      const userData = await ApiService.getCurrentUser();
-      setUser(userData);
+      await ApiService.logout();
     } catch (error) {
-      throw new Error('Failed to connect HubSpot account.');
+      // Ignore logout errors
+    } finally {
+      localStorage.removeItem('authToken');
+      setUser(null);
     }
   };
 
   const value: AuthContextType = {
     user,
-    isLoading,
-    isAuthenticated,
+    loading,
     login,
     register,
     logout,
-    connectHubSpot,
+    isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

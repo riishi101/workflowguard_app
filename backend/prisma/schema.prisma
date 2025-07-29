@@ -98,55 +98,62 @@ model Webhook {
 model Plan {
   id           String   @id // 'starter', 'professional', 'enterprise'
   name         String
-  maxWorkflows Int?     // null = unlimited
-  historyDays  Int?     // null = unlimited
-  features     String[] // List of feature keys
+  description  String?
+  price        Float
+  currency     String   @default("USD")
+  interval     String   @default("month") // 'month', 'year'
+  features     Json?    // Array of feature strings
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Overage {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  type        String   // e.g., 'workflow'
-  amount      Int      // number of overages
-  periodStart DateTime // start of billing period
-  periodEnd   DateTime // end of billing period
-  billed      Boolean  @default(false)
+  month       String   // Format: "YYYY-MM"
+  workflowCount Int
+  limit       Int
+  overage     Int
   createdAt   DateTime @default(now())
 
-  @@unique([userId, type, periodStart, periodEnd])
+  @@unique([userId, month])
 }
 
 model NotificationSettings {
-  id                        String   @id @default(uuid())
-  userId                    String   @unique
-  user                      User     @relation(fields: [userId], references: [id])
-  notificationsEnabled      Boolean  @default(true)
-  notificationEmail         String
-  workflowDeleted           Boolean  @default(true)
-  enrollmentTriggerModified Boolean  @default(false)
-  workflowRolledBack        Boolean  @default(true)
-  criticalActionModified    Boolean  @default(false)
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  emailNotifications    Boolean  @default(true)
+  webhookNotifications  Boolean  @default(false)
+  dailyDigest           Boolean  @default(false)
+  weeklyReport          Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model ApiKey {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  description String
-  keyHash     String   // Store only the hash of the API key
-  createdAt   DateTime @default(now())
+  name        String
+  key         String   @unique
+  permissions Json?    // Array of permission strings
   lastUsed    DateTime?
-  revoked     Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model SsoConfig {
-  id        String   @id @default(uuid())
-  provider  String
-  metadata  String
-  enabled   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  id                String   @id @default(uuid())
+  provider          String   // 'google', 'azure', 'okta', etc.
+  clientId          String
+  clientSecret      String
+  redirectUri       String
+  scopes            String?  // Comma-separated scopes
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+} 

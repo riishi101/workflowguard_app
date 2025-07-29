@@ -1,272 +1,159 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
-import SimpleTopNavigation from "@/components/SimpleTopNavigation";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import ContentPageHeader from "@/components/ContentPageHeader";
 import Footer from "@/components/Footer";
+import { LAYOUT, TYPOGRAPHY, COLORS } from "@/lib/layout-constants";
+import { ChevronDown } from "lucide-react";
 
 const TermsOfService = () => {
   const navigate = useNavigate();
+  const [agreed, setAgreed] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const handleAcceptAndContinue = () => {
+    if (agreed) {
+      // Handle acceptance logic here
+      navigate(-1); // Go back to previous page
+    }
+  };
+
+  const sections = [
+    {
+      id: "acceptance",
+      title: "1. Acceptance of Terms",
+      content:
+        "By accessing and using WorkflowGuard, you accept and agree to be bound by the terms and provision of this agreement.",
+    },
+    {
+      id: "account",
+      title: "2. Your WorkflowGuard Account",
+      content:
+        "You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.",
+    },
+    {
+      id: "service",
+      title: "3. Service Description",
+      content:
+        "WorkflowGuard provides workflow monitoring and protection services for HubSpot users to track and manage their automated workflows.",
+    },
+    {
+      id: "obligations",
+      title: "4. User Obligations",
+      content:
+        "Users must comply with all applicable laws and regulations when using WorkflowGuard services and must not use the service for any unlawful purposes.",
+    },
+    {
+      id: "privacy",
+      title: "5. Privacy and Data Protection",
+      content:
+        "We are committed to protecting your privacy and handling your data in accordance with applicable data protection laws and our Privacy Policy.",
+    },
+    {
+      id: "intellectual",
+      title: "6. Intellectual Property Rights",
+      content:
+        "All content, trademarks, and other intellectual property on WorkflowGuard are owned by us or our licensors and are protected by applicable laws.",
+    },
+    {
+      id: "termination",
+      title: "7. Termination",
+      content:
+        "Either party may terminate this agreement at any time. Upon termination, your right to use the service will cease immediately.",
+    },
+    {
+      id: "limitations",
+      title: "8. Limitations of Liability",
+      content:
+        "WorkflowGuard shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <SimpleTopNavigation />
+    <div className={`${LAYOUT.pageMinHeight} ${LAYOUT.pageBackground} ${LAYOUT.pageLayout}`}>
+      <ContentPageHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
-          <H3 className="mb-2">
+      <main className={`${LAYOUT.narrowMaxWidth} mx-auto ${LAYOUT.containerPadding} ${LAYOUT.contentSpacing} flex-1`}>
+        <div className={`text-center ${TYPOGRAPHY.sectionMargin}`}>
+          <h1 className={`${TYPOGRAPHY.pageTitle} mb-2`}>
             Terms of Service
-          </H3>
-          <SpanSmall>
-            Last updated: May 24, 2024
-          </SpanSmall>
+          </h1>
+          <p className={`${TYPOGRAPHY.helperText} mb-6`}>
+            Last Updated: July 17, 2025
+          </p>
+          <p className={`${TYPOGRAPHY.pageDescription} max-w-lg mx-auto`}>
+            Please read these Terms of Service carefully before using the
+            WorkflowGuard application. By accessing or using our service, you
+            agree to be bound by these terms.
+          </p>
         </div>
 
-        <div className="prose prose-gray max-w-none">
-          <div className="space-y-6">
-            <section>
-              <H5 className="mb-3">
-                1. Acceptance of Terms
-              </H5>
-              <div className="space-y-2">
-                <p>
-                  By accessing and using WorkflowGuard ("the Service"), you accept
-                  and agree to be bound by the terms and provision of this
-                  agreement. If you do not agree to abide by the above, please do
-                  not use this service.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <H5 className="mb-3">
-                2. Description of Service
-              </H5>
-              <div className="space-y-2">
-                <p>
-                  WorkflowGuard is a workflow version control and monitoring
-                  service that integrates with HubSpot to help protect and manage
-                  your automation workflows. Our service includes:
-                </p>
-                <ul className="list-disc pl-6 space-y-1">
-                  <li>Workflow version control and history tracking</li>
-                  <li>Automatic snapshots and backup management</li>
-                  <li>Change detection and notification systems</li>
-                  <li>Rollback and restoration capabilities</li>
-                  <li>Integration with HubSpot automation workflows</li>
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <H5 className="mb-3">
-                3. User Accounts and Registration
-              </H5>
-              <div className="space-y-2">
-                <p>
-                  To use our Service, you must register for an account. You agree
-                  to provide accurate, current, and complete information during
-                  registration and to update such information to keep it accurate,
-                  current, and complete.
-                </p>
-                <p>
-                  You are responsible for safeguarding your account credentials and
-                  for all activities that occur under your account. You agree to
-                  notify us immediately of any unauthorized use of your account.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <H5 className="mb-3">
-                4. HubSpot Integration
-              </H5>
-              <div className="space-y-2">
-                <p>
-                  Our Service integrates with HubSpot to access and monitor your
-                  workflow data. By using our Service, you authorize us to:
-                </p>
-                <ul className="list-disc pl-6 space-y-1">
-                  <li>Read your HubSpot workflow configurations</li>
-                  <li>Create snapshots of your workflow versions</li>
-                  <li>Monitor changes to your workflows</li>
-                  <li>Restore previous versions when requested</li>
-                </ul>
-                <p>
-                  We do not modify your workflows without your explicit consent.
-                  All changes to your workflows are made through the HubSpot
-                  interface with your authorization.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                5. Subscription and Payment
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  We offer various subscription plans with different features and
-                  pricing. Subscription fees are billed in advance on a monthly or
-                  annual basis.
-                </p>
-                <p>
-                  <strong>Payment Terms:</strong> All fees are non-refundable
-                  except as expressly stated in these terms. We reserve the right
-                  to change our pricing with 30 days' notice.
-                </p>
-                <p>
-                  <strong>Cancellation:</strong> You may cancel your subscription
-                  at any time. Your access will continue until the end of your
-                  current billing period.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                6. Acceptable Use
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>You agree not to use the Service to:</p>
-                <ul className="list-disc pl-6 space-y-1">
-                  <li>Violate any applicable laws or regulations</li>
-                  <li>Infringe on the rights of others</li>
-                  <li>Transmit harmful, offensive, or inappropriate content</li>
-                  <li>Attempt to gain unauthorized access to our systems</li>
-                  <li>Interfere with the proper operation of the Service</li>
-                  <li>Use the Service for any illegal or unauthorized purpose</li>
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                7. Data and Privacy
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  Your privacy is important to us. Our collection and use of
-                  personal information is governed by our Privacy Policy, which is
-                  incorporated into these Terms by reference.
-                </p>
-                <p>
-                  You retain ownership of your data. We process your data only as
-                  necessary to provide our Service and as described in our Privacy
-                  Policy.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                8. Intellectual Property
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  The Service and its original content, features, and
-                  functionality are owned by WorkflowGuard and are protected by
-                  international copyright, trademark, patent, trade secret, and
-                  other intellectual property laws.
-                </p>
-                <p>
-                  You retain ownership of your workflow configurations and data.
-                  Our Service does not claim ownership of your content.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                9. Limitation of Liability
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  In no event shall WorkflowGuard, nor its directors, employees,
-                  partners, agents, suppliers, or affiliates, be liable for any
-                  indirect, incidental, special, consequential, or punitive
-                  damages, including without limitation, loss of profits, data,
-                  use, goodwill, or other intangible losses.
-                </p>
-                <p>
-                  Our total liability to you for any claims arising from the use
-                  of our Service shall not exceed the amount you paid us in the
-                  12 months preceding the claim.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                10. Service Availability
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  We strive to maintain high availability of our Service, but we
-                  do not guarantee uninterrupted access. The Service may be
-                  temporarily unavailable due to maintenance, updates, or other
-                  factors beyond our control.
-                </p>
-                <p>
-                  We are not responsible for any losses or damages that may occur
-                  due to Service unavailability.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                11. Termination
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  We may terminate or suspend your account and access to the
-                  Service immediately, without prior notice, for any reason,
-                  including breach of these Terms.
-                </p>
-                <p>
-                  Upon termination, your right to use the Service will cease
-                  immediately. We may delete your account and data in accordance
-                  with our data retention policies.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                12. Changes to Terms
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  We reserve the right to modify these Terms at any time. We will
-                  notify users of any material changes by posting the new Terms on
-                  this page and updating the "Last updated" date.
-                </p>
-                <p>
-                  Your continued use of the Service after any changes indicates
-                  your acceptance of the new Terms.
-                </p>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                13. Governing Law
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  These Terms shall be governed by and construed in accordance
-                  with the laws of [Your Jurisdiction], without regard to its
-                  conflict of law provisions.
-                </p>
-                <p>
-                  Any disputes arising from these Terms or the use of our Service
-                  shall be resolved through binding arbitration in accordance with
-                  the rules of [Arbitration Organization].
-                </p>
+        {/* Terms Sections */}
+        <div className="space-y-3 mb-12">
+          {sections.map((section) => (
+            <Collapsible
+              key={section.id}
+              open={openSections[section.id]}
+              onOpenChange={() => toggleSection(section.id)}
+            >
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200">
+                  <span className="text-sm font-medium text-gray-900 text-left">
+                    {section.title}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-500 transition-transform ${
+                      openSections[section.id] ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
-            </section>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
+                  {section.content}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+        </div>
 
-            
+        {/* Agreement Section */}
+        <div className="space-y-6">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="agree-terms"
+              checked={agreed}
+              onCheckedChange={(checked) => setAgreed(checked as boolean)}
+              className="mt-0.5"
+            />
+            <label
+              htmlFor="agree-terms"
+              className="text-sm text-gray-600 cursor-pointer"
+            >
+              I have read and agree to the Terms of Service
+            </label>
           </div>
+
+          <Button
+            onClick={handleAcceptAndContinue}
+            disabled={!agreed}
+            className={`w-full ${COLORS.primary} text-white py-3 disabled:bg-gray-300 disabled:cursor-not-allowed`}
+          >
+            Accept and Continue
+          </Button>
         </div>
       </main>
 

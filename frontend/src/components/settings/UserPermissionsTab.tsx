@@ -1,199 +1,158 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Shield, Settings, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Plus } from "lucide-react";
 
-const UserPermissionsTab = () => {
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("viewer");
-
-  const teamMembers = [
+const users = [
   {
-      id: 1,
-      name: "John Smith",
-      email: "john.smith@example.com",
-      role: "admin",
-      avatar: "JS",
-      status: "active",
+    id: "1",
+    name: "Sarah Wilson",
+    email: "sarah.wilson@company.com",
+    role: "Admin",
   },
   {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      role: "editor",
-      avatar: "SJ",
-      status: "active",
+    id: "2",
+    name: "Michael Chen",
+    email: "michael.chen@company.com",
+    role: "Restorer",
   },
   {
-      id: 3,
-      name: "Mike Wilson",
-      email: "mike.wilson@example.com",
-      role: "viewer",
-      avatar: "MW",
-      status: "pending",
+    id: "3",
+    name: "Emma Thompson",
+    email: "emma.t@company.com",
+    role: "Viewer",
   },
 ];
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800";
-      case "editor":
-        return "bg-blue-100 text-blue-800";
-      case "viewer":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+const UserPermissionsTab = () => {
+  const [userList, setUserList] = useState(users);
 
-  const getStatusColor = (status: string) => {
-    return status === "active" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
+  const handleRoleChange = (userId: string, newRole: string) => {
+    setUserList((prev) =>
+      prev.map((user) =>
+        user.id === userId ? { ...user, role: newRole } : user,
+      ),
+    );
   };
 
   return (
     <div className="space-y-6">
-      {/* Invite Users */}
-          <Card>
-            <CardHeader>
-          <CardTitle>Invite Team Members</CardTitle>
-          <CardDescription>
-            Invite new users to your WorkflowGuard account
-          </CardDescription>
-            </CardHeader>
-            <CardContent>
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter email address"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div className="w-32">
-              <Label htmlFor="role" className="text-sm font-medium">
-                Role
-              </Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Invite
-              </Button>
-            </div>
-          </div>
-            </CardContent>
-          </Card>
+      {/* Role Descriptions */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Manage App User Roles
+        </h3>
+        <p className="text-gray-600 text-sm mb-6">
+          Assign specific roles to your HubSpot users to control their access
+          and capabilities within WorkflowGuard
+        </p>
 
-      {/* Team Members */}
+        <div className="grid grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            Manage user access and permissions
-          </CardDescription>
+              <CardTitle className="text-base">Viewer</CardTitle>
             </CardHeader>
             <CardContent>
-          <div className="space-y-4">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={`/avatars/${member.avatar.toLowerCase()}.jpg`} />
-                    <AvatarFallback className="bg-blue-50 text-blue-700">
-                      {member.avatar}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-gray-900">{member.name}</h4>
-                      <Badge className={getRoleColor(member.role)}>
-                        {member.role}
-                      </Badge>
-                      <Badge className={getStatusColor(member.status)}>
-                        {member.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">{member.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-            </CardContent>
-          </Card>
-
-      {/* Role Permissions */}
-          <Card>
-            <CardHeader>
-          <CardTitle>Role Permissions</CardTitle>
-          <CardDescription>
-            Understand what each role can do in your account
-          </CardDescription>
-            </CardHeader>
-            <CardContent>
-          <div className="space-y-4">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-5 h-5 text-red-600" />
-                <h4 className="font-medium text-gray-900">Admin</h4>
-                <Badge className="bg-red-100 text-red-800">Full Access</Badge>
-              </div>
               <p className="text-sm text-gray-600">
-                Can manage all workflows, team members, billing, and account settings.
+                Can view workflow history and changes
               </p>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-blue-600" />
-                <h4 className="font-medium text-gray-900">Editor</h4>
-                <Badge className="bg-blue-100 text-blue-800">Limited Access</Badge>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Restorer</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                Can view and restore previous workflow versions
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Admin</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">
+                Full access to manage settings and users
+              </p>
+            </CardContent>
+          </Card>
         </div>
-              <p className="text-sm text-gray-600">
-                Can view and edit workflows, but cannot manage team or billing.
-              </p>
       </div>
 
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="w-5 h-5 text-gray-600" />
-                <h4 className="font-medium text-gray-900">Viewer</h4>
-                <Badge className="bg-gray-100 text-gray-800">Read Only</Badge>
-              </div>
-              <p className="text-sm text-gray-600">
-                Can only view workflows and reports, no editing permissions.
-              </p>
-            </div>
+      {/* User Access Table */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>User Access</CardTitle>
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>App Role</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {userList.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.name}</TableCell>
+                  <TableCell className="text-gray-600">{user.email}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={user.role}
+                      onValueChange={(value) =>
+                        handleRoleChange(user.id, value)
+                      }
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Admin">Admin</SelectItem>
+                        <SelectItem value="Restorer">Restorer</SelectItem>
+                        <SelectItem value="Viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <Trash2 className="w-4 h-4 text-gray-400" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="flex justify-end mt-6">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+              Save Changes
+            </Button>
           </div>
         </CardContent>
       </Card>

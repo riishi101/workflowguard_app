@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -6,9 +7,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import TopNavigation from "@/components/TopNavigation";
-import Footer from "@/components/Footer";
+import MainAppLayout from "@/components/MainAppLayout";
+import ContentSection from "@/components/ContentSection";
 import {
+  Search,
   Link,
   RotateCcw,
   Users,
@@ -146,154 +148,150 @@ const HelpSupport = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <TopNavigation />
-
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Help & Support Center
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Find answers to your questions, explore tutorials, and connect with
-            our support team
-          </p>
+    <MainAppLayout 
+      title="Help & Support Center"
+      description="Find answers to your questions, explore tutorials, and connect with our support team"
+    >
+      {/* Search Bar */}
+      <ContentSection>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Input
+            placeholder="Search for articles, topics, or FAQs..."
+            className="pl-10 py-3 text-base"
+          />
         </div>
+      </ContentSection>
 
-
-
-        {/* Popular Topics */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Popular Topics
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {popularTopics.map((topic, index) => {
-              const IconComponent = topic.icon;
-              return (
-                <Card
-                  key={index}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <IconComponent
-                        className={`w-5 h-5 ${topic.color} flex-shrink-0`}
-                      />
-                      <span className="text-sm font-medium text-gray-900">
-                        {topic.title}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Common Questions */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Common Questions
-          </h2>
-          <div className="space-y-3">
-            {commonQuestions.map((question) => (
-              <Collapsible
-                key={question.id}
-                open={openQuestion === question.id}
-                onOpenChange={(isOpen) =>
-                  setOpenQuestion(isOpen ? question.id : null)
-                }
+      {/* Popular Topics */}
+      <ContentSection>
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Popular Topics
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {popularTopics.map((topic, index) => {
+            const IconComponent = topic.icon;
+            return (
+              <Card
+                key={index}
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
               >
-                <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <span className="text-sm font-medium text-gray-900 text-left">
-                      {question.question}
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-500 transition-transform ${
-                        openQuestion === question.id ? "rotate-180" : ""
-                      }`}
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <IconComponent
+                      className={`w-5 h-5 ${topic.color} flex-shrink-0`}
                     />
+                    <span className="text-sm font-medium text-gray-900">
+                      {topic.title}
+                    </span>
                   </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
-                    {question.answer}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
-          </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+      </ContentSection>
 
-        {/* Comprehensive Guides & Documentation */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Comprehensive Guides & Documentation
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documentationCards.map((card, index) => {
-              const IconComponent = card.icon;
-              return (
-                <Card
-                  key={index}
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-3">
-                      <IconComponent
-                        className={`w-6 h-6 ${card.color} flex-shrink-0 mt-1`}
-                      />
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-2">
-                          {card.title}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {card.description}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Stay Informed & Connect */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Stay Informed & Connect
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {connectSections.map((section, index) => {
-              const IconComponent = section.icon;
-              return (
-                <div key={index} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <IconComponent className="w-5 h-5 text-blue-500" />
-                    <h3 className="font-semibold text-gray-900">
-                      {section.title}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-600">{section.description}</p>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto text-blue-600 font-medium text-sm"
-                  >
-                    {section.link}
-                    <ExternalLink className="w-3 h-3 ml-1" />
-                  </Button>
+      {/* Common Questions */}
+      <ContentSection>
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Common Questions
+        </h2>
+        <div className="space-y-3">
+          {commonQuestions.map((question) => (
+            <Collapsible
+              key={question.id}
+              open={openQuestion === question.id}
+              onOpenChange={(isOpen) =>
+                setOpenQuestion(isOpen ? question.id : null)
+              }
+            >
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span className="text-sm font-medium text-gray-900 text-left">
+                    {question.question}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-500 transition-transform ${
+                      openQuestion === question.id ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
-              );
-            })}
-          </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
+                  {question.answer}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
         </div>
-      </main>
+      </ContentSection>
 
-      <Footer />
-    </div>
+      {/* Documentation */}
+      <ContentSection>
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Comprehensive Guides & Documentation
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {documentationCards.map((card, index) => {
+            const IconComponent = card.icon;
+            return (
+              <Card
+                key={index}
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-3">
+                    <IconComponent
+                      className={`w-6 h-6 ${card.color} flex-shrink-0 mt-1`}
+                    />
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        {card.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {card.description}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </ContentSection>
+
+      {/* Connect Section */}
+      <ContentSection>
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+          Stay Informed & Connect
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {connectSections.map((section, index) => {
+            const IconComponent = section.icon;
+            return (
+              <div key={index} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <IconComponent className="w-5 h-5 text-blue-500" />
+                  <h3 className="font-semibold text-gray-900">
+                    {section.title}
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600">{section.description}</p>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-blue-600 font-medium text-sm"
+                >
+                  {section.link}
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </ContentSection>
+    </MainAppLayout>
   );
 };
 

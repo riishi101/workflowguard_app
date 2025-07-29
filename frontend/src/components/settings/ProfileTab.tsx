@@ -1,41 +1,46 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, User, Shield, Settings, Trash2, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 
 const ProfileTab = () => {
   const [profile, setProfile] = useState({
     fullName: "John Smith",
     email: "john.smith@example.com",
-    jobTitle: "Product Manager",
-    timezone: "America/New_York",
-    language: "en",
+    jobTitle: "Senior Product Manager",
+    timezone: "Pacific Time (PT) UTC-7",
+    language: "English (US)",
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setProfile({ ...profile, [field]: value });
+    setProfile((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="flex items-center gap-6">
-        <Avatar className="h-16 w-16 border-2 border-blue-100">
+      <div className="flex items-center gap-4">
+        <Avatar className="h-16 w-16">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
-          <AvatarFallback className="text-lg bg-blue-50 text-blue-700">JS</AvatarFallback>
+          <AvatarFallback className="text-lg">JS</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">John Smith</h2>
-          <p className="text-sm text-gray-600">john.smith@example.com</p>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-xs text-green-600 font-medium">Active</span>
-          </div>
+          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
+          <p className="text-gray-600">john.smith@example.com</p>
         </div>
       </div>
 
@@ -43,20 +48,15 @@ const ProfileTab = () => {
       <Card>
         <CardHeader>
           <CardTitle>Personal Details</CardTitle>
-          <CardDescription>
-            Update your personal information and contact details
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
-              Full Name
-            </Label>
+            <Label htmlFor="full-name">Full Name</Label>
             <Input
               id="full-name"
               value={profile.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              className="mt-2"
+              className="mt-1"
             />
             <p className="text-sm text-gray-500 mt-1">
               This is how your name appears across the platform
@@ -64,10 +64,8 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-              Email Address
-            </Label>
-            <div className="flex items-center gap-3 mt-2">
+            <Label htmlFor="email">Email Address</Label>
+            <div className="flex items-center gap-2 mt-1">
               <Input
                 id="email"
                 value={profile.email}
@@ -81,14 +79,12 @@ const ProfileTab = () => {
           </div>
 
           <div>
-            <Label htmlFor="job-title" className="text-sm font-medium text-gray-700">
-              Job Title
-            </Label>
+            <Label htmlFor="job-title">Job Title</Label>
             <Input
               id="job-title"
               value={profile.jobTitle}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="mt-2"
+              className="mt-1"
             />
           </div>
         </CardContent>
@@ -98,179 +94,146 @@ const ProfileTab = () => {
       <Card>
         <CardHeader>
           <CardTitle>HubSpot Account Connection</CardTitle>
-          <CardDescription>
-            Manage your HubSpot account integration and permissions
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center border border-green-200">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
-                    Connected to HubSpot
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Your HubSpot account is successfully connected and syncing workflows.
-                  </p>
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900">
+                  Connected
+                </span>
+                <span className="text-sm text-gray-500">
+                  • Last connected: 2025-07-15 10:30 AM
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Portal ID:
+                  </span>
+                  <span className="text-sm text-gray-900 font-mono">
+                    243112608
+                  </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right bg-gray-50 rounded p-2">
-                    <div className="text-xs font-medium text-gray-900">Portal ID</div>
-                    <div className="text-xs text-gray-600">243112608</div>
-                  </div>
-                  <div className="text-right bg-gray-50 rounded p-2">
-                    <div className="text-xs font-medium text-gray-900">Role</div>
-                    <div className="text-xs text-gray-600">Admin</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Connected as:
+                  </span>
+                  <span className="text-sm text-gray-900">
+                    john.smith@example.com
+                  </span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Role:
+                  </span>
+                  <span className="text-sm text-gray-900">Viewer</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
+
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                >
                   Disconnect HubSpot
                 </Button>
-                <Button variant="outline" size="sm">
-                  Reconnect
-                </Button>
               </div>
+
+              <p className="text-sm text-gray-500 pt-1">
+                Disconnecting will disable all HubSpot-related features and
+                monitoring.
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Preferences */}
+      {/* Regional Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferences</CardTitle>
-          <CardDescription>
-            Customize your account settings and preferences
-          </CardDescription>
+          <CardTitle>Regional Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="timezone" className="text-sm font-medium text-gray-700">
-              Timezone
-            </Label>
+            <Label htmlFor="timezone">Time Zone</Label>
             <Select
               value={profile.timezone}
               onValueChange={(value) => handleInputChange("timezone", value)}
             >
-              <SelectTrigger className="mt-2">
+              <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="America/New_York">
-                  (GMT-05:00) Eastern Time - New York
+                <SelectItem value="Pacific Time (PT) UTC-7">
+                  Pacific Time (PT) UTC-7
                 </SelectItem>
-                <SelectItem value="America/Chicago">
-                  (GMT-06:00) Central Time - Chicago
+                <SelectItem value="Mountain Time (MT) UTC-6">
+                  Mountain Time (MT) UTC-6
                 </SelectItem>
-                <SelectItem value="America/Denver">
-                  (GMT-07:00) Mountain Time - Denver
+                <SelectItem value="Central Time (CT) UTC-5">
+                  Central Time (CT) UTC-5
                 </SelectItem>
-                <SelectItem value="America/Los_Angeles">
-                  (GMT-08:00) Pacific Time - Los Angeles
+                <SelectItem value="Eastern Time (ET) UTC-4">
+                  Eastern Time (ET) UTC-4
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor="language" className="text-sm font-medium text-gray-700">
-              Language
-            </Label>
+            <Label htmlFor="language">Display Language</Label>
             <Select
               value={profile.language}
               onValueChange={(value) => handleInputChange("language", value)}
             >
-              <SelectTrigger className="mt-2">
+              <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="English (US)">English (US)</SelectItem>
+                <SelectItem value="English (UK)">English (UK)</SelectItem>
+                <SelectItem value="Spanish">Spanish</SelectItem>
+                <SelectItem value="French">French</SelectItem>
+                <SelectItem value="German">German</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Security */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Security</CardTitle>
-          <CardDescription>
-            Manage your account security settings and authentication
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1">
-                Two-Factor Authentication
-              </h4>
-              <p className="text-sm text-gray-600">
-                Add an extra layer of security to your account.
-              </p>
-            </div>
-            <Button variant="outline" size="sm">
-              Enable 2FA
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1">
-                Change Password
-              </h4>
-              <p className="text-sm text-gray-600">
-                Update your account password regularly.
-              </p>
-            </div>
-            <Button variant="outline" size="sm">
-              Change Password
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Actions */}
+      {/* Danger Zone */}
       <Card className="border-red-200">
         <CardHeader>
-          <CardTitle className="text-red-600">Danger Zone</CardTitle>
-          <CardDescription>
-            Irreversible and destructive actions
-          </CardDescription>
+          <CardTitle className="text-red-800 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Delete Account
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="mb-4 border-red-200 bg-red-50">
+          <Alert className="border-red-200 bg-red-50 mb-4">
             <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-sm text-red-700">
-              These actions cannot be undone. Please proceed with caution.
+            <AlertDescription className="text-red-800">
+              Once you delete your account, there is no going back. Please be
+              certain.
             </AlertDescription>
           </Alert>
-          <div className="space-y-3">
-            <Button 
-              variant="outline" 
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Deactivate Account
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Delete Account
-            </Button>
-          </div>
+          <Button variant="destructive">Delete Account</Button>
         </CardContent>
       </Card>
+
+      {/* Save Changes */}
+      <div className="flex items-center justify-end gap-3 pt-6 border-t">
+        <Button variant="outline">Cancel</Button>
+        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+          Save Changes
+        </Button>
+      </div>
     </div>
   );
 };

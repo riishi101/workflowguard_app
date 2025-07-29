@@ -11,9 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import SimpleTopNavigation from "@/components/SimpleTopNavigation";
+import ContentPageHeader from "@/components/ContentPageHeader";
+import PageSection from "@/components/PageSection";
 import Footer from "@/components/Footer";
-import { HelpCircle, Settings, Mail, MessageCircle, Clock } from "lucide-react";
+import { LAYOUT, TYPOGRAPHY, COLORS } from "@/lib/layout-constants";
+import { Mail, MessageCircle, Clock } from "lucide-react";
 
 const ContactUs = () => {
   const navigate = useNavigate();
@@ -32,34 +34,28 @@ const ContactUs = () => {
   };
 
   const handleSendMessage = () => {
-    // Handle form submission logic here
     console.log("Sending message:", formData);
-    // In a real app, this would call an API
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <SimpleTopNavigation />
+    <div className={`${LAYOUT.pageMinHeight} ${LAYOUT.pageBackground} ${LAYOUT.pageLayout}`}>
+      <ContentPageHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+      <main className={`${LAYOUT.maxWidth} mx-auto ${LAYOUT.containerPadding} ${LAYOUT.contentSpacing} flex-1`}>
+        <div className={TYPOGRAPHY.sectionMargin}>
+          <h1 className={`${TYPOGRAPHY.pageTitle} ${TYPOGRAPHY.titleMargin}`}>
             Contact Us
           </h1>
-          <p className="text-gray-600 text-sm">
+          <p className={TYPOGRAPHY.pageDescription}>
             Have questions, feedback, or need assistance? Reach out to the
             WorkflowGuard team through the options below. We're here to help!
           </p>
         </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Side - Contact Form */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Send Us a Message
-            </h2>
-            <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Form */}
+          <PageSection title="Send Us a Message" variant="card">
+            <div className="space-y-6">
               <div>
                 <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
                   Full Name
@@ -80,7 +76,7 @@ const ContactUs = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your.email@example.com"
+                  placeholder="Your Email Address"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   className="mt-1"
@@ -96,7 +92,7 @@ const ContactUs = () => {
                   onValueChange={(value) => handleInputChange("subject", value)}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a subject" />
+                    <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="general">General Inquiry</SelectItem>
@@ -114,87 +110,91 @@ const ContactUs = () => {
                 </Label>
                 <Textarea
                   id="message"
-                  placeholder="Tell us how we can help you..."
+                  placeholder="Tell us how we can help..."
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
-                  className="mt-1 min-h-[120px]"
+                  className="mt-1 min-h-[120px] resize-none"
                 />
               </div>
 
               <Button
                 onClick={handleSendMessage}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                className={`w-full ${COLORS.primary} text-white py-3`}
               >
                 Send Message
               </Button>
             </div>
-          </div>
+          </PageSection>
 
-          {/* Right Side - Contact Information */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Get in Touch
-            </h2>
-            <div className="space-y-6">
+          {/* Support Options */}
+          <div className="space-y-8">
+            {/* Email Support */}
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Mail className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Email Support</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                    contact@workflowguard.pro
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    We typically respond within 24 hours
-                  </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Live Chat</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                    Available during business hours
+                <h3 className={TYPOGRAPHY.subsectionTitle}>Email Support</h3>
+                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
+                  For detailed inquiries or attaching files, you can email us directly.
                 </p>
-                  <p className="text-xs text-gray-500">
-                    Mon-Fri, 9 AM - 6 PM EST
-                  </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 text-purple-500" />
-              </div>
-              <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Response Times</h3>
-                <p className="text-sm text-gray-600 mb-2">
-                    Priority support for Professional & Enterprise plans
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Emergency issues: 2-4 hours
-                </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Resources */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-4">Helpful Resources</h3>
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left"
-                  onClick={() => navigate("/help-support")}
+                <a
+                  href="mailto:contact@workflowguard.pro"
+                  className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}
                 >
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  Help & Support Center
-                </Button>
+                  contact@workflowguard.pro
+                </a>
+              </div>
+            </div>
 
+            {/* Help Center */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h3 className={TYPOGRAPHY.subsectionTitle}>Help Center</h3>
+                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
+                  Find answers to common questions and comprehensive guides.
+                </p>
+                <button
+                  onClick={() => navigate("/help")}
+                  className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}
+                >
+                  Browse Articles
+                </button>
+              </div>
+            </div>
+
+            {/* Live Chat Support */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h3 className={TYPOGRAPHY.subsectionTitle}>Live Chat Support</h3>
+                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
+                  Chat with our support team in real-time.
+                </p>
+                <button className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}>
+                  Start Chat
+                </button>
+              </div>
+            </div>
+
+            {/* Business Hours */}
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h3 className={TYPOGRAPHY.subsectionTitle}>Business Hours</h3>
+                <p className={`${TYPOGRAPHY.bodyText} mb-1`}>
+                  Monday - Friday, 9 AM - 5 PM EST
+                </p>
+                <p className={TYPOGRAPHY.helperText}>
+                  Expected response time: Within 24 hours
+                </p>
               </div>
             </div>
           </div>

@@ -2,11 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
-  readonly VITE_HUBSPOT_CLIENT_ID: string
-  readonly VITE_HUBSPOT_REDIRECT_URI: string
-  readonly VITE_APP_NAME: string
-  readonly VITE_APP_VERSION: string
-  readonly VITE_DEV_MODE: string
+  // more env variables...
 }
 
 interface ImportMeta {

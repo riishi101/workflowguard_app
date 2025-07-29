@@ -18,16 +18,6 @@ export default {
       },
     },
     extend: {
-      fontSize: {
-        'display-4xl': ['3.75rem', { lineHeight: '1', letterSpacing: '-0.02em' }],
-        'display-3xl': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
-        'display-2xl': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em' }],
-        'display-xl': ['1.875rem', { lineHeight: '1.3', letterSpacing: '-0.01em' }],
-        'display-lg': ['1.5rem', { lineHeight: '1.4', letterSpacing: '0' }],
-        'display-base': ['1.25rem', { lineHeight: '1.5', letterSpacing: '0' }],
-        'display-sm': ['1.125rem', { lineHeight: '1.6', letterSpacing: '0' }],
-        'display-xs': ['1rem', { lineHeight: '1.6', letterSpacing: '0' }],
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

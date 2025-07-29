@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,10 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import TopNavigation from "@/components/TopNavigation";
+import ContentPageHeader from "@/components/ContentPageHeader";
+import PageSection from "@/components/PageSection";
 import Footer from "@/components/Footer";
 import CancelSubscriptionModal from "@/components/CancelSubscriptionModal";
-import { HelpCircle, Settings, Download } from "lucide-react";
+import { LAYOUT, TYPOGRAPHY, COLORS } from "@/lib/layout-constants";
+import { Download } from "lucide-react";
 
 const ManageSubscription = () => {
   const navigate = useNavigate();
@@ -25,219 +25,191 @@ const ManageSubscription = () => {
   };
 
   const handleConfirmCancellation = () => {
-    // Handle the actual cancellation logic here
     console.log("Subscription cancelled");
-    // You might want to navigate to a confirmation page or show a success message
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <TopNavigation />
+    <div className={`${LAYOUT.pageMinHeight} ${LAYOUT.pageBackground} ${LAYOUT.pageLayout}`}>
+      <ContentPageHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Manage Your Subscription
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Update your billing information, payment methods, and subscription details
-          </p>
-        </div>
+      <main className={`${LAYOUT.contentMaxWidth} mx-auto ${LAYOUT.containerPadding} ${LAYOUT.sectionSpacing} flex-1`}>
+        {/* Breadcrumb */}
+        <nav className={`flex items-center gap-2 ${TYPOGRAPHY.helperText} ${TYPOGRAPHY.sectionMargin}`}>
+          <button
+            onClick={() => navigate("/settings")}
+            className="hover:text-gray-900"
+          >
+            App Settings
+          </button>
+          <span>&gt;</span>
+          <button
+            onClick={() => navigate("/settings")}
+            className="hover:text-gray-900"
+          >
+            My Plan & Billing
+          </button>
+          <span>&gt;</span>
+          <span className="text-gray-900">Manage Billing Details</span>
+        </nav>
 
-        <div className="space-y-6">
+        <h1 className={`${TYPOGRAPHY.pageTitle} ${TYPOGRAPHY.sectionMargin}`}>
+          Manage Your Subscription
+        </h1>
+
+        <div className="space-y-8">
           {/* Your Payment Method */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Payment Method</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-8 bg-white border border-gray-200 rounded flex items-center justify-center p-1">
-                    <img
-                      src="https://cdn.builder.io/api/v1/image/assets%2Ffae26f580f3f4b359fc5216711c44c53%2F10f1b8f91e23476982fae6ce94a988d0?format=webp&width=800"
-                      alt="Visa"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Visa ending in 4242</p>
-                    <p className="text-sm text-gray-600">Expires 12/25</p>
-                  </div>
+          <PageSection title="Your Payment Method" variant="card">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-8 bg-white border border-gray-200 rounded flex items-center justify-center p-1">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets%2Ffae26f580f3f4b359fc5216711c44c53%2F10f1b8f91e23476982fae6ce94a988d0?format=webp&width=800"
+                    alt="Visa"
+                    className="h-full w-auto object-contain"
+                  />
                 </div>
-                <Button variant="outline" size="sm">
-                  Update
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Billing Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Address</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">John Smith</p>
-                  <p className="text-sm text-gray-600">
-                    123 Main Street, Suite 100
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    New York, NY 10001, United States
-                  </p>
+                  <div className="font-medium">•••• •••• •••• 1234</div>
+                  <div className={TYPOGRAPHY.helperText}>Expires 12/27</div>
                 </div>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
               </div>
-            </CardContent>
-          </Card>
+              <Button className={`${COLORS.primary} text-white`}>
+                Update Payment Method
+              </Button>
+            </div>
+            <p className={`${TYPOGRAPHY.helperText} mt-4`}>
+              Your payment information is securely processed by Stripe
+            </p>
+          </PageSection>
 
-          {/* Current Plan */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Plan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Professional Plan
-                    </h3>
-                    <Badge className="bg-green-100 text-green-800">
-                      Active
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    $49/month • Next billing date: August 15, 2024
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Includes: 500 workflows, 90-day history, Priority support
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Change Plan
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Next Billing */}
+          <PageSection title="Next Billing" variant="card">
+            <p className={TYPOGRAPHY.bodyText}>
+              Your next payment of $59.00 will be processed on August 18, 2025
+            </p>
+          </PageSection>
 
           {/* Billing History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Invoice</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="text-sm">July 15, 2024</TableCell>
-                    <TableCell className="text-sm">
-                      Professional Plan - Monthly
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">$49.00</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-sm">June 15, 2024</TableCell>
-                    <TableCell className="text-sm">
-                      Professional Plan - Monthly
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">$49.00</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="text-sm">May 15, 2024</TableCell>
-                    <TableCell className="text-sm">
-                      Professional Plan - Monthly
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">$49.00</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Paid
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <PageSection title="Billing History" variant="card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Invoice</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>July 18, 2025</TableCell>
+                  <TableCell>$59.00</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Paid</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`${COLORS.primaryText} hover:text-blue-700`}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>June 18, 2025</TableCell>
+                  <TableCell>$59.00</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Paid</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`${COLORS.primaryText} hover:text-blue-700`}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>May 18, 2025</TableCell>
+                  <TableCell>$59.00</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-sm">Failed</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`${COLORS.primaryText} hover:text-blue-700`}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>April 18, 2025</TableCell>
+                  <TableCell>$59.00</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Paid</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`${COLORS.primaryText} hover:text-blue-700`}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </PageSection>
 
           {/* Cancel Subscription */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-red-600">Cancel Subscription</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Cancel your subscription and stop billing at the end of your
-                    current billing period.
-              </p>
-                  <p className="text-xs text-gray-500">
-                    You'll continue to have access until August 15, 2024
-                  </p>
-                </div>
-              <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 border-red-200 hover:bg-red-50"
-                onClick={handleCancelSubscription}
-              >
-                Cancel Subscription
-              </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <PageSection title="Cancel Subscription" variant="card">
+            <p className={`${TYPOGRAPHY.bodyText} mb-4`}>
+              If you wish to stop your WorkflowGuard subscription, you can
+              cancel it here. Your plan will remain active until the end of
+              your current billing cycle.
+            </p>
+            <Button
+              onClick={handleCancelSubscription}
+              className={`${COLORS.danger} text-white`}
+            >
+              Cancel Subscription
+            </Button>
+          </PageSection>
         </div>
       </main>
 
+      <Footer />
+
+      {/* Cancel Subscription Modal */}
       <CancelSubscriptionModal
         open={showCancelModal}
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleConfirmCancellation}
       />
-
-      <Footer />
     </div>
   );
 };

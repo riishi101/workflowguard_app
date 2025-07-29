@@ -1,12 +1,8 @@
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { H3, PSmall, SpanSmall } from "@/components/ui/typography";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
 import { Lock, Info } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import ApiService from "@/services/api";
 
 interface ConnectHubSpotModalProps {
   open: boolean;
@@ -19,38 +15,11 @@ const ConnectHubSpotModal = ({
   onClose,
   onConnect,
 }: ConnectHubSpotModalProps) => {
-  const { connectHubSpot } = useAuth();
-  
-  console.log('ConnectHubSpotModal render - open:', open);
-
-  const handleConnect = async () => {
-    console.log('ConnectHubSpotModal - handleConnect called');
-    try {
-      console.log('Starting HubSpot connection...');
-      console.log('ApiService.getHubSpotAuthUrl() called');
-      
-      // Get HubSpot OAuth URL using ApiService
-      const { url } = await ApiService.getHubSpotAuthUrl();
-      
-      console.log('Received OAuth URL:', url);
-      
-      // Redirect to HubSpot OAuth
-      console.log('Redirecting to:', url);
-      window.location.href = url;
-    } catch (error) {
-      console.error('Failed to get HubSpot OAuth URL:', error);
-      toast.error('Failed to connect to HubSpot. Please try again.');
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-8 bg-gray-50 border-0">
         <VisuallyHidden>
           <DialogTitle>Connect Your HubSpot Account</DialogTitle>
-          <DialogDescription>
-            Authorize WorkflowGuard to access your HubSpot Workflows for protection and version control.
-          </DialogDescription>
         </VisuallyHidden>
         <div className="text-center space-y-6">
           <div className="flex justify-center">
@@ -60,12 +29,12 @@ const ConnectHubSpotModal = ({
           </div>
 
           <div>
-            <H3 className="mb-3">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
               Connect Your HubSpot Account
-            </H3>
-            <PSmall>
+            </h1>
+            <p className="text-gray-600 text-sm">
               Authorize WorkflowGuard to access your HubSpot Workflows
-            </PSmall>
+            </p>
           </div>
 
           <div className="flex items-center justify-center space-x-4 py-4">
@@ -83,7 +52,7 @@ const ConnectHubSpotModal = ({
                 alt="HubSpot Logo"
                 className="w-8 h-8"
               />
-              <PSmall className="font-medium">HubSpot</PSmall>
+              <span className="text-sm font-medium text-gray-700">HubSpot</span>
             </div>
           </div>
 
@@ -91,21 +60,21 @@ const ConnectHubSpotModal = ({
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="text-left">
-                <PSmall className="text-blue-900 font-medium mb-2">
+                <p className="text-sm text-blue-900 font-medium mb-2">
                   This secure connection allows WorkflowGuard to automatically
                   save versions of your HubSpot Workflows.
-                </PSmall>
-                <PSmall className="text-blue-800">
+                </p>
+                <p className="text-sm text-blue-800">
                   You'll be redirected to HubSpot's authorization page. Please
                   ensure you select the correct HubSpot portal if you have
                   multiple.
-                </PSmall>
+                </p>
               </div>
             </div>
           </div>
 
           <Button
-            onClick={handleConnect}
+            onClick={onConnect}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
           >
             <img

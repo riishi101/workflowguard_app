@@ -11,12 +11,11 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { H3, H5, PSmall, SpanSmall, DisplayMedium } from "@/components/ui/typography";
-import TopNavigation from "@/components/TopNavigation";
+import MainAppLayout from "@/components/MainAppLayout";
+import ContentSection from "@/components/ContentSection";
 import EmptyDashboard from "@/components/EmptyDashboard";
-import Footer from "@/components/Footer";
+import RollbackConfirmModal from "@/components/RollbackConfirmModal";
 import { WorkflowState } from "@/lib/workflowState";
-import { toast } from "sonner";
 import {
   Search,
   Plus,
@@ -30,15 +29,14 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-// Mock data for demonstration
-const mockWorkflows = [
+const workflows = [
   {
     id: "1",
     name: "Customer Onboarding",
     lastSnapshot: "Today, 2:30 PM",
     versions: 12,
     lastModifiedBy: { name: "Sarah Johnson", initials: "SJ" },
-    status: "Active",
+    link: "#",
   },
   {
     id: "2",
@@ -46,7 +44,7 @@ const mockWorkflows = [
     lastSnapshot: "Today, 2:30 PM",
     versions: 8,
     lastModifiedBy: { name: "Mike Wilson", initials: "MW" },
-    status: "Active",
+    link: "#",
   },
   {
     id: "3",
@@ -54,33 +52,35 @@ const mockWorkflows = [
     lastSnapshot: "Today, 2:30 PM",
     versions: 15,
     lastModifiedBy: { name: "Tom Brown", initials: "TB" },
-    status: "Active",
+    link: "#",
+  },
+  {
+    id: "4",
+    name: "Sales Outreach Sequence",
+    lastSnapshot: "Today, 2:30 PM",
+    versions: 15,
+    lastModifiedBy: { name: "Tom Brown", initials: "TB" },
+    link: "#",
+  },
+  {
+    id: "5",
+    name: "Sales Outreach Sequence",
+    lastSnapshot: "Today, 2:30 PM",
+    versions: 15,
+    lastModifiedBy: { name: "Tom Brown", initials: "TB" },
+    link: "#",
   },
 ];
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [hasWorkflows, setHasWorkflows] = useState(false);
-  const [workflows, setWorkflows] = useState(mockWorkflows);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [folderFilter, setFolderFilter] = useState("all");
+  const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
 
   useEffect(() => {
-    // Check if user has selected workflows
     setHasWorkflows(WorkflowState.hasSelectedWorkflows());
   }, []);
-
-  // Show empty state if no workflows are selected
-  if (!hasWorkflows) {
-    return <EmptyDashboard />;
-  }
-
-  const handleAddWorkflow = () => {
-    // Reset workflow state when going back to selection
-    WorkflowState.reset();
-    navigate("/workflow-selection");
-  };
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     navigate(`/workflow-history/${workflowId}`, {
@@ -89,97 +89,92 @@ const Dashboard = () => {
   };
 
   const handleRollbackLatest = (workflow: any) => {
-    toast.success(`Rollback initiated for ${workflow.name}`);
+    setSelectedWorkflow(workflow);
+    setShowRollbackModal(true);
   };
 
-  const filteredWorkflows = workflows.filter((workflow) => {
-    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleConfirmRollback = () => {
+    console.log("Rolling back workflow:", selectedWorkflow?.name);
+  };
+
+  if (!hasWorkflows) {
+    return <EmptyDashboard />;
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      <TopNavigation />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <H3 className="mb-2">
-            Dashboard Overview
-          </H3>
-        </div>
-
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+    <MainAppLayout title="Dashboard Overview">
+      {/* Status Banner */}
+      <ContentSection>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <div>
-              <PSmall className="font-medium text-green-900">
-                All {workflows.length} active workflows are being monitored
-              </PSmall>
-              <SpanSmall className="text-green-700">
+              <p className="text-sm font-medium text-green-900">
+                All 156 active workflows are being monitored
+              </p>
+              <p className="text-xs text-green-700">
                 Last Snapshot: Today, 2:30 PM IST
-              </SpanSmall>
+              </p>
             </div>
           </div>
         </div>
+      </ContentSection>
 
-        <div className="grid grid-cols-3 gap-8 mb-8">
-          <div className="bg-white border border-gray-200 rounded-lg p-8">
+      {/* Statistics Cards */}
+      <ContentSection>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
               </div>
             </div>
             <div>
-              <DisplayMedium className="mb-1">{workflows.length}</DisplayMedium>
-              <div className="text-base text-gray-700 font-medium">Active Workflows</div>
-              <PSmall className="text-gray-500 mt-2">
-                +1% from last month
-              </PSmall>
+              <div className="text-3xl font-bold text-gray-900 mb-1">156</div>
+              <div className="text-sm text-gray-600">Active Workflows</div>
+              <div className="text-xs text-gray-500 mt-1">+1% from last month</div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-8">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-green-500" />
               </div>
             </div>
             <div>
-              <DisplayMedium className="mb-1">99.9%</DisplayMedium>
-              <PSmall className="text-gray-600">Total Uptime</PSmall>
-              <SpanSmall className="text-gray-500 mt-1">Last 30 days</SpanSmall>
+              <div className="text-3xl font-bold text-gray-900 mb-1">99.9%</div>
+              <div className="text-sm text-gray-600">Total Uptime</div>
+              <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-8">
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Users className="w-4 h-4 text-purple-500" />
               </div>
             </div>
             <div>
-              <DisplayMedium className="mb-1">500</DisplayMedium>
-              <PSmall className="text-gray-600">Monitored Services</PSmall>
-              <SpanSmall className="text-gray-500 mt-1">
-                Max. plan capacity
-              </SpanSmall>
+              <div className="text-3xl font-bold text-gray-900 mb-1">500</div>
+              <div className="text-sm text-gray-600">Monitored Services</div>
+              <div className="text-xs text-gray-500 mt-1">Max. plan capacity</div>
             </div>
           </div>
         </div>
+      </ContentSection>
 
-        <div className="bg-white border border-gray-200 rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+      {/* Workflows Table */}
+      <ContentSection>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {/* Table Header */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
-              <H5>
+              <h2 className="text-lg font-semibold text-gray-900">
                 All Protected Workflows
-              </H5>
+              </h2>
               <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleAddWorkflow}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button variant="outline" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Workflow
                 </Button>
@@ -191,34 +186,40 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="p-8 border-b border-gray-200">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-              <div className="relative flex-1 max-w-lg">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  placeholder="Search workflows by name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 text-base"
-                />
+          {/* Filters */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input placeholder="Search workflows by name..." className="pl-10" />
               </div>
               <div className="flex items-center gap-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select defaultValue="modified">
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Last Modified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="modified">Last Modified</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="versions">Versions</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="status">
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={folderFilter} onValueChange={setFolderFilter}>
+                <Select defaultValue="folder">
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="HubSpot Folder" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Folders</SelectItem>
+                    <SelectItem value="folder">HubSpot Folder</SelectItem>
                     <SelectItem value="sales">Sales</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
                   </SelectContent>
@@ -230,50 +231,38 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Workflow Name
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Last Snapshot
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Versions Available
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Last Modified By
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredWorkflows.map((workflow) => (
+                {workflows.map((workflow) => (
                   <tr key={workflow.id} className="hover:bg-gray-50">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <h3 className="text-sm font-medium text-gray-900">
-                            {workflow.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge
-                              variant={workflow.status === "Active" ? "default" : "secondary"}
-                              className={
-                                workflow.status === "Active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }
-                            >
-                              {workflow.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
+                    <td className="px-6 py-4">
+                      <a
+                        href={workflow.link}
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
+                        {workflow.name}
+                      </a>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {workflow.lastSnapshot}
@@ -285,33 +274,35 @@ const Dashboard = () => {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs">
-                            {workflow.lastModifiedBy?.initials || "?"}
+                            {workflow.lastModifiedBy.initials}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm text-gray-600">
-                          {workflow.lastModifiedBy?.name || "Unknown User"}
+                          {workflow.lastModifiedBy.name}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          onClick={() => handleViewHistory(workflow.id, workflow.name)}
-                          className="text-blue-600"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() =>
+                            handleViewHistory(workflow.id, workflow.name)
+                          }
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View History
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
+                          className="text-orange-600 hover:text-orange-700"
                           onClick={() => handleRollbackLatest(workflow)}
-                          className="text-orange-600"
                         >
                           <RotateCcw className="w-4 h-4 mr-1" />
-                          Rollback
+                          Rollback Latest
                         </Button>
                       </div>
                     </td>
@@ -321,6 +312,7 @@ const Dashboard = () => {
             </table>
           </div>
 
+          {/* Table Footer */}
           <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-600">
               Rows per page:
@@ -337,9 +329,9 @@ const Dashboard = () => {
             </p>
 
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{filteredWorkflows.length} workflows</span>
+              <span className="text-sm text-gray-600">156 workflows</span>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" disabled>
+                <Button variant="ghost" size="sm">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <Button
@@ -349,18 +341,28 @@ const Dashboard = () => {
                 >
                   1
                 </Button>
-                <Button variant="ghost" size="sm" disabled>
+                <Button variant="ghost" size="sm">2</Button>
+                <Button variant="ghost" size="sm">3</Button>
+                <span className="text-sm text-gray-400">...</span>
+                <Button variant="ghost" size="sm">10</Button>
+                <Button variant="ghost" size="sm">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </ContentSection>
 
-      <Footer />
-    </div>
+      {/* Rollback Confirmation Modal */}
+      <RollbackConfirmModal
+        open={showRollbackModal}
+        onClose={() => setShowRollbackModal(false)}
+        onConfirm={handleConfirmRollback}
+        workflowName={selectedWorkflow?.name}
+      />
+    </MainAppLayout>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

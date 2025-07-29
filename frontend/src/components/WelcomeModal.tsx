@@ -1,6 +1,5 @@
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
 import { Shield, RotateCcw, FileText, CheckCircle } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -16,16 +15,11 @@ const WelcomeModal = ({
   onClose,
   onConnectHubSpot,
 }: WelcomeModalProps) => {
-  console.log('WelcomeModal render - open:', open);
-  
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-8 bg-gray-50 border-0">
         <VisuallyHidden>
           <DialogTitle>Welcome to WorkflowGuard</DialogTitle>
-          <DialogDescription>
-            Protect your HubSpot automations from accidental changes and easily recover lost work.
-          </DialogDescription>
         </VisuallyHidden>
         <div className="text-center space-y-6">
           <div className="flex justify-center">
@@ -33,13 +27,13 @@ const WelcomeModal = ({
           </div>
 
           <div>
-            <H3 className="mb-3">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
               Welcome to WorkflowGuard!
-            </H3>
-            <PSmall className="leading-relaxed">
+            </h1>
+            <p className="text-gray-600 text-sm leading-relaxed">
               Protect your HubSpot automations from accidental changes and
               easily recover lost work.
-            </PSmall>
+            </p>
           </div>
 
           <div className="flex justify-center gap-8 py-4">
@@ -47,27 +41,27 @@ const WelcomeModal = ({
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Shield className="w-6 h-6 text-blue-500" />
               </div>
-              <PSmall className="font-medium">
+              <p className="text-sm text-gray-700 font-medium">
                 Never lose a change
-              </PSmall>
+              </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <RotateCcw className="w-6 h-6 text-blue-500" />
               </div>
-              <PSmall className="font-medium">
+              <p className="text-sm text-gray-700 font-medium">
                 Rollback instantly
-              </PSmall>
+              </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <FileText className="w-6 h-6 text-blue-500" />
               </div>
-              <PSmall className="font-medium">
+              <p className="text-sm text-gray-700 font-medium">
                 Track all modifications
-              </PSmall>
+              </p>
             </div>
           </div>
 
@@ -78,34 +72,31 @@ const WelcomeModal = ({
               </h3>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <SpanSmall>
+                <span className="text-gray-700">
                   Daily & on-publish snapshots
-                </SpanSmall>
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <SpanSmall>90 days of history</SpanSmall>
+                <span className="text-gray-700">90 days of history</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <SpanSmall>Workflow comparison</SpanSmall>
+                <span className="text-gray-700">Workflow comparison</span>
               </div>
             </div>
           </div>
 
-          <SpanSmall className="leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed">
             You're currently on a 21-day free trial with access to Professional
             Plan features
-          </SpanSmall>
+          </p>
 
           <Button
-            onClick={() => {
-              console.log('WelcomeModal - Connect button clicked');
-              onConnectHubSpot();
-            }}
+            onClick={onConnectHubSpot}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium"
           >
             Connect Your HubSpot Account

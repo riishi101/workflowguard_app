@@ -193,11 +193,7 @@ async function main() {
       name: 'Professional',
       maxWorkflows: 500,
       historyDays: 90,
-      features: [
-        'advanced_monitoring',
-        'priority_support',
-        'custom_notifications',
-      ],
+      features: 'advanced_monitoring,priority_support,custom_notifications',
     },
   });
   await prisma.plan.upsert({
@@ -208,14 +204,7 @@ async function main() {
       name: 'Enterprise',
       maxWorkflows: null,
       historyDays: null,
-      features: [
-        'unlimited_workflows',
-        'advanced_monitoring',
-        '24_7_support',
-        'api_access',
-        'user_permissions',
-        'audit_logs',
-      ],
+      features: 'unlimited_workflows,advanced_monitoring,24_7_support,api_access,user_permissions,audit_logs',
     },
   });
   console.log('✅ Seeded plans');

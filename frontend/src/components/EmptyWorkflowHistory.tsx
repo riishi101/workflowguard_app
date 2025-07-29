@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { H3, H4, PSmall, SpanSmall } from "@/components/ui/typography";
-import TopNavigation from "@/components/TopNavigation";
+import MainAppLayout from "@/components/MainAppLayout";
+import ContentSection from "@/components/ContentSection";
 import { FileText, Plus, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,61 +16,51 @@ const EmptyWorkflowHistory = () => {
     window.open("https://app.hubspot.com", "_blank");
   };
 
+  const headerActions = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleGoToHubSpot}
+      className="text-blue-600"
+    >
+      <ExternalLink className="w-4 h-4 mr-2" />
+      Go to Workflow in HubSpot
+    </Button>
+  );
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <TopNavigation />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <H3>
-                  Workflow History
-                </H3>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Workflow Info */}
-        <div className="flex items-center justify-between mb-8 p-6 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <H4>
+    <MainAppLayout title="Workflow History" headerActions={headerActions}>
+      {/* Workflow Info */}
+      <ContentSection>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-gray-900">
               Customer Onboarding
-            </H4>
-            <div className="flex items-center gap-2">
+            </h2>
+            <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <PSmall>Active</PSmall>
+              <span className="text-sm text-gray-600">Active</span>
             </div>
-            <SpanSmall>ID: adx2c-344</SpanSmall>
+            <span className="text-sm text-gray-500">ID: adx2c-344</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGoToHubSpot}
-            className="text-blue-600"
-          >
-            Go to Workflow in HubSpot
-            <ExternalLink className="w-4 h-4 ml-2" />
-          </Button>
         </div>
+      </ContentSection>
 
-        {/* Empty State */}
-        <div className="py-32 text-center">
+      {/* Empty State */}
+      <ContentSection>
+        <div className="py-20 text-center">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <FileText className="w-8 h-8 text-blue-500" />
           </div>
-          <H4 className="mb-3">
+          <h3 className="text-xl font-semibold text-gray-900 mb-3">
             No Workflow History Yet
-          </H4>
-          <PSmall className="mb-2">
+          </h3>
+          <p className="text-gray-600 mb-2">
             Start creating workflows to track changes and activities.
-          </PSmall>
-          <PSmall className="mb-8">
+          </p>
+          <p className="text-gray-600 mb-8">
             Your workflow history will appear here.
-          </PSmall>
+          </p>
           <Button
             onClick={handleCreateWorkflow}
             className="bg-blue-500 hover:bg-blue-600 text-white"
@@ -79,10 +69,12 @@ const EmptyWorkflowHistory = () => {
             Create New Workflow
           </Button>
         </div>
+      </ContentSection>
 
-        {/* Footer */}
+      {/* Bottom Actions */}
+      <ContentSection>
         <div className="flex items-center justify-between pt-8 border-t border-gray-200">
-          <PSmall>0 versions selected</PSmall>
+          <p className="text-sm text-gray-600">0 versions selected</p>
           <Button
             variant="outline"
             size="sm"
@@ -92,8 +84,8 @@ const EmptyWorkflowHistory = () => {
             Compare Selected Versions
           </Button>
         </div>
-      </main>
-    </div>
+      </ContentSection>
+    </MainAppLayout>
   );
 };
 

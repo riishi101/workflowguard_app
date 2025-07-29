@@ -21,8 +21,8 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
-    /* Type Definitions - More permissive */
-    "types": [],
+    /* Type Definitions */
+    "types": ["node", "vite/client", "d3-color"],
 
     "baseUrl": ".",
     "paths": {
