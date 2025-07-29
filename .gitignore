@@ -117,3 +117,4 @@ nginx/ssl/
 # Backup files
 *.bak
 *.backup
+.vercel

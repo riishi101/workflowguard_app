@@ -62,19 +62,19 @@ const Settings = () => {
                       variant="secondary"
                       className="bg-blue-100 text-blue-800 hover:bg-blue-100"
                     >
-                      Trial
+                      Current Plan
                     </Badge>
                   </div>
                 </div>
 
-                <p className="text-gray-600">$59/month (billed annually)</p>
+                <p className="text-gray-600">$49/month (billed monthly)</p>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Workflows Monitored</span>
-                    <span className="font-medium">47/500</span>
+                    <span className="font-medium">12/25</span>
                   </div>
-                  <Progress value={9.4} className="w-full h-2 bg-gray-200" />
+                  <Progress value={48} className="w-full h-2 bg-gray-200" />
 
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600">Version History</span>
@@ -82,8 +82,13 @@ const Settings = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Team Members</span>
+                    <span className="font-medium">3/5</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <span className="text-gray-600">Next billing on:</span>
-                    <span className="font-medium">July 1, 2024</span>
+                    <span className="font-medium">August 1, 2024</span>
                   </div>
                 </div>
               </CardContent>
@@ -102,7 +107,7 @@ const Settings = () => {
                     <CardTitle className="text-lg">Starter</CardTitle>
                     <div className="space-y-2">
                       <div className="flex items-baseline space-x-1">
-                        <span className="text-3xl font-bold">$29</span>
+                        <span className="text-3xl font-bold">$19</span>
                         <span className="text-gray-600">/month</span>
                       </div>
                     </div>
@@ -112,25 +117,37 @@ const Settings = () => {
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Up to 25 workflows/month
+                          Up to 5 workflows
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Basic Monitoring
+                          Basic version history
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          30 days history
+                          Simple comparison
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Email Support
+                          Basic restore
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Email support
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          30 days retention
                         </span>
                       </div>
                     </div>
@@ -147,7 +164,7 @@ const Settings = () => {
                     <CardTitle className="text-lg">Professional</CardTitle>
                     <div className="space-y-2">
                       <div className="flex items-baseline space-x-1">
-                        <span className="text-3xl font-bold">$59</span>
+                        <span className="text-3xl font-bold">$49</span>
                         <span className="text-gray-600">/month</span>
                       </div>
                     </div>
@@ -157,31 +174,49 @@ const Settings = () => {
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Up to 500 workflows/month
+                          Up to 25 workflows
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Advanced Monitoring
+                          Advanced version history
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          90 days history
+                          Enhanced comparison
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Priority Support
+                          Team management (5 members)
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Custom Notifications
+                          Audit log
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          API access
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Priority support
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          90 days retention
                         </span>
                       </div>
                     </div>
@@ -214,37 +249,43 @@ const Settings = () => {
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Advanced Monitoring
+                          Extended version history
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Unlimited history
+                          Advanced comparison
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          24/7 Support
+                          Unlimited team members
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          API Access
+                          Extended audit log
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          User Permissions
+                          Unlimited API access
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Check className="w-4 h-4 text-green-600" />
                         <span className="text-sm text-gray-600">
-                          Audit Logs
+                          Dedicated support
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          1 year retention
                         </span>
                       </div>
                     </div>
