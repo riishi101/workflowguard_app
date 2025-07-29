@@ -82,9 +82,9 @@ const Settings = () => {
                 Explore Other Plans
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+              <div className="grid grid-cols-3 gap-6 mb-8">
                 {/* Starter Plan */}
-                <Card className="relative flex flex-col w-full">
+                <Card className="relative flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-lg">Starter</CardTitle>
                     <div className="space-y-2">
@@ -129,7 +129,7 @@ const Settings = () => {
                 </Card>
 
                 {/* Professional Plan */}
-                <Card className="relative border-blue-200 ring-2 ring-blue-100 flex flex-col w-full">
+                <Card className="relative border-blue-200 ring-2 ring-blue-100 flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-lg">Professional</CardTitle>
                     <div className="space-y-2">
@@ -180,7 +180,7 @@ const Settings = () => {
                 </Card>
 
                 {/* Enterprise Plan */}
-                <Card className="relative flex flex-col w-full">
+                <Card className="relative flex flex-col">
                   <CardHeader>
                     <CardTitle className="text-lg">Enterprise</CardTitle>
                     <div className="space-y-2">
