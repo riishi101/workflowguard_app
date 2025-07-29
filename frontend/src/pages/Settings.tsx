@@ -292,7 +292,7 @@ const Settings = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl px-6 py-8 flex-1 flex flex-col justify-center">
+      <main className="max-w-7xl px-6 py-8 flex-1 grid place-items-center">
         <div className="w-full max-w-6xl">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
