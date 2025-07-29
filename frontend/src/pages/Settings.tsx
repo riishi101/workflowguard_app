@@ -263,7 +263,6 @@ const Settings = () => {
             </Card>
           </>
         );
-    }
   };
 
   return (
