@@ -108,7 +108,7 @@ const Dashboard = () => {
           </h1>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <div>
@@ -122,8 +122,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="grid grid-cols-3 gap-8 mb-8">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
@@ -138,7 +138,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -151,7 +151,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Users className="w-4 h-4 text-purple-500" />
@@ -191,7 +191,7 @@ const Dashboard = () => {
           </div>
 
           <div className="p-8 border-b border-gray-200">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
               <div className="relative flex-1 max-w-lg">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input

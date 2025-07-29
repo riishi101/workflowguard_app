@@ -121,7 +121,7 @@ const WorkflowHistory = () => {
             Workflow History
           </h1>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-gray-900">
