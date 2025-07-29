@@ -180,8 +180,8 @@ async function main() {
     create: {
       id: 'starter',
       name: 'Starter',
-      maxWorkflows: 25,
-      historyDays: 30,
+      price: 29.99,
+      description: 'Perfect for small teams',
       features: ['basic_monitoring', 'email_support'],
     },
   });
@@ -191,9 +191,9 @@ async function main() {
     create: {
       id: 'professional',
       name: 'Professional',
-      maxWorkflows: 500,
-      historyDays: 90,
-      features: 'advanced_monitoring,priority_support,custom_notifications',
+      price: 99.99,
+      description: 'For growing businesses',
+      features: ['advanced_monitoring', 'priority_support', 'custom_notifications'],
     },
   });
   await prisma.plan.upsert({
@@ -202,9 +202,9 @@ async function main() {
     create: {
       id: 'enterprise',
       name: 'Enterprise',
-      maxWorkflows: null,
-      historyDays: null,
-      features: 'unlimited_workflows,advanced_monitoring,24_7_support,api_access,user_permissions,audit_logs',
+      price: 299.99,
+      description: 'For large organizations',
+      features: ['unlimited_workflows', 'advanced_monitoring', '24_7_support', 'api_access', 'user_permissions', 'audit_logs'],
     },
   });
   console.log('✅ Seeded plans');
