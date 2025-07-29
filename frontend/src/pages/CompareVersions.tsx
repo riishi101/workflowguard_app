@@ -111,10 +111,10 @@ const CompareVersions = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <Button
@@ -135,8 +135,8 @@ const CompareVersions = () => {
         </div>
 
         {/* Version Selection */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Version A</h3>
               <Select value={versionA} onValueChange={setVersionA}>
@@ -195,16 +195,16 @@ const CompareVersions = () => {
         </div>
 
         {/* Comparison View */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Version A */}
           <div className="bg-white border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">Version A</h3>
               <p className="text-sm text-gray-600">
                 {versionAData?.type} - {versionAData?.date}
               </p>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-6 space-y-4">
               {versionASteps.steps.map((step, index) => {
                 const IconComponent = step.icon;
                 return (
@@ -226,13 +226,13 @@ const CompareVersions = () => {
 
           {/* Version B */}
           <div className="bg-white border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">Version B</h3>
               <p className="text-sm text-gray-600">
                 {versionBData?.type} - {versionBData?.date}
               </p>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-6 space-y-4">
               {versionBSteps.steps.map((step, index) => {
                 const IconComponent = step.icon;
                 return (
@@ -259,11 +259,11 @@ const CompareVersions = () => {
         </div>
 
         {/* Actions */}
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-8 flex items-center justify-between">
           <div className="text-sm text-gray-600">
             Found {versionBSteps.steps.length - versionASteps.steps.length} changes
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button variant="outline" className="text-gray-600">
               Export Comparison
             </Button>
