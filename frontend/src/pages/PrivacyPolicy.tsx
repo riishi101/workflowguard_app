@@ -227,22 +227,7 @@ const PrivacyPolicy = () => {
         </div>
             </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                11. Contact Us
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  If you have any questions about this Privacy Policy or our
-                  data practices, please contact us:
-                </p>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="font-medium">WorkflowGuard</p>
-                  <p>Email: privacy@workflowguard.pro</p>
-                  <p>Address: [Your Business Address]</p>
-                </div>
-          </div>
-            </section>
+            
           </div>
         </div>
       </main>

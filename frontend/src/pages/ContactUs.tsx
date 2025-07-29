@@ -143,7 +143,7 @@ const ContactUs = () => {
               <div>
                   <h3 className="font-medium text-gray-900 mb-1">Email Support</h3>
                 <p className="text-sm text-gray-600 mb-2">
-                    support@workflowguard.pro
+                    contact@workflowguard.pro
                   </p>
                   <p className="text-xs text-gray-500">
                     We typically respond within 24 hours
