@@ -293,7 +293,6 @@ const Settings = () => {
       <TopNavigation />
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="w-full max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             App Settings
@@ -324,7 +323,6 @@ const Settings = () => {
           <div>
             {renderTabContent()}
           </div>
-        </div>
         </div>
       </main>
 
