@@ -1,207 +1,250 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Calendar } from "lucide-react";
-
-const auditLogs = [
-  {
-    id: "1",
-    timestamp: "2024-01-20 14:30:25 UTC",
-    user: "John Smith",
-    action: "Updated workflow",
-    workflowName: "Customer Onboarding",
-    oldValue: "3 steps",
-    newValue: "4 steps",
-    ipAddress: "192.168.1.1",
-  },
-  {
-    id: "2",
-    timestamp: "2024-01-20 13:15:12 UTC",
-    user: "Sarah Johnson",
-    action: "Added user",
-    workflowName: "Invoice Processing",
-    oldValue: "-",
-    newValue: "Mike Wilson",
-    ipAddress: "192.168.1.2",
-  },
-  {
-    id: "3",
-    timestamp: "2024-01-20 11:45:33 UTC",
-    user: "David Brown",
-    action: "Modified trigger",
-    workflowName: "Email Notifications",
-    oldValue: "Daily",
-    newValue: "Weekly",
-    ipAddress: "192.168.1.3",
-  },
-  {
-    id: "4",
-    timestamp: "2024-01-20 10:20:18 UTC",
-    user: "Emily Davis",
-    action: "Deleted workflow",
-    workflowName: "Legacy Process",
-    oldValue: "Active",
-    newValue: "Deleted",
-    ipAddress: "192.168.1.4",
-  },
-  {
-    id: "5",
-    timestamp: "2024-01-20 09:05:45 UTC",
-    user: "Michael Wilson",
-    action: "Created workflow",
-    workflowName: "New Hire Setup",
-    oldValue: "-",
-    newValue: "Created",
-    ipAddress: "192.168.1.5",
-  },
-];
+import { Search, Download, Filter, Calendar, User, Settings, Shield } from "lucide-react";
 
 const AuditLogTab = () => {
-  const [dateRange, setDateRange] = useState("all");
-  const [userFilter, setUserFilter] = useState("all");
-  const [actionFilter, setActionFilter] = useState("all");
+  const [selectedPeriod, setSelectedPeriod] = useState("7d");
+  const [selectedAction, setSelectedAction] = useState("all");
+
+  const auditLogs = [
+    {
+      id: 1,
+      action: "Workflow Modified",
+      user: "John Smith",
+      timestamp: "2024-01-15 14:30:00",
+      details: "Modified 'Lead Nurturing Campaign' workflow",
+      severity: "info",
+      ip: "192.168.1.100",
+    },
+    {
+      id: 2,
+      action: "User Added",
+      user: "Sarah Johnson",
+      timestamp: "2024-01-15 13:45:00",
+      details: "Added new team member: mike.wilson@example.com",
+      severity: "info",
+      ip: "192.168.1.101",
+    },
+    {
+      id: 3,
+      action: "Security Alert",
+      user: "System",
+      timestamp: "2024-01-15 12:20:00",
+      details: "Multiple failed login attempts detected",
+      severity: "warning",
+      ip: "192.168.1.102",
+    },
+    {
+      id: 4,
+      action: "Settings Changed",
+      user: "John Smith",
+      timestamp: "2024-01-15 11:15:00",
+      details: "Updated notification preferences",
+      severity: "info",
+      ip: "192.168.1.100",
+    },
+    {
+      id: 5,
+      action: "Workflow Deleted",
+      user: "Sarah Johnson",
+      timestamp: "2024-01-15 10:30:00",
+      details: "Deleted 'Old Marketing Campaign' workflow",
+      severity: "danger",
+      ip: "192.168.1.101",
+    },
+  ];
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "danger":
+        return "bg-red-100 text-red-800";
+      case "warning":
+        return "bg-yellow-100 text-yellow-800";
+      case "info":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case "Workflow Modified":
+      case "Workflow Deleted":
+        return <Settings className="w-4 h-4" />;
+      case "User Added":
+        return <User className="w-4 h-4" />;
+      case "Security Alert":
+        return <Shield className="w-4 h-4" />;
+      case "Settings Changed":
+        return <Settings className="w-4 h-4" />;
+      default:
+        return <Settings className="w-4 h-4" />;
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Upgrade Banner */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Upgrade to Enterprise Plan
-          </h3>
-          <p className="text-gray-600 text-sm">
-            Get access to comprehensive audit logs and advanced security
-            features
-          </p>
-        </div>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-          Upgrade Now
-        </Button>
-      </div>
-
-      {/* Audit Log Content */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Comprehensive App Activity Log
-        </h3>
-        <p className="text-gray-600 text-sm mb-6">
-          Track all changes and actions performed in your workflows
-        </p>
-
-        {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-500" />
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">Last 7 days</SelectItem>
-                <SelectItem value="month">Last 30 days</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Audit Log</CardTitle>
+          <CardDescription>
+            View detailed logs of all activities and changes in your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Label htmlFor="search" className="text-sm font-medium">
+                Search
+              </Label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  id="search"
+                  placeholder="Search audit logs..."
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="w-32">
+              <Label htmlFor="period" className="text-sm font-medium">
+                Period
+              </Label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1d">Last 24h</SelectItem>
+                  <SelectItem value="7d">Last 7 days</SelectItem>
+                  <SelectItem value="30d">Last 30 days</SelectItem>
+                  <SelectItem value="90d">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-32">
+              <Label htmlFor="action" className="text-sm font-medium">
+                Action
+              </Label>
+              <Select value={selectedAction} onValueChange={setSelectedAction}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Actions</SelectItem>
+                  <SelectItem value="workflow">Workflow</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
+                  <SelectItem value="settings">Settings</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <Select value={userFilter} onValueChange={setUserFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="john">John Smith</SelectItem>
-              <SelectItem value="sarah">Sarah Johnson</SelectItem>
-              <SelectItem value="david">David Brown</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Audit Log Entries */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>
+            Latest audit log entries from your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {auditLogs.map((log) => (
+              <div key={log.id} className="flex items-start gap-4 p-3 border border-gray-200 rounded-lg">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    {getActionIcon(log.action)}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">
+                        {log.action}
+                      </span>
+                      <Badge className={`text-xs ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </Badge>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {log.timestamp}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">
+                    {log.details}
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span>User: {log.user}</span>
+                    <span>IP: {log.ip}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-          <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Actions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
-              <SelectItem value="created">Created</SelectItem>
-              <SelectItem value="updated">Updated</SelectItem>
-              <SelectItem value="deleted">Deleted</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Settings className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Total Actions</p>
+                <p className="text-2xl font-bold text-gray-900">1,247</p>
+                <p className="text-xs text-gray-500">Last 30 days</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Button variant="outline" className="text-blue-600">
-            <Download className="w-4 h-4 mr-2" />
-            Export Log
-          </Button>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <User className="w-4 h-4 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Active Users</p>
+                <p className="text-2xl font-bold text-gray-900">12</p>
+                <p className="text-xs text-gray-500">Team members</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Audit Log Table */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead>TIMESTAMP</TableHead>
-                <TableHead>USER</TableHead>
-                <TableHead>ACTION</TableHead>
-                <TableHead>WORKFLOW NAME</TableHead>
-                <TableHead>OLD VALUE</TableHead>
-                <TableHead>NEW VALUE</TableHead>
-                <TableHead>IP ADDRESS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {auditLogs.map((log) => (
-                <TableRow key={log.id} className="hover:bg-gray-50">
-                  <TableCell className="font-mono text-sm text-gray-600">
-                    {log.timestamp}
-                  </TableCell>
-                  <TableCell className="font-medium">{log.user}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        log.action.includes("Delete")
-                          ? "bg-red-100 text-red-800"
-                          : log.action.includes("Create")
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                      }
-                    >
-                      {log.action}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="link" className="p-0 text-blue-600">
-                      {log.workflowName}
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-gray-600">
-                    {log.oldValue}
-                  </TableCell>
-                  <TableCell className="font-medium">{log.newValue}</TableCell>
-                  <TableCell className="font-mono text-sm text-gray-600">
-                    {log.ipAddress}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <Shield className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Security Events</p>
+                <p className="text-2xl font-bold text-gray-900">3</p>
+                <p className="text-xs text-gray-500">This week</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

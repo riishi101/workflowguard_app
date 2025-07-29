@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, User, Shield, Settings, Trash2 } from "lucide-react";
 
@@ -31,17 +31,17 @@ const ProfileTab = () => {
   };
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-6">
       {/* Profile Header */}
-      <div className="flex items-center gap-8">
-        <Avatar className="h-20 w-20 border-4 border-blue-100 shadow-sm">
+      <div className="flex items-center gap-6">
+        <Avatar className="h-16 w-16 border-2 border-blue-100">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
-          <AvatarFallback className="text-xl bg-blue-50 text-blue-700">JS</AvatarFallback>
+          <AvatarFallback className="text-lg bg-blue-50 text-blue-700">JS</AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
+          <h2 className="text-lg font-semibold text-gray-900">John Smith</h2>
           <p className="text-sm text-gray-600">john.smith@example.com</p>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-xs text-green-600 font-medium">Active</span>
           </div>
@@ -49,16 +49,14 @@ const ProfileTab = () => {
       </div>
 
       {/* Personal Details */}
-      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-8">
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-gray-600" />
-            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-              Personal Details
-            </CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Personal Details</CardTitle>
+          <CardDescription>
+            Update your personal information and contact details
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-0 space-y-8">
+        <CardContent className="space-y-4">
           <div>
             <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
               Full Name
@@ -67,9 +65,9 @@ const ProfileTab = () => {
               id="full-name"
               value={profile.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              className="mt-2"
             />
-            <p className="text-sm text-gray-500 mt-3">
+            <p className="text-sm text-gray-500 mt-1">
               This is how your name appears across the platform
             </p>
           </div>
@@ -78,14 +76,14 @@ const ProfileTab = () => {
             <Label htmlFor="email" className="text-sm font-medium text-gray-700">
               Email Address
             </Label>
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-3 mt-2">
               <Input
                 id="email"
                 value={profile.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className="flex-1 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                className="flex-1"
               />
-              <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
+              <Button variant="outline" size="sm">
                 Verify Email
               </Button>
             </div>
@@ -99,56 +97,53 @@ const ProfileTab = () => {
               id="job-title"
               value={profile.jobTitle}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+              className="mt-2"
             />
           </div>
         </CardContent>
       </Card>
 
       {/* HubSpot Account Connection */}
-      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-8">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-              HubSpot Account Connection
-            </CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>HubSpot Account Connection</CardTitle>
+          <CardDescription>
+            Manage your HubSpot account integration and permissions
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-0">
-          <div className="flex items-start gap-8">
+        <CardContent>
+          <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center border border-green-200">
-                <CheckCircle className="w-6 h-6 text-green-500" />
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center border border-green-200">
+                <CheckCircle className="w-5 h-5 text-green-500" />
               </div>
             </div>
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h3 className="font-semibold text-gray-900 mb-1">
                     Connected to HubSpot
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Your HubSpot account is successfully connected and syncing
-                    workflows.
+                    Your HubSpot account is successfully connected and syncing workflows.
                   </p>
                 </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Portal ID</div>
-                    <div className="text-sm text-gray-600">243112608</div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right bg-gray-50 rounded p-2">
+                    <div className="text-xs font-medium text-gray-900">Portal ID</div>
+                    <div className="text-xs text-gray-600">243112608</div>
                   </div>
-                  <div className="text-right bg-gray-50 rounded-lg p-3">
-                    <div className="text-sm font-medium text-gray-900">Role</div>
-                    <div className="text-sm text-gray-600">Admin</div>
+                  <div className="text-right bg-gray-50 rounded p-2">
+                    <div className="text-xs font-medium text-gray-900">Role</div>
+                    <div className="text-xs text-gray-600">Admin</div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" className="h-12 px-8 text-base font-medium border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
                   Disconnect HubSpot
                 </Button>
-                <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
+                <Button variant="outline" size="sm">
                   Reconnect
                 </Button>
               </div>
@@ -158,16 +153,14 @@ const ProfileTab = () => {
       </Card>
 
       {/* Preferences */}
-      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-8">
-          <div className="flex items-center gap-3">
-            <Settings className="w-5 h-5 text-gray-600" />
-            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-              Preferences
-            </CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Preferences</CardTitle>
+          <CardDescription>
+            Customize your account settings and preferences
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-0 space-y-8">
+        <CardContent className="space-y-4">
           <div>
             <Label htmlFor="timezone" className="text-sm font-medium text-gray-700">
               Timezone
@@ -176,7 +169,7 @@ const ProfileTab = () => {
               value={profile.timezone}
               onValueChange={(value) => handleInputChange("timezone", value)}
             >
-              <SelectTrigger className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+              <SelectTrigger className="mt-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -204,7 +197,7 @@ const ProfileTab = () => {
               value={profile.language}
               onValueChange={(value) => handleInputChange("language", value)}
             >
-              <SelectTrigger className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+              <SelectTrigger className="mt-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,40 +213,38 @@ const ProfileTab = () => {
       </Card>
 
       {/* Security */}
-      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-8">
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-gray-600" />
-            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-              Security
-            </CardTitle>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Security</CardTitle>
+          <CardDescription>
+            Manage your account security settings and authentication
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-0 space-y-8">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+              <h4 className="font-medium text-gray-900 mb-1">
                 Two-Factor Authentication
               </h4>
               <p className="text-sm text-gray-600">
                 Add an extra layer of security to your account
               </p>
             </div>
-            <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
+            <Button variant="outline" size="sm">
               Enable 2FA
             </Button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+              <h4 className="font-medium text-gray-900 mb-1">
                 Change Password
               </h4>
               <p className="text-sm text-gray-600">
                 Update your account password regularly
               </p>
             </div>
-            <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
+            <Button variant="outline" size="sm">
               Change Password
             </Button>
           </div>
@@ -261,32 +252,30 @@ const ProfileTab = () => {
       </Card>
 
       {/* Account Actions */}
-      <Card className="shadow-sm border border-red-200 hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-8">
-          <div className="flex items-center gap-3">
-            <Trash2 className="w-5 h-5 text-red-600" />
-            <CardTitle className="tracking-tight text-lg font-semibold text-red-600">
-              Danger Zone
-            </CardTitle>
-          </div>
+      <Card className="border-red-200">
+        <CardHeader>
+          <CardTitle className="text-red-600">Danger Zone</CardTitle>
+          <CardDescription>
+            Irreversible and destructive actions
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-0">
-          <Alert className="mb-8 border-red-200 bg-red-50">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+        <CardContent>
+          <Alert className="mb-4 border-red-200 bg-red-50">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-sm text-red-700">
               These actions cannot be undone. Please proceed with caution.
             </AlertDescription>
           </Alert>
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Button 
               variant="outline" 
-              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors duration-200"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
             >
               Deactivate Account
             </Button>
             <Button 
               variant="outline" 
-              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors duration-200"
+              className="w-full text-red-600 border-red-200 hover:bg-red-50"
             >
               Delete Account
             </Button>
