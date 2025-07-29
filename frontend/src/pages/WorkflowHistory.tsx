@@ -12,11 +12,7 @@ import {
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import EmptyWorkflowHistory from "@/components/EmptyWorkflowHistory";
-import ViewDetailsModal from "@/components/ViewDetailsModal";
-import CreateNewWorkflowModal from "@/components/CreateNewWorkflowModal";
-import RestoreVersionModal from "@/components/RestoreVersionModal";
 import { WorkflowState } from "@/lib/workflowState";
-import { useWorkflowHistory, useDeleteWorkflowVersion } from "@/hooks/useWorkflowVersions";
 import { toast } from "sonner";
 import {
   MoreHorizontal,
@@ -25,10 +21,10 @@ import {
   RotateCcw,
   Download,
   Copy,
-  Loader2,
 } from "lucide-react";
 
-const workflowVersions = [
+// Mock data for demonstration
+const mockVersions = [
   {
     id: "1",
     date: "June 20, 2025, 10:00 AM IST",
@@ -39,14 +35,6 @@ const workflowVersions = [
   },
   {
     id: "2",
-    date: "June 20, 2025, 10:00 AM IST",
-    type: "On-Publish Save",
-    initiator: "John Doe",
-    notes: "Refactored email content to align with Q2 campaign",
-    selected: false,
-  },
-  {
-    id: "3",
     date: "June 19, 2025, 3:30 PM IST",
     type: "Daily Backup",
     initiator: "System",
@@ -54,23 +42,7 @@ const workflowVersions = [
     selected: false,
   },
   {
-    id: "4",
-    date: "June 18, 2025, 11:45 AM IST",
-    type: "Manual Snapshot",
-    initiator: "Jane Smith",
-    notes: "Added new welcome email sequence",
-    selected: false,
-  },
-  {
-    id: "5",
-    date: "June 18, 2025, 11:45 AM IST",
-    type: "Manual Snapshot",
-    initiator: "Jane Smith",
-    notes: "Added new welcome email sequence",
-    selected: false,
-  },
-  {
-    id: "6",
+    id: "3",
     date: "June 18, 2025, 11:45 AM IST",
     type: "Manual Snapshot",
     initiator: "Jane Smith",
@@ -83,93 +55,47 @@ const WorkflowHistory = () => {
   const navigate = useNavigate();
   const { workflowId } = useParams<{ workflowId: string }>();
   const [hasWorkflows, setHasWorkflows] = useState(false);
-  const [showViewDetails, setShowViewDetails] = useState(false);
-  const [showCreateNew, setShowCreateNew] = useState(false);
-  const [showRestore, setShowRestore] = useState(false);
-  const [selectedVersion, setSelectedVersion] = useState<any>(null);
-
-  // API hooks
-  const { data: versions = [], isLoading, error } = useWorkflowHistory(workflowId || '');
-  const deleteVersionMutation = useDeleteWorkflowVersion();
+  const [versions, setVersions] = useState(mockVersions);
+  const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
 
   useEffect(() => {
     // Check if user has selected workflows
     setHasWorkflows(WorkflowState.hasSelectedWorkflows());
   }, []);
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading workflow history...</span>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">Failed to load workflow history</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
-      </div>
-    );
-  }
-
   // Show empty state if no workflows are selected
   if (!hasWorkflows) {
     return <EmptyWorkflowHistory />;
   }
 
-  const selectedCount = versions.filter((v) => v.selected).length;
-  const selectedVersions = versions.filter((v) => v.selected);
+  const handleVersionToggle = (versionId: string) => {
+    setSelectedVersions((prev) =>
+      prev.includes(versionId)
+        ? prev.filter((id) => id !== versionId)
+        : [...prev, versionId]
+    );
+  };
 
   const handleCompareVersions = () => {
-    if (selectedCount === 2) {
+    if (selectedVersions.length === 2) {
       navigate(
-        `/compare-versions?versionA=${selectedVersions[0].id}&versionB=${selectedVersions[1].id}`,
+        `/compare-versions?versionA=${selectedVersions[0]}&versionB=${selectedVersions[1]}`,
       );
+    } else {
+      toast.error('Please select exactly 2 versions to compare');
     }
   };
 
-  const handleVersionToggle = (versionId: string) => {
-    setVersions((prev) => {
-      const currentSelected = prev.filter((v) => v.selected);
-
-      return prev.map((version) => {
-        if (version.id === versionId) {
-          // If trying to unselect, allow it
-          if (version.selected) {
-            return { ...version, selected: false };
-          }
-          // If trying to select and less than 2 are selected, allow it
-          if (currentSelected.length < 2) {
-            return { ...version, selected: true };
-          }
-          // If 2 are already selected, don't allow more
-          return version;
-        }
-        return version;
-      });
-    });
-  };
-
   const handleViewDetails = (version: any) => {
-    setSelectedVersion(version);
-    setShowViewDetails(true);
+    toast.info(`Viewing details for version ${version.id}`);
   };
 
   const handleCreateNew = (version: any) => {
-    setSelectedVersion(version);
-    setShowCreateNew(true);
+    toast.info(`Creating new workflow from version ${version.id}`);
   };
 
   const handleRestore = (version: any) => {
-    setSelectedVersion(version);
-    setShowRestore(true);
+    toast.success(`Restoring to version ${version.id}`);
   };
 
   const getTypeColor = (type: string) => {
@@ -242,104 +168,85 @@ const WorkflowHistory = () => {
               <tbody className="divide-y divide-gray-200">
                 {versions.length > 0 ? (
                   versions.map((version) => (
-                  <tr key={version.id} className="hover:bg-gray-50">
+                    <tr key={version.id} className="hover:bg-gray-50">
                       <td className="px-8 py-6">
-                      <Checkbox
-                        checked={version.selected}
-                        onCheckedChange={() => handleVersionToggle(version.id)}
-                      />
-                    </td>
+                        <Checkbox
+                          checked={selectedVersions.includes(version.id)}
+                          onCheckedChange={() => handleVersionToggle(version.id)}
+                        />
+                      </td>
                       <td className="px-8 py-6 text-base text-gray-900">
-                      {version.date}
-                    </td>
+                        {version.date}
+                      </td>
                       <td className="px-8 py-6">
-                      <Badge
-                        variant="secondary"
-                        className={getTypeColor(version.type)}
-                      >
-                        {version.type}
-                      </Badge>
-                    </td>
-                      <td className="px-8 py-6 text-base text-gray-600">
-                        <div className="flex items-center gap-2">
-                        <span>👤</span>
-                        <span>{version.initiator}</span>
-                      </div>
-                    </td>
-                      <td className="px-8 py-6 text-base text-gray-600">
-                        <div className="flex items-center gap-2">
-                        <span>📝</span>
-                        <span
-                          className={
-                            version.notes === "No notes available"
-                              ? "italic"
-                              : ""
-                          }
+                        <Badge
+                          variant="secondary"
+                          className={getTypeColor(version.type)}
                         >
-                          {version.notes}
-                        </span>
-                      </div>
-                    </td>
+                          {version.type}
+                        </Badge>
+                      </td>
+                      <td className="px-8 py-6 text-base text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span>👤</span>
+                          <span>{version.initiator}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-base text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <span>📝</span>
+                          <span
+                            className={
+                              version.notes === "No notes available"
+                                ? "italic"
+                                : ""
+                            }
+                          >
+                            {version.notes}
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
-                        <Button
-                          variant="outline"
+                          <Button
+                            variant="outline"
                             size="default"
-                          onClick={() => handleViewDetails(version)}
-                          className="text-blue-600"
-                        >
-                          View Details
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="default">
-                                <MoreHorizontal className="w-5 h-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetails(version)}
-                            >
-                                <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => handleCreateNew(version)}
-                            >
+                            onClick={() => handleViewDetails(version)}
+                            className="text-blue-600"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="default">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleCreateNew(version)}>
+                                <Copy className="w-4 h-4 mr-2" />
+                                Create New from This Version
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRestore(version)}>
                                 <RotateCcw className="w-4 h-4 mr-2" />
-                                Create New from This
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => handleRestore(version)}
-                            >
+                                Restore to This Version
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
                                 <Download className="w-4 h-4 mr-2" />
-                                Restore This Version
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                Download Version
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-8 py-16 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                          <div className="w-8 h-8 bg-gray-400 rounded-full"></div>
-                        </div>
-                        <div className="text-center">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                            No workflow history yet
-                          </h3>
-                          <p className="text-gray-600 max-w-md">
-                            When you make changes to this workflow, we'll automatically save versions here for you to track and restore.
-                          </p>
-                        </div>
-                        <Button variant="outline" className="mt-4">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Go to Workflow in HubSpot
-                        </Button>
+                    <td colSpan={6} className="px-8 py-12 text-center">
+                      <div className="text-gray-500">
+                        No workflow history available
                       </div>
                     </td>
                   </tr>
@@ -348,46 +255,28 @@ const WorkflowHistory = () => {
             </table>
           </div>
 
-          {selectedCount > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                ✓ {selectedCount} versions selected
-                {selectedCount === 1 && " (select 1 more to compare)"}
-                {selectedCount === 2 && " (ready to compare)"}
-              </p>
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              {selectedVersions.length} versions selected
+            </p>
+            <div className="flex items-center gap-3">
               <Button
+                variant="outline"
+                size="sm"
                 onClick={handleCompareVersions}
-                disabled={selectedCount !== 2}
-                className="bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+                disabled={selectedVersions.length !== 2}
+                className={selectedVersions.length === 2 ? "text-blue-600" : "text-gray-400"}
               >
                 Compare Selected Versions
               </Button>
             </div>
-          )}
+          </div>
         </div>
       </main>
-
-      <ViewDetailsModal
-        open={showViewDetails}
-        onClose={() => setShowViewDetails(false)}
-        version={selectedVersion}
-      />
-
-      <CreateNewWorkflowModal
-        open={showCreateNew}
-        onClose={() => setShowCreateNew(false)}
-        version={selectedVersion}
-      />
-
-      <RestoreVersionModal
-        open={showRestore}
-        onClose={() => setShowRestore(false)}
-        version={selectedVersion}
-      />
 
       <Footer />
     </div>
   );
 };
 
-export default WorkflowHistory;
+export default WorkflowHistory; 
