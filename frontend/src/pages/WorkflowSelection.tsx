@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
-import { Search, Info, Loader2 } from "lucide-react";
+import { Search, Info, Loader2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import ApiService from "@/services/api";
@@ -51,45 +51,69 @@ const WorkflowSelection = () => {
         
         // Fallback to mock data for demo
         setWorkflows([
-  {
-    id: "1",
-    name: "Customer Onboarding",
-    folder: "Sales Automation",
-    status: "Active",
-    lastModified: "2024-01-15 14:30",
-            hubspotId: "workflow_1"
-  },
-  {
-    id: "2",
-    name: "Lead Nurturing - SaaS",
-    folder: "Marketing",
-    status: "Active",
-    lastModified: "2024-01-14 09:15",
-            hubspotId: "workflow_2"
-  },
-  {
-    id: "3",
-    name: "Email Campaign Follow-up",
-    folder: "Marketing",
-    status: "Inactive",
-    lastModified: "2024-01-13 16:45",
-            hubspotId: "workflow_3"
-  },
-  {
-    id: "4",
-    name: "Deal Pipeline Automation",
-    folder: "Sales",
-    status: "Active",
-    lastModified: "2024-01-12 11:20",
-            hubspotId: "workflow_4"
-  },
-  {
-    id: "5",
-    name: "Customer Feedback Loop",
-    folder: "Customer Success",
-    status: "Active",
-    lastModified: "2024-01-11 13:50",
-            hubspotId: "workflow_5"
+          {
+            id: "1",
+            name: "WorkflowGuard Test Workflow - Contact Enrollment",
+            folder: "",
+            status: "Active",
+            lastModified: "7/21/2025, 11:08:51 AM",
+            hubspotId: "12584080"
+          },
+          {
+            id: "2",
+            name: "WG Test - Existing Contact Update",
+            folder: "",
+            status: "Active",
+            lastModified: "7/20/2025, 09:15:30 AM",
+            hubspotId: "12584081"
+          },
+          {
+            id: "3",
+            name: "Customer Onboarding Automation",
+            folder: "",
+            status: "Active",
+            lastModified: "7/19/2025, 16:45:22 PM",
+            hubspotId: "12584082"
+          },
+          {
+            id: "4",
+            name: "Lead Nurturing - SaaS",
+            folder: "",
+            status: "Active",
+            lastModified: "7/18/2025, 11:20:15 AM",
+            hubspotId: "12584083"
+          },
+          {
+            id: "5",
+            name: "Email Campaign Follow-up",
+            folder: "",
+            status: "Active",
+            lastModified: "7/17/2025, 13:50:45 PM",
+            hubspotId: "12584084"
+          },
+          {
+            id: "6",
+            name: "Deal Pipeline Automation",
+            folder: "",
+            status: "Active",
+            lastModified: "7/16/2025, 10:30:12 AM",
+            hubspotId: "12584085"
+          },
+          {
+            id: "7",
+            name: "Customer Feedback Loop",
+            folder: "",
+            status: "Active",
+            lastModified: "7/15/2025, 14:25:33 PM",
+            hubspotId: "12584086"
+          },
+          {
+            id: "8",
+            name: "Support Ticket Automation",
+            folder: "",
+            status: "Active",
+            lastModified: "7/14/2025, 09:45:18 AM",
+            hubspotId: "12584087"
           },
         ]);
       } finally {
@@ -108,6 +132,14 @@ const WorkflowSelection = () => {
     );
   };
 
+  const handleSelectAll = () => {
+    if (selectedWorkflows.length === filteredWorkflows.length) {
+      setSelectedWorkflows([]);
+    } else {
+      setSelectedWorkflows(filteredWorkflows.map(w => w.id));
+    }
+  };
+
   const handleStartProtecting = async () => {
     if (selectedWorkflows.length === 0) {
       toast.error('Please select at least one workflow to protect.');
@@ -116,8 +148,8 @@ const WorkflowSelection = () => {
 
     try {
       // Save selected workflows to state
-    WorkflowState.setWorkflowSelection(true);
-    WorkflowState.setSelectedCount(selectedWorkflows.length);
+      WorkflowState.setWorkflowSelection(true);
+      WorkflowState.setSelectedCount(selectedWorkflows.length);
       
       // In a real app, this would call an API to start monitoring
       console.log('Starting protection for workflows:', selectedWorkflows);
@@ -125,7 +157,7 @@ const WorkflowSelection = () => {
       toast.success(`Successfully started protecting ${selectedWorkflows.length} workflows!`);
       
       // Navigate to dashboard
-    navigate("/dashboard");
+      navigate("/dashboard");
     } catch (error) {
       console.error('Error starting workflow protection:', error);
       toast.error('Failed to start workflow protection. Please try again.');
@@ -178,6 +210,17 @@ const WorkflowSelection = () => {
           </p>
         </div>
 
+        {/* Alert Banner */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+            <span className="text-sm font-medium text-red-900">
+              Real-time updates disabled
+            </span>
+          </div>
+        </div>
+
+        {/* Information Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -213,22 +256,22 @@ const WorkflowSelection = () => {
                 />
               </div>
               <div className="flex items-center gap-4">
-                <Select defaultValue="status">
+                <Select defaultValue="all">
                   <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select defaultValue="folder">
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="HubSpot Folder" />
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="All Folders" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="folder">HubSpot Folder</SelectItem>
+                    <SelectItem value="all">All Folders</SelectItem>
                     <SelectItem value="sales">Sales</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
                     <SelectItem value="customer-success">
@@ -240,50 +283,83 @@ const WorkflowSelection = () => {
             </div>
           </div>
 
-          <div className="p-4">
-            <div className="space-y-3">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left">
+                    <Checkbox
+                      checked={selectedWorkflows.length === filteredWorkflows.length && filteredWorkflows.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                    Workflow Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                    HubSpot ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                    HubSpot Folder
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">
+                    Last Modified
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
                 {filteredWorkflows.map((workflow) => (
-                <div
-                  key={workflow.id}
-                  className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
+                  <tr key={workflow.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
                       <Checkbox
-                    id={workflow.id}
                         checked={selectedWorkflows.includes(workflow.id)}
-                    onCheckedChange={() => handleWorkflowToggle(workflow.id)}
+                        onCheckedChange={() => handleWorkflowToggle(workflow.id)}
                       />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                      {workflow.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {workflow.folder} • Last modified: {workflow.lastModified}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-medium text-gray-900">
+                        {workflow.name}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-600">
+                        {workflow.hubspotId}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-600">
+                        {workflow.folder || "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
                       <Badge
-                          variant={workflow.status === "Active" ? "default" : "secondary"}
+                        variant={workflow.status === "Active" ? "default" : "secondary"}
                         className={
                           workflow.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
                         }
                       >
                         {workflow.status}
                       </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-600">
+                        {workflow.lastModified}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
-            </div>
+              </tbody>
+            </table>
           </div>
 
           <div className="px-4 py-4 border-t border-gray-200 flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              {selectedWorkflows.length} of {filteredWorkflows.length} workflows selected
+              Selected {selectedWorkflows.length} of {filteredWorkflows.length} workflows. You have {500 - selectedWorkflows.length} workflows remaining in your trial.
             </p>
             <div className="flex items-center gap-3">
               <Button
@@ -291,14 +367,14 @@ const WorkflowSelection = () => {
                 onClick={handleSkipForNow}
                 className="text-gray-600"
               >
-                Skip for Now
+                Skip for now
               </Button>
               <Button
                 onClick={handleStartProtecting}
                 disabled={selectedWorkflows.length === 0}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Start Protecting {selectedWorkflows.length > 0 && `(${selectedWorkflows.length})`}
+                Start Protecting Workflows
               </Button>
             </div>
           </div>
