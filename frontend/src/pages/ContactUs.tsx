@@ -136,48 +136,48 @@ const ContactUs = () => {
               Get in Touch
             </h2>
             <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-5 h-5 text-blue-500" />
-                </div>
-                <div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Mail className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
                   <h3 className="font-medium text-gray-900 mb-1">Email Support</h3>
-                  <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-2">
                     support@workflowguard.pro
                   </p>
                   <p className="text-xs text-gray-500">
                     We typically respond within 24 hours
                   </p>
-                </div>
               </div>
+            </div>
 
-              <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <MessageCircle className="w-5 h-5 text-green-500" />
-                </div>
-                <div>
+              </div>
+              <div>
                   <h3 className="font-medium text-gray-900 mb-1">Live Chat</h3>
-                  <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-2">
                     Available during business hours
-                  </p>
+                </p>
                   <p className="text-xs text-gray-500">
                     Mon-Fri, 9 AM - 6 PM EST
                   </p>
-                </div>
               </div>
+            </div>
 
-              <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Clock className="w-5 h-5 text-purple-500" />
-                </div>
-                <div>
+              </div>
+              <div>
                   <h3 className="font-medium text-gray-900 mb-1">Response Times</h3>
-                  <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-2">
                     Priority support for Professional & Enterprise plans
                   </p>
                   <p className="text-xs text-gray-500">
                     Emergency issues: 2-4 hours
-                  </p>
+                </p>
                 </div>
               </div>
             </div>

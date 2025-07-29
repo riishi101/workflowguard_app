@@ -74,7 +74,7 @@ export class AuthController {
       if (!clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
         return res.redirect('https://www.workflowguard.pro?error=config_error');
-      }
+    }
 
       // 1. Exchange code for tokens
       console.log('Exchanging code for tokens...');

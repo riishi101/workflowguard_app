@@ -9,15 +9,15 @@ const PlanBillingTab = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Trial Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex items-center justify-between mb-8">
         <div>
           <p className="text-blue-900 font-medium">
             You are currently on a 21-day free trial with access to
             Professional Plan features!
           </p>
-          <p className="text-blue-700 text-sm mt-1">
+          <p className="text-blue-700 text-sm mt-2">
             Trial ends in 5 days. Upgrade now to continue using
             WorkflowGuard.
           </p>
@@ -28,11 +28,11 @@ const PlanBillingTab = () => {
       </div>
 
       {/* Subscription Overview */}
-      <Card>
+      <Card className="mb-8">
         <CardHeader>
           <CardTitle>Your Subscription Overview</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <h3 className="font-semibold text-gray-900">
@@ -49,7 +49,7 @@ const PlanBillingTab = () => {
 
           <p className="text-gray-600">$59/month (billed annually)</p>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Workflows Monitored</span>
               <span className="font-medium">47/500</span>
@@ -70,8 +70,8 @@ const PlanBillingTab = () => {
       </Card>
 
       {/* Explore Other Plans */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Explore Other Plans
         </h2>
 
@@ -88,7 +88,7 @@ const PlanBillingTab = () => {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-3 flex-grow">
+              <div className="space-y-4 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">
@@ -133,7 +133,7 @@ const PlanBillingTab = () => {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-3 flex-grow">
+              <div className="space-y-4 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">
@@ -184,7 +184,7 @@ const PlanBillingTab = () => {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-3 flex-grow">
+              <div className="space-y-4 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">

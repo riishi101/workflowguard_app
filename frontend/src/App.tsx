@@ -36,31 +36,31 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
+      <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth/hubspot/callback" element={<HubSpotCallback />} />
             <Route path="/workflow-selection" element={<WorkflowSelection />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/workflow-history" element={<WorkflowHistory />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/workflow-history" element={<WorkflowHistory />} />
             <Route
               path="/workflow-history/:workflowId"
               element={<WorkflowHistoryDetail />}
             />
-            <Route path="/compare-versions" element={<CompareVersions />} />
-            <Route path="/settings" element={<Settings />} />
+        <Route path="/compare-versions" element={<CompareVersions />} />
+        <Route path="/settings" element={<Settings />} />
             <Route path="/help" element={<HelpSupport />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/contact" element={<ContactUs />} />
+        <Route path="/contact" element={<ContactUs />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/manage-subscription" element={<ManageSubscription />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
 
 export default App;

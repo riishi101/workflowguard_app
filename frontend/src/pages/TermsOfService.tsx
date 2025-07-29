@@ -261,7 +261,7 @@ const TermsOfService = () => {
                   shall be resolved through binding arbitration in accordance with
                   the rules of [Arbitration Organization].
                 </p>
-              </div>
+                </div>
             </section>
 
             <section>
@@ -278,7 +278,7 @@ const TermsOfService = () => {
                   <p>Email: legal@workflowguard.pro</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
-              </div>
+        </div>
             </section>
           </div>
         </div>

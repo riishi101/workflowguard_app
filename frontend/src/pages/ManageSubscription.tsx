@@ -212,19 +212,19 @@ const ManageSubscription = () => {
                   <p className="text-sm text-gray-600 mb-2">
                     Cancel your subscription and stop billing at the end of your
                     current billing period.
-                  </p>
+              </p>
                   <p className="text-xs text-gray-500">
                     You'll continue to have access until August 15, 2024
                   </p>
                 </div>
-                <Button
+              <Button
                   variant="outline"
                   size="sm"
                   className="text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={handleCancelSubscription}
-                >
-                  Cancel Subscription
-                </Button>
+                onClick={handleCancelSubscription}
+              >
+                Cancel Subscription
+              </Button>
               </div>
             </CardContent>
           </Card>
