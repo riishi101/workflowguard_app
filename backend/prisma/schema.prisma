@@ -29,6 +29,9 @@ model User {
   subscription  Subscription?
   webhooks      Webhook[]
   hubspotPortalId String? @unique
+  hubspotAccessToken String?
+  hubspotRefreshToken String?
+  hubspotTokenExpiresAt DateTime?
   overages      Overage[]
   notificationSettings NotificationSettings?
   apiKeys       ApiKey[]

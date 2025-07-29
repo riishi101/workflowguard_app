@@ -13,6 +13,7 @@ import { RolesGuard } from './auth/roles.guard';
 import { WebhookModule } from './webhook/webhook.module';
 import { OverageModule } from './overage/overage.module';
 import { HubSpotBillingModule } from './modules/hubspot-billing.module';
+import { HubSpotModule } from './modules/hubspot.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { EmailModule } from './email/email.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -29,6 +30,7 @@ import { MetricsModule } from './metrics/metrics.module';
     WebhookModule,
     OverageModule,
     HubSpotBillingModule,
+    HubSpotModule,
     AnalyticsModule,
     EmailModule,
     RealtimeModule,
