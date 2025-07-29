@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import TopNavigation from "@/components/TopNavigation";
+import SimpleTopNavigation from "@/components/SimpleTopNavigation";
 import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
 import { Search, Info, Loader2, AlertTriangle } from "lucide-react";
@@ -178,7 +178,7 @@ const WorkflowSelection = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
-        <TopNavigation />
+        <SimpleTopNavigation />
         <main className="max-w-7xl mx-auto px-6 py-8 flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
@@ -197,7 +197,7 @@ const WorkflowSelection = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <TopNavigation />
+      <SimpleTopNavigation />
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
