@@ -18,6 +18,7 @@ const Settings = () => {
         return (
           <>
           {/* Trial Banner */}
+            <div className="space-y-8">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
               <div>
                 <p className="text-blue-900 font-medium">
@@ -261,6 +262,7 @@ const Settings = () => {
                 </Button>
               </CardContent>
             </Card>
+            </div>
           </>
         );
   };
@@ -277,7 +279,7 @@ const Settings = () => {
         </div>
 
         {/* Content */}
-        <div>
+        <div className="space-y-8">
           {renderContent()}
         </div>
       </main>
