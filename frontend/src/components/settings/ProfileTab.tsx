@@ -33,7 +33,7 @@ const ProfileTab = () => {
   return (
     <div>
       {/* Profile Header */}
-      <div className="flex items-center gap-6 mb-8">
+      <div className="flex items-center gap-6 mb-6">
         <Avatar className="h-16 w-16 border-2 border-blue-100">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
           <AvatarFallback className="text-lg bg-blue-50 text-blue-700">JS</AvatarFallback>
@@ -49,14 +49,14 @@ const ProfileTab = () => {
       </div>
 
       {/* Personal Details */}
-      <Card className="mb-8">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Personal Details</CardTitle>
           <CardDescription>
             Update your personal information and contact details
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div>
             <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
               Full Name
@@ -67,7 +67,7 @@ const ProfileTab = () => {
               onChange={(e) => handleInputChange("fullName", e.target.value)}
               className="mt-2"
             />
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-gray-500 mt-1">
               This is how your name appears across the platform
             </p>
           </div>
@@ -104,7 +104,7 @@ const ProfileTab = () => {
       </Card>
 
       {/* HubSpot Account Connection */}
-      <Card className="mb-8">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>HubSpot Account Connection</CardTitle>
           <CardDescription>
@@ -153,14 +153,14 @@ const ProfileTab = () => {
       </Card>
 
       {/* Preferences */}
-      <Card className="mb-8">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Preferences</CardTitle>
           <CardDescription>
             Customize your account settings and preferences
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div>
             <Label htmlFor="timezone" className="text-sm font-medium text-gray-700">
               Timezone
@@ -213,14 +213,14 @@ const ProfileTab = () => {
       </Card>
 
       {/* Security */}
-      <Card className="mb-8">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Security</CardTitle>
           <CardDescription>
             Manage your account security settings and authentication
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
               <h4 className="font-medium text-gray-900 mb-1">

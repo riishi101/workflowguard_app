@@ -11,13 +11,13 @@ const PlanBillingTab = () => {
   return (
     <div>
       {/* Trial Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex items-center justify-between mb-8">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-6">
         <div>
           <p className="text-blue-900 font-medium">
             You are currently on a 21-day free trial with access to
             Professional Plan features!
           </p>
-          <p className="text-blue-700 text-sm mt-2">
+          <p className="text-blue-700 text-sm mt-1">
             Trial ends in 5 days. Upgrade now to continue using
             WorkflowGuard.
           </p>
@@ -28,11 +28,11 @@ const PlanBillingTab = () => {
       </div>
 
       {/* Subscription Overview */}
-      <Card className="mb-8">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Your Subscription Overview</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <h3 className="font-semibold text-gray-900">
@@ -49,7 +49,7 @@ const PlanBillingTab = () => {
 
           <p className="text-gray-600">$59/month (billed annually)</p>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Workflows Monitored</span>
               <span className="font-medium">47/500</span>
@@ -70,12 +70,12 @@ const PlanBillingTab = () => {
       </Card>
 
       {/* Explore Other Plans */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Explore Other Plans
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-4">
           {/* Starter Plan */}
           <Card className="relative flex flex-col">
             <CardHeader>
