@@ -16,10 +16,10 @@ const EmptyWorkflowHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
