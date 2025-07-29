@@ -38,26 +38,26 @@ const ViewDetailsModal = ({
             View detailed information about this workflow version including changes, metadata, and actions.
           </DialogDescription>
         </VisuallyHidden>
-        
+
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
                 {workflow?.name || "Workflow Details"}
-              </h2>
-              <p className="text-sm text-gray-600">
+            </h2>
+            <p className="text-sm text-gray-600">
                 Version {version?.versionNumber || "Latest"}
-              </p>
-            </div>
+            </p>
+          </div>
             <Button variant="outline" size="sm" onClick={onClose}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Close
             </Button>
-          </div>
+        </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-4">
-              <div>
+              <div className="space-y-4">
+                <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Version Information
                 </h3>
@@ -73,17 +73,17 @@ const ViewDetailsModal = ({
                     <span className="text-sm text-gray-900">
                       {version?.snapshotType || "Manual"}
                     </span>
-                  </div>
+                </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Created By:</span>
                     <span className="text-sm text-gray-900">
                       {version?.createdBy || "System"}
                     </span>
-                  </div>
+                </div>
                 </div>
               </div>
 
-              <div>
+                <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Timestamps
                 </h3>
@@ -93,22 +93,22 @@ const ViewDetailsModal = ({
                     <span className="text-sm text-gray-600">
                       Created: {version?.createdAt || "Unknown"}
                     </span>
-                  </div>
+                </div>
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
                       Modified: {workflow?.updatedAt || "Unknown"}
                     </span>
-                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
             <div className="space-y-4">
-              <div>
+          <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Workflow Status
-                </h3>
+            </h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Status:</span>
@@ -128,8 +128,8 @@ const ViewDetailsModal = ({
                       {workflow?.versions?.length || 1}
                     </span>
                   </div>
-                </div>
-              </div>
+                        </div>
+                      </div>
 
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
@@ -148,7 +148,7 @@ const ViewDetailsModal = ({
                     <History className="w-4 h-4 mr-2" />
                     Compare with Previous
                   </Button>
-                </div>
+                  </div>
               </div>
             </div>
           </div>
@@ -192,7 +192,7 @@ const ViewDetailsModal = ({
               <span className="text-sm text-gray-600">
                 This version was created automatically
               </span>
-            </div>
+              </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />

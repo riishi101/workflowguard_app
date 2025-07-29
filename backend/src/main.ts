@@ -36,11 +36,11 @@ async function bootstrap() {
 
   // CORS configuration
   const corsOrigins = [
-    'http://localhost:3000',
-    'http://localhost:8080',
+      'http://localhost:3000',
+      'http://localhost:8080',
     'https://www.workflowguard.pro',
     'https://workflowguard.pro',
-    process.env.FRONTEND_URL
+      process.env.FRONTEND_URL
   ].filter((v): v is string => typeof v === 'string');
   
   console.log('CORS origins configured:', corsOrigins);

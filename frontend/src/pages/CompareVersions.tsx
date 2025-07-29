@@ -215,8 +215,8 @@ const CompareVersions = () => {
                     <div className="flex items-center gap-3">
                       <IconComponent className="w-4 h-4 flex-shrink-0" />
                       <span className={`text-sm font-medium ${getStepTextColor(step)}`}>
-                        {step.title}
-                      </span>
+                      {step.title}
+                    </span>
                     </div>
                   </div>
                 );
@@ -243,13 +243,13 @@ const CompareVersions = () => {
                     <div className="flex items-center gap-3">
                       <IconComponent className="w-4 h-4 flex-shrink-0" />
                       <span className={`text-sm font-medium ${getStepTextColor(step)}`}>
-                        {step.title}
-                      </span>
-                      {step.isNew && (
+                      {step.title}
+                    </span>
+                    {step.isNew && (
                         <Badge className="bg-red-100 text-red-800 text-xs">
-                          New
-                        </Badge>
-                      )}
+                        New
+                      </Badge>
+                    )}
                     </div>
                   </div>
                 );

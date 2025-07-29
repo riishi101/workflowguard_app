@@ -27,7 +27,7 @@ const RollbackConfirmModal = ({
             Are you sure you want to rollback this workflow to version {versionNumber}? This action cannot be undone.
           </DialogDescription>
         </VisuallyHidden>
-        
+
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
@@ -36,12 +36,12 @@ const RollbackConfirmModal = ({
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Rollback Workflow
-              </h2>
+          </h2>
               <p className="text-sm text-gray-600">
                 This will restore {workflowName} to version {versionNumber}
               </p>
             </div>
-          </div>
+        </div>
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
             <div className="flex items-start gap-3">

@@ -21,10 +21,10 @@ const PrivacyPolicy = () => {
 
         <div className="prose prose-gray max-w-none">
           <div className="space-y-6">
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 1. Information We Collect
-              </h2>
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   We collect information you provide directly to us, such as when
@@ -45,14 +45,14 @@ const PrivacyPolicy = () => {
                   <strong>Usage Data:</strong> We collect information about how
                   you use our service, including which features you use and how
                   often you access the platform.
-                </p>
+            </p>
               </div>
-            </section>
+          </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 2. How We Use Your Information
-              </h2>
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>We use the information we collect to:</p>
                 <ul className="list-disc pl-6 space-y-1">
@@ -62,20 +62,20 @@ const PrivacyPolicy = () => {
                   <li>Provide customer support and respond to your inquiries</li>
                   <li>Improve our services and develop new features</li>
                   <li>Ensure the security and integrity of our platform</li>
-                </ul>
-              </div>
-            </section>
+              </ul>
+            </div>
+          </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 3. Information Sharing
-              </h2>
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   We do not sell, trade, or otherwise transfer your personal
                   information to third parties, except in the following
                   circumstances:
-                </p>
+            </p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>
                     <strong>Service Providers:</strong> We may share information
@@ -92,14 +92,14 @@ const PrivacyPolicy = () => {
                     or acquisition, your information may be transferred to the new
                     entity
                   </li>
-                </ul>
+            </ul>
               </div>
-            </section>
+          </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                4. Data Security
-              </h2>
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              4. Data Security
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   We implement appropriate technical and organizational measures to
@@ -155,25 +155,25 @@ const PrivacyPolicy = () => {
                   information within 30 days, except where we are required to
                   retain certain information for legal or legitimate business
                   purposes.
-                </p>
+            </p>
               </div>
-            </section>
+          </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 7. Cookies and Tracking
-              </h2>
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   We use cookies and similar technologies to enhance your
                   experience on our platform. These technologies help us:
-                </p>
+            </p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>Remember your preferences and settings</li>
                   <li>Analyze how our platform is used</li>
                   <li>Provide personalized content and features</li>
                   <li>Ensure the security of our platform</li>
-                </ul>
+            </ul>
                 <p>
                   You can control cookie settings through your browser
                   preferences, though disabling cookies may affect some platform
@@ -194,12 +194,12 @@ const PrivacyPolicy = () => {
                   appropriate safeguards to protect your information.
                 </p>
               </div>
-            </section>
+          </section>
 
-            <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 9. Children's Privacy
-              </h2>
+            </h2>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   Our services are not intended for children under the age of 13.
@@ -208,7 +208,7 @@ const PrivacyPolicy = () => {
                   child under 13, please contact us immediately.
                 </p>
               </div>
-            </section>
+          </section>
 
             <section>
               <h2 className="text-lg font-semibold text-gray-900 mb-3">
@@ -224,7 +224,7 @@ const PrivacyPolicy = () => {
                   Your continued use of our services after any changes indicates
                   your acceptance of the updated policy.
                 </p>
-              </div>
+        </div>
             </section>
 
             <section>
@@ -241,7 +241,7 @@ const PrivacyPolicy = () => {
                   <p>Email: privacy@workflowguard.pro</p>
                   <p>Address: [Your Business Address]</p>
                 </div>
-              </div>
+          </div>
             </section>
           </div>
         </div>

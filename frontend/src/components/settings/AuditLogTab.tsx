@@ -5,63 +5,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download, Filter, Calendar, User, Settings, Shield } from "lucide-react";
+import { Search, Download, Filter, Clock, User, Settings, Shield, AlertTriangle } from "lucide-react";
 
 const AuditLogTab = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("7d");
-  const [selectedAction, setSelectedAction] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSeverity, setSelectedSeverity] = useState("all");
 
-  const auditLogs = [
-    {
+  const auditEntries = [
+  {
       id: 1,
       action: "Workflow Modified",
-      user: "John Smith",
-      timestamp: "2024-01-15 14:30:00",
-      details: "Modified 'Lead Nurturing Campaign' workflow",
+      description: "Lead Nurturing Campaign workflow was updated",
+    user: "John Smith",
+      timestamp: "2024-01-15 14:30:25",
       severity: "info",
-      ip: "192.168.1.100",
+      category: "workflow",
     },
     {
       id: 2,
-      action: "User Added",
-      user: "Sarah Johnson",
-      timestamp: "2024-01-15 13:45:00",
-      details: "Added new team member: mike.wilson@example.com",
+      action: "User Invited",
+      description: "Sarah Johnson was invited to the team",
+      user: "John Smith",
+      timestamp: "2024-01-15 13:45:12",
       severity: "info",
-      ip: "192.168.1.101",
+      category: "user",
     },
     {
       id: 3,
       action: "Security Alert",
+      description: "Failed login attempt from unknown IP",
       user: "System",
-      timestamp: "2024-01-15 12:20:00",
-      details: "Multiple failed login attempts detected",
+      timestamp: "2024-01-15 12:20:45",
       severity: "warning",
-      ip: "192.168.1.102",
+      category: "security",
     },
     {
       id: 4,
-      action: "Settings Changed",
+      action: "Billing Updated",
+      description: "Payment method updated successfully",
       user: "John Smith",
-      timestamp: "2024-01-15 11:15:00",
-      details: "Updated notification preferences",
+      timestamp: "2024-01-15 11:15:30",
       severity: "info",
-      ip: "192.168.1.100",
+      category: "billing",
     },
     {
       id: 5,
-      action: "Workflow Deleted",
-      user: "Sarah Johnson",
-      timestamp: "2024-01-15 10:30:00",
-      details: "Deleted 'Old Marketing Campaign' workflow",
-      severity: "danger",
-      ip: "192.168.1.101",
+      action: "Permission Changed",
+      description: "Mike Wilson role changed from Editor to Viewer",
+      user: "John Smith",
+      timestamp: "2024-01-15 10:30:15",
+      severity: "warning",
+      category: "user",
     },
   ];
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case "danger":
+      case "error":
         return "bg-red-100 text-red-800";
       case "warning":
         return "bg-yellow-100 text-yellow-800";
@@ -72,16 +72,15 @@ const AuditLogTab = () => {
     }
   };
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "Workflow Modified":
-      case "Workflow Deleted":
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "workflow":
         return <Settings className="w-4 h-4" />;
-      case "User Added":
+      case "user":
         return <User className="w-4 h-4" />;
-      case "Security Alert":
+      case "security":
         return <Shield className="w-4 h-4" />;
-      case "Settings Changed":
+      case "billing":
         return <Settings className="w-4 h-4" />;
       default:
         return <Settings className="w-4 h-4" />;
@@ -90,16 +89,16 @@ const AuditLogTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card>
         <CardHeader>
           <CardTitle>Audit Log</CardTitle>
           <CardDescription>
-            View detailed logs of all activities and changes in your account
+            View detailed logs of all activities in your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
+          <div className="flex gap-4">
             <div className="flex-1">
               <Label htmlFor="search" className="text-sm font-medium">
                 Search
@@ -109,108 +108,49 @@ const AuditLogTab = () => {
                 <Input
                   id="search"
                   placeholder="Search audit logs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
-              </div>
-            </div>
-            <div className="w-32">
-              <Label htmlFor="period" className="text-sm font-medium">
-                Period
+        </div>
+      </div>
+            <div className="w-48">
+              <Label htmlFor="severity" className="text-sm font-medium">
+                Severity
               </Label>
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
                 <SelectTrigger className="mt-2">
                   <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1d">Last 24h</SelectItem>
-                  <SelectItem value="7d">Last 7 days</SelectItem>
-                  <SelectItem value="30d">Last 30 days</SelectItem>
-                  <SelectItem value="90d">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-32">
-              <Label htmlFor="action" className="text-sm font-medium">
-                Action
-              </Label>
-              <Select value={selectedAction} onValueChange={setSelectedAction}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  <SelectItem value="workflow">Workflow</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="settings">Settings</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="all">All Severities</SelectItem>
+                  <SelectItem value="error">Error</SelectItem>
+                  <SelectItem value="warning">Warning</SelectItem>
+                  <SelectItem value="info">Info</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Audit Log Entries */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Latest audit log entries from your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {auditLogs.map((log) => (
-              <div key={log.id} className="flex items-start gap-4 p-3 border border-gray-200 rounded-lg">
-                <div className="flex-shrink-0 mt-1">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    {getActionIcon(log.action)}
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900">
-                        {log.action}
-                      </span>
-                      <Badge className={`text-xs ${getSeverityColor(log.severity)}`}>
-                        {log.severity}
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {log.timestamp}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    {log.details}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>User: {log.user}</span>
-                    <span>IP: {log.ip}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="flex items-end">
+              <Button variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+                Export
+          </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Settings className="w-4 h-4 text-blue-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Total Actions</p>
+                <p className="text-sm text-gray-600">Total Events</p>
                 <p className="text-2xl font-bold text-gray-900">1,247</p>
-                <p className="text-xs text-gray-500">Last 30 days</p>
               </div>
             </div>
           </CardContent>
@@ -219,13 +159,12 @@ const AuditLogTab = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <User className="w-4 h-4 text-green-600" />
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <User className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Active Users</p>
+                <p className="text-sm text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-gray-900">12</p>
-                <p className="text-xs text-gray-500">Team members</p>
               </div>
             </div>
           </CardContent>
@@ -234,18 +173,51 @@ const AuditLogTab = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Shield className="w-4 h-4 text-yellow-600" />
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Security Events</p>
+                <p className="text-sm text-gray-600">Warnings</p>
                 <p className="text-2xl font-bold text-gray-900">3</p>
-                <p className="text-xs text-gray-500">This week</p>
               </div>
             </div>
           </CardContent>
         </Card>
+        </div>
+
+      {/* Audit Log Entries */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {auditEntries.map((entry) => (
+              <div key={entry.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    {getCategoryIcon(entry.category)}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-gray-900">{entry.action}</h4>
+                    <Badge className={getSeverityColor(entry.severity)}>
+                      {entry.severity}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{entry.description}</p>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span>By: {entry.user}</span>
+                    <span>•</span>
+                    <span>{entry.timestamp}</span>
+                  </div>
+        </div>
       </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

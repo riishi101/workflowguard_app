@@ -36,19 +36,19 @@ const NotificationsTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Mail className="w-5 h-5 text-gray-600" />
               <div>
                 <Label className="text-sm font-medium">Email Notifications</Label>
                 <p className="text-xs text-gray-500">Receive notifications via email</p>
               </div>
-            </div>
-            <Switch
+              </div>
+              <Switch
               checked={notifications.emailNotifications}
               onCheckedChange={() => handleToggle("emailNotifications")}
-            />
-          </div>
+              />
+            </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ const NotificationsTab = () => {
               checked={notifications.pushNotifications}
               onCheckedChange={() => handleToggle("pushNotifications")}
             />
-          </div>
+              </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -103,13 +103,13 @@ const NotificationsTab = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-sm font-medium">Security Alerts</Label>
-              <p className="text-xs text-gray-500">Important security notifications</p>
+              <p className="text-xs text-gray-500">Important security and access notifications</p>
             </div>
             <Switch
               checked={notifications.securityAlerts}
               onCheckedChange={() => handleToggle("securityAlerts")}
             />
-          </div>
+              </div>
 
           <div className="flex items-center justify-between">
             <div>
@@ -120,7 +120,7 @@ const NotificationsTab = () => {
               checked={notifications.billingUpdates}
               onCheckedChange={() => handleToggle("billingUpdates")}
             />
-          </div>
+              </div>
 
           <div className="flex items-center justify-between">
             <div>
@@ -144,24 +144,26 @@ const NotificationsTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <Label htmlFor="frequency" className="text-sm font-medium">
-              Frequency
-            </Label>
-            <Select
-              value={notifications.frequency}
-              onValueChange={(value) => setNotifications(prev => ({ ...prev, frequency: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="immediate">Immediate</SelectItem>
-                <SelectItem value="hourly">Hourly Digest</SelectItem>
-                <SelectItem value="daily">Daily Digest</SelectItem>
-                <SelectItem value="weekly">Weekly Digest</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="frequency" className="text-sm font-medium">
+                Frequency
+              </Label>
+              <Select
+                value={notifications.frequency}
+                onValueChange={(value) => setNotifications(prev => ({ ...prev, frequency: value }))}
+              >
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="immediate">Immediate</SelectItem>
+                  <SelectItem value="hourly">Hourly Digest</SelectItem>
+                  <SelectItem value="daily">Daily Digest</SelectItem>
+                  <SelectItem value="weekly">Weekly Digest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -175,20 +177,17 @@ const NotificationsTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
+          <div className="flex gap-3">
             <Button variant="outline" size="sm">
-              <Mail className="w-4 h-4 mr-2" />
               Test Email
             </Button>
             <Button variant="outline" size="sm">
-              <Bell className="w-4 h-4 mr-2" />
               Test Push
             </Button>
             <Button variant="outline" size="sm">
-              <Smartphone className="w-4 h-4 mr-2" />
               Test SMS
-            </Button>
-          </div>
+          </Button>
+        </div>
         </CardContent>
       </Card>
     </div>

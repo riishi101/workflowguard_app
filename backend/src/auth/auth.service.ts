@@ -45,25 +45,25 @@ export class AuthService {
     try {
       console.log('Finding or creating user with email:', email);
       
-      let user = await this.prisma.user.findUnique({
-        where: { email },
-      });
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
-      if (!user) {
+    if (!user) {
         console.log('User not found, creating new user');
-        user = await this.prisma.user.create({
-          data: {
-            email,
-            name,
-            role: 'viewer',
-          },
-        });
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name,
+          role: 'viewer',
+        },
+      });
         console.log('New user created with ID:', user.id);
       } else {
         console.log('Existing user found with ID:', user.id);
-      }
+    }
 
-      return user;
+    return user;
     } catch (error) {
       console.error('Error in findOrCreateUser:', error);
       throw error;
@@ -102,9 +102,9 @@ export class AuthService {
       console.log('Updating user hubspotPortalId:', userId, hubspotPortalId);
       
       const result = await this.prisma.user.update({
-        where: { id: userId },
-        data: { hubspotPortalId },
-      });
+      where: { id: userId },
+      data: { hubspotPortalId },
+    });
       
       console.log('User hubspotPortalId updated successfully');
       return result;

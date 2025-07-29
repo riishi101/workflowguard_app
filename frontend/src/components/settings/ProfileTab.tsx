@@ -1,39 +1,30 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, User, Shield, Settings, Trash2 } from "lucide-react";
+import { CheckCircle, User, Shield, Settings, Trash2, AlertTriangle } from "lucide-react";
 
 const ProfileTab = () => {
   const [profile, setProfile] = useState({
     fullName: "John Smith",
     email: "john.smith@example.com",
-    jobTitle: "Senior Product Manager",
-    timezone: "Pacific Time (PT) UTC-7",
-    language: "English (US)",
+    jobTitle: "Product Manager",
+    timezone: "America/New_York",
+    language: "en",
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setProfile((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setProfile({ ...profile, [field]: value });
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Profile Header */}
-      <div className="flex items-center gap-6 mb-6">
+      <div className="flex items-center gap-6">
         <Avatar className="h-16 w-16 border-2 border-blue-100">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
           <AvatarFallback className="text-lg bg-blue-50 text-blue-700">JS</AvatarFallback>
@@ -49,7 +40,7 @@ const ProfileTab = () => {
       </div>
 
       {/* Personal Details */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>Personal Details</CardTitle>
           <CardDescription>
@@ -104,7 +95,7 @@ const ProfileTab = () => {
       </Card>
 
       {/* HubSpot Account Connection */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>HubSpot Account Connection</CardTitle>
           <CardDescription>
@@ -136,7 +127,7 @@ const ProfileTab = () => {
                   <div className="text-right bg-gray-50 rounded p-2">
                     <div className="text-xs font-medium text-gray-900">Role</div>
                     <div className="text-xs text-gray-600">Admin</div>
-                  </div>
+                </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -153,7 +144,7 @@ const ProfileTab = () => {
       </Card>
 
       {/* Preferences */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>Preferences</CardTitle>
           <CardDescription>
@@ -173,17 +164,17 @@ const ProfileTab = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Pacific Time (PT) UTC-7">
-                  Pacific Time (PT) UTC-7
+                <SelectItem value="America/New_York">
+                  (GMT-05:00) Eastern Time - New York
                 </SelectItem>
-                <SelectItem value="Mountain Time (MT) UTC-6">
-                  Mountain Time (MT) UTC-6
+                <SelectItem value="America/Chicago">
+                  (GMT-06:00) Central Time - Chicago
                 </SelectItem>
-                <SelectItem value="Central Time (CT) UTC-5">
-                  Central Time (CT) UTC-5
+                <SelectItem value="America/Denver">
+                  (GMT-07:00) Mountain Time - Denver
                 </SelectItem>
-                <SelectItem value="Eastern Time (ET) UTC-4">
-                  Eastern Time (ET) UTC-4
+                <SelectItem value="America/Los_Angeles">
+                  (GMT-08:00) Pacific Time - Los Angeles
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -201,11 +192,9 @@ const ProfileTab = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="English (US)">English (US)</SelectItem>
-                <SelectItem value="English (UK)">English (UK)</SelectItem>
-                <SelectItem value="Spanish">Spanish</SelectItem>
-                <SelectItem value="French">French</SelectItem>
-                <SelectItem value="German">German</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -213,7 +202,7 @@ const ProfileTab = () => {
       </Card>
 
       {/* Security */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle>Security</CardTitle>
           <CardDescription>
@@ -227,7 +216,7 @@ const ProfileTab = () => {
                 Two-Factor Authentication
               </h4>
               <p className="text-sm text-gray-600">
-                Add an extra layer of security to your account
+                Add an extra layer of security to your account.
               </p>
             </div>
             <Button variant="outline" size="sm">
@@ -241,7 +230,7 @@ const ProfileTab = () => {
                 Change Password
               </h4>
               <p className="text-sm text-gray-600">
-                Update your account password regularly
+                Update your account password regularly.
               </p>
             </div>
             <Button variant="outline" size="sm">
