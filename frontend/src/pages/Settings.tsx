@@ -17,9 +17,8 @@ const Settings = () => {
     const renderContent = () => {
         return (
           <>
-          {/* Trial Banner */}
-            <div className="space-y-8">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+                      {/* Trial Banner */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-8">
               <div>
                 <p className="text-blue-900 font-medium">
                   You are currently on a 21-day free trial with access to
@@ -36,7 +35,7 @@ const Settings = () => {
             </div>
 
             {/* Subscription Overview */}
-            <Card>
+            <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Your Subscription Overview</CardTitle>
               </CardHeader>
@@ -78,7 +77,7 @@ const Settings = () => {
             </Card>
 
             {/* Explore Other Plans */}
-            <div>
+            <div className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Explore Other Plans
               </h2>
@@ -246,7 +245,7 @@ const Settings = () => {
             </div>
 
             {/* Manage Subscription */}
-            <Card>
+            <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Manage Your Subscription & Plan</CardTitle>
                 <CardDescription>
@@ -262,7 +261,6 @@ const Settings = () => {
                 </Button>
               </CardContent>
             </Card>
-            </div>
           </>
         );
   };
@@ -279,9 +277,7 @@ const Settings = () => {
         </div>
 
         {/* Content */}
-        <div className="space-y-8">
-          {renderContent()}
-        </div>
+        {renderContent()}
       </main>
 
       <Footer />
