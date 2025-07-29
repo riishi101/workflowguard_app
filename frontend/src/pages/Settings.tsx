@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,44 +14,21 @@ import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 
 const Settings = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <TopNavigation />
+  const [activeTab, setActiveTab] = useState("billing");
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            App Settings
-          </h1>
-        </div>
+  const tabs = [
+    { id: "billing", label: "My Plan & Billing" },
+    { id: "notifications", label: "Notifications" },
+    { id: "permissions", label: "User Permissions" },
+    { id: "audit", label: "Audit Log" },
+    { id: "api", label: "API Access" },
+    { id: "profile", label: "My Profile" },
+  ];
 
-        {/* Tabs */}
-        <div className="space-y-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button className="border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
-                <span>My Plan & Billing</span>
-              </button>
-              <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                Notifications
-              </button>
-              <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                User Permissions
-              </button>
-              <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                Audit Log
-              </button>
-              <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                API Access
-              </button>
-              <button className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                My Profile
-              </button>
-            </nav>
-          </div>
-
-          {/* Billing Content */}
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "billing":
+        return (
           <div className="space-y-6">
             {/* Trial Banner */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
@@ -259,6 +237,81 @@ const Settings = () => {
               </div>
             </div>
           </div>
+        );
+      case "notifications":
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Settings</h3>
+            <p className="text-gray-600">Configure your notification preferences here.</p>
+          </div>
+        );
+      case "permissions":
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">User Permissions</h3>
+            <p className="text-gray-600">Manage user roles and permissions here.</p>
+          </div>
+        );
+      case "audit":
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Audit Log</h3>
+            <p className="text-gray-600">View system activity and audit logs here.</p>
+          </div>
+        );
+      case "api":
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">API Access</h3>
+            <p className="text-gray-600">Manage API keys and access here.</p>
+          </div>
+        );
+      case "profile":
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">My Profile</h3>
+            <p className="text-gray-600">Update your profile information here.</p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <TopNavigation />
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            App Settings
+          </h1>
+        </div>
+
+        {/* Tabs */}
+        <div className="space-y-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`border-b-2 py-2 px-1 text-sm font-medium transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          {renderTabContent()}
         </div>
       </div>
 
