@@ -21,7 +21,7 @@ const Settings = () => {
       <TopNavigation />
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             App Settings
           </h1>
@@ -32,52 +32,52 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-gray-50 p-3 rounded-xl mb-8">
+          <TabsList className="grid w-full grid-cols-6 bg-gray-50 p-2 rounded-xl mb-10 shadow-sm border border-gray-200">
             <TabsTrigger
               value="plan-billing"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <CreditCard className="w-5 h-5" />
               My Plan & Billing
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <Bell className="w-5 h-5" />
               Notifications
             </TabsTrigger>
             <TabsTrigger
               value="user-permissions"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <Users className="w-5 h-5" />
               User Permissions
             </TabsTrigger>
             <TabsTrigger
               value="audit-log"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <FileText className="w-5 h-5" />
               Audit Log
             </TabsTrigger>
             <TabsTrigger
               value="api-access"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <Code className="w-5 h-5" />
               API Access
             </TabsTrigger>
             <TabsTrigger
               value="profile"
-              className="flex items-center gap-3 text-sm font-medium py-4 px-6"
+              className="flex items-center gap-3 text-sm font-medium py-4 px-6 rounded-lg transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-blue-200"
             >
               <CircleUser className="w-5 h-5" />
               My Profile
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-8">
+          <div className="mt-10">
             <TabsContent value="plan-billing">
               <PlanBillingTab />
             </TabsContent>

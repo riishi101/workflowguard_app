@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, User, Shield, Settings, Trash2 } from "lucide-react";
 
 const ProfileTab = () => {
   const [profile, setProfile] = useState({
@@ -31,25 +31,32 @@ const ProfileTab = () => {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-16">
       {/* Profile Header */}
       <div className="flex items-center gap-8">
-        <Avatar className="h-20 w-20">
+        <Avatar className="h-20 w-20 border-4 border-blue-100 shadow-sm">
           <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
-          <AvatarFallback className="text-xl">JS</AvatarFallback>
+          <AvatarFallback className="text-xl bg-blue-50 text-blue-700">JS</AvatarFallback>
         </Avatar>
         <div>
           <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
           <p className="text-sm text-gray-600">john.smith@example.com</p>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-xs text-green-600 font-medium">Active</span>
+          </div>
         </div>
       </div>
 
       {/* Personal Details */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-8">
-          <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-            Personal Details
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-gray-600" />
+            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
+              Personal Details
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0 space-y-8">
           <div>
@@ -60,7 +67,7 @@ const ProfileTab = () => {
               id="full-name"
               value={profile.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              className="mt-3 h-12 text-base"
+              className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
             <p className="text-sm text-gray-500 mt-3">
               This is how your name appears across the platform
@@ -76,9 +83,9 @@ const ProfileTab = () => {
                 id="email"
                 value={profile.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className="flex-1 h-12 text-base"
+                className="flex-1 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
               />
-              <Button variant="outline" className="h-12 px-8 text-base font-medium">
+              <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
                 Verify Email
               </Button>
             </div>
@@ -92,23 +99,26 @@ const ProfileTab = () => {
               id="job-title"
               value={profile.jobTitle}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-              className="mt-3 h-12 text-base"
+              className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         </CardContent>
       </Card>
 
       {/* HubSpot Account Connection */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-8">
-          <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-            HubSpot Account Connection
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
+              HubSpot Account Connection
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0">
           <div className="flex items-start gap-8">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center border border-green-200">
                 <CheckCircle className="w-6 h-6 text-green-500" />
               </div>
             </div>
@@ -124,21 +134,21 @@ const ProfileTab = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="text-right">
+                  <div className="text-right bg-gray-50 rounded-lg p-3">
                     <div className="text-sm font-medium text-gray-900">Portal ID</div>
                     <div className="text-sm text-gray-600">243112608</div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right bg-gray-50 rounded-lg p-3">
                     <div className="text-sm font-medium text-gray-900">Role</div>
                     <div className="text-sm text-gray-600">Admin</div>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Button variant="outline" className="h-12 px-8 text-base font-medium">
+                <Button variant="outline" className="h-12 px-8 text-base font-medium border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors duration-200">
                   Disconnect HubSpot
                 </Button>
-                <Button variant="outline" className="h-12 px-8 text-base font-medium">
+                <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
                   Reconnect
                 </Button>
               </div>
@@ -148,11 +158,14 @@ const ProfileTab = () => {
       </Card>
 
       {/* Preferences */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-8">
-          <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-            Preferences
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <Settings className="w-5 h-5 text-gray-600" />
+            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
+              Preferences
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0 space-y-8">
           <div>
@@ -163,7 +176,7 @@ const ProfileTab = () => {
               value={profile.timezone}
               onValueChange={(value) => handleInputChange("timezone", value)}
             >
-              <SelectTrigger className="mt-3 h-12 text-base">
+              <SelectTrigger className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -191,7 +204,7 @@ const ProfileTab = () => {
               value={profile.language}
               onValueChange={(value) => handleInputChange("language", value)}
             >
-              <SelectTrigger className="mt-3 h-12 text-base">
+              <SelectTrigger className="mt-3 h-12 text-base border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -207,14 +220,17 @@ const ProfileTab = () => {
       </Card>
 
       {/* Security */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-8">
-          <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
-            Security
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-gray-600" />
+            <CardTitle className="tracking-tight text-lg font-semibold text-gray-900">
+              Security
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0 space-y-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
                 Two-Factor Authentication
@@ -223,12 +239,12 @@ const ProfileTab = () => {
                 Add an extra layer of security to your account
               </p>
             </div>
-            <Button variant="outline" className="h-12 px-8 text-base font-medium">
+            <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
               Enable 2FA
             </Button>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
                 Change Password
@@ -237,7 +253,7 @@ const ProfileTab = () => {
                 Update your account password regularly
               </p>
             </div>
-            <Button variant="outline" className="h-12 px-8 text-base font-medium">
+            <Button variant="outline" className="h-12 px-8 text-base font-medium border-blue-200 hover:bg-blue-50 transition-colors duration-200">
               Change Password
             </Button>
           </div>
@@ -245,29 +261,32 @@ const ProfileTab = () => {
       </Card>
 
       {/* Account Actions */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-red-200 hover:shadow-md transition-shadow duration-200">
         <CardHeader className="pb-8">
-          <CardTitle className="tracking-tight text-lg font-semibold text-red-600">
-            Danger Zone
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <Trash2 className="w-5 h-5 text-red-600" />
+            <CardTitle className="tracking-tight text-lg font-semibold text-red-600">
+              Danger Zone
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0">
-          <Alert className="mb-8">
-            <AlertTriangle className="h-5 w-5" />
-            <AlertDescription className="text-sm">
+          <Alert className="mb-8 border-red-200 bg-red-50">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertDescription className="text-sm text-red-700">
               These actions cannot be undone. Please proceed with caution.
             </AlertDescription>
           </Alert>
           <div className="space-y-6">
             <Button 
               variant="outline" 
-              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50"
+              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors duration-200"
             >
               Deactivate Account
             </Button>
             <Button 
               variant="outline" 
-              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50"
+              className="w-full h-12 text-base font-medium text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-colors duration-200"
             >
               Delete Account
             </Button>
