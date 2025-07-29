@@ -52,8 +52,8 @@ const Settings = () => {
       <TopNavigation />
 
       {/* Main Content */}
-      <div className="max-w-7xl px-4 py-6">
-        <div className="mb-6 text-center">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">App Settings</h1>
           <p className="text-gray-600 text-sm">
             Manage app-level configurations, subscriptions, and user access for
@@ -64,7 +64,7 @@ const Settings = () => {
         {/* Tabs */}
         <div className="mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 justify-center">
+            <nav className="-mb-px flex space-x-8">
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
                 const isActive = activeTab === tab.id;
