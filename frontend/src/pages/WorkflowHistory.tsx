@@ -117,26 +117,26 @@ const WorkflowHistory = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+          <h1 className="text-3xl font-semibold text-gray-900 mb-4">
             Workflow History
           </h1>
 
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-semibold text-gray-900">
                   Customer Onboarding
                 </h2>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Active</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-base text-gray-600 font-medium">Active</span>
                 </div>
-                <span className="text-sm text-gray-500">ID: a1b2c304</span>
+                <span className="text-base text-gray-500">ID: a1b2c304</span>
               </div>
             </div>
 
-            <Button variant="outline" size="sm" className="text-blue-600">
-              <ExternalLink className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="default" className="text-blue-600 font-medium">
+              <ExternalLink className="w-5 h-5 mr-2" />
               Go to Workflow in HubSpot
             </Button>
           </div>
@@ -148,19 +148,19 @@ const WorkflowHistory = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="w-16 px-8 py-6"></th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-8 py-6 text-lg font-semibold text-gray-900">
                     Date & Time
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-8 py-6 text-lg font-semibold text-gray-900">
                     Type
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-8 py-6 text-lg font-semibold text-gray-900">
                     Initiator
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-8 py-6 text-lg font-semibold text-gray-900">
                     Notes
                   </th>
-                  <th className="text-left px-8 py-6 text-base font-semibold text-gray-900">
+                  <th className="text-left px-8 py-6 text-lg font-semibold text-gray-900">
                     Actions
                   </th>
                 </tr>
@@ -175,31 +175,31 @@ const WorkflowHistory = () => {
                           onCheckedChange={() => handleVersionToggle(version.id)}
                         />
                       </td>
-                      <td className="px-8 py-6 text-base text-gray-900">
+                      <td className="px-8 py-6 text-lg text-gray-900 font-medium">
                         {version.date}
                       </td>
                       <td className="px-8 py-6">
                         <Badge
                           variant="secondary"
-                          className={getTypeColor(version.type)}
+                          className={`${getTypeColor(version.type)} text-sm font-medium px-3 py-1`}
                         >
                           {version.type}
                         </Badge>
                       </td>
-                      <td className="px-8 py-6 text-base text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <span>👤</span>
-                          <span>{version.initiator}</span>
+                      <td className="px-8 py-6 text-lg text-gray-700">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">👤</span>
+                          <span className="font-medium">{version.initiator}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-base text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <span>📝</span>
+                      <td className="px-8 py-6 text-lg text-gray-700">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl">📝</span>
                           <span
                             className={
                               version.notes === "No notes available"
-                                ? "italic"
-                                : ""
+                                ? "italic text-gray-500"
+                                : "font-medium"
                             }
                           >
                             {version.notes}
@@ -207,20 +207,20 @@ const WorkflowHistory = () => {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <Button
                             variant="outline"
                             size="default"
                             onClick={() => handleViewDetails(version)}
-                            className="text-blue-600"
+                            className="text-blue-600 font-medium"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
+                            <Eye className="w-5 h-5 mr-2" />
                             View
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="outline" size="default">
-                                <MoreHorizontal className="w-4 h-4" />
+                                <MoreHorizontal className="w-5 h-5" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -255,17 +255,17 @@ const WorkflowHistory = () => {
             </table>
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+          <div className="px-8 py-6 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-base text-gray-700 font-medium">
               {selectedVersions.length} versions selected
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={handleCompareVersions}
                 disabled={selectedVersions.length !== 2}
-                className={selectedVersions.length === 2 ? "text-blue-600" : "text-gray-400"}
+                className={selectedVersions.length === 2 ? "text-blue-600 font-medium" : "text-gray-400"}
               >
                 Compare Selected Versions
               </Button>
