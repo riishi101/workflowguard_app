@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import TopNavigation from "@/components/TopNavigation";
+import SimpleTopNavigation from "@/components/SimpleTopNavigation";
 import Footer from "@/components/Footer";
 
 const PrivacyPolicy = () => {
@@ -7,7 +7,7 @@ const PrivacyPolicy = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <TopNavigation />
+      <SimpleTopNavigation />
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
