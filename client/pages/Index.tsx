@@ -9,13 +9,49 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import TopNavigation from "@/components/TopNavigation";
-import Footer from "@/components/Footer";
 
-const Settings = () => {
+export default function Index() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNavigation />
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                  <Check className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-lg font-semibold text-gray-900">
+                  WorkflowGuard
+                </span>
+              </div>
+            </div>
+
+            <nav className="flex items-center space-x-8">
+              <a href="#" className="text-gray-600 hover:text-gray-900">
+                Dashboard
+              </a>
+              <a href="#" className="text-gray-600 hover:text-gray-900">
+                Workflow History
+              </a>
+              <a href="#" className="text-blue-600 font-medium">
+                Settings
+              </a>
+              <a href="#" className="text-gray-600 hover:text-gray-900">
+                Help & Support
+              </a>
+            </nav>
+
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-600">John Smith</span>
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-700">JS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -301,10 +337,6 @@ const Settings = () => {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
-};
-
-export default Settings; 
+}
