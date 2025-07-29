@@ -31,272 +31,249 @@ const Settings = () => {
         return (
           <div className="space-y-6">
             {/* Trial Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Check className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-900 mb-1">
-                      🎉 You're on a Professional Trial!
-                    </h3>
-                    <p className="text-sm text-blue-700 mb-2">
-                      Enjoy full access to Professional Plan features for 21 days
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-blue-600">
-                      <span>⏰ Trial ends in 5 days</span>
-                      <span>📊 47/500 workflows used</span>
-                      <span>💳 No credit card required</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Upgrade Now
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Learn More
-                  </Button>
-                </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+              <div>
+                <p className="text-blue-900 font-medium">
+                  You are currently on a 21-day free trial with access to
+                  Professional Plan features!
+                </p>
+                <p className="text-blue-700 text-sm mt-1">
+                  Trial ends in 5 days. Upgrade now to continue using
+                  WorkflowGuard.
+                </p>
               </div>
+              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                Upgrade Now
+              </Button>
             </div>
 
             {/* Subscription Overview */}
-            <div className="bg-white border border-gray-200 rounded-lg mb-8">
-              <div className="px-6 py-4 border-b border-gray-200">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Subscription Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Your Subscription Overview</h3>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <h4 className="text-2xl font-bold text-gray-900 mb-1">Professional Plan</h4>
-                    <p className="text-lg text-gray-700 font-medium mb-1">$59/month</p>
-                    <p className="text-sm text-gray-500">Billed annually • Trial Plan</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-600 mb-1">Next billing</div>
-                    <div className="text-lg font-semibold text-gray-900">July 1, 2024</div>
-                    <div className="text-xs text-gray-500">Auto-renewal enabled</div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="font-semibold text-gray-900">
+                      Professional Plan
+                    </h3>
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-800 hover:bg-blue-100"
+                    >
+                      Trial
+                    </Badge>
                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Workflows Monitored</span>
-                      <span className="text-sm font-semibold text-gray-900">47 / 500</span>
-                    </div>
-                    <Progress value={9.4} className="w-full h-2 bg-gray-200" />
-                    <div className="text-xs text-gray-500 mt-1">9.4% of your limit used</div>
+
+                <p className="text-gray-600">$59/month (billed annually)</p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Workflows Monitored</span>
+                    <span className="font-medium">47/500</span>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-lg font-bold text-blue-600">90</div>
-                      <div className="text-xs text-gray-600">Days History</div>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-lg font-bold text-green-600">24/7</div>
-                      <div className="text-xs text-gray-600">Support</div>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <div className="text-lg font-bold text-purple-600">Unlimited</div>
-                      <div className="text-xs text-gray-600">API Calls</div>
-                    </div>
+                  <Progress value={9.4} className="w-full h-2 bg-gray-200" />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Version History</span>
+                    <span className="font-medium">90 days retained</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Next billing on:</span>
+                    <span className="font-medium">July 1, 2024</span>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Explore Other Plans */}
-            <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Explore Other Plans
-                  </h2>
-                </div>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Explore Other Plans
+              </h2>
 
-              <div className="p-8 border-b border-gray-200">
-                <div className="grid grid-cols-3 gap-6">
-                  {/* Starter Plan */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                    <div className="text-center mb-6">
-                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Check className="w-6 h-6 text-gray-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Starter</h3>
-                      <div className="flex items-baseline justify-center space-x-1 mb-1">
-                        <span className="text-3xl font-bold text-gray-900">$29</span>
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Starter Plan */}
+                <Card className="relative flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Starter</CardTitle>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-3xl font-bold">$29</span>
                         <span className="text-gray-600">/month</span>
                       </div>
-                      <p className="text-sm text-gray-500">Perfect for small teams</p>
                     </div>
-                    
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Up to 25 workflows/month</span>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow">
+                    <div className="space-y-3 flex-grow">
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Up to 25 workflows/month
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Basic monitoring & alerts</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Basic Monitoring
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">30 days version history</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          30 days history
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Email support</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Basic integrations</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Email Support
+                        </span>
                       </div>
                     </div>
-                    
-                    <Button className="w-full bg-gray-600 hover:bg-gray-700 text-white">
-                      Select Starter Plan
+
+                    <Button variant="outline" className="w-full mt-8">
+                      Select Plan
                     </Button>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Professional Plan */}
-                  <div className="bg-white border-2 border-blue-500 rounded-lg p-6 ring-4 ring-blue-100 relative hover:shadow-lg transition-shadow">
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-blue-600 text-white px-3 py-1">Current Plan</Badge>
-                    </div>
-                    <div className="text-center mb-6">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Check className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Professional</h3>
-                      <div className="flex items-baseline justify-center space-x-1 mb-1">
-                        <span className="text-3xl font-bold text-gray-900">$59</span>
+                {/* Professional Plan */}
+                <Card className="relative border-blue-200 ring-2 ring-blue-100 flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Professional</CardTitle>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-3xl font-bold">$59</span>
                         <span className="text-gray-600">/month</span>
                       </div>
-                      <p className="text-sm text-gray-500">Most popular choice</p>
                     </div>
-                    
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Up to 500 workflows/month</span>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow">
+                    <div className="space-y-3 flex-grow">
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Up to 500 workflows/month
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Advanced monitoring & analytics</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Advanced Monitoring
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">90 days version history</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          90 days history
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Priority support</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Priority Support
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Custom notifications</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Advanced integrations</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Custom Notifications
+                        </span>
                       </div>
                     </div>
-                    
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled>
+
+                    <Button className="w-full mt-8 bg-blue-600 hover:bg-blue-700">
                       Current Plan
                     </Button>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Enterprise Plan */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                    <div className="text-center mb-6">
-                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Check className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Enterprise</h3>
-                      <div className="flex items-baseline justify-center space-x-1 mb-1">
-                        <span className="text-3xl font-bold text-gray-900">$99</span>
+                {/* Enterprise Plan */}
+                <Card className="relative flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Enterprise</CardTitle>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-3xl font-bold">$99</span>
                         <span className="text-gray-600">/month</span>
                       </div>
-                      <p className="text-sm text-gray-500">For large organizations</p>
                     </div>
-                    
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Unlimited workflows</span>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow">
+                    <div className="space-y-3 flex-grow">
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Unlimited workflows
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Advanced monitoring & analytics</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Advanced Monitoring
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Unlimited version history</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Unlimited history
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">24/7 dedicated support</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          24/7 Support
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Full API access</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          API Access
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Advanced user permissions</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          User Permissions
+                        </span>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Comprehensive audit logs</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">Custom integrations</span>
+                      <div className="flex items-center space-x-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-gray-600">
+                          Audit Logs
+                        </span>
                       </div>
                     </div>
-                    
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                      Select Enterprise Plan
+
+                    <Button variant="outline" className="w-full mt-8">
+                      Select Plan
                     </Button>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
             {/* Manage Subscription */}
-            <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Manage Your Subscription & Plan
-                  </h2>
-                </div>
-              </div>
-              <div className="p-8 border-b border-gray-200">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                  <div className="relative flex-1 max-w-lg">
-                    <p className="text-sm text-gray-600 mb-4">
-                      To change your plan, update payment methods, or manage your
-                      subscription details, you will be redirected to your HubSpot
-                      account.
-                    </p>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
-                      <span>Manage Subscription in HubSpot</span>
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Manage Your Subscription & Plan</CardTitle>
+                <CardDescription>
+                  To change your plan, update payment methods, or manage your
+                  subscription details, you will be redirected to your HubSpot
+                  account.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+                  <span>Manage Subscription in HubSpot</span>
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         );
       case "notifications":
