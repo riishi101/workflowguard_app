@@ -12,7 +12,7 @@ const PlanBillingTab = () => {
     <div>
       {/* Trial Banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-6">
-        <div>
+        <div className="text-center flex-1">
           <p className="text-blue-900 font-medium">
             You are currently on a 21-day free trial with access to
             Professional Plan features!
@@ -29,39 +29,37 @@ const PlanBillingTab = () => {
 
       {/* Subscription Overview */}
       <Card className="mb-6">
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Your Subscription Overview</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h3 className="font-semibold text-gray-900">
-                Professional Plan
-              </h3>
-              <Badge
-                variant="secondary"
-                className="bg-blue-100 text-blue-800 hover:bg-blue-100"
-              >
-                Trial
-              </Badge>
-            </div>
+        <CardContent className="space-y-4 text-center">
+          <div className="flex items-center justify-center space-x-2">
+            <h3 className="font-semibold text-gray-900">
+              Professional Plan
+            </h3>
+            <Badge
+              variant="secondary"
+              className="bg-blue-100 text-blue-800 hover:bg-blue-100"
+            >
+              Trial
+            </Badge>
           </div>
 
           <p className="text-gray-600">$59/month (billed annually)</p>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center space-x-4">
               <span className="text-gray-600">Workflows Monitored</span>
               <span className="font-medium">47/500</span>
             </div>
             <Progress value={9.4} className="w-full h-2 bg-gray-200" />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center space-x-4">
               <span className="text-gray-600">Version History</span>
               <span className="font-medium">90 days retained</span>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center space-x-4">
               <span className="text-gray-600">Next billing on:</span>
               <span className="font-medium">July 1, 2024</span>
             </div>
@@ -71,24 +69,24 @@ const PlanBillingTab = () => {
 
       {/* Explore Other Plans */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center">
           Explore Other Plans
         </h2>
 
         <div className="grid md:grid-cols-3 gap-4">
           {/* Starter Plan */}
           <Card className="relative flex flex-col">
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle className="text-lg">Starter</CardTitle>
               <div className="space-y-2">
-                <div className="flex items-baseline space-x-1">
+                <div className="flex items-baseline space-x-1 justify-center">
                   <span className="text-3xl font-bold">$29</span>
                   <span className="text-gray-600">/month</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-4 flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">
@@ -115,7 +113,7 @@ const PlanBillingTab = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full mt-8">
+              <Button variant="outline" className="w-full mt-6">
                 Select Plan
               </Button>
             </CardContent>
@@ -123,17 +121,17 @@ const PlanBillingTab = () => {
 
           {/* Professional Plan */}
           <Card className="relative border-blue-200 ring-2 ring-blue-100 flex flex-col">
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle className="text-lg">Professional</CardTitle>
               <div className="space-y-2">
-                <div className="flex items-baseline space-x-1">
+                <div className="flex items-baseline space-x-1 justify-center">
                   <span className="text-3xl font-bold">$59</span>
                   <span className="text-gray-600">/month</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-4 flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">
@@ -166,7 +164,7 @@ const PlanBillingTab = () => {
                 </div>
               </div>
 
-              <Button className="w-full mt-8 bg-blue-600 hover:bg-blue-700">
+              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
                 Current Plan
               </Button>
             </CardContent>
@@ -174,17 +172,17 @@ const PlanBillingTab = () => {
 
           {/* Enterprise Plan */}
           <Card className="relative flex flex-col">
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle className="text-lg">Enterprise</CardTitle>
               <div className="space-y-2">
-                <div className="flex items-baseline space-x-1">
+                <div className="flex items-baseline space-x-1 justify-center">
                   <span className="text-3xl font-bold">$99</span>
                   <span className="text-gray-600">/month</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow">
-              <div className="space-y-4 flex-grow">
+              <div className="space-y-3 flex-grow">
                 <div className="flex items-center space-x-2">
                   <Check className="w-4 h-4 text-green-600" />
                   <span className="text-sm text-gray-600">
@@ -229,7 +227,7 @@ const PlanBillingTab = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full mt-8">
+              <Button variant="outline" className="w-full mt-6">
                 Select Plan
               </Button>
             </CardContent>
@@ -239,7 +237,7 @@ const PlanBillingTab = () => {
 
       {/* Manage Subscription */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Manage Your Subscription & Plan</CardTitle>
           <CardDescription>
             To change your plan, update payment methods, or manage your
@@ -247,7 +245,7 @@ const PlanBillingTab = () => {
             account.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="text-center">
           <Button 
             onClick={() => navigate("/manage-subscription")}
             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2"
