@@ -14,10 +14,10 @@ import ProfileTab from "@/components/settings/ProfileTab";
 
 const Settings = () => {
 
-  const renderContent = () => {
+    const renderContent = () => {
         return (
-          <div className="space-y-6">
-            {/* Trial Banner */}
+          <>
+          {/* Trial Banner */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
               <div>
                 <p className="text-blue-900 font-medium">
@@ -261,7 +261,7 @@ const Settings = () => {
                 </Button>
               </CardContent>
             </Card>
-          </div>
+          </>
         );
     }
   };
