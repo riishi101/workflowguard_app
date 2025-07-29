@@ -5,7 +5,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-auto">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl px-6 py-4 flex items-center justify-between">
         <div className="text-sm text-gray-600">
           © 2024 WorkflowGuard. All rights reserved.
         </div>
