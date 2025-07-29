@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { H3, DisplayMedium, PSmall, SpanSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import {
   Search,
@@ -35,70 +36,70 @@ const EmptyDashboard = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Dashboard Overview
-          </h1>
+          </H3>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <div>
-              <p className="text-sm font-medium text-green-900">
+              <PSmall className="font-medium text-green-900">
                 No active workflows to monitor
-              </p>
-              <p className="text-xs text-green-700">
+              </PSmall>
+              <SpanSmall className="text-green-700">
                 Last Snapshot: Today, 2:30 PM IST
-              </p>
+              </SpanSmall>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="grid grid-cols-3 gap-8 mb-8">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-blue-500" />
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
-              <div className="text-sm text-gray-600">Active Workflows</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <DisplayMedium className="mb-1">0</DisplayMedium>
+              <PSmall className="text-gray-600">Active Workflows</PSmall>
+              <SpanSmall className="text-gray-500 mt-1">
                 Start your first workflow
-              </div>
+              </SpanSmall>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-green-500" />
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0%</div>
-              <div className="text-sm text-gray-600">Total Uptime</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <DisplayMedium className="mb-1">0%</DisplayMedium>
+              <PSmall className="text-gray-600">Total Uptime</PSmall>
+              <SpanSmall className="text-gray-500 mt-1">
                 No data available
-              </div>
+              </SpanSmall>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Users className="w-4 h-4 text-purple-500" />
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0/500</div>
-              <div className="text-sm text-gray-600">Monitored Services</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <DisplayMedium className="mb-1">0/500</DisplayMedium>
+              <PSmall className="text-gray-600">Monitored Services</PSmall>
+              <SpanSmall className="text-gray-500 mt-1">
                 Maximum plan capacity
-              </div>
+              </SpanSmall>
             </div>
           </div>
         </div>

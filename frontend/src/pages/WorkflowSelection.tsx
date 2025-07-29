@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import SimpleTopNavigation from "@/components/SimpleTopNavigation";
 import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
@@ -201,13 +202,13 @@ const WorkflowSelection = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Select Workflows to Protect
-          </h1>
-          <p className="text-gray-600 text-sm">
+          </H3>
+          <PSmall>
             Great! Your HubSpot account is connected. Choose the workflows you
             want WorkflowGuard to monitor and protect.
-          </p>
+          </PSmall>
         </div>
 
         {/* Alert Banner */}

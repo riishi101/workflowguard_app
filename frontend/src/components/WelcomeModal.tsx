@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
 import { Shield, RotateCcw, FileText, CheckCircle } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -32,13 +33,13 @@ const WelcomeModal = ({
           </div>
 
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+            <H3 className="mb-3">
               Welcome to WorkflowGuard!
-            </h1>
-            <p className="text-gray-600 text-sm leading-relaxed">
+            </H3>
+            <PSmall className="leading-relaxed">
               Protect your HubSpot automations from accidental changes and
               easily recover lost work.
-            </p>
+            </PSmall>
           </div>
 
           <div className="flex justify-center gap-8 py-4">
@@ -46,27 +47,27 @@ const WelcomeModal = ({
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Shield className="w-6 h-6 text-blue-500" />
               </div>
-              <p className="text-sm text-gray-700 font-medium">
+              <PSmall className="font-medium">
                 Never lose a change
-              </p>
+              </PSmall>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <RotateCcw className="w-6 h-6 text-blue-500" />
               </div>
-              <p className="text-sm text-gray-700 font-medium">
+              <PSmall className="font-medium">
                 Rollback instantly
-              </p>
+              </PSmall>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <FileText className="w-6 h-6 text-blue-500" />
               </div>
-              <p className="text-sm text-gray-700 font-medium">
+              <PSmall className="font-medium">
                 Track all modifications
-              </p>
+              </PSmall>
             </div>
           </div>
 
@@ -77,28 +78,28 @@ const WelcomeModal = ({
               </h3>
             </div>
 
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-700">
+                <SpanSmall>
                   Daily & on-publish snapshots
-                </span>
+                </SpanSmall>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-700">90 days of history</span>
+                <SpanSmall>90 days of history</SpanSmall>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-blue-500" />
-                <span className="text-gray-700">Workflow comparison</span>
+                <SpanSmall>Workflow comparison</SpanSmall>
               </div>
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <SpanSmall className="leading-relaxed">
             You're currently on a 21-day free trial with access to Professional
             Plan features
-          </p>
+          </SpanSmall>
 
           <Button
             onClick={() => {

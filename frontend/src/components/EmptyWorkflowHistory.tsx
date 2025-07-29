@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { H3, H4, PSmall, SpanSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import { FileText, Plus, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -19,31 +20,31 @@ const EmptyWorkflowHistory = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold text-gray-900">
+                <H3>
                   Workflow History
-                </h1>
+                </H3>
               </div>
             </div>
           </div>
         </div>
 
         {/* Workflow Info */}
-        <div className="flex items-center justify-between mb-8 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-between mb-8 p-6 bg-gray-50 rounded-lg">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <H4>
               Customer Onboarding
-            </h2>
+            </H4>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Active</span>
+              <PSmall>Active</PSmall>
             </div>
-            <span className="text-sm text-gray-500">ID: adx2c-344</span>
+            <SpanSmall>ID: adx2c-344</SpanSmall>
           </div>
           <Button
             variant="outline"
@@ -57,19 +58,19 @@ const EmptyWorkflowHistory = () => {
         </div>
 
         {/* Empty State */}
-        <div className="py-20 text-center">
+        <div className="py-32 text-center">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <FileText className="w-8 h-8 text-blue-500" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-3">
+          <H4 className="mb-3">
             No Workflow History Yet
-          </h3>
-          <p className="text-gray-600 mb-2">
+          </H4>
+          <PSmall className="mb-2">
             Start creating workflows to track changes and activities.
-          </p>
-          <p className="text-gray-600 mb-8">
+          </PSmall>
+          <PSmall className="mb-8">
             Your workflow history will appear here.
-          </p>
+          </PSmall>
           <Button
             onClick={handleCreateWorkflow}
             className="bg-blue-500 hover:bg-blue-600 text-white"
@@ -81,7 +82,7 @@ const EmptyWorkflowHistory = () => {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-600">0 versions selected</p>
+          <PSmall>0 versions selected</PSmall>
           <Button
             variant="outline"
             size="sm"

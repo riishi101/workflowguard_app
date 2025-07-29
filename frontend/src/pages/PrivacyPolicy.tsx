@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import SimpleTopNavigation from "@/components/SimpleTopNavigation";
 import Footer from "@/components/Footer";
 
@@ -11,12 +12,12 @@ const PrivacyPolicy = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Privacy Policy
-          </h1>
-          <p className="text-gray-600 text-sm">
+          </H3>
+          <SpanSmall>
             Last updated: May 24, 2024
-          </p>
+          </SpanSmall>
         </div>
 
         <div className="prose prose-gray max-w-none">

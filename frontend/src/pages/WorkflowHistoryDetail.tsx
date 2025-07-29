@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import {
@@ -150,9 +151,9 @@ const WorkflowHistoryDetail = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <H3>
               Workflow History: Customer Onboarding
-            </h1>
+            </H3>
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"

@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { H3, PSmall, SpanSmall } from "@/components/ui/typography";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
 import { Lock, Info } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -59,12 +60,12 @@ const ConnectHubSpotModal = ({
           </div>
 
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+            <H3 className="mb-3">
               Connect Your HubSpot Account
-            </h1>
-            <p className="text-gray-600 text-sm">
+            </H3>
+            <PSmall>
               Authorize WorkflowGuard to access your HubSpot Workflows
-            </p>
+            </PSmall>
           </div>
 
           <div className="flex items-center justify-center space-x-4 py-4">
@@ -82,7 +83,7 @@ const ConnectHubSpotModal = ({
                 alt="HubSpot Logo"
                 className="w-8 h-8"
               />
-              <span className="text-sm font-medium text-gray-700">HubSpot</span>
+              <PSmall className="font-medium">HubSpot</PSmall>
             </div>
           </div>
 
@@ -90,15 +91,15 @@ const ConnectHubSpotModal = ({
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="text-left">
-                <p className="text-sm text-blue-900 font-medium mb-2">
+                <PSmall className="text-blue-900 font-medium mb-2">
                   This secure connection allows WorkflowGuard to automatically
                   save versions of your HubSpot Workflows.
-                </p>
-                <p className="text-sm text-blue-800">
+                </PSmall>
+                <PSmall className="text-blue-800">
                   You'll be redirected to HubSpot's authorization page. Please
                   ensure you select the correct HubSpot portal if you have
                   multiple.
-                </p>
+                </PSmall>
               </div>
             </div>
           </div>

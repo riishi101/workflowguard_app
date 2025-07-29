@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { H3, H4, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 
@@ -1032,9 +1033,9 @@ const Settings = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             App Settings
-          </h1>
+          </H3>
         </div>
 
         {/* Tabs */}

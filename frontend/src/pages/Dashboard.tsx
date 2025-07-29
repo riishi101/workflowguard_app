@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { H3, H5, PSmall, SpanSmall, DisplayMedium } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import EmptyDashboard from "@/components/EmptyDashboard";
 import Footer from "@/components/Footer";
@@ -103,21 +104,21 @@ const Dashboard = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Dashboard Overview
-          </h1>
+          </H3>
         </div>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <div>
-              <p className="text-sm font-medium text-green-900">
+              <PSmall className="font-medium text-green-900">
                 All {workflows.length} active workflows are being monitored
-              </p>
-              <p className="text-xs text-green-700">
+              </PSmall>
+              <SpanSmall className="text-green-700">
                 Last Snapshot: Today, 2:30 PM IST
-              </p>
+              </SpanSmall>
             </div>
           </div>
         </div>
@@ -130,11 +131,11 @@ const Dashboard = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{workflows.length}</div>
+              <DisplayMedium className="mb-1">{workflows.length}</DisplayMedium>
               <div className="text-base text-gray-700 font-medium">Active Workflows</div>
-              <div className="text-sm text-gray-500 mt-2">
+              <PSmall className="text-gray-500 mt-2">
                 +1% from last month
-              </div>
+              </PSmall>
             </div>
           </div>
 
@@ -145,9 +146,9 @@ const Dashboard = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">99.9%</div>
-              <div className="text-sm text-gray-600">Total Uptime</div>
-              <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
+              <DisplayMedium className="mb-1">99.9%</DisplayMedium>
+              <PSmall className="text-gray-600">Total Uptime</PSmall>
+              <SpanSmall className="text-gray-500 mt-1">Last 30 days</SpanSmall>
             </div>
           </div>
 
@@ -158,11 +159,11 @@ const Dashboard = () => {
               </div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">500</div>
-              <div className="text-sm text-gray-600">Monitored Services</div>
-              <div className="text-xs text-gray-500 mt-1">
+              <DisplayMedium className="mb-1">500</DisplayMedium>
+              <PSmall className="text-gray-600">Monitored Services</PSmall>
+              <SpanSmall className="text-gray-500 mt-1">
                 Max. plan capacity
-              </div>
+              </SpanSmall>
             </div>
           </div>
         </div>
@@ -170,9 +171,9 @@ const Dashboard = () => {
         <div className="bg-white border border-gray-200 rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <H5>
                 All Protected Workflows
-              </h2>
+              </H5>
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleAddWorkflow}

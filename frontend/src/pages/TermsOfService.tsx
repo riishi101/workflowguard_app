@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { H3, H5, PSmall, SpanSmall } from "@/components/ui/typography";
 import SimpleTopNavigation from "@/components/SimpleTopNavigation";
 import Footer from "@/components/Footer";
 
@@ -11,21 +12,21 @@ const TermsOfService = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Terms of Service
-          </h1>
-          <p className="text-gray-600 text-sm">
+          </H3>
+          <SpanSmall>
             Last updated: May 24, 2024
-          </p>
+          </SpanSmall>
         </div>
 
         <div className="prose prose-gray max-w-none">
           <div className="space-y-6">
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              <H5 className="mb-3">
                 1. Acceptance of Terms
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
+              </H5>
+              <div className="space-y-2">
                 <p>
                   By accessing and using WorkflowGuard ("the Service"), you accept
                   and agree to be bound by the terms and provision of this
@@ -36,10 +37,10 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              <H5 className="mb-3">
                 2. Description of Service
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
+              </H5>
+              <div className="space-y-2">
                 <p>
                   WorkflowGuard is a workflow version control and monitoring
                   service that integrates with HubSpot to help protect and manage
@@ -56,10 +57,10 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              <H5 className="mb-3">
                 3. User Accounts and Registration
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
+              </H5>
+              <div className="space-y-2">
                 <p>
                   To use our Service, you must register for an account. You agree
                   to provide accurate, current, and complete information during
@@ -75,10 +76,10 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              <H5 className="mb-3">
                 4. HubSpot Integration
-              </h2>
-              <div className="text-sm text-gray-600 space-y-2">
+              </H5>
+              <div className="space-y-2">
                 <p>
                   Our Service integrates with HubSpot to access and monitor your
                   workflow data. By using our Service, you authorize us to:

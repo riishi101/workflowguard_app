@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { H3, PSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import {
@@ -126,12 +127,12 @@ const CompareVersions = () => {
               Back to History
             </Button>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          <H3 className="mb-2">
             Compare Workflow Versions
-          </h1>
-          <p className="text-gray-600 text-sm">
+          </H3>
+          <PSmall>
             Compare two versions of your workflow to see what changed
-          </p>
+          </PSmall>
         </div>
 
         {/* Version Selection */}

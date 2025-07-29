@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { H2, H4, PSmall, SpanSmall } from "@/components/ui/typography";
 import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import EmptyWorkflowHistory from "@/components/EmptyWorkflowHistory";
@@ -117,9 +118,9 @@ const WorkflowHistory = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-4">
+          <H2 className="mb-4">
             Workflow History
-          </h1>
+          </H2>
 
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-6">
