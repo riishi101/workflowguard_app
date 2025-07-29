@@ -180,9 +180,17 @@ async function main() {
     create: {
       id: 'starter',
       name: 'Starter',
-      price: 29.99,
-      description: 'Perfect for small teams',
-      features: ['basic_monitoring', 'email_support'],
+      price: 19.00,
+      description: 'Perfect for small teams getting started with workflow protection',
+      features: [
+        'workflow_selection',
+        'dashboard_overview', 
+        'basic_version_history',
+        'simple_comparison',
+        'basic_restore',
+        'email_support',
+        'basic_settings'
+      ],
     },
   });
   await prisma.plan.upsert({
@@ -191,9 +199,18 @@ async function main() {
     create: {
       id: 'professional',
       name: 'Professional',
-      price: 99.99,
-      description: 'For growing businesses',
-      features: ['advanced_monitoring', 'priority_support', 'custom_notifications'],
+      price: 49.00,
+      description: 'For growing businesses that need advanced workflow management',
+      features: [
+        'enhanced_dashboard',
+        'advanced_workflow_history',
+        'improved_comparison',
+        'team_management',
+        'audit_log',
+        'api_access',
+        'enhanced_settings',
+        'priority_support'
+      ],
     },
   });
   await prisma.plan.upsert({
@@ -202,9 +219,18 @@ async function main() {
     create: {
       id: 'enterprise',
       name: 'Enterprise',
-      price: 299.99,
-      description: 'For large organizations',
-      features: ['unlimited_workflows', 'advanced_monitoring', '24_7_support', 'api_access', 'user_permissions', 'audit_logs'],
+      price: 99.00,
+      description: 'For large organizations requiring unlimited workflow protection',
+      features: [
+        'unlimited_workflows',
+        'extended_history',
+        'advanced_analytics',
+        'unlimited_team',
+        'extended_audit_log',
+        'dedicated_support',
+        'all_settings_features',
+        'advanced_comparison'
+      ],
     },
   });
   console.log('✅ Seeded plans');

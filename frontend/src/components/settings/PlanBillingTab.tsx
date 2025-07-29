@@ -43,7 +43,7 @@ const PlanBillingTab = () => {
             </Badge>
           </div>
           <p className="text-gray-600 text-sm">
-            $59/month (billed annually)
+            $49/month (billed annually)
           </p>
 
           <div className="space-y-4">
@@ -52,9 +52,9 @@ const PlanBillingTab = () => {
                 <span className="text-sm text-gray-600">
                   Workflows Monitored
                 </span>
-                <span className="text-sm font-medium">47/500</span>
+                <span className="text-sm font-medium">47/25</span>
               </div>
-              <Progress value={9.4} className="h-2" />
+              <Progress value={188} className="h-2" />
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -83,26 +83,45 @@ const PlanBillingTab = () => {
             <CardHeader>
               <CardTitle className="text-xl">Starter</CardTitle>
               <div className="text-3xl font-bold">
-                $29<span className="text-base font-normal">/month</span>
+                $19<span className="text-base font-normal">/month</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Up to 25 workflows/month</span>
+                  <span>Up to 5 workflows</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Basic Monitoring</span>
+                  <span>Workflow Selection</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>30 days history</span>
+                  <span>Dashboard Overview</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Basic Version History</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Simple Comparison</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Basic Restore</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span>Email Support</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Basic Settings</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  <strong>Limitations:</strong> 30 days version history, Basic comparison only
                 </div>
               </div>
               <Button variant="outline" className="w-full">
@@ -116,30 +135,49 @@ const PlanBillingTab = () => {
             <CardHeader>
               <CardTitle className="text-xl">Professional</CardTitle>
               <div className="text-3xl font-bold">
-                $59<span className="text-base font-normal">/month</span>
+                $49<span className="text-base font-normal">/month</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Up to 500 workflows/month</span>
+                  <span>Up to 25 workflows</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Advanced Monitoring</span>
+                  <span>Enhanced Dashboard</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>90 days history</span>
+                  <span>Advanced Workflow History</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Improved Comparison</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Team Management</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Audit Log</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>API Access</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Enhanced Settings</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
                   <span>Priority Support</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Custom Notifications</span>
+                <div className="text-xs text-gray-500 mt-2">
+                  <strong>Limitations:</strong> 90 days version history, Up to 5 team members
                 </div>
               </div>
               <Button className="w-full bg-blue-500 hover:bg-blue-600">
@@ -164,27 +202,34 @@ const PlanBillingTab = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Advanced Monitoring</span>
+                  <span>Extended History</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Unlimited history</span>
+                  <span>Advanced Analytics</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>24/7 Support</span>
+                  <span>Unlimited Team</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>API Access</span>
+                  <span>Extended Audit Log</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>User Permissions</span>
+                  <span>Dedicated Support</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Audit Logs</span>
+                  <span>All Settings Features</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Advanced Comparison</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  <strong>Limitations:</strong> 1 year version history, All features unlocked
                 </div>
               </div>
               <Button variant="outline" className="w-full">
