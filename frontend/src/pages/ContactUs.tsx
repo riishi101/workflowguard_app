@@ -194,14 +194,7 @@ const ContactUs = () => {
                   <HelpCircle className="w-4 h-4 mr-2" />
                   Help & Support Center
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left"
-                  onClick={() => navigate("/setup-guide")}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Setup Guide
-                </Button>
+
               </div>
             </div>
           </div>

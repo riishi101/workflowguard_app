@@ -16,7 +16,7 @@ import HelpSupport from "./pages/HelpSupport";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ContactUs from "./pages/ContactUs";
-import SetupGuide from "./pages/SetupGuide";
+
 import ManageSubscription from "./pages/ManageSubscription";
 import NotFound from "./pages/NotFound";
 
@@ -51,8 +51,7 @@ const App = () => (
             <Route path="/help" element={<HelpSupport />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/contact" element={<ContactUs />} />
-            <Route path="/setup-guide" element={<SetupGuide />} />
+                    <Route path="/contact" element={<ContactUs />} />
             <Route path="/manage-subscription" element={<ManageSubscription />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

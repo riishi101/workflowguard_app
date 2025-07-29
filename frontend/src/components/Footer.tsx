@@ -28,12 +28,6 @@ const Footer = () => {
           >
             Contact Us
           </button>
-          <button
-            onClick={() => navigate("/setup-guide")}
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Setup Guide
-          </button>
         </div>
       </div>
     </footer>
