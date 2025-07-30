@@ -29,8 +29,11 @@ const Index = () => {
   };
 
   const handleConnectHubSpot = () => {
-    // Redirect to HubSpot OAuth URL
-    const hubspotAuthUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/auth/hubspot/url`;
+    // Redirect to HubSpot OAuth URL - use the API base URL without adding /api
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    // Remove /api from the end if it exists
+    const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
+    const hubspotAuthUrl = `${cleanBaseUrl}/api/auth/hubspot/url`;
     window.location.href = hubspotAuthUrl;
   };
 
