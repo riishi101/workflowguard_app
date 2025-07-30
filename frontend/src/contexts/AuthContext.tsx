@@ -4,8 +4,7 @@ import { ApiService, User } from '@/lib/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  connectHubSpot: () => void;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -30,13 +29,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
+      // Check if this is an OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+
+      if (code && state) {
+        // This is a HubSpot OAuth callback
+        try {
+          // The backend will handle the OAuth callback
+          // We just need to check if user is now authenticated
+          const response = await ApiService.getCurrentUser();
+          setUser(response.data);
+        } catch (error) {
+          console.log('OAuth callback failed');
+        }
+      } else {
+        // Check if user is already authenticated
         try {
           const response = await ApiService.getCurrentUser();
           setUser(response.data);
         } catch (error) {
-          localStorage.removeItem('authToken');
+          // User not authenticated, that's okay for HubSpot app
+          console.log('User not authenticated - HubSpot OAuth required');
         }
       }
       setLoading(false);
@@ -45,16 +60,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await ApiService.login(email, password);
-    localStorage.setItem('authToken', response.data.token);
-    setUser(response.data.user);
-  };
-
-  const register = async (email: string, password: string, name: string) => {
-    const response = await ApiService.register({ email, password, name });
-    localStorage.setItem('authToken', response.data.token);
-    setUser(response.data.user);
+  const connectHubSpot = () => {
+    // Redirect to HubSpot OAuth URL
+    const hubspotAuthUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/auth/hubspot/url`;
+    window.location.href = hubspotAuthUrl;
   };
 
   const logout = async () => {
@@ -71,8 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     loading,
-    login,
-    register,
+    connectHubSpot,
     logout,
     isAuthenticated: !!user,
   };

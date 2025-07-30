@@ -16,6 +16,10 @@ import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
 import { Search, Info } from "lucide-react";
 
+interface WorkflowSelectionProps {
+  onComplete?: () => void;
+}
+
 const workflows = [
   {
     id: "1",
@@ -54,7 +58,7 @@ const workflows = [
   },
 ];
 
-const WorkflowSelection = () => {
+const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const navigate = useNavigate();
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,14 +75,26 @@ const WorkflowSelection = () => {
     // Set workflow selection state
     WorkflowState.setWorkflowSelection(true);
     WorkflowState.setSelectedCount(selectedWorkflows.length);
-    navigate("/dashboard");
+    
+    // Call onComplete if provided, otherwise navigate
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   const handleSkipForNow = () => {
     // User skipped workflow selection, keep empty state
     WorkflowState.setWorkflowSelection(false);
     WorkflowState.setSelectedCount(0);
-    navigate("/dashboard");
+    
+    // Call onComplete if provided, otherwise navigate
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   const filteredWorkflows = workflows.filter((workflow) =>

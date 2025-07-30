@@ -1,19 +1,17 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import WorkflowGuardLogo from "./WorkflowGuardLogo";
-import { Shield, RotateCcw, FileText, CheckCircle } from "lucide-react";
+import { Shield, RotateCcw, FileText, CheckCircle, ArrowRight } from "lucide-react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface WelcomeModalProps {
   open: boolean;
   onClose: () => void;
-  onConnectHubSpot: () => void;
 }
 
 const WelcomeModal = ({
   open,
   onClose,
-  onConnectHubSpot,
 }: WelcomeModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -96,23 +94,11 @@ const WelcomeModal = ({
           </p>
 
           <Button
-            onClick={onConnectHubSpot}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium"
+            onClick={onClose}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
           >
-            Connect Your HubSpot Account
-            <svg
-              className="w-4 h-4 ml-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
+            Get Started
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </DialogContent>
