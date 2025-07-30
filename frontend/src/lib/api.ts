@@ -205,6 +205,17 @@ export class ApiService {
     return response.data;
   }
 
+  // HubSpot workflow endpoints
+  static async getHubSpotWorkflows(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/hubspot/workflows');
+    return response.data;
+  }
+
+  static async startWorkflowProtection(workflowIds: string[]): Promise<ApiResponse<any>> {
+    const response = await api.post('/workflow/protect', { workflowIds });
+    return response.data;
+  }
+
   // Support ticket endpoints
   static async createSupportTicket(ticketData: {
     fullName: string;
