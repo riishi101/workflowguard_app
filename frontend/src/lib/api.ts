@@ -243,6 +243,27 @@ export class ApiService {
     const response = await api.post(`/support/tickets/${ticketId}/reply`, { message });
     return response.data;
   }
+
+  // Dashboard endpoints
+  static async getProtectedWorkflows(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/workflow/protected');
+    return response.data;
+  }
+
+  static async getDashboardStats(): Promise<ApiResponse<any>> {
+    const response = await api.get('/dashboard/stats');
+    return response.data;
+  }
+
+  static async rollbackWorkflow(workflowId: string): Promise<ApiResponse<any>> {
+    const response = await api.post(`/workflow/${workflowId}/rollback`);
+    return response.data;
+  }
+
+  static async exportDashboardData(): Promise<ApiResponse<any>> {
+    const response = await api.post('/dashboard/export');
+    return response.data;
+  }
 }
 
 export default api; 
