@@ -15,8 +15,18 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // If user is already authenticated, go to dashboard
-    if (isAuthenticated && !loading && user) {
+    // Check if this is an OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code && state && isAuthenticated && !loading) {
+      // OAuth callback successful, show workflow selection
+      setCurrentStep('workflow-selection');
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (isAuthenticated && !loading && user && !code && !state) {
+      // User is already authenticated and not in OAuth callback, go to dashboard
       setCurrentStep('dashboard');
       navigate('/dashboard');
     }
