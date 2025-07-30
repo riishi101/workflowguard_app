@@ -10,27 +10,32 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'connect' | 'workflow-selection' | 'dashboard'>('welcome');
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false);
   const { isAuthenticated, loading, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (loading) return; // Don't process while loading
+
     // Check if this is an OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
 
-    if (code && state && isAuthenticated && !loading) {
+    if (code && state && isAuthenticated && !hasProcessedOAuth) {
       // OAuth callback successful, show workflow selection
       setCurrentStep('workflow-selection');
+      setHasProcessedOAuth(true);
       // Clear URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (isAuthenticated && !loading && user && !code && !state) {
+    } else if (isAuthenticated && !loading && user && !code && !state && !hasProcessedOAuth) {
       // User is already authenticated and not in OAuth callback, go to dashboard
       setCurrentStep('dashboard');
+      setHasProcessedOAuth(true);
       navigate('/dashboard');
     }
-  }, [isAuthenticated, loading, user, navigate]);
+  }, [isAuthenticated, loading, user, navigate, hasProcessedOAuth]);
 
   const handleWelcomeComplete = () => {
     setShowWelcomeModal(false);

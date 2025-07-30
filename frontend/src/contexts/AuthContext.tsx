@@ -26,39 +26,48 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      // Check if this is an OAuth callback
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
+    if (hasInitialized) return; // Prevent multiple initializations
 
-      if (code && state) {
-        // This is a HubSpot OAuth callback
-        try {
-          // The backend will handle the OAuth callback
-          // We just need to check if user is now authenticated
-          const response = await ApiService.getCurrentUser();
-          setUser(response.data);
-        } catch (error) {
-          console.log('OAuth callback failed');
+    const initializeAuth = async () => {
+      try {
+        // Check if this is an OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+
+        if (code && state) {
+          // This is a HubSpot OAuth callback
+          try {
+            // The backend will handle the OAuth callback
+            // We just need to check if user is now authenticated
+            const response = await ApiService.getCurrentUser();
+            setUser(response.data);
+          } catch (error) {
+            console.log('OAuth callback failed');
+          }
+        } else {
+          // Check if user is already authenticated
+          try {
+            const response = await ApiService.getCurrentUser();
+            setUser(response.data);
+          } catch (error) {
+            // User not authenticated, that's okay for HubSpot app
+            console.log('User not authenticated - HubSpot OAuth required');
+          }
         }
-      } else {
-        // Check if user is already authenticated
-        try {
-          const response = await ApiService.getCurrentUser();
-          setUser(response.data);
-        } catch (error) {
-          // User not authenticated, that's okay for HubSpot app
-          console.log('User not authenticated - HubSpot OAuth required');
-        }
+      } catch (error) {
+        console.log('Auth initialization error:', error);
+      } finally {
+        setLoading(false);
+        setHasInitialized(true);
       }
-      setLoading(false);
     };
 
     initializeAuth();
-  }, []);
+  }, [hasInitialized]);
 
   const connectHubSpot = () => {
     // Redirect to HubSpot OAuth URL - use the API base URL without adding /api
