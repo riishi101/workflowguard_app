@@ -47,6 +47,7 @@ interface HubSpotWorkflow {
   steps: number;
   contacts: number;
   isProtected?: boolean;
+  isDemo?: boolean;
 }
 
 const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
@@ -70,86 +71,124 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setLoading(true);
       setError(null);
       
-      // Simulate API call to HubSpot
+      // Try to get real data from HubSpot API
       const response = await ApiService.getHubSpotWorkflows();
-      setWorkflows(response.data || []);
+      
+      if (response.data && response.data.length > 0) {
+        setWorkflows(response.data);
+        toast({
+          title: "Connected to HubSpot",
+          description: `Found ${response.data.length} workflows in your account.`,
+        });
+      } else {
+        // No workflows found in HubSpot
+        setWorkflows([]);
+        toast({
+          title: "No Workflows Found",
+          description: "No active workflows found in your HubSpot account.",
+          variant: "destructive",
+        });
+      }
     } catch (err) {
       console.error('Failed to fetch workflows:', err);
-      setError('Failed to load workflows from HubSpot. Please try again.');
       
-      // Fallback to mock data for demo
+      // Check if it's a network error vs API error
+      const isNetworkError = err.message?.includes('Network Error') || err.code === 'NETWORK_ERROR';
+      
+      if (isNetworkError) {
+        setError('Unable to connect to HubSpot. Please check your internet connection and try again.');
+      } else {
+        setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
+      }
+      
+      // Show demo data with clear indication
+      toast({
+        title: "Demo Mode Active",
+        description: "Showing sample workflows for demonstration purposes.",
+        variant: "default",
+      });
+      
+      // Fallback to demo data with clear labeling
       setWorkflows([
         {
-          id: "1",
-          name: "Customer Onboarding",
+          id: "demo-1",
+          name: "Customer Onboarding (Demo)",
           folder: "Sales Automation",
           status: "ACTIVE",
           lastModified: "2024-01-15 14:30",
           steps: 12,
           contacts: 1500,
+          isDemo: true,
         },
         {
-          id: "2",
-          name: "Lead Nurturing - SaaS",
+          id: "demo-2",
+          name: "Lead Nurturing - SaaS (Demo)",
           folder: "Marketing",
           status: "ACTIVE",
           lastModified: "2024-01-14 09:15",
           steps: 8,
           contacts: 3200,
+          isDemo: true,
         },
         {
-          id: "3",
-          name: "Email Campaign Follow-up",
+          id: "demo-3",
+          name: "Email Campaign Follow-up (Demo)",
           folder: "Marketing",
           status: "INACTIVE",
           lastModified: "2024-01-13 16:45",
           steps: 6,
           contacts: 800,
+          isDemo: true,
         },
         {
-          id: "4",
-          name: "Deal Pipeline Automation",
+          id: "demo-4",
+          name: "Deal Pipeline Automation (Demo)",
           folder: "Sales",
           status: "ACTIVE",
           lastModified: "2024-01-12 11:20",
           steps: 15,
           contacts: 2100,
+          isDemo: true,
         },
         {
-          id: "5",
-          name: "Customer Feedback Loop",
+          id: "demo-5",
+          name: "Customer Feedback Loop (Demo)",
           folder: "Customer Success",
           status: "ACTIVE",
           lastModified: "2024-01-11 13:50",
           steps: 10,
           contacts: 950,
+          isDemo: true,
         },
         {
-          id: "6",
-          name: "Welcome Series - New Users",
+          id: "demo-6",
+          name: "Welcome Series - New Users (Demo)",
           folder: "Marketing",
           status: "ACTIVE",
           lastModified: "2024-01-10 08:30",
           steps: 7,
           contacts: 1800,
+          isDemo: true,
         },
         {
-          id: "7",
-          name: "Sales Qualification",
+          id: "demo-7",
+          name: "Sales Qualification (Demo)",
           folder: "Sales",
           status: "ACTIVE",
           lastModified: "2024-01-09 15:45",
           steps: 9,
           contacts: 1200,
+          isDemo: true,
         },
         {
-          id: "8",
-          name: "Customer Retention",
+          id: "demo-8",
+          name: "Customer Retention (Demo)",
           folder: "Customer Success",
           status: "DRAFT",
           lastModified: "2024-01-08 12:20",
           steps: 5,
           contacts: 0,
+          isDemo: true,
         },
       ]);
     } finally {
@@ -416,6 +455,24 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           </div>
         </div>
 
+        {/* Demo Mode Alert */}
+        {workflows.some(w => w.isDemo) && (
+          <Alert className="mb-6 border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>Demo Mode:</strong> You're viewing sample workflows because we couldn't connect to your HubSpot account. 
+              In production, you'll see your actual HubSpot workflows here.
+              <Button 
+                variant="link" 
+                className="p-0 h-auto text-orange-800 underline ml-2"
+                onClick={refreshWorkflows}
+              >
+                Try connecting again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Error Alert */}
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
@@ -581,6 +638,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           {workflow.isProtected && (
                             <CheckCircle className="w-4 h-4 text-green-500" />
                           )}
+                          {workflow.isDemo && (
+                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                              Demo
+                            </Badge>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
@@ -616,9 +678,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               <p className="text-sm text-gray-600">
                 Selected {selectedWorkflows.length} of {filteredWorkflows.length} workflows
               </p>
-              <p className="text-sm text-gray-500">
-                • {500 - selectedWorkflows.length} remaining in your trial
-              </p>
+              {workflows.some(w => w.isDemo) ? (
+                <p className="text-sm text-orange-600">
+                  • Demo mode - showing sample data
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  • {500 - selectedWorkflows.length} remaining in your trial
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button onClick={handleSkipForNow} variant="outline" size="sm">
@@ -630,7 +698,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 className="bg-blue-500 hover:bg-blue-600 text-white"
                 size="sm"
               >
-                Start Protecting Workflows
+                {workflows.some(w => w.isDemo) ? "Try Demo Protection" : "Start Protecting Workflows"}
               </Button>
             </div>
           </div>
