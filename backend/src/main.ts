@@ -48,13 +48,14 @@ async function bootstrap() {
       'http://localhost:8080',
     'https://www.workflowguard.pro',
     'https://workflowguard.pro',
+    'https://api.workflowguard.pro',
       process.env.FRONTEND_URL
   ].filter((v): v is string => typeof v === 'string');
   
   console.log('CORS origins configured:', corsOrigins);
   
   app.enableCors({
-    origin: corsOrigins,
+    origin: true, // Allow all origins for debugging
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
