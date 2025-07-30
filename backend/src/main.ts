@@ -5,6 +5,14 @@ import * as compression from 'compression';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { AllExceptionsFilter } from './all-exceptions.filter';
+import { randomUUID } from 'crypto';
+
+// Polyfill for crypto.randomUUID if not available
+if (!global.crypto) {
+  global.crypto = {
+    randomUUID: () => randomUUID()
+  } as any;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
