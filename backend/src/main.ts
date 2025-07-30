@@ -32,13 +32,15 @@ async function bootstrap() {
   // Compression for better performance
   app.use(compression());
 
-  // Rate limiting
+  // Rate limiting - more lenient for development
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased from 100 to 1000 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: true, // Don't count successful requests
+    skipFailedRequests: false, // Do count failed requests
   });
   app.use(limiter);
 
