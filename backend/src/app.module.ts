@@ -18,6 +18,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { EmailModule } from './email/email.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MetricsModule } from './metrics/metrics.module';
     EmailModule,
     RealtimeModule,
     MetricsModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [

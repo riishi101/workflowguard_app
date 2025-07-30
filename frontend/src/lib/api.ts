@@ -204,6 +204,34 @@ export class ApiService {
     const response = await api.post('/user/hubspot/disconnect');
     return response.data;
   }
+
+  // Support ticket endpoints
+  static async createSupportTicket(ticketData: {
+    fullName: string;
+    email: string;
+    subject: string;
+    message: string;
+    category?: string;
+    priority?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.post('/support/tickets', ticketData);
+    return response.data;
+  }
+
+  static async getUserTickets(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/support/tickets');
+    return response.data;
+  }
+
+  static async getTicket(ticketId: string): Promise<ApiResponse<any>> {
+    const response = await api.get(`/support/tickets/${ticketId}`);
+    return response.data;
+  }
+
+  static async addReply(ticketId: string, message: string): Promise<ApiResponse<any>> {
+    const response = await api.post(`/support/tickets/${ticketId}/reply`, { message });
+    return response.data;
+  }
 }
 
 export default api; 

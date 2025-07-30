@@ -11,19 +11,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import ContentPageHeader from "@/components/ContentPageHeader";
 import PageSection from "@/components/PageSection";
 import Footer from "@/components/Footer";
 import { LAYOUT, TYPOGRAPHY, COLORS } from "@/lib/layout-constants";
-import { Mail, MessageCircle, Clock } from "lucide-react";
+import { Mail, MessageCircle, Clock, CheckCircle } from "lucide-react";
+import { ApiService } from "@/lib/api";
 
 const ContactUs = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     subject: "",
     message: "",
+    category: "",
+    priority: "medium",
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -33,8 +39,43 @@ const ContactUs = () => {
     }));
   };
 
-  const handleSendMessage = () => {
-    console.log("Sending message:", formData);
+  const handleSendMessage = async () => {
+    if (!formData.fullName || !formData.email || !formData.subject || !formData.message) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await ApiService.createSupportTicket(formData);
+      
+      toast({
+        title: "Ticket Created Successfully!",
+        description: response.message,
+      });
+
+      // Reset form
+      setFormData({
+        fullName: "",
+        email: "",
+        subject: "",
+        message: "",
+        category: "",
+        priority: "medium",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create support ticket. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,7 +99,7 @@ const ContactUs = () => {
             <div className="space-y-6">
               <div>
                 <Label htmlFor="full-name" className="text-sm font-medium text-gray-700">
-                  Full Name
+                  Full Name *
                 </Label>
                 <Input
                   id="full-name"
@@ -71,7 +112,7 @@ const ContactUs = () => {
 
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email Address
+                  Email Address *
                 </Label>
                 <Input
                   id="email"
@@ -85,11 +126,24 @@ const ContactUs = () => {
 
               <div>
                 <Label htmlFor="subject" className="text-sm font-medium text-gray-700">
-                  Subject
+                  Subject *
+                </Label>
+                <Input
+                  id="subject"
+                  placeholder="Brief description of your issue"
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category" className="text-sm font-medium text-gray-700">
+                  Category
                 </Label>
                 <Select
-                  value={formData.subject}
-                  onValueChange={(value) => handleInputChange("subject", value)}
+                  value={formData.category}
+                  onValueChange={(value) => handleInputChange("category", value)}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select a category" />
@@ -105,98 +159,138 @@ const ContactUs = () => {
               </div>
 
               <div>
+                <Label htmlFor="priority" className="text-sm font-medium text-gray-700">
+                  Priority
+                </Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => handleInputChange("priority", value)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="message" className="text-sm font-medium text-gray-700">
-                  Message
+                  Message *
                 </Label>
                 <Textarea
                   id="message"
-                  placeholder="Tell us how we can help..."
+                  placeholder="Please describe your issue or question in detail..."
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
-                  className="mt-1 min-h-[120px] resize-none"
+                  className="mt-1 min-h-[120px]"
                 />
               </div>
 
               <Button
                 onClick={handleSendMessage}
-                className={`w-full ${COLORS.primary} text-white py-3`}
+                disabled={isSubmitting}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium"
               >
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
             </div>
           </PageSection>
 
-          {/* Support Options */}
+          {/* Contact Information */}
           <div className="space-y-8">
-            {/* Email Support */}
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Mail className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <h3 className={TYPOGRAPHY.subsectionTitle}>Email Support</h3>
-                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
-                  For detailed inquiries or attaching files, you can email us directly.
-                </p>
-                <a
-                  href="mailto:contact@workflowguard.pro"
-                  className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}
-                >
-                  contact@workflowguard.pro
-                </a>
-              </div>
-            </div>
+            <PageSection title="Contact Information" variant="card">
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Email Support</h3>
+                    <p className="text-gray-600 text-sm">
+                      <a href="mailto:contact@workflowguard.pro" className="text-blue-500 hover:text-blue-600">
+                        contact@workflowguard.pro
+                      </a>
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      We typically respond within 24 hours
+                    </p>
+                  </div>
+                </div>
 
-            {/* Help Center */}
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <h3 className={TYPOGRAPHY.subsectionTitle}>Help Center</h3>
-                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
-                  Find answers to common questions and comprehensive guides.
-                </p>
-                <button
-                  onClick={() => navigate("/help")}
-                  className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}
-                >
-                  Browse Articles
-                </button>
-              </div>
-            </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Support Ticket System</h3>
+                    <p className="text-gray-600 text-sm">
+                      Create a support ticket for detailed assistance
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      Track your issues and get updates
+                    </p>
+                  </div>
+                </div>
 
-            {/* Live Chat Support */}
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-5 h-5 text-blue-500" />
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Response Times</h3>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span>General inquiries: 24 hours</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span>Technical issues: 12 hours</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span>Urgent issues: 4 hours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className={TYPOGRAPHY.subsectionTitle}>Live Chat Support</h3>
-                <p className={`${TYPOGRAPHY.bodyText} mb-2`}>
-                  Chat with our support team in real-time.
-                </p>
-                <button className={`text-sm ${COLORS.primaryText} hover:text-blue-700 font-medium`}>
-                  Start Chat
-                </button>
-              </div>
-            </div>
+            </PageSection>
 
-            {/* Business Hours */}
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="w-5 h-5 text-blue-500" />
+            <PageSection title="Before You Contact Us" variant="card">
+              <div className="space-y-4 text-sm text-gray-600">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Check Our Documentation</h4>
+                  <p>
+                    Many questions can be answered by checking our{" "}
+                    <button
+                      onClick={() => navigate("/help-support")}
+                      className="text-blue-500 hover:text-blue-600 underline"
+                    >
+                      help documentation
+                    </button>
+                    .
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">Include Details</h4>
+                  <p>
+                    When contacting us, please include:
+                  </p>
+                  <ul className="list-disc pl-5 mt-2 space-y-1">
+                    <li>Your HubSpot portal ID</li>
+                    <li>Steps to reproduce the issue</li>
+                    <li>Screenshots if applicable</li>
+                    <li>Error messages you're seeing</li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <h3 className={TYPOGRAPHY.subsectionTitle}>Business Hours</h3>
-                <p className={`${TYPOGRAPHY.bodyText} mb-1`}>
-                  Monday - Friday, 9 AM - 5 PM EST
-                </p>
-                <p className={TYPOGRAPHY.helperText}>
-                  Expected response time: Within 24 hours
-                </p>
-              </div>
-            </div>
+            </PageSection>
           </div>
         </div>
       </main>
