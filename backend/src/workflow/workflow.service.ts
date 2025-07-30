@@ -37,22 +37,29 @@ export class WorkflowService {
       const now = new Date();
       const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      const month = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
       await this.prisma.overage.upsert({
         where: {
-          userId_type_periodStart_periodEnd: {
+          userId_month: {
             userId: ownerId,
-            type: 'workflow',
-            periodStart,
-            periodEnd,
+            month,
           },
         },
-        update: { amount: { increment: 1 } },
+        update: { 
+          amount: { increment: 1 },
+          workflowCount: { increment: 1 },
+          overage: { increment: 1 },
+        },
         create: {
           userId: ownerId,
           type: 'workflow',
           amount: 1,
           periodStart,
           periodEnd,
+          month,
+          workflowCount: 1,
+          limit: 100, // Default limit
+          overage: 1,
         },
       });
     }

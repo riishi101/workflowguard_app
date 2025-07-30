@@ -190,7 +190,7 @@ async function main() {
         'basic_restore',
         'email_support',
         'basic_settings'
-      ],
+      ] as any,
     },
   });
   await prisma.plan.upsert({
@@ -210,7 +210,7 @@ async function main() {
         'api_access',
         'enhanced_settings',
         'priority_support'
-      ],
+      ] as any,
     },
   });
   await prisma.plan.upsert({
@@ -230,7 +230,7 @@ async function main() {
         'dedicated_support',
         'all_settings_features',
         'advanced_comparison'
-      ],
+      ] as any,
     },
   });
   console.log('✅ Seeded plans');

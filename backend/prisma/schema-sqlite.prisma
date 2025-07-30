@@ -29,6 +29,9 @@ model User {
   subscription  Subscription?
   webhooks      Webhook[]
   hubspotPortalId String? @unique
+  hubspotAccessToken String?
+  hubspotRefreshToken String?
+  hubspotTokenExpiresAt DateTime?
   overages      Overage[]
   notificationSettings NotificationSettings?
   apiKeys       ApiKey[]
@@ -102,7 +105,7 @@ model Plan {
   price        Float
   currency     String   @default("USD")
   interval     String   @default("month") // 'month', 'year'
-  features     String?  // Comma-separated list of features
+  features     String?  // Array of feature strings (JSON string)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -116,6 +119,11 @@ model Overage {
   workflowCount Int
   limit       Int
   overage     Int
+  amount      Float    @default(0)
+  billed      Boolean  @default(false)
+  periodStart DateTime?
+  periodEnd   DateTime?
+  type        String   @default("workflow")
   createdAt   DateTime @default(now())
 
   @@unique([userId, month])
@@ -139,7 +147,9 @@ model ApiKey {
   user        User     @relation(fields: [userId], references: [id])
   name        String
   key         String   @unique
+  description String?
   permissions String?  // Comma-separated list of permissions
+  revoked     Boolean  @default(false)
   lastUsed    DateTime?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -153,6 +163,8 @@ model SsoConfig {
   clientSecret      String
   redirectUri       String
   scopes            String?  // Comma-separated scopes
+  metadata          String?
+  enabled           Boolean  @default(true)
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

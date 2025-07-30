@@ -7,7 +7,11 @@ export class WebhookService {
   constructor(private prisma: PrismaService, private auditLogService: AuditLogService) {}
 
   async create(data: { userId: string; name?: string; endpointUrl: string; secret?: string; events: string[] }) {
-    const webhook = await this.prisma.webhook.create({ data });
+    const webhookData = {
+      ...data,
+      events: data.events.join(','), // Convert array to comma-separated string
+    };
+    const webhook = await this.prisma.webhook.create({ data: webhookData });
     await this.auditLogService.create({
       userId: data.userId,
       action: 'create',

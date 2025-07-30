@@ -181,7 +181,7 @@ export class AnalyticsService {
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     const monthlyOverages = overages.filter(o => 
-      o.periodStart >= monthStart && o.periodStart <= monthEnd
+      o.periodStart && o.periodStart >= monthStart && o.periodStart <= monthEnd
     );
     const monthlyRevenue = monthlyOverages.reduce((sum, o) => sum + (o.amount * 1.00), 0);
 
@@ -190,7 +190,7 @@ export class AnalyticsService {
     const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const prevMonthOverages = overages.filter(o => 
-      o.periodStart >= prevMonthStart && o.periodStart <= prevMonthEnd
+      o.periodStart && o.periodStart >= prevMonthStart && o.periodStart <= prevMonthEnd
     );
     const prevMonthRevenue = prevMonthOverages.reduce((sum, o) => sum + (o.amount * 1.00), 0);
 

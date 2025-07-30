@@ -285,6 +285,9 @@ export class HubSpotService {
 
       if (expiresAt && expiresAt.getTime() - now.getTime() < bufferTime) {
         this.logger.log(`Refreshing expired token for user ${userId}`);
+        if (!user.hubspotRefreshToken) {
+          throw new HttpException('No refresh token available', HttpStatus.UNAUTHORIZED);
+        }
         const newTokens = await this.refreshToken(user.hubspotRefreshToken);
         await this.storeUserTokens(userId, newTokens);
         return newTokens.access_token;

@@ -3,16 +3,11 @@ FROM node:18-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
 
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build the NestJS app
 RUN npm run build
 
-EXPOSE 4000
+EXPOSE 3000
 
 CMD ["npm", "run", "start:prod"] 

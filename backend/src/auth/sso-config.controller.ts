@@ -13,7 +13,14 @@ export class SsoConfigController {
   }
 
   @Put()
-  async updateConfig(@Body() dto: { provider: string; metadata: string; enabled: boolean }) {
+  async updateConfig(@Body() dto: { 
+    provider: string; 
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+    metadata?: string; 
+    enabled: boolean 
+  }) {
     let config = await this.prisma.ssoConfig.findFirst();
     if (!config) {
       config = await this.prisma.ssoConfig.create({ data: dto });

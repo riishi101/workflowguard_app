@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,152 +5,162 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  name          String?
-  role          String   // e.g., 'admin', 'restorer', 'viewer'
-  password      String?  // Hashed password for email/password auth
-  jobTitle      String?
-  timezone      String?
-  language      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  workflows     Workflow[]
-  auditLogs     AuditLog[]
-  subscription  Subscription?
-  webhooks      Webhook[]
-  hubspotPortalId String? @unique
-  hubspotAccessToken String?
-  hubspotRefreshToken String?
+  id                    String                @id @default(uuid())
+  email                 String                @unique
+  name                  String?
+  role                  String
+  password              String?
+  jobTitle              String?
+  timezone              String?
+  language              String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  hubspotPortalId       String?               @unique
+  hubspotAccessToken    String?
+  hubspotRefreshToken   String?
   hubspotTokenExpiresAt DateTime?
-  overages      Overage[]
-  notificationSettings NotificationSettings?
-  apiKeys       ApiKey[]
+  apiKeys               ApiKey[]
+  auditLogs             AuditLog[]
+  notificationSettings  NotificationSettings?
+  overages              Overage[]
+  subscription          Subscription?
+  webhooks              Webhook[]
+  workflows             Workflow[]
 }
 
 model Workflow {
-  id            String            @id @default(uuid())
-  hubspotId     String            @unique // HubSpot workflow ID
-  name          String
-  ownerId       String
-  owner         User              @relation(fields: [ownerId], references: [id])
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  versions      WorkflowVersion[]
+  id        String            @id @default(uuid())
+  hubspotId String            @unique
+  name      String
+  ownerId   String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  owner     User              @relation(fields: [ownerId], references: [id])
+  versions  WorkflowVersion[]
 }
 
 model WorkflowVersion {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   workflowId    String
-  workflow      Workflow  @relation(fields: [workflowId], references: [id])
   versionNumber Int
-  snapshotType  String    // e.g., 'manual', 'on-publish', 'daily-backup'
-  createdBy     String    // User ID or 'system'
-  createdAt     DateTime  @default(now())
-  data          Json      // Raw workflow JSON from HubSpot
+  snapshotType  String
+  createdBy     String
+  createdAt     DateTime @default(now())
+  data          Json
+  workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
 }
 
 model AuditLog {
-  id            String   @id @default(uuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
-  action        String   // e.g., 'restore', 'create', 'update', 'delete'
-  entityType    String   // e.g., 'workflow', 'version', 'settings'
-  entityId      String   // ID of the affected entity
-  oldValue      Json?
-  newValue      Json?
-  timestamp     DateTime @default(now())
-  ipAddress     String?
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  timestamp  DateTime @default(now())
+  ipAddress  String?
+  user       User?    @relation(fields: [userId], references: [id])
 }
 
 model Subscription {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id])
-  planId          String   // 'starter', 'professional', 'enterprise'
-  status          String   // 'active', 'trial', 'cancelled', 'overdue'
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  planId          String
+  status          String
   trialEndDate    DateTime?
   nextBillingDate DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id])
 }
 
 model Webhook {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
   name        String?
   endpointUrl String
   secret      String?
-  events      String[]
+  events      String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Plan {
-  id           String   @id // 'starter', 'professional', 'enterprise'
-  name         String
-  description  String?
-  price        Float
-  currency     String   @default("USD")
-  interval     String   @default("month") // 'month', 'year'
-  features     Json?    // Array of feature strings
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model Overage {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  month       String   // Format: "YYYY-MM"
-  workflowCount Int
-  limit       Int
-  overage     Int
-  createdAt   DateTime @default(now())
-
-  @@unique([userId, month])
-}
-
-model NotificationSettings {
-  id                    String   @id @default(uuid())
-  userId                String   @unique
-  user                  User     @relation(fields: [userId], references: [id])
-  emailNotifications    Boolean  @default(true)
-  webhookNotifications  Boolean  @default(false)
-  dailyDigest           Boolean  @default(false)
-  weeklyReport          Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-}
-
-model ApiKey {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  id          String   @id
   name        String
-  key         String   @unique
-  permissions Json?    // Array of permission strings
-  lastUsed    DateTime?
+  description String?
+  price       Float
+  currency    String   @default("USD")
+  interval    String   @default("month")
+  features    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
+model Overage {
+  id            String    @id @default(uuid())
+  userId        String
+  month         String
+  workflowCount Int
+  limit         Int
+  overage       Int
+  amount        Float     @default(0)
+  billed        Boolean   @default(false)
+  periodStart   DateTime?
+  periodEnd     DateTime?
+  type          String    @default("workflow")
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, month])
+}
+
+model NotificationSettings {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  emailNotifications   Boolean  @default(true)
+  webhookNotifications Boolean  @default(false)
+  dailyDigest          Boolean  @default(false)
+  weeklyReport         Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id])
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String
+  key         String    @unique
+  description String?
+  permissions String?
+  revoked     Boolean   @default(false)
+  lastUsed    DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+}
+
 model SsoConfig {
-  id                String   @id @default(uuid())
-  provider          String   // 'google', 'azure', 'okta', etc.
-  clientId          String
-  clientSecret      String
-  redirectUri       String
-  scopes            String?  // Comma-separated scopes
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-} 
+  id           String   @id @default(uuid())
+  provider     String
+  clientId     String
+  clientSecret String
+  redirectUri  String
+  scopes       String?
+  metadata     String?
+  enabled      Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

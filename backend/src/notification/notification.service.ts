@@ -330,7 +330,7 @@ export class NotificationService {
       const webhooks = await this.prisma.webhook.findMany({
         where: { 
           userId,
-          events: { has: payload.type },
+          events: { contains: payload.type },
         },
       });
 

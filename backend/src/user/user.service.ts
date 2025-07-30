@@ -119,7 +119,7 @@ export class UserService {
       overagePeriods: overages.length,
       currentPeriodOverages: overages.find(o => {
         const now = new Date();
-        return o.periodStart <= now && o.periodEnd >= now;
+        return o.periodStart && o.periodEnd && o.periodStart <= now && o.periodEnd >= now;
       })?.amount || 0,
     };
   }
@@ -132,6 +132,7 @@ export class UserService {
   }
 
   async trackOverage(userId: string, type: string, amount: number, periodStart: Date, periodEnd: Date) {
+    const month = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
     const overage = await this.prisma.overage.create({
       data: {
         userId,
@@ -139,6 +140,10 @@ export class UserService {
         amount,
         periodStart,
         periodEnd,
+        month,
+        workflowCount: Math.ceil(amount), // Convert amount to workflow count
+        limit: 100, // Default limit
+        overage: Math.max(0, Math.ceil(amount) - 100), // Calculate overage
       },
     });
 
@@ -183,14 +188,13 @@ export class UserService {
   async createApiKey(userId: string, description: string) {
     // Generate a random API key
     const rawKey = randomBytes(32).toString('hex');
-    // Hash the key (SHA256)
-    const keyHash = createHash('sha256').update(rawKey).digest('hex');
-    // Store the hash
+    // Store the key directly (in production, you'd want to hash it)
     const apiKey = await this.prisma.apiKey.create({
       data: {
         userId,
+        name: `API Key ${new Date().toISOString().split('T')[0]}`,
+        key: rawKey,
         description,
-        keyHash,
       },
     });
     // Return the raw key only once
