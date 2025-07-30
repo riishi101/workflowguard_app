@@ -109,7 +109,7 @@ export class ApiService {
 
   // User endpoints
   static async getCurrentUser(): Promise<ApiResponse<User>> {
-    const response = await api.get('/user/me');
+    const response = await api.get('/auth/me');
     return response.data;
   }
 
