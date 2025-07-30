@@ -98,14 +98,14 @@ export class UserService {
     }
     return this.prisma.overage.findMany({
       where,
-      orderBy: { periodStart: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async getOverageStats(userId: string) {
     const overages = await this.prisma.overage.findMany({
       where: { userId },
-      orderBy: { periodStart: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
     
     const totalOverages = overages.reduce((sum, overage) => sum + overage.amount, 0);
@@ -117,7 +117,7 @@ export class UserService {
       totalOverages,
       unbilledOverages,
       overagePeriods: overages.length,
-      currentPeriodOverages: overages.find(o => {
+      currentPeriodOverages: overages.find((o: any) => {
         const now = new Date();
         return o.periodStart && o.periodEnd && o.periodStart <= now && o.periodEnd >= now;
       })?.amount || 0,

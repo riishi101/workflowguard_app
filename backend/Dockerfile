@@ -7,6 +7,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# Generate Prisma client
+RUN npx prisma generate
 RUN npm run build
 
 # Remove dev dependencies after build

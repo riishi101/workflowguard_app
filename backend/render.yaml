@@ -2,7 +2,7 @@ services:
   - type: web
     name: workflowguard-backend
     env: node
-    buildCommand: cd backend && npm install && npm run build
+    buildCommand: cd backend && npm install && npx prisma generate && npm run build
     startCommand: cd backend && npm run start:prod
     envVars:
       - key: DATABASE_URL
