@@ -3,11 +3,15 @@ FROM node:18-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm ci
 
 COPY . .
 RUN npm run build
 
-EXPOSE 3000
+# Remove dev dependencies after build
+RUN npm prune --production
+
+EXPOSE 4000
 
 CMD ["npm", "run", "start:prod"] 
