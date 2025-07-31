@@ -33,46 +33,57 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        // Check if this is an OAuth callback
+        console.log('AuthContext - Starting initialization');
+        
+        // Check if this is an OAuth success callback
         const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const token = urlParams.get('token');
         const code = urlParams.get('code');
         const state = urlParams.get('state');
 
-        if (code && state) {
-          // This is a HubSpot OAuth callback
+        console.log('AuthContext - URL params:', { success, token: !!token, code: !!code, state: !!state });
+
+        if (success === 'true' && token) {
+          // OAuth was successful, store the token and get user
+          console.log('AuthContext - OAuth success detected, storing token');
+          localStorage.setItem('authToken', token);
+          
           try {
-            // The backend will handle the OAuth callback
-            // We just need to check if user is now authenticated
+            console.log('AuthContext - Fetching user after OAuth success');
             const response = await ApiService.getCurrentUser();
+            console.log('AuthContext - User fetched successfully:', response.data);
             setUser(response.data);
           } catch (error) {
-            console.log('OAuth callback failed');
+            console.error('AuthContext - Failed to get user after OAuth:', error);
+            // Don't clear the token, let the user try again
           }
-        } else if (urlParams.get('success') === 'true' && urlParams.get('token')) {
-          // OAuth was successful, store the token
-          const token = urlParams.get('token');
-          if (token) {
-            localStorage.setItem('authToken', token);
-            try {
-              const response = await ApiService.getCurrentUser();
-              setUser(response.data);
-            } catch (error) {
-              console.log('Failed to get user after OAuth');
-            }
+        } else if (code && state) {
+          // This is a HubSpot OAuth callback (not used in current flow)
+          console.log('AuthContext - HubSpot OAuth callback detected');
+          try {
+            const response = await ApiService.getCurrentUser();
+            console.log('AuthContext - User fetched from OAuth callback:', response.data);
+            setUser(response.data);
+          } catch (error) {
+            console.error('AuthContext - OAuth callback failed:', error);
           }
         } else {
           // Check if user is already authenticated
+          console.log('AuthContext - Checking existing authentication');
           try {
             const response = await ApiService.getCurrentUser();
+            console.log('AuthContext - User already authenticated:', response.data);
             setUser(response.data);
           } catch (error) {
             // User not authenticated, that's okay for HubSpot app
-            console.log('User not authenticated - HubSpot OAuth required');
+            console.log('AuthContext - User not authenticated - HubSpot OAuth required');
           }
         }
       } catch (error) {
-        console.log('Auth initialization error:', error);
+        console.error('AuthContext - Auth initialization error:', error);
       } finally {
+        console.log('AuthContext - Initialization complete, setting loading to false');
         setLoading(false);
         setHasInitialized(true);
       }
@@ -82,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = () => {
+    console.log('AuthContext - Initiating HubSpot OAuth');
     // Direct redirect to the OAuth URL
     const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
     const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
@@ -89,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
     
+    console.log('AuthContext - Redirecting to:', authUrl);
     // Redirect immediately
     window.location.href = authUrl;
   };
@@ -111,6 +124,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isAuthenticated: !!user,
   };
+
+  console.log('AuthContext - Current state:', { user: !!user, loading, isAuthenticated: !!user });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }; 

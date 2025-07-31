@@ -12,9 +12,22 @@ const OnboardingFlow = () => {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [timeoutReached, setTimeoutReached] = useState(false);
   const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Timeout mechanism to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('OnboardingFlow - Timeout reached, forcing workflow selection');
+      setTimeoutReached(true);
+      setHasProcessedOAuth(true);
+      setCurrentStep('workflow-selection');
+    }, 30000); // 30 seconds timeout
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (loading || isInitialized) return; // Don't process while loading or if already initialized
@@ -25,7 +38,7 @@ const OnboardingFlow = () => {
     const token = urlParams.get('token');
     const error = urlParams.get('error');
 
-    console.log('OnboardingFlow - Processing:', { success, token: !!token, error, isAuthenticated, hasProcessedOAuth });
+    console.log('OnboardingFlow - Processing:', { success, token: !!token, error, isAuthenticated, hasProcessedOAuth, timeoutReached });
 
     if (success === 'true' && token && !hasProcessedOAuth) {
       // OAuth was successful, clear URL and go to workflow selection
@@ -70,7 +83,7 @@ const OnboardingFlow = () => {
       setShowWelcomeModal(true);
       setIsInitialized(true);
     }
-  }, [isAuthenticated, loading, user, navigate, toast, hasProcessedOAuth, isInitialized]);
+  }, [isAuthenticated, loading, user, navigate, toast, hasProcessedOAuth, isInitialized, timeoutReached]);
 
   const handleWelcomeComplete = () => {
     console.log('OnboardingFlow - Welcome complete, showing connect modal');
@@ -95,7 +108,20 @@ const OnboardingFlow = () => {
     });
   };
 
-  if (loading) {
+  // Show timeout message if loading for too long
+  if (timeoutReached && loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Taking longer than expected...</p>
+          <p className="mt-1 text-sm text-gray-500">Redirecting to workflow selection</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && !timeoutReached) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
@@ -108,6 +134,11 @@ const OnboardingFlow = () => {
 
   // Show workflow selection if user is authenticated and on workflow-selection step
   if (isAuthenticated && currentStep === 'workflow-selection') {
+    return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
+  }
+
+  // Show workflow selection if timeout reached (force workflow selection)
+  if (timeoutReached && currentStep === 'workflow-selection') {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
   }
 
