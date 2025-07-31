@@ -96,16 +96,24 @@ export class HubSpotController {
       }
 
       const token = authHeader.substring(7);
+      console.log('HubSpotController - Verifying token for workflows request');
       const user = await this.authService.verifyToken(token);
       if (!user) {
+        console.log('HubSpotController - Invalid token for workflows request');
         throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
       }
 
+      console.log('HubSpotController - User authenticated:', { id: user.id, email: user.email });
+
       // Get valid access token
+      console.log('HubSpotController - Getting valid access token');
       const accessToken = await this.hubSpotService.getValidAccessToken(user.id);
+      console.log('HubSpotController - Access token obtained');
       
       // Get workflows from HubSpot
+      console.log('HubSpotController - Fetching workflows from HubSpot');
       const hubspotWorkflows = await this.hubSpotService.getWorkflows(accessToken, user.hubspotPortalId);
+      console.log('HubSpotController - Workflows fetched:', hubspotWorkflows.length);
       
       // Get protected workflow IDs for this user
       const protectedWorkflowIds = await this.workflowService.getProtectedWorkflowIds(user.id);
@@ -123,8 +131,10 @@ export class HubSpotController {
         isDemo: false,
       }));
       
+      console.log('HubSpotController - Returning workflows:', workflows.length);
       return workflows;
     } catch (error) {
+      console.error('HubSpotController - Error in getWorkflows:', error);
       if (error instanceof HttpException) {
         throw error;
       }

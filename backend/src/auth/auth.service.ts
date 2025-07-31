@@ -76,15 +76,25 @@ export class AuthService {
 
   async verifyToken(token: string) {
     try {
+      console.log('AuthService - Verifying token:', token.substring(0, 20) + '...');
+      
       const payload = this.jwtService.verify(token);
+      console.log('AuthService - JWT payload verified:', { sub: payload.sub, email: payload.email, role: payload.role });
+      
       const user = await this.validateJwtPayload(payload);
+      console.log('AuthService - User found from payload:', user ? { id: user.id, email: user.email } : null);
+      
       if (!user) {
+        console.log('AuthService - No user found for payload');
         return null;
       }
+      
       // Remove password from user object before returning
       const { password: _, ...userWithoutPassword } = user as any;
+      console.log('AuthService - Returning user without password:', { id: userWithoutPassword.id, email: userWithoutPassword.email });
       return userWithoutPassword;
     } catch (error) {
+      console.error('AuthService - Token verification failed:', error.message);
       return null;
     }
   }

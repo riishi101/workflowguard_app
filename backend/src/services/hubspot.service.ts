@@ -265,6 +265,8 @@ export class HubSpotService {
    */
   async getValidAccessToken(userId: string): Promise<string> {
     try {
+      console.log('HubSpotService - Getting valid access token for user:', userId);
+      
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -274,7 +276,14 @@ export class HubSpotService {
         },
       });
 
+      console.log('HubSpotService - User found:', user ? { 
+        hasAccessToken: !!user.hubspotAccessToken,
+        hasRefreshToken: !!user.hubspotRefreshToken,
+        expiresAt: user.hubspotTokenExpiresAt
+      } : null);
+
       if (!user?.hubspotAccessToken) {
+        console.log('HubSpotService - No HubSpot tokens found for user');
         throw new HttpException('No HubSpot tokens found for user', HttpStatus.UNAUTHORIZED);
       }
 
@@ -293,6 +302,7 @@ export class HubSpotService {
         return newTokens.access_token;
       }
 
+      console.log('HubSpotService - Returning valid access token');
       return user.hubspotAccessToken;
     } catch (error) {
       this.logger.error('Error getting valid access token:', error);
