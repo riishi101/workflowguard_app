@@ -173,6 +173,17 @@ const OnboardingFlow = () => {
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
         <p className="mt-2 text-gray-600">Setting up...</p>
+        
+        {/* Debug Button */}
+        <button
+          onClick={() => {
+            console.log('Manual OAuth trigger');
+            connectHubSpot();
+          }}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+        >
+          Manual OAuth Trigger
+        </button>
       </div>
     </div>
   );
