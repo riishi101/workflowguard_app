@@ -81,11 +81,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, [hasInitialized]);
 
-  const connectHubSpot = () => {
-    // Redirect to HubSpot OAuth URL
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    const hubspotAuthUrl = `${baseUrl}/hubspot/auth/url`;
-    window.location.href = hubspotAuthUrl;
+  const connectHubSpot = async () => {
+    try {
+      // Get the OAuth URL from the backend
+      const response = await ApiService.getHubSpotAuthUrl();
+      if (response.data && response.data.url) {
+        window.location.href = response.data.url;
+      } else {
+        console.error('Failed to get HubSpot OAuth URL');
+      }
+    } catch (error) {
+      console.error('Error connecting to HubSpot:', error);
+    }
   };
 
   const logout = async () => {

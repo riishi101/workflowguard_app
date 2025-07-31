@@ -475,6 +475,11 @@ export class ApiService {
     return response.data;
   }
 
+  static async getHubSpotAuthUrl(): Promise<ApiResponse<{ url: string }>> {
+    const response = await api.get('/hubspot/auth/url');
+    return response.data;
+  }
+
   static async disconnectHubSpot(): Promise<ApiResponse<void>> {
     const response = await api.post('/hubspot/disconnect');
     return response.data;
