@@ -10,7 +10,6 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'connect' | 'workflow-selection' | 'dashboard'>('welcome');
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false);
   const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -18,24 +17,46 @@ const Index = () => {
   useEffect(() => {
     if (loading) return; // Don't process while loading
 
-    // Check if this is an OAuth callback
+    // Check if this is an OAuth success callback
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
+    const success = urlParams.get('success');
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
 
-    if (code && state && isAuthenticated && !hasProcessedOAuth) {
-      // OAuth callback successful, show workflow selection
-      setCurrentStep('workflow-selection');
-      setHasProcessedOAuth(true);
-      // Clear URL parameters
+    if (success === 'true' && token) {
+      // OAuth was successful, clear URL and go to workflow selection
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (isAuthenticated && !loading && user && !code && !state && !hasProcessedOAuth) {
-      // User is already authenticated and not in OAuth callback, go to dashboard
-      setCurrentStep('dashboard');
-      setHasProcessedOAuth(true);
-      navigate('/dashboard');
+      setCurrentStep('workflow-selection');
+      return;
     }
-  }, [isAuthenticated, loading, user, navigate, hasProcessedOAuth]);
+
+    if (error) {
+      // OAuth failed, show error and stay on connect step
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect to HubSpot. Please try again.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setCurrentStep('connect');
+      setShowConnectModal(true);
+      return;
+    }
+
+    // Check if user is already authenticated
+    if (isAuthenticated && !loading && user) {
+      // User is authenticated, go to dashboard
+      setCurrentStep('dashboard');
+      navigate('/dashboard');
+      return;
+    }
+
+    // User is not authenticated, show welcome modal
+    if (!isAuthenticated && !loading) {
+      setCurrentStep('welcome');
+      setShowWelcomeModal(true);
+    }
+  }, [isAuthenticated, loading, user, navigate, toast]);
 
   const handleWelcomeComplete = () => {
     setShowWelcomeModal(false);
@@ -71,6 +92,11 @@ const Index = () => {
   // Show workflow selection if user is authenticated but hasn't selected workflows
   if (isAuthenticated && currentStep === 'workflow-selection') {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
+  }
+
+  // Show dashboard if user is authenticated and on dashboard step
+  if (isAuthenticated && currentStep === 'dashboard') {
+    return null; // Will be handled by navigation
   }
 
   return (
