@@ -7,6 +7,7 @@ interface AuthContextType {
   connectHubSpot: () => void;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  testAuthentication?: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,11 +78,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           // Check if user is already authenticated
           console.log('AuthContext - Checking existing authentication');
-          try {
-            const response = await ApiService.getCurrentUser();
-            console.log('AuthContext - User already authenticated:', response.data);
-            setUser(response.data);
-          } catch (error) {
+          
+          // Check if there's a token in localStorage
+          const existingToken = localStorage.getItem('authToken');
+          console.log('AuthContext - Existing token in localStorage:', !!existingToken);
+          
+          if (existingToken) {
+            try {
+              const response = await ApiService.getCurrentUser();
+              console.log('AuthContext - User already authenticated:', response.data);
+              setUser(response.data);
+            } catch (error) {
+              console.log('AuthContext - Token exists but user fetch failed:', error.message);
+              // Clear invalid token
+              localStorage.removeItem('authToken');
+            }
+          } else {
             // User not authenticated, that's okay for HubSpot app
             console.log('AuthContext - User not authenticated - HubSpot OAuth required');
           }
@@ -112,6 +124,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     window.location.href = authUrl;
   };
 
+  const testAuthentication = async () => {
+    console.log('AuthContext - Testing authentication manually');
+    const token = localStorage.getItem('authToken');
+    console.log('AuthContext - Current token:', token ? token.substring(0, 50) + '...' : 'none');
+    
+    try {
+      const response = await ApiService.getCurrentUser();
+      console.log('AuthContext - Manual auth test successful:', response.data);
+      setUser(response.data);
+    } catch (error) {
+      console.error('AuthContext - Manual auth test failed:', error);
+    }
+  };
+
   const logout = async () => {
     try {
       await ApiService.logout();
@@ -129,6 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     connectHubSpot,
     logout,
     isAuthenticated: !!user,
+    testAuthentication, // Add this for debugging
   };
 
   console.log('AuthContext - Current state:', { user: !!user, loading, isAuthenticated: !!user });
