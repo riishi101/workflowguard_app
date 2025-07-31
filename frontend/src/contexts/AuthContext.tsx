@@ -48,6 +48,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } catch (error) {
             console.log('OAuth callback failed');
           }
+        } else if (urlParams.get('success') === 'true' && urlParams.get('token')) {
+          // OAuth was successful, store the token
+          const token = urlParams.get('token');
+          if (token) {
+            localStorage.setItem('authToken', token);
+            try {
+              const response = await ApiService.getCurrentUser();
+              setUser(response.data);
+            } catch (error) {
+              console.log('Failed to get user after OAuth');
+            }
+          }
         } else {
           // Check if user is already authenticated
           try {
@@ -70,11 +82,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = () => {
-    // Redirect to HubSpot OAuth URL - use the API base URL without adding /api
+    // Redirect to HubSpot OAuth URL
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    // Remove /api from the end if it exists
-    const cleanBaseUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
-    const hubspotAuthUrl = `${cleanBaseUrl}/api/auth/hubspot/url`;
+    const hubspotAuthUrl = `${baseUrl}/hubspot/auth/url`;
     window.location.href = hubspotAuthUrl;
   };
 
