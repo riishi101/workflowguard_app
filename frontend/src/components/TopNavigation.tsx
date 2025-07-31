@@ -56,7 +56,7 @@ const TopNavigation = () => {
       console.error('Logout failed:', error);
       // Force logout even if API call fails
       localStorage.removeItem('authToken');
-      navigate("/");
+    navigate("/");
     }
   };
 
@@ -158,12 +158,12 @@ const TopNavigation = () => {
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-4 h-4" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">
-                  2
-                </Badge>
-              </Button>
+          <Button variant="ghost" size="sm" className="relative">
+            <Bell className="w-4 h-4" />
+            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">
+              2
+            </Badge>
+          </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <DropdownMenuLabel>Notifications</DropdownMenuLabel>

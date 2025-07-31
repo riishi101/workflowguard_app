@@ -198,13 +198,13 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
   const refreshWorkflows = async () => {
     try {
-      setRefreshing(true);
+    setRefreshing(true);
       setError(null);
-      await fetchWorkflows();
+    await fetchWorkflows();
     } catch (error) {
       console.error('Failed to refresh workflows:', error);
     } finally {
-      setRefreshing(false);
+    setRefreshing(false);
     }
   };
 
@@ -652,7 +652,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           </span>
                           {workflow.isProtected && (
                             <div className="flex items-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            <CheckCircle className="w-4 h-4 text-green-500" />
                               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                                 Protected
                               </Badge>

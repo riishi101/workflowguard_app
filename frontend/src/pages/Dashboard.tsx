@@ -115,9 +115,9 @@ const Dashboard = () => {
 
   const refreshDashboard = async () => {
     try {
-      setRefreshing(true);
+    setRefreshing(true);
       setError(null);
-      await fetchDashboardData();
+    await fetchDashboardData();
       toast({
         title: "Dashboard Refreshed",
         description: "Dashboard data has been updated successfully.",
@@ -125,7 +125,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to refresh dashboard:', error);
     } finally {
-      setRefreshing(false);
+    setRefreshing(false);
     }
   };
 

@@ -100,9 +100,9 @@ export class AuthService {
   async updateUserHubspotPortalId(userId: string, hubspotPortalId: string) {
     try {
       await this.prisma.user.update({
-        where: { id: userId },
-        data: { hubspotPortalId },
-      });
+      where: { id: userId },
+      data: { hubspotPortalId },
+    });
     } catch (error) {
       throw new HttpException('Failed to update HubSpot portal ID', HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -380,19 +380,19 @@ const WorkflowHistory = () => {
       <ContentSection>
         {workflowDetails && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {workflowDetails.name}
-                </h2>
-                <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(workflowDetails.status)}`}></div>
-                  <span className="text-sm text-gray-600 capitalize">{workflowDetails.status}</span>
-                </div>
-                <span className="text-sm text-gray-500">ID: {workflowDetails.id}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {workflowDetails.name}
+              </h2>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(workflowDetails.status)}`}></div>
+                <span className="text-sm text-gray-600 capitalize">{workflowDetails.status}</span>
               </div>
-              <div className="text-sm text-gray-500">
-                Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
+              <span className="text-sm text-gray-500">ID: {workflowDetails.id}</span>
+            </div>
+            <div className="text-sm text-gray-500">
+              Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-600">

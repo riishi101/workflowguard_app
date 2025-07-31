@@ -85,15 +85,15 @@ const PlanBillingTab = () => {
     <div className="space-y-6">
       {/* Trial Banner */}
       {isTrialActive && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-          <div>
-            <p className="text-blue-900 font-medium text-sm">
-              You are currently on a 21-day free trial with access to Professional
-              Plan features!
-            </p>
-            <p className="text-blue-800 text-sm">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+        <div>
+          <p className="text-blue-900 font-medium text-sm">
+            You are currently on a 21-day free trial with access to Professional
+            Plan features!
+          </p>
+          <p className="text-blue-800 text-sm">
               Trial ends in {trialDaysRemaining} days. Upgrade now to continue using WorkflowGuard.
-            </p>
+          </p>
           </div>
           <Button 
             className="bg-green-600 hover:bg-green-700 text-white"
@@ -119,9 +119,9 @@ const PlanBillingTab = () => {
             className="bg-red-600 hover:bg-red-700 text-white"
             onClick={() => handleUpgrade('professional')}
           >
-            Upgrade Now
-          </Button>
-        </div>
+          Upgrade Now
+        </Button>
+      </div>
       )}
 
       {/* Current Subscription */}
@@ -138,8 +138,8 @@ const PlanBillingTab = () => {
             </h4>
             {isTrialActive && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Trial
-              </Badge>
+              Trial
+            </Badge>
             )}
             {isTrialExpired && (
               <Badge variant="secondary" className="bg-red-100 text-red-800">

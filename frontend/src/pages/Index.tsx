@@ -11,7 +11,7 @@ const Index = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false);
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,7 +45,6 @@ const Index = () => {
 
   const handleConnectHubSpot = () => {
     // Use the connectHubSpot function from AuthContext
-    const { connectHubSpot } = useAuth();
     connectHubSpot();
   };
 
