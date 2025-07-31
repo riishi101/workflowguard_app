@@ -38,7 +38,7 @@ export class HubSpotController {
   async handleAuthCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
     try {
       if (!code) {
-        const frontendUrl = process.env.FRONTEND_URL || 'https://workflowguard-app.vercel.app';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.workflowguard.pro';
         return res.redirect(`${frontendUrl}?error=no_code`);
       }
 
@@ -76,13 +76,13 @@ export class HubSpotController {
       const jwtToken = this.authService.generateToken(user);
 
       // Redirect to frontend with success
-      const frontendUrl = process.env.FRONTEND_URL || 'https://workflowguard-app.vercel.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://www.workflowguard.pro';
       const redirectUrl = `${frontendUrl}?success=true&token=${encodeURIComponent(jwtToken)}`;
       return res.redirect(redirectUrl);
       
     } catch (error) {
       console.error('OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'https://workflowguard-app.vercel.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://www.workflowguard.pro';
       return res.redirect(`${frontendUrl}?error=oauth_failed`);
     }
   }
