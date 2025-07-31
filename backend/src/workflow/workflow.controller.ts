@@ -214,20 +214,6 @@ export class WorkflowController {
     }
   }
 
-  // Development endpoint to create sample data
-  @Post(':id/sample-data')
-  async createSampleData(@Param('id') id: string, @Body() body: { ownerId: string }) {
-    try {
-      const result = await this.workflowService.createSampleWorkflowData(id, body.ownerId);
-      return { message: 'Sample workflow data created successfully', data: result };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to create sample data', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   // Start workflow protection
   @Post('start-protection')
   async startWorkflowProtection(@Body() body: { workflowIds: string[] }, @Req() req: Request) {

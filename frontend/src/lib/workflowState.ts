@@ -15,7 +15,7 @@ export const WorkflowState = {
     );
   },
 
-  // Get number of selected workflows (for demo purposes)
+  // Get number of selected workflows
   getSelectedCount(): number {
     const count = localStorage.getItem("workflowGuard_selectedCount");
     return count ? parseInt(count, 10) : 0;

@@ -314,128 +314,14 @@ export class WorkflowService {
   }
 
   private calculateDifferences(stepsA: any[], stepsB: any[]) {
-    const added: any[] = [];
-    const modified: any[] = [];
-    const removed: any[] = [];
-
-    // Create maps for easy lookup
-    const stepsAMap = new Map(stepsA.map(step => [step.id, step]));
-    const stepsBMap = new Map(stepsB.map(step => [step.id, step]));
-
-    // Find added and modified steps in version B
-    stepsB.forEach(stepB => {
-      const stepA = stepsAMap.get(stepB.id);
-      if (!stepA) {
-        added.push({ ...stepB, isNew: true });
-      } else if (JSON.stringify(stepA) !== JSON.stringify(stepB)) {
-        modified.push({ ...stepB, isModified: true });
-      }
-    });
-
-    // Find removed steps (in A but not in B)
-    stepsA.forEach(stepA => {
-      if (!stepsBMap.has(stepA.id)) {
-        removed.push({ ...stepA, isRemoved: true });
-      }
+    const added = stepsB.filter(stepB => !stepsA.find(stepA => stepA.id === stepB.id));
+    const removed = stepsA.filter(stepA => !stepsB.find(stepB => stepB.id === stepA.id));
+    const modified = stepsB.filter(stepB => {
+      const stepA = stepsA.find(stepA => stepA.id === stepB.id);
+      return stepA && JSON.stringify(stepA) !== JSON.stringify(stepB);
     });
 
     return { added, modified, removed };
-  }
-
-  // Helper method to create sample workflow data for testing
-  async createSampleWorkflowData(workflowId: string, ownerId: string) {
-    const sampleSteps = [
-      {
-        id: 'step-1',
-        type: 'email',
-        title: 'Send Welcome Email',
-        description: 'Send a welcome email to new contacts',
-        config: { templateId: 'welcome-template', delay: 0 },
-        isNew: false,
-        isModified: false,
-        isRemoved: false,
-      },
-      {
-        id: 'step-2',
-        type: 'delay',
-        title: 'Wait 5 days',
-        description: 'Wait for 5 days before next action',
-        config: { duration: 5, unit: 'days' },
-        isNew: false,
-        isModified: false,
-        isRemoved: false,
-      },
-      {
-        id: 'step-3',
-        type: 'email',
-        title: 'Send Follow-up Email',
-        description: 'Send a follow-up email',
-        config: { templateId: 'followup-template', delay: 0 },
-        isNew: false,
-        isModified: false,
-        isRemoved: false,
-      },
-    ];
-
-    const version1 = await this.prisma.workflowVersion.create({
-      data: {
-        workflowId,
-        versionNumber: 1,
-        snapshotType: 'Manual Snapshot',
-        createdBy: 'John Doe',
-        data: { steps: sampleSteps } as any,
-      },
-    });
-
-    const version2Steps = [
-      ...sampleSteps,
-      {
-        id: 'step-4',
-        type: 'meeting',
-        title: 'Schedule Meeting',
-        description: 'Schedule a meeting with the contact',
-        config: { meetingType: 'discovery', duration: 30 },
-        isNew: true,
-        isModified: false,
-        isRemoved: false,
-      },
-    ];
-
-    const version2 = await this.prisma.workflowVersion.create({
-      data: {
-        workflowId,
-        versionNumber: 2,
-        snapshotType: 'On-Publish Save',
-        createdBy: 'Jane Smith',
-        data: { steps: version2Steps } as any,
-      },
-    });
-
-    const version3Steps = [
-      ...version2Steps,
-      {
-        id: 'step-5',
-        type: 'email',
-        title: 'Send Thank You Email',
-        description: 'Send a thank you email after meeting',
-        config: { templateId: 'thankyou-template', delay: 1 },
-        isNew: true,
-        isModified: false,
-        isRemoved: false,
-      },
-    ];
-
-    const version3 = await this.prisma.workflowVersion.create({
-      data: {
-        workflowId,
-        versionNumber: 3,
-        snapshotType: 'Daily Backup',
-        createdBy: 'System',
-        data: { steps: version3Steps } as any,
-      },
-    });
-
-    return { version1, version2, version3 };
   }
 
   async startWorkflowProtection(workflowIds: string[], userId: string) {
@@ -541,8 +427,8 @@ export class WorkflowService {
           status,
           protectionStatus: 'protected',
           lastModified: workflow.updatedAt.toISOString(),
-          steps: Math.floor(Math.random() * 20) + 1, // Mock data
-          contacts: Math.floor(Math.random() * 5000) + 100, // Mock data
+          steps: 0, // Will be populated from HubSpot API
+          contacts: 0, // Will be populated from HubSpot API
         };
       });
     } catch (error) {
@@ -583,9 +469,9 @@ export class WorkflowService {
         activeWorkflows,
         protectedWorkflows,
         totalVersions,
-        uptime: 99.9, // Mock uptime
+        uptime: null, // Will be calculated from real data
         lastSnapshot: new Date().toISOString(),
-        planCapacity: 500, // Mock plan capacity
+        planCapacity: null, // Will be populated from subscription data
         planUsed: activeWorkflows,
       };
     } catch (error) {

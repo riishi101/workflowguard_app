@@ -152,11 +152,9 @@ export class HubSpotBillingService {
 
     this.logger.log('Sending to HubSpot billing API:', JSON.stringify(hubspotPayload, null, 2));
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Simulate HubSpot response
-    const mockResponse = {
+    // TODO: Implement real HubSpot billing API call
+    // For now, return a placeholder response
+    const response = {
       success: true,
       referenceId: `HS_BILL_${Date.now()}_${billingRecord.overageId}`,
       amount: billingRecord.totalAmount,
@@ -164,7 +162,7 @@ export class HubSpotBillingService {
       message: 'Billing record created successfully',
     };
 
-    return mockResponse;
+    return response;
   }
 
   /**

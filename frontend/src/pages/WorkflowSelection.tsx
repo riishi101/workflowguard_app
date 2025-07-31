@@ -47,7 +47,6 @@ interface HubSpotWorkflow {
   steps: number;
   contacts: number;
   isProtected?: boolean;
-  isDemo?: boolean;
 }
 
 const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
@@ -101,96 +100,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
       }
       
-      // Show demo data with clear indication
-      toast({
-        title: "Demo Mode Active",
-        description: "Showing sample workflows for demonstration purposes.",
-        variant: "default",
-      });
-      
-      // Fallback to demo data with clear labeling
-      setWorkflows([
-        {
-          id: "demo-1",
-          name: "Customer Onboarding (Demo)",
-          folder: "Sales Automation",
-          status: "ACTIVE",
-          lastModified: "2024-01-15 14:30",
-          steps: 12,
-          contacts: 1500,
-          isDemo: true,
-        },
-        {
-          id: "demo-2",
-          name: "Lead Nurturing - SaaS (Demo)",
-          folder: "Marketing",
-          status: "ACTIVE",
-          lastModified: "2024-01-14 09:15",
-          steps: 8,
-          contacts: 3200,
-          isDemo: true,
-        },
-        {
-          id: "demo-3",
-          name: "Email Campaign Follow-up (Demo)",
-          folder: "Marketing",
-          status: "INACTIVE",
-          lastModified: "2024-01-13 16:45",
-          steps: 6,
-          contacts: 800,
-          isDemo: true,
-        },
-        {
-          id: "demo-4",
-          name: "Deal Pipeline Automation (Demo)",
-          folder: "Sales",
-          status: "ACTIVE",
-          lastModified: "2024-01-12 11:20",
-          steps: 15,
-          contacts: 2100,
-          isDemo: true,
-        },
-        {
-          id: "demo-5",
-          name: "Customer Feedback Loop (Demo)",
-          folder: "Customer Success",
-          status: "ACTIVE",
-          lastModified: "2024-01-11 13:50",
-          steps: 10,
-          contacts: 950,
-          isDemo: true,
-        },
-        {
-          id: "demo-6",
-          name: "Welcome Series - New Users (Demo)",
-          folder: "Marketing",
-          status: "ACTIVE",
-          lastModified: "2024-01-10 08:30",
-          steps: 7,
-          contacts: 1800,
-          isDemo: true,
-        },
-        {
-          id: "demo-7",
-          name: "Sales Qualification (Demo)",
-          folder: "Sales",
-          status: "ACTIVE",
-          lastModified: "2024-01-09 15:45",
-          steps: 9,
-          contacts: 1200,
-          isDemo: true,
-        },
-        {
-          id: "demo-8",
-          name: "Customer Retention (Demo)",
-          folder: "Customer Success",
-          status: "DRAFT",
-          lastModified: "2024-01-08 12:20",
-          steps: 5,
-          contacts: 0,
-          isDemo: true,
-        },
-      ]);
+      // Set empty workflows array instead of demo data
+      setWorkflows([]);
     } finally {
       setLoading(false);
     }
@@ -469,24 +380,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           </div>
         </div>
 
-        {/* Demo Mode Alert */}
-        {workflows.some(w => w.isDemo) && (
-          <Alert className="mb-6 border-orange-200 bg-orange-50">
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">
-              <strong>Demo Mode:</strong> You're viewing sample workflows because we couldn't connect to your HubSpot account. 
-              In production, you'll see your actual HubSpot workflows here.
-              <Button 
-                variant="link" 
-                className="p-0 h-auto text-orange-800 underline ml-2"
-                onClick={refreshWorkflows}
-              >
-                Try connecting again
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Error Alert */}
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
@@ -658,11 +551,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                               </Badge>
                             </div>
                           )}
-                          {workflow.isDemo && (
-                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                              Demo
-                            </Badge>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
@@ -698,15 +586,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               <p className="text-sm text-gray-600">
                 Selected {selectedWorkflows.length} of {filteredWorkflows.length} workflows
               </p>
-              {workflows.some(w => w.isDemo) ? (
-                <p className="text-sm text-orange-600">
-                  • Demo mode - showing sample data
-                </p>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  • {500 - selectedWorkflows.length} remaining in your trial
-                </p>
-              )}
+              <p className="text-sm text-gray-500">
+                • {500 - selectedWorkflows.length} remaining in your trial
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {workflows.filter(w => w.isProtected).length > 0 && (
@@ -723,7 +605,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 className="bg-blue-500 hover:bg-blue-600 text-white"
                 size="sm"
               >
-                {workflows.some(w => w.isDemo) ? "Try Demo Protection" : "Start Protecting Workflows"}
+                Start Protecting Workflows
               </Button>
             </div>
           </div>

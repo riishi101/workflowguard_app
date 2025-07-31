@@ -117,8 +117,8 @@ export class HubSpotController {
         folder: workflow.description || 'General', // Use description as folder or default
         status: workflow.status as "ACTIVE" | "INACTIVE" | "DRAFT",
         lastModified: workflow.lastUpdated,
-        steps: Math.floor(Math.random() * 20) + 1, // Mock step count
-        contacts: Math.floor(Math.random() * 5000) + 100, // Mock contact count
+        steps: 0, // Will be populated from HubSpot API
+        contacts: 0, // Will be populated from HubSpot API
         isProtected: protectedWorkflowIds.includes(workflow.id),
         isDemo: false,
       }));
