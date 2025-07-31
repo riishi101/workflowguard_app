@@ -81,18 +81,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, [hasInitialized]);
 
-  const connectHubSpot = async () => {
-    try {
-      // Get the OAuth URL from the backend
-      const response = await ApiService.getHubSpotAuthUrl();
-      if (response.data && response.data.url) {
-        window.location.href = response.data.url;
-      } else {
-        console.error('Failed to get HubSpot OAuth URL');
-      }
-    } catch (error) {
-      console.error('Error connecting to HubSpot:', error);
-    }
+  const connectHubSpot = () => {
+    // Direct redirect to the OAuth URL
+    const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
+    const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
+    const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+    
+    const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+    
+    // Redirect immediately
+    window.location.href = authUrl;
   };
 
   const logout = async () => {
