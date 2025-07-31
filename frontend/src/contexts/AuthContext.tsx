@@ -47,6 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (success === 'true' && token) {
           // OAuth was successful, store the token and get user
           console.log('AuthContext - OAuth success detected, storing token');
+          console.log('AuthContext - Token received (first 50 chars):', token.substring(0, 50) + '...');
           localStorage.setItem('authToken', token);
           
           try {
@@ -56,6 +57,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(response.data);
           } catch (error) {
             console.error('AuthContext - Failed to get user after OAuth:', error);
+            console.error('AuthContext - Error details:', {
+              message: error.message,
+              status: error.response?.status,
+              data: error.response?.data
+            });
             // Don't clear the token, let the user try again
           }
         } else if (code && state) {

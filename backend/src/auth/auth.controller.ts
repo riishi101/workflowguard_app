@@ -164,6 +164,7 @@ export class AuthController {
       // 4. Generate JWT token for the user
       const token = this.authService.generateToken(user);
       console.log('JWT token generated for user:', user.id);
+      console.log('Generated token (first 50 chars):', token.substring(0, 50) + '...');
 
       // 5. Redirect to frontend with success and token
       console.log('OAuth callback completed successfully');

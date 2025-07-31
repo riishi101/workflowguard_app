@@ -70,10 +70,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setLoading(true);
       setError(null);
       
+      console.log('WorkflowSelection - Starting to fetch workflows from HubSpot');
+      
       // Try to get real data from HubSpot API
       const response = await ApiService.getHubSpotWorkflows();
       
+      console.log('WorkflowSelection - HubSpot API response:', response);
+      
       if (response.data && response.data.length > 0) {
+        console.log('WorkflowSelection - Found workflows:', response.data.length);
         setWorkflows(response.data);
         toast({
           title: "Connected to HubSpot",
@@ -81,6 +86,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         });
       } else {
         // No workflows found in HubSpot
+        console.log('WorkflowSelection - No workflows found in HubSpot');
         setWorkflows([]);
         toast({
           title: "No Workflows Found",
@@ -89,13 +95,26 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         });
       }
     } catch (err) {
-      console.error('Failed to fetch workflows:', err);
+      console.error('WorkflowSelection - Failed to fetch workflows:', err);
+      console.error('WorkflowSelection - Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        code: err.code
+      });
       
       // Check if it's a network error vs API error
       const isNetworkError = err.message?.includes('Network Error') || err.code === 'NETWORK_ERROR';
+      const isTimeoutError = err.code === 'ECONNABORTED';
       
-      if (isNetworkError) {
+      if (isTimeoutError) {
+        setError('Request timed out. The server is taking too long to respond. Please try again.');
+      } else if (isNetworkError) {
         setError('Unable to connect to HubSpot. Please check your internet connection and try again.');
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please reconnect your HubSpot account.');
+      } else if (err.response?.status === 400) {
+        setError('Invalid request. Please check your HubSpot connection and try again.');
       } else {
         setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
       }
