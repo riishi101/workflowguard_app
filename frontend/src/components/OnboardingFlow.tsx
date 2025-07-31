@@ -1,106 +1,83 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import WelcomeModal from "@/components/WelcomeModal";
-import ConnectHubSpotModal from "@/components/ConnectHubSpotModal";
+import WelcomeModal from "./WelcomeModal";
+import ConnectHubSpotModal from "./ConnectHubSpotModal";
+import WorkflowSelection from "@/pages/WorkflowSelection";
 import { useToast } from "@/hooks/use-toast";
 
 const OnboardingFlow = () => {
+  const [currentStep, setCurrentStep] = useState<'welcome' | 'connect' | 'workflow-selection' | 'dashboard'>('welcome');
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { isAuthenticated, loading, login } = useAuth();
   const { toast } = useToast();
-  
-  // Modal states
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [showConnect, setShowConnect] = useState(false);
-  
-  // Check if user is new (no auth token)
-  const isNewUser = !localStorage.getItem('authToken');
 
   useEffect(() => {
-    // Check for OAuth callback parameters
-    const success = searchParams.get('success');
-    const token = searchParams.get('token');
-    const error = searchParams.get('error');
+    if (loading) return; // Don't process while loading
 
-    console.log('OnboardingFlow - URL params:', { success, token: token ? 'present' : 'missing', error });
+    // Check if this is an OAuth success callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
 
     if (success === 'true' && token) {
-      // OAuth successful - store token and redirect to workflow selection
-      console.log('OAuth successful, storing token and redirecting');
-      localStorage.setItem('authToken', token);
-      toast({
-        title: "Success!",
-        description: "Your HubSpot account has been connected successfully.",
-      });
-      navigate('/workflow-selection');
+      // OAuth was successful, clear URL and go to workflow selection
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setCurrentStep('workflow-selection');
       return;
     }
 
     if (error) {
-      // OAuth failed
-      console.log('OAuth failed with error:', error);
+      // OAuth failed, show error and stay on connect step
       toast({
         title: "Connection Failed",
-        description: `Failed to connect HubSpot account: ${error}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // For new users, start the onboarding flow
-    if (isNewUser && !loading) {
-      console.log('Starting onboarding flow for new user');
-      setShowWelcome(true);
-    }
-  }, [searchParams, isNewUser, loading, navigate, toast]);
-
-  const handleConnectHubSpot = () => {
-    setShowWelcome(false);
-    setShowConnect(true);
-  };
-
-  const handleConnect = async () => {
-    try {
-      // Get the HubSpot OAuth URL from backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/hubspot/url`);
-      const data = await response.json();
-      
-      if (data.url) {
-        // Redirect to HubSpot OAuth
-        window.location.href = data.url;
-      } else {
-        throw new Error('Failed to get OAuth URL');
-      }
-    } catch (error) {
-      console.error('Error initiating HubSpot OAuth:', error);
-      toast({
-        title: "Connection Error",
         description: "Failed to connect to HubSpot. Please try again.",
         variant: "destructive",
       });
-      setShowConnect(false);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setCurrentStep('connect');
+      setShowConnectModal(true);
+      return;
     }
+
+    // Check if user is already authenticated and has workflows
+    if (isAuthenticated && !loading && user) {
+      // User is authenticated, check if they have workflows
+      // For now, assume they need to go through workflow selection
+      setCurrentStep('workflow-selection');
+      return;
+    }
+
+    // User is not authenticated, show welcome modal
+    if (!isAuthenticated && !loading) {
+      setCurrentStep('welcome');
+      setShowWelcomeModal(true);
+    }
+  }, [isAuthenticated, loading, user, navigate, toast]);
+
+  const handleWelcomeComplete = () => {
+    setShowWelcomeModal(false);
+    setShowConnectModal(true);
+    setCurrentStep('connect');
   };
 
-  const handleCloseWelcome = () => {
-    setShowWelcome(false);
-    // If user closes welcome modal, redirect to dashboard or workflow selection
-    if (isAuthenticated) {
-      navigate('/workflow-selection');
-    }
+  const handleConnectHubSpot = () => {
+    // Use the connectHubSpot function from AuthContext
+    connectHubSpot();
   };
 
-  const handleCloseConnect = () => {
-    setShowConnect(false);
-    // If user closes connect modal, redirect to dashboard or workflow selection
-    if (isAuthenticated) {
-      navigate('/workflow-selection');
-    }
+  const handleWorkflowSelectionComplete = () => {
+    setCurrentStep('dashboard');
+    navigate('/dashboard');
+    toast({
+      title: "Setup Complete!",
+      description: "Your workflows are now being monitored.",
+    });
   };
 
-  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -112,36 +89,29 @@ const OnboardingFlow = () => {
     );
   }
 
-  // If user is authenticated, redirect to workflow selection
-  if (isAuthenticated) {
-    navigate('/workflow-selection');
-    return null;
+  // Show workflow selection if user is authenticated but hasn't selected workflows
+  if (isAuthenticated && currentStep === 'workflow-selection') {
+    return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
   }
 
-  // Show onboarding modals
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-            Welcome to WorkflowGuard
-          </h1>
-          <p className="text-gray-600">
-            Setting up your account...
-          </p>
-        </div>
-      </div>
+  // Show dashboard if user is authenticated and on dashboard step
+  if (isAuthenticated && currentStep === 'dashboard') {
+    return null; // Will be handled by navigation
+  }
 
-      <WelcomeModal
-        open={showWelcome}
-        onClose={handleCloseWelcome}
-        onConnectHubSpot={handleConnectHubSpot}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Welcome Modal */}
+      <WelcomeModal 
+        open={showWelcomeModal} 
+        onClose={handleWelcomeComplete}
       />
 
+      {/* Connect HubSpot Modal */}
       <ConnectHubSpotModal
-        open={showConnect}
-        onClose={handleCloseConnect}
-        onConnect={handleConnect}
+        open={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onConnect={handleConnectHubSpot}
       />
     </div>
   );
