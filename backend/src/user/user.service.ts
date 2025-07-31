@@ -6,6 +6,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { NotificationService } from '../notification/notification.service';
 import { PLAN_CONFIG } from '../plan-config';
 import { randomBytes, createHash } from 'crypto';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
@@ -234,8 +235,243 @@ export class UserService {
   }
 
   async deleteMe(userId: string) {
-    return this.prisma.user.delete({
-      where: { id: userId },
-    });
+    try {
+      const user = await this.prisma.user.delete({
+        where: { id: userId },
+      });
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      throw new HttpException('Failed to delete user', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getMySubscription(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      return {
+        plan: user.subscription?.planId || 'starter',
+        status: user.subscription?.status || 'active',
+        currentPeriodEnd: user.subscription?.nextBillingDate,
+        cancelAtPeriodEnd: false, // Not implemented in schema yet
+        nextBillingDate: user.subscription?.nextBillingDate,
+        trialEndDate: user.subscription?.trialEndDate,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to get subscription', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async cancelMySubscription(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!user.subscription) {
+        throw new HttpException('No subscription found', HttpStatus.NOT_FOUND);
+      }
+
+      // Update subscription to canceled status
+      await this.prisma.subscription.update({
+        where: { id: user.subscription.id },
+        data: {
+          status: 'canceled',
+        },
+      });
+
+      return { message: 'Subscription has been canceled' };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to cancel subscription', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getTrialStatus(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      const now = new Date();
+      const trialEndDate = user.subscription?.trialEndDate;
+      const isTrialActive = trialEndDate && trialEndDate > now;
+      const trialDaysRemaining = trialEndDate ? Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+      return {
+        isTrialActive,
+        trialDaysRemaining: Math.max(0, trialDaysRemaining),
+        trialEndDate: trialEndDate,
+        isTrialExpired: trialEndDate && trialEndDate <= now,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to get trial status', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getUsageStats(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+          workflows: {
+            include: {
+              versions: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      const totalWorkflows = user.workflows.length;
+      const totalVersions = user.workflows.reduce((sum, workflow) => sum + workflow.versions.length, 0);
+      const activeWorkflows = user.workflows.filter(w => w.versions.length > 0).length;
+
+      // Get plan limits based on subscription
+      const planId = user.subscription?.planId || 'starter';
+      const plan = await this.getPlanById(planId);
+      const workflowLimit = plan?.workflowLimit || 5;
+
+      return {
+        totalWorkflows,
+        totalVersions,
+        activeWorkflows,
+        workflowLimit,
+        usagePercentage: Math.round((totalWorkflows / workflowLimit) * 100),
+        isOverLimit: totalWorkflows > workflowLimit,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to get usage stats', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async createTrialSubscription(userId: string) {
+    try {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 21); // 21-day trial
+
+      const subscription = await this.prisma.subscription.upsert({
+        where: { userId },
+        update: {
+          planId: 'professional',
+          status: 'trial',
+          trialEndDate,
+          nextBillingDate: trialEndDate,
+        },
+        create: {
+          userId,
+          planId: 'professional',
+          status: 'trial',
+          trialEndDate,
+          nextBillingDate: trialEndDate,
+        },
+      });
+
+      return subscription;
+    } catch (error) {
+      throw new HttpException('Failed to create trial subscription', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async checkTrialAccess(userId: string) {
+    try {
+      const trialStatus = await this.getTrialStatus(userId);
+      
+      if (trialStatus.isTrialExpired) {
+        throw new HttpException('Trial has expired. Please upgrade to continue using WorkflowGuard.', HttpStatus.PAYMENT_REQUIRED);
+      }
+
+      return { hasAccess: true };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to check trial access', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async upgradeSubscription(userId: string, planId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      const plan = await this.getPlanById(planId);
+      if (!plan) {
+        throw new HttpException('Invalid plan', HttpStatus.BAD_REQUEST);
+      }
+
+      // Calculate next billing date
+      const nextBillingDate = new Date();
+      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+
+      const subscription = await this.prisma.subscription.upsert({
+        where: { userId },
+        update: {
+          planId,
+          status: 'active',
+          trialEndDate: null,
+          nextBillingDate,
+        },
+        create: {
+          userId,
+          planId,
+          status: 'active',
+          nextBillingDate,
+        },
+      });
+
+      return subscription;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to upgrade subscription', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

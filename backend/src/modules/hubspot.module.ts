@@ -6,6 +6,7 @@ import { HubSpotService } from '../services/hubspot.service';
 import { HubSpotHealthService } from '../services/hubspot-health.service';
 import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../prisma/prisma.module';
+import { WorkflowModule } from '../workflow/workflow.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     ScheduleModule.forRoot(),
     AuthModule,
     PrismaModule,
+    WorkflowModule,
   ],
   controllers: [HubSpotController],
   providers: [HubSpotService, HubSpotHealthService],

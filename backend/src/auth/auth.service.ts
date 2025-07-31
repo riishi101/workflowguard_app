@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -99,18 +99,39 @@ export class AuthService {
 
   async updateUserHubspotPortalId(userId: string, hubspotPortalId: string) {
     try {
-      console.log('Updating user hubspotPortalId:', userId, hubspotPortalId);
-      
-      const result = await this.prisma.user.update({
-      where: { id: userId },
-      data: { hubspotPortalId },
-    });
-      
-      console.log('User hubspotPortalId updated successfully');
-      return result;
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { hubspotPortalId },
+      });
     } catch (error) {
-      console.error('Error updating user hubspotPortalId:', error);
-      throw error;
+      throw new HttpException('Failed to update HubSpot portal ID', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async createTrialSubscription(userId: string) {
+    try {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 21); // 21-day trial
+
+      await this.prisma.subscription.upsert({
+        where: { userId },
+        update: {
+          planId: 'professional',
+          status: 'trial',
+          trialEndDate,
+          nextBillingDate: trialEndDate,
+        },
+        create: {
+          userId,
+          planId: 'professional',
+          status: 'trial',
+          trialEndDate,
+          nextBillingDate: trialEndDate,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to create trial subscription:', error);
+      // Don't throw error to avoid breaking OAuth flow
     }
   }
 }

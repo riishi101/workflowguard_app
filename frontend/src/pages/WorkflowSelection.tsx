@@ -197,9 +197,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   const refreshWorkflows = async () => {
-    setRefreshing(true);
-    await fetchWorkflows();
-    setRefreshing(false);
+    try {
+      setRefreshing(true);
+      setError(null);
+      await fetchWorkflows();
+    } catch (error) {
+      console.error('Failed to refresh workflows:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -220,7 +226,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setSelectAll(false);
     } else {
       const activeWorkflowIds = filteredWorkflows
-        .filter(w => w.status === "ACTIVE")
+        .filter(w => w.status === "ACTIVE" && !w.isProtected)
         .map(w => w.id);
       setSelectedWorkflows(activeWorkflowIds);
       setSelectAll(true);
@@ -235,8 +241,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         description: "Configuring WorkflowGuard for your selected workflows.",
       });
 
-      // Simulate API call to start protection
-      await ApiService.startWorkflowProtection(selectedWorkflows);
+      // Call API to start protection
+      const response = await ApiService.startWorkflowProtection(selectedWorkflows);
       
       // Set workflow selection state
       WorkflowState.setWorkflowSelection(true);
@@ -244,7 +250,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
       toast({
         title: "Protection Activated!",
-        description: `${selectedWorkflows.length} workflows are now being monitored.`,
+        description: response.data?.message || `${selectedWorkflows.length} workflows are now being monitored.`,
       });
       
       // Call onComplete if provided, otherwise navigate
@@ -253,10 +259,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       } else {
         navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to start protection:', error);
       toast({
         title: "Setup Failed",
-        description: "Failed to start protection. Please try again.",
+        description: error.response?.data?.message || "Failed to start protection. Please try again.",
         variant: "destructive",
       });
     }
@@ -276,6 +283,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     } else {
       navigate("/dashboard");
     }
+  };
+
+  const handleViewProtectedWorkflows = () => {
+    navigate("/dashboard");
   };
 
   // Filter and sort workflows
@@ -404,6 +415,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 {selectedWorkflows.length}
               </p>
               <p className="text-xs text-gray-600">workflows selected</p>
+              <p className="text-xs text-green-600 mt-1">
+                {workflows.filter(w => w.isProtected).length} already protected
+              </p>
             </CardContent>
           </Card>
 
@@ -576,6 +590,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 <Checkbox
                   checked={selectAll}
                   onCheckedChange={handleSelectAll}
+                  disabled={filteredWorkflows.filter(w => w.status === "ACTIVE" && !w.isProtected).length === 0}
                 />
                 <span className="text-sm text-gray-600">
                   Select all active workflows
@@ -627,7 +642,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         <Checkbox
                           checked={selectedWorkflows.includes(workflow.id)}
                           onCheckedChange={() => handleWorkflowToggle(workflow.id)}
-                          disabled={workflow.status === "DRAFT"}
+                          disabled={workflow.status === "DRAFT" || workflow.isProtected}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -636,7 +651,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                             {workflow.name}
                           </span>
                           {workflow.isProtected && (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <div className="flex items-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                Protected
+                              </Badge>
+                            </div>
                           )}
                           {workflow.isDemo && (
                             <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
@@ -689,6 +709,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               )}
             </div>
             <div className="flex items-center gap-3">
+              {workflows.filter(w => w.isProtected).length > 0 && (
+                <Button onClick={handleViewProtectedWorkflows} variant="outline" size="sm">
+                  View Protected Workflows
+                </Button>
+              )}
               <Button onClick={handleSkipForNow} variant="outline" size="sm">
                 Skip for now
               </Button>

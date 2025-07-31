@@ -1,39 +1,133 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Lock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { ApiService } from "@/lib/api";
+import { Lock, Loader2, Save } from "lucide-react";
+
+interface NotificationSettings {
+  enabled: boolean;
+  email: string;
+  workflowDeleted: boolean;
+  enrollmentTriggerModified: boolean;
+  workflowRolledBack: boolean;
+  criticalActionModified: boolean;
+}
 
 const NotificationsTab = () => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [notificationEmail, setNotificationEmail] = useState("");
-  const [notifications, setNotifications] = useState({
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<NotificationSettings>({
+    enabled: false,
+    email: "",
     workflowDeleted: false,
     enrollmentTriggerModified: false,
     workflowRolledBack: false,
     criticalActionModified: false,
   });
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleNotificationToggle = (key: string) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key as keyof typeof prev],
-    }));
+  useEffect(() => {
+    fetchNotificationSettings();
+  }, []);
+
+  const fetchNotificationSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ApiService.getNotificationSettings();
+      setSettings(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch notification settings:', err);
+      setError(err.response?.data?.message || 'Failed to load notification settings. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load notification settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSettingChange = (key: keyof NotificationSettings, value: boolean | string) => {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    setHasChanges(true);
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      setSaving(true);
+      await ApiService.updateNotificationSettings(settings);
+      setHasChanges(false);
+      toast({
+        title: "Settings Updated",
+        description: "Your notification settings have been updated successfully.",
+      });
+    } catch (err: any) {
+      console.error('Failed to update notification settings:', err);
+      toast({
+        title: "Update Failed",
+        description: err.response?.data?.message || "Failed to update notification settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-6 w-12" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-10 w-32" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchNotificationSettings}
+              className="ml-2"
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Upgrade Banner */}
-      <Alert className="border-orange-200 bg-orange-50">
-        <Lock className="h-4 w-4 text-orange-600" />
-        <AlertDescription className="text-orange-800">
-          Upgrade to Professional Plan to configure notifications
-        </AlertDescription>
-      </Alert>
-
       {/* Workflow Change Notifications */}
       <div className="space-y-6">
         <div>
@@ -53,9 +147,8 @@ const NotificationsTab = () => {
               </div>
               <Switch
                 id="enable-notifications"
-                checked={notificationsEnabled}
-                onCheckedChange={setNotificationsEnabled}
-                disabled
+                checked={settings.enabled}
+                onCheckedChange={(checked) => handleSettingChange("enabled", checked)}
               />
             </div>
 
@@ -63,11 +156,11 @@ const NotificationsTab = () => {
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="workflow-deleted"
-                  checked={notifications.workflowDeleted}
-                  onCheckedChange={() =>
-                    handleNotificationToggle("workflowDeleted")
+                  checked={settings.workflowDeleted}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("workflowDeleted", checked)
                   }
-                  disabled
+                  disabled={!settings.enabled}
                 />
                 <Label
                   htmlFor="workflow-deleted"
@@ -80,11 +173,11 @@ const NotificationsTab = () => {
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="enrollment-trigger"
-                  checked={notifications.enrollmentTriggerModified}
-                  onCheckedChange={() =>
-                    handleNotificationToggle("enrollmentTriggerModified")
+                  checked={settings.enrollmentTriggerModified}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("enrollmentTriggerModified", checked)
                   }
-                  disabled
+                  disabled={!settings.enabled}
                 />
                 <Label
                   htmlFor="enrollment-trigger"
@@ -97,11 +190,11 @@ const NotificationsTab = () => {
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="workflow-rolled-back"
-                  checked={notifications.workflowRolledBack}
-                  onCheckedChange={() =>
-                    handleNotificationToggle("workflowRolledBack")
+                  checked={settings.workflowRolledBack}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("workflowRolledBack", checked)
                   }
-                  disabled
+                  disabled={!settings.enabled}
                 />
                 <Label
                   htmlFor="workflow-rolled-back"
@@ -114,11 +207,11 @@ const NotificationsTab = () => {
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="critical-action"
-                  checked={notifications.criticalActionModified}
-                  onCheckedChange={() =>
-                    handleNotificationToggle("criticalActionModified")
+                  checked={settings.criticalActionModified}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("criticalActionModified", checked)
                   }
-                  disabled
+                  disabled={!settings.enabled}
                 />
                 <Label
                   htmlFor="critical-action"
@@ -137,19 +230,45 @@ const NotificationsTab = () => {
               <Input
                 id="notification-email"
                 placeholder="Enter email addresses or select users"
-                value={notificationEmail}
-                onChange={(e) => setNotificationEmail(e.target.value)}
-                disabled
+                value={settings.email}
+                onChange={(e) => handleSettingChange("email", e.target.value)}
+                disabled={!settings.enabled}
                 className="max-w-md"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white" disabled>
-            Save Changes
-          </Button>
+        <div className="flex items-center justify-between pt-6 border-t">
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <span className="text-sm text-gray-600">
+                You have unsaved changes
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" disabled={!hasChanges}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-blue-500 hover:bg-blue-600 text-white" 
+              onClick={handleSaveChanges}
+              disabled={!hasChanges || saving}
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

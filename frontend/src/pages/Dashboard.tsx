@@ -114,9 +114,19 @@ const Dashboard = () => {
   };
 
   const refreshDashboard = async () => {
-    setRefreshing(true);
-    await fetchDashboardData();
-    setRefreshing(false);
+    try {
+      setRefreshing(true);
+      setError(null);
+      await fetchDashboardData();
+      toast({
+        title: "Dashboard Refreshed",
+        description: "Dashboard data has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Failed to refresh dashboard:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -124,12 +134,25 @@ const Dashboard = () => {
   }, []);
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
+    // Store the current workflow context for the history page
+    localStorage.setItem('currentWorkflow', JSON.stringify({ id: workflowId, name: workflowName }));
+    
     navigate(`/workflow-history/${workflowId}`, {
       state: { workflowName },
     });
   };
 
   const handleRollbackLatest = (workflow: DashboardWorkflow) => {
+    // Check if workflow has versions to rollback
+    if (workflow.versions === 0) {
+      toast({
+        title: "No Versions Available",
+        description: "This workflow has no versions to rollback to.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSelectedWorkflow(workflow);
     setShowRollbackModal(true);
   };
@@ -138,19 +161,20 @@ const Dashboard = () => {
     if (!selectedWorkflow) return;
 
     try {
-      await ApiService.rollbackWorkflow(selectedWorkflow.id);
+      const response = await ApiService.rollbackWorkflow(selectedWorkflow.id);
       
       toast({
         title: "Rollback Successful",
-        description: `${selectedWorkflow.name} has been rolled back to the latest version.`,
+        description: response.data?.message || `${selectedWorkflow.name} has been rolled back to the latest version.`,
       });
 
       // Refresh dashboard data
       await fetchDashboardData();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to rollback workflow:', error);
       toast({
         title: "Rollback Failed",
-        description: "Failed to rollback workflow. Please try again.",
+        description: error.response?.data?.message || "Failed to rollback workflow. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -160,20 +184,43 @@ const Dashboard = () => {
   };
 
   const handleAddWorkflow = () => {
+    // Check if user has reached plan limits
+    if (stats && stats.planUsed >= stats.planCapacity) {
+      toast({
+        title: "Plan Limit Reached",
+        description: "You've reached your plan limit. Please upgrade to add more workflows.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     navigate("/workflow-selection");
   };
 
   const handleExportData = async () => {
     try {
-      await ApiService.exportDashboardData();
+      const response = await ApiService.exportDashboardData();
+      
+      // Create and download the export file
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workflowguard-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       toast({
         title: "Export Successful",
-        description: "Dashboard data has been exported to your email.",
+        description: "Dashboard data has been exported successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to export data:', error);
       toast({
         title: "Export Failed",
-        description: "Failed to export data. Please try again.",
+        description: error.response?.data?.message || "Failed to export data. Please try again.",
         variant: "destructive",
       });
     }
@@ -185,6 +232,14 @@ const Dashboard = () => {
     const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Get filtered stats
+  const filteredStats = {
+    total: filteredWorkflows.length,
+    active: filteredWorkflows.filter(w => w.status === 'active').length,
+    inactive: filteredWorkflows.filter(w => w.status === 'inactive').length,
+    error: filteredWorkflows.filter(w => w.status === 'error').length,
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -262,7 +317,7 @@ const Dashboard = () => {
   }
 
   // Show empty state if no workflows
-  if (!stats || workflows.length === 0) {
+  if (!loading && (!stats || workflows.length === 0)) {
     return <EmptyDashboard />;
   }
 
@@ -293,11 +348,16 @@ const Dashboard = () => {
               <CheckCircle className="w-5 h-5 text-green-500" />
               <div>
                 <p className="text-sm font-medium text-green-900">
-                  All {stats.activeWorkflows} active workflows are being monitored
+                  {filteredStats.active} of {filteredWorkflows.length} workflows are active
                 </p>
                 <p className="text-xs text-green-700">
                   Last Snapshot: {stats.lastSnapshot}
                 </p>
+                {(searchTerm || statusFilter !== "all") && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Showing {filteredWorkflows.length} of {workflows.length} workflows
+                  </p>
+                )}
               </div>
             </div>
             <Button
@@ -423,6 +483,18 @@ const Dashboard = () => {
                     <SelectItem value="error">Error</SelectItem>
                   </SelectContent>
                 </Select>
+                {(searchTerm || statusFilter !== "all") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
             </div>
           </div>

@@ -1,25 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
-import {
-  Search,
-  Plus,
-  Download,
-  CheckCircle,
-  TrendingUp,
-  Users,
-  ChevronLeft,
-  ChevronRight,
-  FolderOpen,
-} from "lucide-react";
+import { CheckCircle, FolderOpen, Lightbulb } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { WorkflowState } from "@/lib/workflowState";
 
@@ -27,7 +9,6 @@ const EmptyDashboard = () => {
   const navigate = useNavigate();
 
   const handleAddWorkflow = () => {
-    // Reset workflow state when going back to selection
     WorkflowState.reset();
     navigate("/workflow-selection");
   };
@@ -36,196 +17,42 @@ const EmptyDashboard = () => {
     <MainAppLayout title="Dashboard Overview">
       {/* Status Banner */}
       <ContentSection>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <div>
-              <p className="text-sm font-medium text-green-900">
-                No active workflows to monitor
-              </p>
-              <p className="text-xs text-green-700">
-                Last Snapshot: Today, 2:30 PM IST
-              </p>
-            </div>
-          </div>
-        </div>
-      </ContentSection>
-
-      {/* Statistics Cards */}
-      <ContentSection>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0</div>
-              <div className="text-sm text-gray-600">Active Workflows</div>
-              <div className="text-xs text-gray-500 mt-1">
-                Start your first workflow
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0%</div>
-              <div className="text-sm text-gray-600">Total Uptime</div>
-              <div className="text-xs text-gray-500 mt-1">
-                No data available
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="w-4 h-4 text-purple-500" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-gray-900 mb-1">0/500</div>
-              <div className="text-sm text-gray-600">Monitored Services</div>
-              <div className="text-xs text-gray-500 mt-1">
-                Maximum plan capacity
-              </div>
-            </div>
-          </div>
-        </div>
-      </ContentSection>
-
-      {/* Workflows Table */}
-      <ContentSection>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                All Protected Workflows
-              </h2>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleAddWorkflow}
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Workflow
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search workflows by name..."
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <Select defaultValue="modified">
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Last Modified" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="modified">Last Modified</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="versions">Versions</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="status">
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="status">Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="folder">
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="HubSpot Folder" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="folder">HubSpot Folder</SelectItem>
-                    <SelectItem value="sales">Sales</SelectItem>
-                    <SelectItem value="marketing">Marketing</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" className="text-blue-600">
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Empty State */}
-          <div className="py-16 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FolderOpen className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No workflows yet
-            </h3>
-            <p className="text-gray-600 text-sm mb-6 max-w-md mx-auto">
-              Get started by adding your first workflow using the 'Add Workflow'
-              button above
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <CheckCircle className="w-5 h-5 text-blue-500" />
+          <div>
+            <p className="text-sm font-semibold text-blue-900">
+              Welcome to WorkflowGuard!
             </p>
+            <p className="text-xs text-blue-800">
+              Get started by adding your first workflow to protect and monitor.
+            </p>
+          </div>
+        </div>
+      </ContentSection>
+
+      {/* Onboarding Tips */}
+      <ContentSection>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <FolderOpen className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No workflows yet
+          </h3>
+          <p className="text-gray-600 text-base mb-6 max-w-lg">
+            Protect your HubSpot automations from accidental changes and data loss. Click the button below to connect your HubSpot account and start monitoring your workflows.
+          </p>
+          <div className="flex flex-col items-center gap-4 w-full">
             <Button
               onClick={handleAddWorkflow}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 text-lg font-semibold rounded-lg shadow"
+              size="lg"
             >
-              Add Workflow
+              + Add Your First Workflow
             </Button>
-          </div>
-
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Rows per page:
-              <Select defaultValue="10">
-                <SelectTrigger className="w-16 ml-2 inline-flex">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </p>
-
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">0 workflows</span>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" disabled>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="bg-blue-500 text-white hover:bg-blue-600"
-                >
-                  1
-                </Button>
-                <Button variant="ghost" size="sm" disabled>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
+              <Lightbulb className="w-4 h-4 text-yellow-400" />
+              <span>Tip: You can always add more workflows later from the dashboard.</span>
             </div>
           </div>
         </div>

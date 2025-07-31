@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,35 +12,214 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { ApiService } from "@/lib/api";
+import { AlertTriangle, CheckCircle, Loader2, Save } from "lucide-react";
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  jobTitle?: string;
+  timezone?: string;
+  language?: string;
+  hubspotPortalId?: string;
+  hubspotConnectedAt?: string;
+  hubspotRole?: string;
+}
 
 const ProfileTab = () => {
-  const [profile, setProfile] = useState({
-    fullName: "John Smith",
-    email: "john.smith@example.com",
-    jobTitle: "Senior Product Manager",
-    timezone: "Pacific Time (PT) UTC-7",
-    language: "English (US)",
-  });
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ApiService.getUserProfile();
+      setProfile(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch user profile:', err);
+      setError(err.response?.data?.message || 'Failed to load user profile. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load user profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
+    if (!profile) return;
+    
     setProfile((prev) => ({
-      ...prev,
+      ...prev!,
       [field]: value,
     }));
+    setHasChanges(true);
   };
+
+  const handleSaveChanges = async () => {
+    if (!profile) return;
+    
+    try {
+      setSaving(true);
+      await ApiService.updateUserProfile({
+        name: profile.name,
+        email: profile.email,
+        jobTitle: profile.jobTitle,
+        timezone: profile.timezone,
+        language: profile.language,
+      });
+      
+      setHasChanges(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (err: any) {
+      console.error('Failed to update profile:', err);
+      toast({
+        title: "Update Failed",
+        description: err.response?.data?.message || "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisconnectHubSpot = async () => {
+    try {
+      await ApiService.disconnectHubSpot();
+      toast({
+        title: "HubSpot Disconnected",
+        description: "Your HubSpot account has been disconnected successfully.",
+      });
+      // Refresh profile to update connection status
+      fetchUserProfile();
+    } catch (err: any) {
+      console.error('Failed to disconnect HubSpot:', err);
+      toast({
+        title: "Disconnect Failed",
+        description: err.response?.data?.message || "Failed to disconnect HubSpot. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await ApiService.deleteAccount();
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been deleted successfully.",
+      });
+      // Redirect to logout or home page
+      window.location.href = '/';
+    } catch (err: any) {
+      console.error('Failed to delete account:', err);
+      toast({
+        title: "Delete Failed",
+        description: err.response?.data?.message || "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j}>
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchUserProfile}
+              className="ml-2"
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            No profile data available.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Profile Header */}
       <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src="/placeholder-avatar.jpg" alt="John Smith" />
-          <AvatarFallback className="text-lg">JS</AvatarFallback>
+          <AvatarImage src="/placeholder-avatar.jpg" alt={profile.name} />
+          <AvatarFallback className="text-lg">
+            {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">John Smith</h2>
-          <p className="text-gray-600">john.smith@example.com</p>
+          <h2 className="text-xl font-semibold text-gray-900">{profile.name}</h2>
+          <p className="text-gray-600">{profile.email}</p>
         </div>
       </div>
 
@@ -54,8 +233,8 @@ const ProfileTab = () => {
             <Label htmlFor="full-name">Full Name</Label>
             <Input
               id="full-name"
-              value={profile.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
+              value={profile.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
               className="mt-1"
             />
             <p className="text-sm text-gray-500 mt-1">
@@ -72,7 +251,7 @@ const ProfileTab = () => {
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className="flex-1"
               />
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled>
                 Verify Email
               </Button>
             </div>
@@ -82,9 +261,10 @@ const ProfileTab = () => {
             <Label htmlFor="job-title">Job Title</Label>
             <Input
               id="job-title"
-              value={profile.jobTitle}
+              value={profile.jobTitle || ""}
               onChange={(e) => handleInputChange("jobTitle", e.target.value)}
               className="mt-1"
+              placeholder="Enter your job title"
             />
           </div>
         </CardContent>
@@ -96,61 +276,77 @@ const ProfileTab = () => {
           <CardTitle>HubSpot Account Connection</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0">
-              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+          {profile.hubspotPortalId ? (
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-900">
+                    Connected
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    • Last connected: {profile.hubspotConnectedAt ? new Date(profile.hubspotConnectedAt).toLocaleString() : 'Unknown'}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 font-medium">
+                      Portal ID:
+                    </span>
+                    <span className="text-sm text-gray-900 font-mono">
+                      {profile.hubspotPortalId}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 font-medium">
+                      Connected as:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {profile.email}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 font-medium">
+                      Role:
+                    </span>
+                    <span className="text-sm text-gray-900">{profile.hubspotRole || 'Unknown'}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                    onClick={handleDisconnectHubSpot}
+                  >
+                    Disconnect HubSpot
+                  </Button>
+                </div>
+
+                <p className="text-sm text-gray-500 pt-1">
+                  Disconnecting will disable all HubSpot-related features and
+                  monitoring.
+                </p>
+              </div>
             </div>
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900">
-                  Connected
-                </span>
-                <span className="text-sm text-gray-500">
-                  • Last connected: 2025-07-15 10:30 AM
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Portal ID:
-                  </span>
-                  <span className="text-sm text-gray-900 font-mono">
-                    243112608
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Connected as:
-                  </span>
-                  <span className="text-sm text-gray-900">
-                    john.smith@example.com
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Role:
-                  </span>
-                  <span className="text-sm text-gray-900">Viewer</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-                >
-                  Disconnect HubSpot
-                </Button>
-              </div>
-
-              <p className="text-sm text-gray-500 pt-1">
-                Disconnecting will disable all HubSpot-related features and
-                monitoring.
+          ) : (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Not Connected
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Connect your HubSpot account to enable workflow protection features.
               </p>
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                Connect HubSpot
+              </Button>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -163,7 +359,7 @@ const ProfileTab = () => {
           <div>
             <Label htmlFor="timezone">Time Zone</Label>
             <Select
-              value={profile.timezone}
+              value={profile.timezone || "Pacific Time (PT) UTC-7"}
               onValueChange={(value) => handleInputChange("timezone", value)}
             >
               <SelectTrigger className="mt-1">
@@ -189,7 +385,7 @@ const ProfileTab = () => {
           <div>
             <Label htmlFor="language">Display Language</Label>
             <Select
-              value={profile.language}
+              value={profile.language || "English (US)"}
               onValueChange={(value) => handleInputChange("language", value)}
             >
               <SelectTrigger className="mt-1">
@@ -223,16 +419,43 @@ const ProfileTab = () => {
               certain.
             </AlertDescription>
           </Alert>
-          <Button variant="destructive">Delete Account</Button>
+          <Button variant="destructive" onClick={handleDeleteAccount}>
+            Delete Account
+          </Button>
         </CardContent>
       </Card>
 
       {/* Save Changes */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t">
-        <Button variant="outline">Cancel</Button>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-          Save Changes
-        </Button>
+      <div className="flex items-center justify-between pt-6 border-t">
+        <div className="flex items-center gap-2">
+          {hasChanges && (
+            <span className="text-sm text-gray-600">
+              You have unsaved changes
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" disabled={!hasChanges}>
+            Cancel
+          </Button>
+          <Button 
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+            onClick={handleSaveChanges}
+            disabled={!hasChanges || saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,8 +10,12 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
+import { useToast } from "@/hooks/use-toast";
+import { ApiService, WorkflowVersion, WorkflowHistoryVersion } from "@/lib/api";
 import {
   ArrowLeft,
   Plus,
@@ -20,97 +24,292 @@ import {
   Clock,
   Calendar,
   RotateCcw,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Eye,
+  Download,
 } from "lucide-react";
-
-// Mock data for versions
-const allVersions = [
-  {
-    id: "1",
-    date: "June 15, 2025, 2:30 PM",
-    creator: "John Smith",
-    type: "Manual Snapshot",
-  },
-  {
-    id: "2",
-    date: "June 20, 2025, 3:45 PM",
-    creator: "Sarah Johnson",
-    type: "Current Version",
-  },
-  {
-    id: "3",
-    date: "June 19, 2025, 1:30 PM",
-    creator: "Mike Wilson",
-    type: "On-Publish Save",
-  },
-];
-
-// Mock workflow data for comparison
-const workflowVersionsData = {
-  "1": {
-    steps: [
-      { type: "email", title: "Send Welcome Email", icon: Mail },
-      { type: "delay", title: "Wait 5 days", icon: Clock },
-      { type: "email", title: "Send Follow-up Email", icon: Mail },
-      { type: "meeting", title: "Schedule Meeting", icon: Calendar },
-    ],
-  },
-  "2": {
-    steps: [
-      { type: "email", title: "Send Welcome Email", icon: Mail },
-      { type: "delay", title: "Wait 7 days", icon: Clock },
-      { type: "email", title: "Send Follow-up Email", icon: Mail },
-      { type: "meeting", title: "Schedule Meeting", icon: Calendar },
-      { type: "email", title: "Send Thank You Email", icon: Mail, isNew: true },
-    ],
-  },
-};
 
 const CompareVersions = () => {
   const navigate = useNavigate();
+  const { workflowId } = useParams<{ workflowId: string }>();
   const [searchParams] = useSearchParams();
-  const [versionA, setVersionA] = useState(searchParams.get("versionA") || "1");
-  const [versionB, setVersionB] = useState(searchParams.get("versionB") || "2");
+  const { toast } = useToast();
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [versions, setVersions] = useState<WorkflowHistoryVersion[]>([]);
+  const [versionA, setVersionA] = useState(searchParams.get("versionA") || "");
+  const [versionB, setVersionB] = useState(searchParams.get("versionB") || "");
   const [syncScroll, setSyncScroll] = useState(true);
+  const [workflowDetails, setWorkflowDetails] = useState<any>(null);
+  const [comparisonData, setComparisonData] = useState<{
+    versionA: WorkflowVersion | null;
+    versionB: WorkflowVersion | null;
+    differences: {
+      added: any[];
+      modified: any[];
+      removed: any[];
+    };
+  } | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
-  const versionAData = allVersions.find((v) => v.id === versionA);
-  const versionBData = allVersions.find((v) => v.id === versionB);
+  useEffect(() => {
+    if (workflowId) {
+      fetchVersions();
+    }
+  }, [workflowId]);
 
-  const versionASteps =
-    workflowVersionsData[versionA as keyof typeof workflowVersionsData] ||
-    workflowVersionsData["1"];
-  const versionBSteps =
-    workflowVersionsData[versionB as keyof typeof workflowVersionsData] ||
-    workflowVersionsData["2"];
+  useEffect(() => {
+    if (versionA && versionB && workflowId) {
+      fetchComparisonData();
+    }
+  }, [versionA, versionB, workflowId]);
+
+  const fetchVersions = async () => {
+    if (!workflowId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [workflowResponse, versionsResponse] = await Promise.all([
+        ApiService.getWorkflowDetails(workflowId),
+        ApiService.getWorkflowVersionsForComparison(workflowId)
+      ]);
+      
+      setWorkflowDetails(workflowResponse.data);
+      setVersions(versionsResponse.data);
+      
+      // Set default versions if not already set
+      if (versionsResponse.data.length >= 2) {
+        if (!versionA) setVersionA(versionsResponse.data[0].id);
+        if (!versionB) setVersionB(versionsResponse.data[1].id);
+      }
+      
+    } catch (err: any) {
+      console.error('Failed to fetch versions:', err);
+      setError(err.response?.data?.message || 'Failed to load workflow versions. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load workflow versions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchComparisonData = async () => {
+    if (!workflowId || !versionA || !versionB) return;
+    
+    try {
+      setLoading(true);
+      const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
+      setComparisonData(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch comparison data:', err);
+      toast({
+        title: "Comparison Failed",
+        description: "Failed to compare workflow versions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchVersions();
+  };
+
+  const handleRestoreVersion = async (versionId: string, versionLabel: string) => {
+    if (!workflowId) return;
+    
+    try {
+      setRestoring(true);
+      await ApiService.restoreWorkflowVersion(workflowId, versionId);
+      
+      toast({
+        title: "Version Restored",
+        description: `Successfully restored ${versionLabel}`,
+      });
+      
+      // Navigate back to workflow history
+      navigate(`/workflow-history/${workflowId}`);
+      
+    } catch (err: any) {
+      console.error('Failed to restore version:', err);
+      toast({
+        title: "Restore Failed",
+        description: err.response?.data?.message || "Failed to restore version. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleDownloadVersion = async (versionId: string, versionLabel: string) => {
+    if (!workflowId) return;
+    
+    try {
+      const response = await ApiService.downloadWorkflowVersion(workflowId, versionId);
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workflow-${workflowDetails?.name}-${versionLabel}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download Complete",
+        description: "Workflow version downloaded successfully.",
+      });
+      
+    } catch (err: any) {
+      console.error('Failed to download version:', err);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download workflow version. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleBackToHistory = () => {
-    navigate("/workflow-history");
+    navigate(`/workflow-history/${workflowId}`);
   };
 
   const getStepColor = (step: any) => {
-    if (step.isNew) return "bg-red-50 border-red-200";
-    if (step.type === "email") return "bg-green-50 border-green-200";
-    if (step.type === "delay") return "bg-yellow-50 border-yellow-200";
-    if (step.type === "meeting") return "bg-blue-50 border-blue-200";
+    if (step?.isNew) return "bg-green-50 border-green-200";
+    if (step?.isModified) return "bg-yellow-50 border-yellow-200";
+    if (step?.isRemoved) return "bg-red-50 border-red-200";
+    if (step?.type === "email") return "bg-blue-50 border-blue-200";
+    if (step?.type === "delay") return "bg-purple-50 border-purple-200";
+    if (step?.type === "meeting") return "bg-indigo-50 border-indigo-200";
+    if (step?.type === "condition") return "bg-orange-50 border-orange-200";
     return "bg-gray-50 border-gray-200";
   };
 
   const getStepTextColor = (step: any) => {
-    if (step.isNew) return "text-red-800";
-    if (step.type === "email") return "text-green-800";
-    if (step.type === "delay") return "text-yellow-800";
-    if (step.type === "meeting") return "text-blue-800";
+    if (step?.isNew) return "text-green-800";
+    if (step?.isModified) return "text-yellow-800";
+    if (step?.isRemoved) return "text-red-800";
+    if (step?.type === "email") return "text-blue-800";
+    if (step?.type === "delay") return "text-purple-800";
+    if (step?.type === "meeting") return "text-indigo-800";
+    if (step?.type === "condition") return "text-orange-800";
     return "text-gray-800";
   };
 
+  const getStepIcon = (step: any) => {
+    switch (step?.type) {
+      case "email":
+        return Mail;
+      case "delay":
+        return Clock;
+      case "meeting":
+        return Calendar;
+      default:
+        return Mail;
+    }
+  };
+
+  if (loading && !comparisonData) {
+    return (
+      <MainAppLayout title="Compare Workflow Versions">
+        <ContentSection>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </ContentSection>
+        <ContentSection>
+          <div className="grid grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="p-4 space-y-3">
+                  {[...Array(5)].map((_, j) => (
+                    <Skeleton key={j} className="h-12 w-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ContentSection>
+      </MainAppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainAppLayout title="Compare Workflow Versions">
+        <ContentSection>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh}
+                className="ml-2"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </ContentSection>
+      </MainAppLayout>
+    );
+  }
+
+  const versionAData = versions.find((v) => v.id === versionA);
+  const versionBData = versions.find((v) => v.id === versionB);
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={handleRefresh}
+        disabled={loading}
+      >
+        <RefreshCw className="w-4 h-4 mr-2" />
+        Refresh
+      </Button>
+    </div>
+  );
+
   return (
     <MainAppLayout
-      title="Compare Workflow Versions: Customer Onboarding"
-      description="Last modified: June 21, 2025, 9:00 AM IST"
+      title={`Compare Workflow Versions: ${workflowDetails?.name || 'Workflow'}`}
+      description={workflowDetails?.lastModified ? `Last modified: ${new Date(workflowDetails.lastModified).toLocaleString()}` : undefined}
+      headerActions={headerActions}
     >
       {/* Breadcrumb */}
       <ContentSection spacing="tight">
         <nav className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>Workflow History</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleBackToHistory}
+            className="p-0 h-auto text-gray-600 hover:text-gray-900"
+          >
+            Workflow History
+          </Button>
           <span>&gt;</span>
           <span className="text-gray-900 font-medium">Compare Versions</span>
         </nav>
@@ -124,14 +323,14 @@ const CompareVersions = () => {
               <span className="text-sm font-medium text-gray-700">
                 Version A:
               </span>
-              <Select value={versionA} onValueChange={setVersionA}>
+              <Select value={versionA} onValueChange={setVersionA} disabled={loading}>
                 <SelectTrigger className="w-48">
-                  <SelectValue />
+                  <SelectValue placeholder="Select version" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allVersions.map((version) => (
+                  {versions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {version.date}
+                      {new Date(version.date).toLocaleString()} - {version.type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -142,14 +341,14 @@ const CompareVersions = () => {
               <span className="text-sm font-medium text-gray-700">
                 Version B:
               </span>
-              <Select value={versionB} onValueChange={setVersionB}>
+              <Select value={versionB} onValueChange={setVersionB} disabled={loading}>
                 <SelectTrigger className="w-48">
-                  <SelectValue />
+                  <SelectValue placeholder="Select version" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allVersions.map((version) => (
+                  {versions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {version.date}
+                      {new Date(version.date).toLocaleString()} - {version.type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -163,18 +362,11 @@ const CompareVersions = () => {
                 checked={syncScroll}
                 onCheckedChange={setSyncScroll}
                 id="sync-scroll"
+                disabled={loading}
               />
               <label htmlFor="sync-scroll" className="text-sm text-gray-700">
                 Sync Scroll
               </label>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <Minus className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
@@ -182,72 +374,98 @@ const CompareVersions = () => {
 
       {/* Comparison Content */}
       <ContentSection>
-        <div className="grid grid-cols-2 gap-6">
-          {/* Version A */}
-          <div className="border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-gray-900">
-                Version A - {versionAData?.date}
-              </h3>
-              <p className="text-sm text-gray-600">
-                Created by {versionAData?.creator}
-              </p>
+        {comparisonData ? (
+          <div className="grid grid-cols-2 gap-6">
+            {/* Version A */}
+            <div className="border border-gray-200 rounded-lg">
+              <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="font-semibold text-gray-900">
+                  Version A - {versionAData?.type}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {versionAData?.date && new Date(versionAData.date).toLocaleString()} by {versionAData?.initiator}
+                </p>
+              </div>
+              <div className="p-4 space-y-3">
+                {comparisonData.versionA?.steps.map((step, index) => {
+                  const IconComponent = getStepIcon(step);
+                  return (
+                    <div
+                      key={step.id || index}
+                      className={`p-3 rounded-lg border flex items-center justify-between ${getStepColor(step)}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <IconComponent
+                          className={`w-5 h-5 ${getStepTextColor(step)}`}
+                        />
+                        <span className={`font-medium ${getStepTextColor(step)}`}>
+                          {step.title}
+                        </span>
+                      </div>
+                      {step.isRemoved && (
+                        <Badge variant="destructive" className="text-xs">
+                          Removed
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="p-4 space-y-3">
-              {versionASteps.steps.map((step, index) => {
-                const IconComponent = step.icon;
-                return (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg border flex items-center space-x-3 ${getStepColor(step)}`}
-                  >
-                    <IconComponent
-                      className={`w-5 h-5 ${getStepTextColor(step)}`}
-                    />
-                    <span className={`font-medium ${getStepTextColor(step)}`}>
-                      {step.title}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Version B */}
-          <div className="border border-gray-200 rounded-lg">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-gray-900">
-                Version B - {versionBData?.type} ({versionBData?.date})
-              </h3>
-              <p className="text-sm text-gray-600">
-                Last modified by {versionBData?.creator}
-              </p>
-            </div>
-            <div className="p-4 space-y-3">
-              {versionBSteps.steps.map((step, index) => {
-                const IconComponent = step.icon;
-                return (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg border flex items-center space-x-3 ${getStepColor(step)}`}
-                  >
-                    <IconComponent
-                      className={`w-5 h-5 ${getStepTextColor(step)}`}
-                    />
-                    <span className={`font-medium ${getStepTextColor(step)}`}>
-                      {step.title}
-                    </span>
-                    {step.isNew && (
-                      <Badge variant="destructive" className="text-xs">
-                        New
-                      </Badge>
-                    )}
-                  </div>
-                );
-              })}
+            {/* Version B */}
+            <div className="border border-gray-200 rounded-lg">
+              <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="font-semibold text-gray-900">
+                  Version B - {versionBData?.type}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {versionBData?.date && new Date(versionBData.date).toLocaleString()} by {versionBData?.initiator}
+                </p>
+              </div>
+              <div className="p-4 space-y-3">
+                {comparisonData.versionB?.steps.map((step, index) => {
+                  const IconComponent = getStepIcon(step);
+                  return (
+                    <div
+                      key={step.id || index}
+                      className={`p-3 rounded-lg border flex items-center justify-between ${getStepColor(step)}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <IconComponent
+                          className={`w-5 h-5 ${getStepTextColor(step)}`}
+                        />
+                        <span className={`font-medium ${getStepTextColor(step)}`}>
+                          {step.title}
+                        </span>
+                      </div>
+                      {step.isNew && (
+                        <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                          New
+                        </Badge>
+                      )}
+                      {step.isModified && (
+                        <Badge variant="default" className="text-xs bg-yellow-100 text-yellow-800">
+                          Modified
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-12">
+            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Comparison Data
+            </h3>
+            <p className="text-gray-600">
+              Select two different versions to compare them.
+            </p>
+          </div>
+        )}
       </ContentSection>
 
       {/* Action Buttons */}
@@ -257,16 +475,61 @@ const CompareVersions = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Version History
           </Button>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" className="text-blue-600">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Restore Version A
-            </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Restore Version B
-            </Button>
-          </div>
+          {comparisonData && (
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                className="text-blue-600"
+                onClick={() => handleDownloadVersion(versionA, "Version-A")}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Version A
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-blue-600"
+                onClick={() => handleDownloadVersion(versionB, "Version-B")}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Version B
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-green-600"
+                onClick={() => handleRestoreVersion(versionA, "Version A")}
+                disabled={restoring}
+              >
+                {restoring ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Restoring...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore Version A
+                  </>
+                )}
+              </Button>
+              <Button 
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => handleRestoreVersion(versionB, "Version B")}
+                disabled={restoring}
+              >
+                {restoring ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Restoring...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore Version B
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </ContentSection>
     </MainAppLayout>

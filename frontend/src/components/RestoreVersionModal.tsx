@@ -4,29 +4,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { WorkflowHistoryVersion } from "@/lib/api";
 
 interface RestoreVersionModalProps {
   open: boolean;
   onClose: () => void;
-  version: any;
+  version: WorkflowHistoryVersion | null;
+  onRestore: (version: WorkflowHistoryVersion) => Promise<void>;
+  loading?: boolean;
 }
 
 const RestoreVersionModal = ({
   open,
   onClose,
   version,
+  onRestore,
+  loading = false,
 }: RestoreVersionModalProps) => {
   const [restoreType, setRestoreType] = useState("overwrite");
   const [confirmText, setConfirmText] = useState("");
 
-  const handleRestore = () => {
-    if (confirmText === "RESTORE") {
-      // Handle restore logic here
-      console.log("Restoring version:", { restoreType, version });
-      onClose();
+  const handleRestore = async () => {
+    if (confirmText === "RESTORE" && version) {
+      await onRestore(version);
+      setConfirmText("");
+      setRestoreType("overwrite");
     }
   };
 
@@ -60,17 +65,20 @@ const RestoreVersionModal = ({
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Customer Onboarding
+                Workflow Version
               </h3>
               <div className="space-y-2 text-sm">
                 <p>
-                  <strong>Version to Restore:</strong> April 15, 2024 at 10:00
-                  AM by John Doe (On-Publish Save)
+                  <strong>Version to Restore:</strong> {new Date(version.date).toLocaleString()} by {version.initiator} ({version.type})
                 </p>
                 <p>
-                  <strong>Currently Live Version:</strong> June 20, 2024 at
-                  03:30 PM by HubSpot Automated Backup
+                  <strong>Version Number:</strong> {version.versionNumber}
                 </p>
+                {version.notes && version.notes !== "No notes available" && (
+                  <p>
+                    <strong>Notes:</strong> {version.notes}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -91,8 +99,7 @@ const RestoreVersionModal = ({
                     </Label>
                   </div>
                   <p className="text-sm text-gray-600 ml-6">
-                    This will replace the current live version of 'Customer
-                    Onboarding' in HubSpot. This action cannot be undone.
+                    This will replace the current live version in HubSpot. This action cannot be undone.
                   </p>
                 </div>
 
@@ -104,9 +111,7 @@ const RestoreVersionModal = ({
                     </Label>
                   </div>
                   <p className="text-sm text-gray-600 ml-6">
-                    This will create a new, inactive workflow in HubSpot based
-                    on this version. The current live workflow will remain
-                    unchanged.
+                    This will create a new, inactive workflow in HubSpot based on this version. The current live workflow will remain unchanged.
                   </p>
                 </div>
               </RadioGroup>
@@ -125,20 +130,28 @@ const RestoreVersionModal = ({
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 className="mt-1"
+                disabled={loading}
               />
             </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
             <Button
               onClick={handleRestore}
-              disabled={!isConfirmValid}
+              disabled={!isConfirmValid || loading}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Confirm Rollback
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Restoring...
+                </>
+              ) : (
+                "Confirm Rollback"
+              )}
             </Button>
           </div>
         </div>

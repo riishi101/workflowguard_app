@@ -66,6 +66,47 @@ export interface WorkflowVersion {
   isActive: boolean;
 }
 
+export interface WorkflowHistoryVersion {
+  id: string;
+  date: string;
+  type: 'On-Publish Save' | 'Manual Snapshot' | 'Daily Backup' | 'System Backup';
+  initiator: string;
+  notes: string;
+  workflowId: string;
+  versionNumber: number;
+  changes?: {
+    added: number;
+    modified: number;
+    removed: number;
+  };
+  status: 'active' | 'inactive' | 'restored';
+}
+
+export interface WorkflowStep {
+  id: string;
+  type: 'email' | 'delay' | 'meeting' | 'condition' | 'action' | 'other';
+  title: string;
+  description?: string;
+  config?: any;
+  isNew?: boolean;
+  isModified?: boolean;
+  isRemoved?: boolean;
+}
+
+export interface WorkflowVersion {
+  id: string;
+  versionNumber: number;
+  date: string;
+  creator: string;
+  type: string;
+  steps: WorkflowStep[];
+  metadata?: {
+    totalSteps: number;
+    activeSteps: number;
+    lastModified: string;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
@@ -160,8 +201,8 @@ export class ApiService {
     return response.data;
   }
 
-  // Audit log endpoints
-  static async getAuditLogs(filters?: { resource?: string; userId?: string; startDate?: string; endDate?: string }): Promise<ApiResponse<AuditLog[]>> {
+  // Audit log endpoints (legacy)
+  static async getAuditLogsLegacy(filters?: { resource?: string; userId?: string; startDate?: string; endDate?: string }): Promise<ApiResponse<AuditLog[]>> {
     const response = await api.get('/audit-log', { params: filters });
     return response.data;
   }
@@ -185,12 +226,38 @@ export class ApiService {
 
   // Subscription endpoints
   static async getSubscription(): Promise<ApiResponse<any>> {
-    const response = await api.get('/user/subscription');
+    const response = await api.get('/users/me/subscription');
     return response.data;
   }
 
   static async cancelSubscription(): Promise<ApiResponse<void>> {
-    const response = await api.post('/user/subscription/cancel');
+    const response = await api.post('/users/me/subscription/cancel');
+    return response.data;
+  }
+
+  // Trial and subscription management
+  static async getTrialStatus(): Promise<ApiResponse<any>> {
+    const response = await api.get('/users/me/trial/status');
+    return response.data;
+  }
+
+  static async getUsageStats(): Promise<ApiResponse<any>> {
+    const response = await api.get('/users/me/usage/stats');
+    return response.data;
+  }
+
+  static async createTrialSubscription(): Promise<ApiResponse<any>> {
+    const response = await api.post('/users/me/trial/create');
+    return response.data;
+  }
+
+  static async checkTrialAccess(): Promise<ApiResponse<any>> {
+    const response = await api.get('/users/me/trial/access');
+    return response.data;
+  }
+
+  static async upgradeSubscription(planId: string): Promise<ApiResponse<any>> {
+    const response = await api.post('/users/me/subscription/upgrade', { planId });
     return response.data;
   }
 
@@ -200,7 +267,7 @@ export class ApiService {
     return response.data;
   }
 
-  static async disconnectHubSpot(): Promise<ApiResponse<void>> {
+  static async disconnectHubSpotLegacy(): Promise<ApiResponse<void>> {
     const response = await api.post('/user/hubspot/disconnect');
     return response.data;
   }
@@ -212,7 +279,7 @@ export class ApiService {
   }
 
   static async startWorkflowProtection(workflowIds: string[]): Promise<ApiResponse<any>> {
-    const response = await api.post('/workflow/protect', { workflowIds });
+    const response = await api.post('/workflow/start-protection', { workflowIds });
     return response.data;
   }
 
@@ -262,6 +329,159 @@ export class ApiService {
 
   static async exportDashboardData(): Promise<ApiResponse<any>> {
     const response = await api.post('/dashboard/export');
+    return response.data;
+  }
+
+  // Workflow history endpoints
+  static async getWorkflowHistory(workflowId: string): Promise<ApiResponse<WorkflowHistoryVersion[]>> {
+    const response = await api.get(`/workflow/${workflowId}/history`);
+    return response.data;
+  }
+
+  static async getWorkflowDetails(workflowId: string): Promise<ApiResponse<any>> {
+    const response = await api.get(`/workflow/${workflowId}`);
+    return response.data;
+  }
+
+  static async restoreWorkflowVersion(workflowId: string, versionId: string): Promise<ApiResponse<any>> {
+    const response = await api.post(`/workflow/${workflowId}/restore/${versionId}`);
+    return response.data;
+  }
+
+  static async downloadWorkflowVersion(workflowId: string, versionId: string): Promise<ApiResponse<any>> {
+    const response = await api.get(`/workflow/${workflowId}/version/${versionId}/download`);
+    return response.data;
+  }
+
+  static async createWorkflowFromVersion(workflowId: string, versionId: string, newName: string): Promise<ApiResponse<any>> {
+    const response = await api.post(`/workflow/${workflowId}/version/${versionId}/create-new`, { name: newName });
+    return response.data;
+  }
+
+  // Workflow comparison endpoints
+  static async getWorkflowVersion(workflowId: string, versionId: string): Promise<ApiResponse<WorkflowVersion>> {
+    const response = await api.get(`/workflow/${workflowId}/version/${versionId}`);
+    return response.data;
+  }
+
+  static async compareWorkflowVersions(workflowId: string, versionAId: string, versionBId: string): Promise<ApiResponse<{
+    versionA: WorkflowVersion;
+    versionB: WorkflowVersion;
+    differences: {
+      added: WorkflowStep[];
+      modified: WorkflowStep[];
+      removed: WorkflowStep[];
+    };
+  }>> {
+    const response = await api.get(`/workflow/${workflowId}/compare?versionA=${versionAId}&versionB=${versionBId}`);
+    return response.data;
+  }
+
+  static async getWorkflowVersionsForComparison(workflowId: string): Promise<ApiResponse<WorkflowHistoryVersion[]>> {
+    const response = await api.get(`/workflow/${workflowId}/versions`);
+    return response.data;
+  }
+
+  // Settings endpoints
+  static async getUserProfile(): Promise<ApiResponse<any>> {
+    const response = await api.get('/users/me');
+    return response.data;
+  }
+
+  static async updateUserProfile(profileData: {
+    name?: string;
+    email?: string;
+    jobTitle?: string;
+    timezone?: string;
+    language?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.put('/users/me', profileData);
+    return response.data;
+  }
+
+  static async getNotificationSettings(): Promise<ApiResponse<any>> {
+    const response = await api.get('/users/me/notification-settings');
+    return response.data;
+  }
+
+  static async updateNotificationSettings(settings: {
+    enabled: boolean;
+    email: string;
+    workflowDeleted: boolean;
+    enrollmentTriggerModified: boolean;
+    workflowRolledBack: boolean;
+    criticalActionModified: boolean;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.put('/users/me/notification-settings', settings);
+    return response.data;
+  }
+
+  static async getAuditLogs(filters?: {
+    dateRange?: string;
+    user?: string;
+    action?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/audit-logs', { params: filters });
+    return response.data;
+  }
+
+  static async exportAuditLogs(filters?: {
+    dateRange?: string;
+    user?: string;
+    action?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.post('/audit-logs/export', filters);
+    return response.data;
+  }
+
+  static async getApiKeys(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/users/me/api-keys');
+    return response.data;
+  }
+
+  static async createApiKey(keyData: {
+    name: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.post('/users/me/api-keys', keyData);
+    return response.data;
+  }
+
+  static async deleteApiKey(keyId: string): Promise<ApiResponse<void>> {
+    const response = await api.delete(`/users/me/api-keys/${keyId}`);
+    return response.data;
+  }
+
+  static async getUserPermissions(): Promise<ApiResponse<any[]>> {
+    const response = await api.get('/users/permissions');
+    return response.data;
+  }
+
+  static async updateUserRole(userId: string, role: string): Promise<ApiResponse<any>> {
+    const response = await api.put(`/users/${userId}`, { role });
+    return response.data;
+  }
+
+  static async addUser(userData: {
+    email: string;
+    role: string;
+  }): Promise<ApiResponse<any>> {
+    const response = await api.post('/users', userData);
+    return response.data;
+  }
+
+  static async removeUser(userId: string): Promise<ApiResponse<void>> {
+    const response = await api.delete(`/users/${userId}`);
+    return response.data;
+  }
+
+  static async disconnectHubSpot(): Promise<ApiResponse<void>> {
+    const response = await api.post('/hubspot/disconnect');
+    return response.data;
+  }
+
+  static async deleteAccount(): Promise<ApiResponse<void>> {
+    const response = await api.delete('/users/me');
     return response.data;
   }
 }

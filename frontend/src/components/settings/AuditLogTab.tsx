@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -16,84 +16,156 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Calendar } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { ApiService } from "@/lib/api";
+import { Download, Calendar, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 
-const auditLogs = [
-  {
-    id: "1",
-    timestamp: "2024-01-20 14:30:25 UTC",
-    user: "John Smith",
-    action: "Updated workflow",
-    workflowName: "Customer Onboarding",
-    oldValue: "3 steps",
-    newValue: "4 steps",
-    ipAddress: "192.168.1.1",
-  },
-  {
-    id: "2",
-    timestamp: "2024-01-20 13:15:12 UTC",
-    user: "Sarah Johnson",
-    action: "Added user",
-    workflowName: "Invoice Processing",
-    oldValue: "-",
-    newValue: "Mike Wilson",
-    ipAddress: "192.168.1.2",
-  },
-  {
-    id: "3",
-    timestamp: "2024-01-20 11:45:33 UTC",
-    user: "David Brown",
-    action: "Modified trigger",
-    workflowName: "Email Notifications",
-    oldValue: "Daily",
-    newValue: "Weekly",
-    ipAddress: "192.168.1.3",
-  },
-  {
-    id: "4",
-    timestamp: "2024-01-20 10:20:18 UTC",
-    user: "Emily Davis",
-    action: "Deleted workflow",
-    workflowName: "Legacy Process",
-    oldValue: "Active",
-    newValue: "Deleted",
-    ipAddress: "192.168.1.4",
-  },
-  {
-    id: "5",
-    timestamp: "2024-01-20 09:05:45 UTC",
-    user: "Michael Wilson",
-    action: "Created workflow",
-    workflowName: "New Hire Setup",
-    oldValue: "-",
-    newValue: "Created",
-    ipAddress: "192.168.1.5",
-  },
-];
+interface AuditLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  workflowName: string;
+  oldValue: string;
+  newValue: string;
+  ipAddress: string;
+}
 
 const AuditLogTab = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [dateRange, setDateRange] = useState("all");
   const [userFilter, setUserFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
 
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [dateRange, userFilter, actionFilter]);
+
+  const fetchAuditLogs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await ApiService.getAuditLogs({
+        dateRange,
+        user: userFilter !== "all" ? userFilter : undefined,
+        action: actionFilter !== "all" ? actionFilter : undefined,
+      });
+      setAuditLogs(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch audit logs:', err);
+      setError(err.response?.data?.message || 'Failed to load audit logs. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load audit logs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportLogs = async () => {
+    try {
+      setExporting(true);
+      const response = await ApiService.exportAuditLogs({
+        dateRange,
+        user: userFilter !== "all" ? userFilter : undefined,
+        action: actionFilter !== "all" ? actionFilter : undefined,
+      });
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Export Successful",
+        description: "Audit logs have been exported successfully.",
+      });
+    } catch (err: any) {
+      console.error('Failed to export audit logs:', err);
+      toast({
+        title: "Export Failed",
+        description: err.response?.data?.message || "Failed to export audit logs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-40" />
+            ))}
+          </div>
+          
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-gray-50 p-4">
+              <Skeleton className="h-4 w-full" />
+            </div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="p-4 border-b border-gray-200">
+                <div className="grid grid-cols-7 gap-4">
+                  {[...Array(7)].map((_, j) => (
+                    <Skeleton key={j} className="h-4 w-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchAuditLogs}
+              className="ml-2"
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Upgrade Banner */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Upgrade to Enterprise Plan
-          </h3>
-          <p className="text-gray-600 text-sm">
-            Get access to comprehensive audit logs and advanced security
-            features
-          </p>
-        </div>
-        <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-          Upgrade Now
-        </Button>
-      </div>
-
       {/* Audit Log Content */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -126,9 +198,7 @@ const AuditLogTab = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="john">John Smith</SelectItem>
-              <SelectItem value="sarah">Sarah Johnson</SelectItem>
-              <SelectItem value="david">David Brown</SelectItem>
+              {/* Dynamic user list would be populated from API */}
             </SelectContent>
           </Select>
 
@@ -144,63 +214,99 @@ const AuditLogTab = () => {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" className="text-blue-600">
-            <Download className="w-4 h-4 mr-2" />
-            Export Log
+          <Button 
+            variant="outline" 
+            className="text-blue-600"
+            onClick={handleExportLogs}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Export Log
+              </>
+            )}
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={fetchAuditLogs}
+            disabled={loading}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
           </Button>
         </div>
 
         {/* Audit Log Table */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead>TIMESTAMP</TableHead>
-                <TableHead>USER</TableHead>
-                <TableHead>ACTION</TableHead>
-                <TableHead>WORKFLOW NAME</TableHead>
-                <TableHead>OLD VALUE</TableHead>
-                <TableHead>NEW VALUE</TableHead>
-                <TableHead>IP ADDRESS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {auditLogs.map((log) => (
-                <TableRow key={log.id} className="hover:bg-gray-50">
-                  <TableCell className="font-mono text-sm text-gray-600">
-                    {log.timestamp}
-                  </TableCell>
-                  <TableCell className="font-medium">{log.user}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        log.action.includes("Delete")
-                          ? "bg-red-100 text-red-800"
-                          : log.action.includes("Create")
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                      }
-                    >
-                      {log.action}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="link" className="p-0 text-blue-600">
-                      {log.workflowName}
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-gray-600">
-                    {log.oldValue}
-                  </TableCell>
-                  <TableCell className="font-medium">{log.newValue}</TableCell>
-                  <TableCell className="font-mono text-sm text-gray-600">
-                    {log.ipAddress}
-                  </TableCell>
+          {auditLogs.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead>TIMESTAMP</TableHead>
+                  <TableHead>USER</TableHead>
+                  <TableHead>ACTION</TableHead>
+                  <TableHead>WORKFLOW NAME</TableHead>
+                  <TableHead>OLD VALUE</TableHead>
+                  <TableHead>NEW VALUE</TableHead>
+                  <TableHead>IP ADDRESS</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {auditLogs.map((log) => (
+                  <TableRow key={log.id} className="hover:bg-gray-50">
+                    <TableCell className="font-mono text-sm text-gray-600">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-medium">{log.user}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          log.action.includes("Delete")
+                            ? "bg-red-100 text-red-800"
+                            : log.action.includes("Create")
+                              ? "bg-green-100 text-green-800"
+                              : "bg-blue-100 text-blue-800"
+                        }
+                      >
+                        {log.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="link" className="p-0 text-blue-600">
+                        {log.workflowName}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {log.oldValue}
+                    </TableCell>
+                    <TableCell className="font-medium">{log.newValue}</TableCell>
+                    <TableCell className="font-mono text-sm text-gray-600">
+                      {log.ipAddress}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-12">
+              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Audit Logs Found
+              </h3>
+              <p className="text-gray-600">
+                No audit logs match your current filters. Try adjusting your search criteria.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

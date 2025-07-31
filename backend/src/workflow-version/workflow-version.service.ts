@@ -108,10 +108,36 @@ export class WorkflowVersionService {
       const cutoff = new Date(Date.now() - plan.historyDays * 24 * 60 * 60 * 1000);
       where.createdAt = { gte: cutoff };
     }
-    return this.prisma.workflowVersion.findMany({
+    const versions = await this.prisma.workflowVersion.findMany({
       where,
       include: { workflow: true },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Transform to match frontend interface
+    return versions.map(version => ({
+      id: version.id,
+      date: version.createdAt.toISOString(),
+      type: version.snapshotType,
+      initiator: version.createdBy,
+      notes: `Version ${version.versionNumber} - ${version.snapshotType}`,
+      workflowId: version.workflowId,
+      versionNumber: version.versionNumber,
+      status: 'active',
+      changes: this.calculateChanges(version.data),
+    }));
+  }
+
+  private calculateChanges(data: any) {
+    if (!data || !Array.isArray((data as any).steps)) {
+      return { added: 0, modified: 0, removed: 0 };
+    }
+
+    const steps = (data as any).steps;
+    return {
+      added: steps.filter((step: any) => step.isNew).length,
+      modified: steps.filter((step: any) => step.isModified).length,
+      removed: steps.filter((step: any) => step.isRemoved).length,
+    };
   }
 }

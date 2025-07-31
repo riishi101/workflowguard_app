@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Param, Query, Req, Res, HttpException, H
 import { Response, Request } from 'express';
 import { HubSpotService } from '../services/hubspot.service';
 import { AuthService } from '../auth/auth.service';
+import { WorkflowService } from '../workflow/workflow.service';
 import { Public } from '../auth/public.decorator';
 
 @Controller('hubspot')
@@ -9,6 +10,7 @@ export class HubSpotController {
   constructor(
     private readonly hubSpotService: HubSpotService,
     private readonly authService: AuthService,
+    private readonly workflowService: WorkflowService,
   ) {}
 
   @Public()
@@ -52,6 +54,9 @@ export class HubSpotController {
       try {
         user = await this.authService.findOrCreateUser(hubSpotUser.email);
         await this.authService.updateUserHubspotPortalId(user.id, tokens.hub_id);
+        
+        // Create trial subscription for new users
+        await this.authService.createTrialSubscription(user.id);
       } catch (dbError) {
         console.error('Database operation failed:', dbError);
         // Create minimal user object for token generation
@@ -97,9 +102,25 @@ export class HubSpotController {
       const accessToken = await this.hubSpotService.getValidAccessToken(user.id);
       
       // Get workflows from HubSpot
-      const workflows = await this.hubSpotService.getWorkflows(accessToken, user.hubspotPortalId);
+      const hubspotWorkflows = await this.hubSpotService.getWorkflows(accessToken, user.hubspotPortalId);
       
-      return { workflows };
+      // Get protected workflow IDs for this user
+      const protectedWorkflowIds = await this.workflowService.getProtectedWorkflowIds(user.id);
+      
+      // Transform to match frontend interface
+      const workflows = hubspotWorkflows.map(workflow => ({
+        id: workflow.id,
+        name: workflow.name,
+        folder: workflow.description || 'General', // Use description as folder or default
+        status: workflow.status as "ACTIVE" | "INACTIVE" | "DRAFT",
+        lastModified: workflow.lastUpdated,
+        steps: Math.floor(Math.random() * 20) + 1, // Mock step count
+        contacts: Math.floor(Math.random() * 5000) + 100, // Mock contact count
+        isProtected: protectedWorkflowIds.includes(workflow.id),
+        isDemo: false,
+      }));
+      
+      return workflows;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

@@ -102,4 +102,35 @@ export class AuditLogController {
       throw new HttpException('Failed to delete audit log', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @Post('export')
+  @UseGuards(JwtAuthGuard)
+  async exportAuditLogs(
+    @Req() req: Request,
+    @Body() filters: {
+      dateRange?: string;
+      user?: string;
+      action?: string;
+    }
+  ) {
+    const userIdFromJwt = (req.user as any)?.sub;
+    const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+    const planId = user?.subscription?.planId || 'starter';
+    const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+    if (!plan?.features?.includes('audit_logs')) {
+      throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
+    }
+    
+    try {
+      const auditLogs = await this.auditLogService.findAll();
+      return {
+        data: auditLogs,
+        exportDate: new Date().toISOString(),
+        filters: filters,
+        totalRecords: auditLogs.length
+      };
+    } catch (error) {
+      throw new HttpException('Failed to export audit logs', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

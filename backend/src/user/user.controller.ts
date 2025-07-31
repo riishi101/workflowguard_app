@@ -198,4 +198,60 @@ export class UserController {
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.deleteMe(userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/subscription')
+  async getMySubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getMySubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/subscription/cancel')
+  async cancelMySubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.cancelMySubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/trial/status')
+  async getTrialStatus(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getTrialStatus(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/usage/stats')
+  async getUsageStats(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getUsageStats(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/trial/create')
+  async createTrialSubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.createTrialSubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/trial/access')
+  async checkTrialAccess(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.checkTrialAccess(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/subscription/upgrade')
+  async upgradeSubscription(@Req() req: Request, @Body() body: { planId: string }) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.upgradeSubscription(userId, body.planId);
+  }
 }

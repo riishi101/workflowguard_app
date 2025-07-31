@@ -21,13 +21,11 @@ import {
   Rocket,
   AlertTriangle,
   Code,
-  Activity,
-  MessageCircle,
-  Map,
-  ExternalLink,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HelpSupport = () => {
+  const navigate = useNavigate();
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
 
   const popularTopics = [
@@ -35,21 +33,25 @@ const HelpSupport = () => {
       icon: Link,
       title: "How to connect your HubSpot account",
       color: "text-blue-500",
+      route: "/help/connect-hubspot"
     },
     {
       icon: RotateCcw,
       title: "Restoring a workflow to a previous state",
       color: "text-blue-500",
+      route: "/help/restore-workflow"
     },
     {
       icon: Users,
       title: "Managing user permissions",
       color: "text-blue-500",
+      route: "/help/user-permissions"
     },
     {
       icon: MessageSquare,
       title: "Integrating with Slack",
       color: "text-blue-500",
+      route: "/help/slack-integration"
     },
   ];
 
@@ -93,6 +95,7 @@ const HelpSupport = () => {
       description:
         "Complete step-by-step guide to using all WorkflowGuard features.",
       color: "text-blue-500",
+      route: "/help/user-manual"
     },
     {
       icon: Lightbulb,
@@ -100,12 +103,14 @@ const HelpSupport = () => {
       description:
         "In-depth tutorials highlighting specific features and capabilities.",
       color: "text-blue-500",
+      route: "/help/feature-spotlights"
     },
     {
       icon: Rocket,
       title: "Advanced Use Cases",
       description: "Real-world examples and complex workflow implementations.",
       color: "text-blue-500",
+      route: "/help/advanced-use-cases"
     },
     {
       icon: AlertTriangle,
@@ -113,6 +118,7 @@ const HelpSupport = () => {
       description:
         "Common issues and their solutions to keep your workflows running smoothly.",
       color: "text-blue-500",
+      route: "/help/troubleshooting"
     },
     {
       icon: Code,
@@ -120,32 +126,13 @@ const HelpSupport = () => {
       description:
         "Technical documentation for developers integrating with our API.",
       color: "text-blue-500",
+      route: "/help/api-docs"
     },
   ];
 
-  const connectSections = [
-    {
-      icon: Activity,
-      title: "System Status",
-      description:
-        "Check real-time status of all WorkflowGuard services and get updates on any ongoing issues.",
-      link: "View Status",
-    },
-    {
-      icon: MessageCircle,
-      title: "Community Forum",
-      description:
-        "Join discussions, share tips, and get help from other WorkflowGuard users and experts.",
-      link: "Join Forum",
-    },
-    {
-      icon: Map,
-      title: "Feature Request & Roadmap",
-      description:
-        "Submit feature requests, vote on upcoming features, and see what's planned for WorkflowGuard.",
-      link: "View Roadmap",
-    },
-  ];
+  const handleTopicClick = (route: string) => {
+    navigate(route);
+  };
 
   return (
     <MainAppLayout 
@@ -175,6 +162,7 @@ const HelpSupport = () => {
               <Card
                 key={index}
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => handleTopicClick(topic.route)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -240,6 +228,7 @@ const HelpSupport = () => {
               <Card
                 key={index}
                 className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => handleTopicClick(card.route)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3">
@@ -257,36 +246,6 @@ const HelpSupport = () => {
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-      </ContentSection>
-
-      {/* Connect Section */}
-      <ContentSection>
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Stay Informed & Connect
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {connectSections.map((section, index) => {
-            const IconComponent = section.icon;
-            return (
-              <div key={index} className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <IconComponent className="w-5 h-5 text-blue-500" />
-                  <h3 className="font-semibold text-gray-900">
-                    {section.title}
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-600">{section.description}</p>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto text-blue-600 font-medium text-sm"
-                >
-                  {section.link}
-                  <ExternalLink className="w-3 h-3 ml-1" />
-                </Button>
-              </div>
             );
           })}
         </div>
