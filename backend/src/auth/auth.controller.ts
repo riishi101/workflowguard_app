@@ -237,22 +237,34 @@ export class AuthController {
   @Get('me')
   async getCurrentUser(@Req() req: Request) {
     try {
+      console.log('AuthController - getCurrentUser called');
+      
       // Get the authorization header
       const authHeader = req.headers.authorization;
+      console.log('AuthController - Auth header present:', !!authHeader);
+      
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('AuthController - No valid authorization header');
         throw new HttpException('No authorization token provided', HttpStatus.UNAUTHORIZED);
       }
 
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      console.log('AuthController - Token extracted (first 50 chars):', token.substring(0, 50) + '...');
       
       // Verify the JWT token and get user data
+      console.log('AuthController - Calling verifyToken...');
       const user = await this.authService.verifyToken(token);
+      console.log('AuthController - verifyToken result:', user ? { id: user.id, email: user.email } : null);
+      
       if (!user) {
+        console.log('AuthController - No user returned from verifyToken');
         throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
       }
 
+      console.log('AuthController - Returning user:', { id: user.id, email: user.email });
       return user;
     } catch (error) {
+      console.error('AuthController - getCurrentUser error:', error);
       if (error instanceof HttpException) {
         throw error;
       }

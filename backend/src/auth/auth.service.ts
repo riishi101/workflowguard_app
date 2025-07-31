@@ -71,7 +71,12 @@ export class AuthService {
   }
 
   async validateJwtPayload(payload: { sub: string; email: string; role: string }) {
-    return this.prisma.user.findUnique({ where: { id: payload.sub } });
+    console.log('AuthService - validateJwtPayload called with payload:', payload);
+    
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    console.log('AuthService - User found in database:', user ? { id: user.id, email: user.email } : null);
+    
+    return user;
   }
 
   async verifyToken(token: string) {
