@@ -10,12 +10,14 @@ const OnboardingFlow = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'connect' | 'workflow-selection' | 'dashboard'>('welcome');
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [hasProcessedOAuth, setHasProcessedOAuth] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (loading) return; // Don't process while loading
+    if (loading || isInitialized) return; // Don't process while loading or if already initialized
 
     // Check if this is an OAuth success callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -23,53 +25,68 @@ const OnboardingFlow = () => {
     const token = urlParams.get('token');
     const error = urlParams.get('error');
 
-    if (success === 'true' && token) {
+    console.log('OnboardingFlow - Processing:', { success, token: !!token, error, isAuthenticated, hasProcessedOAuth });
+
+    if (success === 'true' && token && !hasProcessedOAuth) {
       // OAuth was successful, clear URL and go to workflow selection
+      console.log('OnboardingFlow - OAuth success, going to workflow selection');
       window.history.replaceState({}, document.title, window.location.pathname);
+      setHasProcessedOAuth(true);
       setCurrentStep('workflow-selection');
+      setIsInitialized(true);
       return;
     }
 
-    if (error) {
+    if (error && !hasProcessedOAuth) {
       // OAuth failed, show error and stay on connect step
+      console.log('OnboardingFlow - OAuth error:', error);
       toast({
         title: "Connection Failed",
         description: "Failed to connect to HubSpot. Please try again.",
         variant: "destructive",
       });
       window.history.replaceState({}, document.title, window.location.pathname);
+      setHasProcessedOAuth(true);
       setCurrentStep('connect');
       setShowConnectModal(true);
+      setIsInitialized(true);
       return;
     }
 
-    // Check if user is already authenticated and has workflows
-    if (isAuthenticated && !loading && user) {
-      // User is authenticated, check if they have workflows
-      // For now, assume they need to go through workflow selection
+    // Check if user is already authenticated and hasn't processed OAuth
+    if (isAuthenticated && !loading && user && !hasProcessedOAuth) {
+      // User is authenticated, go directly to workflow selection
+      console.log('OnboardingFlow - User already authenticated, going to workflow selection');
+      setHasProcessedOAuth(true);
       setCurrentStep('workflow-selection');
+      setIsInitialized(true);
       return;
     }
 
-    // User is not authenticated, show welcome modal
-    if (!isAuthenticated && !loading) {
+    // User is not authenticated and hasn't processed OAuth, show welcome modal
+    if (!isAuthenticated && !loading && !hasProcessedOAuth) {
+      console.log('OnboardingFlow - User not authenticated, showing welcome modal');
       setCurrentStep('welcome');
       setShowWelcomeModal(true);
+      setIsInitialized(true);
     }
-  }, [isAuthenticated, loading, user, navigate, toast]);
+  }, [isAuthenticated, loading, user, navigate, toast, hasProcessedOAuth, isInitialized]);
 
   const handleWelcomeComplete = () => {
+    console.log('OnboardingFlow - Welcome complete, showing connect modal');
     setShowWelcomeModal(false);
     setShowConnectModal(true);
     setCurrentStep('connect');
   };
 
   const handleConnectHubSpot = () => {
+    console.log('OnboardingFlow - Initiating HubSpot connection');
     // Use the connectHubSpot function from AuthContext
     connectHubSpot();
   };
 
   const handleWorkflowSelectionComplete = () => {
+    console.log('OnboardingFlow - Workflow selection complete, going to dashboard');
     setCurrentStep('dashboard');
     navigate('/dashboard');
     toast({
@@ -89,7 +106,7 @@ const OnboardingFlow = () => {
     );
   }
 
-  // Show workflow selection if user is authenticated but hasn't selected workflows
+  // Show workflow selection if user is authenticated and on workflow-selection step
   if (isAuthenticated && currentStep === 'workflow-selection') {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
   }
@@ -99,20 +116,33 @@ const OnboardingFlow = () => {
     return null; // Will be handled by navigation
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Welcome Modal */}
-      <WelcomeModal 
-        open={showWelcomeModal} 
-        onClose={handleWelcomeComplete}
-      />
+  // Only show modals if we're on welcome or connect steps
+  if (currentStep === 'welcome' || currentStep === 'connect') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Welcome Modal */}
+        <WelcomeModal 
+          open={showWelcomeModal} 
+          onClose={handleWelcomeComplete}
+        />
 
-      {/* Connect HubSpot Modal */}
-      <ConnectHubSpotModal
-        open={showConnectModal}
-        onClose={() => setShowConnectModal(false)}
-        onConnect={handleConnectHubSpot}
-      />
+        {/* Connect HubSpot Modal */}
+        <ConnectHubSpotModal
+          open={showConnectModal}
+          onClose={() => setShowConnectModal(false)}
+          onConnect={handleConnectHubSpot}
+        />
+      </div>
+    );
+  }
+
+  // Fallback: show loading
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Setting up...</p>
+      </div>
     </div>
   );
 };
