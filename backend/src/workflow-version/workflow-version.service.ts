@@ -114,18 +114,8 @@ export class WorkflowVersionService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Transform to match frontend interface
-    return versions.map(version => ({
-      id: version.id,
-      date: version.createdAt.toISOString(),
-      type: version.snapshotType,
-      initiator: version.createdBy,
-      notes: `Version ${version.versionNumber} - ${version.snapshotType}`,
-      workflowId: version.workflowId,
-      versionNumber: version.versionNumber,
-      status: 'active',
-      changes: this.calculateChanges(version.data),
-    }));
+    // Return the original WorkflowVersion objects without transformation
+    return versions;
   }
 
   private calculateChanges(data: any) {

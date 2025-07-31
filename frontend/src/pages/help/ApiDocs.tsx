@@ -161,7 +161,7 @@ result = response.json()`
                 <h3 className="font-medium text-gray-900">1. Get API Key</h3>
               </div>
               <p className="text-sm text-gray-600">
-                Generate an API key from Settings > API Access
+                Generate an API key from Settings &gt; API Access
               </p>
             </CardContent>
           </Card>
