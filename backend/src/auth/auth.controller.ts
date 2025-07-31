@@ -123,25 +123,47 @@ export class AuthController {
         return res.redirect('https://www.workflowguard.pro?error=user_error');
       }
 
-      // 3. Create or update user in your DB with hubspotPortalId
+      // 3. Create or update user in your DB with hubspotPortalId and tokens
       console.log('Creating/updating user in database...');
       let user;
       try {
         user = await this.authService.findOrCreateUser(email);
         console.log('User found/created:', user.id);
         
+        // Store HubSpot tokens and portal ID
         await this.authService.updateUserHubspotPortalId(user.id, hub_id);
-        console.log('User hubspotPortalId updated');
+        await this.authService.updateUserHubspotTokens(user.id, {
+          access_token,
+          refresh_token,
+          expires_in: tokenRes.data.expires_in,
+        });
+        console.log('User HubSpot data updated');
       } catch (dbError) {
         console.error('Database operation failed:', dbError);
-        // Continue with OAuth flow even if DB fails
-        console.log('Continuing OAuth flow despite DB error');
-        // Create a minimal user object for token generation
-        user = { id: 'temp-user', email, role: 'user' };
+        // Try to create user again with a simpler approach
+        try {
+          console.log('Retrying user creation with fallback approach');
+          user = await this.authService.createUser(email, undefined, 'viewer');
+          console.log('User created with fallback approach:', user.id);
+          
+          // Store HubSpot tokens and portal ID
+          await this.authService.updateUserHubspotPortalId(user.id, hub_id);
+          await this.authService.updateUserHubspotTokens(user.id, {
+            access_token,
+            refresh_token,
+            expires_in: tokenRes.data.expires_in,
+          });
+          console.log('User HubSpot data updated with fallback');
+        } catch (fallbackError) {
+          console.error('Fallback user creation also failed:', fallbackError);
+          // If all else fails, redirect with error
+          return res.redirect('https://www.workflowguard.pro?error=user_creation_failed');
+        }
       }
 
       // 4. Generate JWT token for the user
       const token = this.authService.generateToken(user);
+      console.log('JWT token generated for user:', user.id);
 
       // 5. Redirect to frontend with success and token
       console.log('OAuth callback completed successfully');

@@ -108,6 +108,24 @@ export class AuthService {
     }
   }
 
+  async updateUserHubspotTokens(userId: string, tokens: { access_token: string; refresh_token: string; expires_in: number }) {
+    try {
+      const expiresAt = new Date();
+      expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in);
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          hubspotAccessToken: tokens.access_token,
+          hubspotRefreshToken: tokens.refresh_token,
+          hubspotTokenExpiresAt: expiresAt,
+        },
+      });
+    } catch (error) {
+      throw new HttpException('Failed to update HubSpot tokens', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   async createTrialSubscription(userId: string) {
     try {
       const trialEndDate = new Date();
