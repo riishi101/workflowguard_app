@@ -178,37 +178,66 @@ export class HubSpotService {
    */
   async getWorkflows(accessToken: string, portalId: string): Promise<HubSpotWorkflow[]> {
     try {
-      const workflows: HubSpotWorkflow[] = [];
-      let after: string | undefined;
+      this.logger.log(`Fetching workflows for portal ${portalId}`);
+      
+      // Use the correct HubSpot API endpoint for workflows
+      const response = await this.apiClient.get('/automation/v3/workflows', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: {
+          limit: 100,
+          portalId,
+        },
+      });
 
-      do {
-        const response = await this.apiClient.get('/automation/v4/workflows', {
+      this.logger.log(`HubSpot API response status: ${response.status}`);
+      this.logger.log(`HubSpot API response data:`, response.data);
+
+      const workflows = response.data.workflows || response.data || [];
+      
+      return workflows.map((workflow: any) => ({
+        id: workflow.id,
+        name: workflow.name,
+        description: workflow.description || workflow.folder || 'General',
+        lastUpdated: workflow.updatedAt || workflow.lastUpdated || workflow.updated,
+        status: workflow.status || 'ACTIVE',
+        type: workflow.type || 'WORKFLOW',
+        portalId,
+      }));
+    } catch (error) {
+      this.logger.error('Error getting workflows from HubSpot:', error);
+      this.logger.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
+        params: error.config?.params
+      });
+      
+      // Try alternative endpoint if the first one fails
+      try {
+        this.logger.log('Trying alternative HubSpot API endpoint');
+        const altResponse = await this.apiClient.get('/automation/v4/workflows', {
           headers: { Authorization: `Bearer ${accessToken}` },
           params: {
             limit: 100,
-            after,
             portalId,
           },
         });
 
-        const workflowData = response.data.results || response.data;
-        workflows.push(...workflowData.map((workflow: any) => ({
+        const altWorkflows = altResponse.data.results || altResponse.data || [];
+        return altWorkflows.map((workflow: any) => ({
           id: workflow.id,
           name: workflow.name,
-          description: workflow.description,
-          lastUpdated: workflow.updatedAt || workflow.lastUpdated,
+          description: workflow.description || workflow.folder || 'General',
+          lastUpdated: workflow.updatedAt || workflow.lastUpdated || workflow.updated,
           status: workflow.status || 'ACTIVE',
           type: workflow.type || 'WORKFLOW',
           portalId,
-        })));
-
-        after = response.data.paging?.next?.after;
-      } while (after);
-
-      return workflows;
-    } catch (error) {
-      this.logger.error('Error getting workflows:', error);
-      throw new HttpException('Failed to get workflows from HubSpot', HttpStatus.BAD_REQUEST);
+        }));
+      } catch (altError) {
+        this.logger.error('Alternative endpoint also failed:', altError);
+        throw new HttpException('Failed to get workflows from HubSpot. Please check your HubSpot connection.', HttpStatus.BAD_REQUEST);
+      }
     }
   }
 

@@ -21,7 +21,7 @@ export class HubSpotController {
     try {
       const clientId = process.env.HUBSPOT_CLIENT_ID;
       const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
-      const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+      const scopes = 'automation oauth crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read';
       
       if (!clientId) {
         throw new HttpException('HubSpot configuration missing', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -182,8 +182,10 @@ export class HubSpotController {
         }
       }
       
+      console.log('HubSpotController - Calling HubSpot service with portal ID:', portalId);
       const hubspotWorkflows = await this.hubSpotService.getWorkflows(accessToken, portalId);
-      console.log('HubSpotController - Workflows fetched:', hubspotWorkflows.length);
+      console.log('HubSpotController - Workflows fetched successfully:', hubspotWorkflows.length);
+      console.log('HubSpotController - Sample workflow:', hubspotWorkflows[0]);
       
       // Get protected workflow IDs for this user
       const protectedWorkflowIds = await this.workflowService.getProtectedWorkflowIds(user.id);
