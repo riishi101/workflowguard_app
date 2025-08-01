@@ -54,7 +54,6 @@ export class HubSpotController {
       let user;
       try {
         user = await this.authService.findOrCreateUser(hubSpotUser.email);
-        await this.authService.updateUserHubspotPortalId(user.id, tokens.hub_id);
         
         // Create trial subscription for new users
         await this.authService.createTrialSubscription(user.id);
@@ -64,9 +63,9 @@ export class HubSpotController {
         user = { id: 'temp-user', email: hubSpotUser.email, role: 'user' };
       }
 
-      // Store HubSpot tokens
+      // Store HubSpot tokens using the service method
       try {
-        await this.authService.updateUserHubspotTokens(user.id, tokens);
+        await this.hubSpotService.storeUserTokens(user.id, tokens);
       } catch (tokenError) {
         console.error('Failed to store tokens:', tokenError);
         // Continue with OAuth flow even if token storage fails
