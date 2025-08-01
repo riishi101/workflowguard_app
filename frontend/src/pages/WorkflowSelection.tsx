@@ -67,6 +67,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [selectAll, setSelectAll] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [workflowsFetched, setWorkflowsFetched] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const maxRetries = 10; // Increased from 3 to 10
 
   // Fetch workflows from HubSpot
@@ -269,6 +270,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   const handleStartProtecting = async () => {
+    if (isNavigating) {
+      return; // Prevent multiple clicks
+    }
+    
     if (!isAuthenticated) {
       toast({
         title: "Authentication Required",
@@ -297,12 +302,19 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         description: response.data?.message || `${selectedWorkflows.length} workflows are now being monitored.`,
       });
       
-      // Call onComplete if provided, otherwise navigate
-      if (onComplete) {
-        onComplete();
-      } else {
-        navigate("/dashboard");
-      }
+      // Set navigation state to prevent further state updates
+      setIsNavigating(true);
+      
+      // Use setTimeout to ensure state updates complete before navigation
+      setTimeout(() => {
+        // Call onComplete if provided, otherwise navigate
+        if (onComplete) {
+          onComplete();
+        } else {
+          navigate("/dashboard");
+        }
+      }, 100);
+      
     } catch (error: any) {
       console.error('Failed to start protection:', error);
       toast({
@@ -314,6 +326,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   const handleSkipForNow = () => {
+    if (isNavigating) {
+      return; // Prevent multiple clicks
+    }
+    
+    setIsNavigating(true);
+    
     WorkflowState.setWorkflowSelection(false);
     WorkflowState.setSelectedCount(0);
     
@@ -322,11 +340,13 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       description: "You can configure workflow protection later in settings.",
     });
     
-    if (onComplete) {
-      onComplete();
-    } else {
-      navigate("/dashboard");
-    }
+    setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      } else {
+        navigate("/dashboard");
+      }
+    }, 100);
   };
 
   const handleViewProtectedWorkflows = () => {
