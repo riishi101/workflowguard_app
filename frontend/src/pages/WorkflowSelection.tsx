@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import ContentPageHeader from "@/components/ContentPageHeader";
 import Footer from "@/components/Footer";
 import { WorkflowState } from "@/lib/workflowState";
@@ -52,6 +53,7 @@ interface HubSpotWorkflow {
 const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [workflows, setWorkflows] = useState<HubSpotWorkflow[]>([]);
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,6 +68,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
   // Fetch workflows from HubSpot
   const fetchWorkflows = async () => {
+    // Check if user is authenticated before making API call
+    if (!isAuthenticated) {
+      console.log('WorkflowSelection - User not authenticated, skipping workflow fetch');
+      setError('Please connect your HubSpot account first to view workflows.');
+      setWorkflows([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -139,8 +150,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   useEffect(() => {
-    fetchWorkflows();
-  }, []);
+    // Only fetch workflows if user is authenticated and auth loading is complete
+    if (!authLoading) {
+      fetchWorkflows();
+    }
+  }, [isAuthenticated, authLoading]);
 
   const handleWorkflowToggle = (workflowId: string) => {
     setSelectedWorkflows((prev) =>
@@ -164,6 +178,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   const handleStartProtecting = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your HubSpot account first to start protecting workflows.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Show loading state
       toast({
@@ -273,7 +296,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ContentPageHeader />
@@ -405,12 +428,31 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
               {error}
+              {isAuthenticated && (
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-red-800 underline ml-2"
+                  onClick={refreshWorkflows}
+                >
+                  Try again
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Authentication Required Alert */}
+        {!isAuthenticated && !loading && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              Please connect your HubSpot account to view and select workflows for protection.
               <Button 
                 variant="link" 
-                className="p-0 h-auto text-red-800 underline ml-2"
-                onClick={refreshWorkflows}
+                className="p-0 h-auto text-blue-800 underline ml-2"
+                onClick={() => window.location.href = '/'}
               >
-                Try again
+                Connect HubSpot
               </Button>
             </AlertDescription>
           </Alert>
@@ -427,6 +469,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
+                  disabled={!isAuthenticated}
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -434,7 +477,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   variant="outline"
                   size="sm"
                   onClick={refreshWorkflows}
-                  disabled={refreshing}
+                  disabled={refreshing || !isAuthenticated}
                 >
                   {refreshing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -448,7 +491,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={setStatusFilter} disabled={!isAuthenticated}>
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -460,7 +503,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   </SelectContent>
                 </Select>
 
-                <Select value={folderFilter} onValueChange={setFolderFilter}>
+                <Select value={folderFilter} onValueChange={setFolderFilter} disabled={!isAuthenticated}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Folder" />
                   </SelectTrigger>
@@ -473,7 +516,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   </SelectContent>
                 </Select>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select value={sortBy} onValueChange={setSortBy} disabled={!isAuthenticated}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
@@ -489,6 +532,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   variant="outline"
                   size="sm"
                   onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                  disabled={!isAuthenticated}
                 >
                   {sortOrder === "asc" ? (
                     <SortAsc className="w-4 h-4" />
@@ -502,7 +546,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 <Checkbox
                   checked={selectAll}
                   onCheckedChange={handleSelectAll}
-                  disabled={filteredWorkflows.filter(w => w.status === "ACTIVE" && !w.isProtected).length === 0}
+                  disabled={filteredWorkflows.filter(w => w.status === "ACTIVE" && !w.isProtected).length === 0 || !isAuthenticated}
                 />
                 <span className="text-sm text-gray-600">
                   Select all active workflows
@@ -554,7 +598,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         <Checkbox
                           checked={selectedWorkflows.includes(workflow.id)}
                           onCheckedChange={() => handleWorkflowToggle(workflow.id)}
-                          disabled={workflow.status === "DRAFT" || workflow.isProtected}
+                          disabled={workflow.status === "DRAFT" || workflow.isProtected || !isAuthenticated}
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -620,7 +664,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               </Button>
               <Button
                 onClick={handleStartProtecting}
-                disabled={selectedWorkflows.length === 0}
+                disabled={selectedWorkflows.length === 0 || !isAuthenticated}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
                 size="sm"
               >

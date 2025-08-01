@@ -137,9 +137,25 @@ const OnboardingFlow = () => {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
   }
 
-  // Show workflow selection if timeout reached (force workflow selection)
-  if (timeoutReached && currentStep === 'workflow-selection') {
+  // Show workflow selection if timeout reached AND user is authenticated
+  if (timeoutReached && currentStep === 'workflow-selection' && isAuthenticated) {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
+  }
+
+  // If timeout reached but user is not authenticated, show connect modal
+  if (timeoutReached && !isAuthenticated) {
+    console.log('OnboardingFlow - Timeout reached but user not authenticated, showing connect modal');
+    setCurrentStep('connect');
+    setShowConnectModal(true);
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ConnectHubSpotModal
+          open={showConnectModal}
+          onClose={() => setShowConnectModal(false)}
+          onConnect={handleConnectHubSpot}
+        />
+      </div>
+    );
   }
 
   // Show dashboard if user is authenticated and on dashboard step
