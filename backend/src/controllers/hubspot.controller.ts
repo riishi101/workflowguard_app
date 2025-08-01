@@ -66,7 +66,7 @@ export class HubSpotController {
 
       // Store HubSpot tokens
       try {
-        await this.hubSpotService.storeUserTokens(user.id, tokens);
+        await this.authService.updateUserHubspotTokens(user.id, tokens);
       } catch (tokenError) {
         console.error('Failed to store tokens:', tokenError);
         // Continue with OAuth flow even if token storage fails
@@ -136,6 +136,10 @@ export class HubSpotController {
     } catch (error) {
       console.error('HubSpotController - Error in getWorkflows:', error);
       if (error instanceof HttpException) {
+        // If it's an unauthorized error, it means no HubSpot tokens
+        if (error.getStatus() === HttpStatus.UNAUTHORIZED) {
+          throw new HttpException('HubSpot connection required. Please reconnect your HubSpot account.', HttpStatus.BAD_REQUEST);
+        }
         throw error;
       }
       throw new HttpException('Failed to get workflows', HttpStatus.INTERNAL_SERVER_ERROR);
