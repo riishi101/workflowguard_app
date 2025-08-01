@@ -66,6 +66,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [workflowsFetched, setWorkflowsFetched] = useState(false);
   const maxRetries = 10; // Increased from 3 to 10
 
   // Fetch workflows from HubSpot
@@ -79,6 +80,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       return;
     }
 
+    // Ensure minimum loading time to prevent too quick completion
+    const minLoadingTime = 2000; // 2 seconds minimum
+    const startTime = Date.now();
+
     try {
       setLoading(true);
       setError(null);
@@ -86,16 +91,42 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log('WorkflowSelection - Starting to fetch workflows from HubSpot');
       
       // Try to get real data from HubSpot API
+      console.log('WorkflowSelection - Making API call to fetch workflows...');
+      const apiStartTime = Date.now();
+      
       const response = await ApiService.getHubSpotWorkflows();
       
+      const apiEndTime = Date.now();
+      console.log(`WorkflowSelection - API call completed in ${apiEndTime - apiStartTime}ms`);
       console.log('WorkflowSelection - HubSpot API response:', response);
       
-      if (response.data && response.data.length > 0) {
-        console.log('WorkflowSelection - Found workflows:', response.data.length);
-        setWorkflows(response.data);
+      // Validate the response structure
+      if (!response || !response.data) {
+        throw new Error('Invalid response structure from HubSpot API');
+      }
+      
+      // Check if we got actual workflow data
+      const workflows = Array.isArray(response.data) ? response.data : [];
+      console.log('WorkflowSelection - Parsed workflows:', workflows.length);
+      
+      if (workflows.length > 0) {
+        console.log('WorkflowSelection - Found workflows:', workflows.length);
+        console.log('WorkflowSelection - Sample workflow:', workflows[0]);
+        
+        // Validate workflow structure
+        const validWorkflows = workflows.filter(workflow => 
+          workflow && workflow.id && workflow.name
+        );
+        
+        if (validWorkflows.length === 0) {
+          throw new Error('No valid workflows found in response');
+        }
+        
+        setWorkflows(validWorkflows);
+        setWorkflowsFetched(true);
         toast({
           title: "Connected to HubSpot",
-          description: `Found ${response.data.length} workflows in your account.`,
+          description: `Found ${validWorkflows.length} workflows in your account.`,
         });
       } else {
         // No workflows found in HubSpot
@@ -144,6 +175,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       // Set empty workflows array instead of demo data
       setWorkflows([]);
     } finally {
+      // Ensure minimum loading time
+      const totalTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, minLoadingTime - totalTime);
+      
+      if (remainingTime > 0) {
+        console.log(`WorkflowSelection - Waiting ${remainingTime}ms to ensure minimum loading time`);
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+      
       setLoading(false);
     }
   };
@@ -329,7 +369,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
   };
 
-  if (loading || authLoading) {
+  if (loading || authLoading || !workflowsFetched) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ContentPageHeader />

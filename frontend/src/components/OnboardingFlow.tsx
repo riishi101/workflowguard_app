@@ -89,8 +89,13 @@ const OnboardingFlow = () => {
       // User is authenticated, go directly to workflow selection
       console.log('OnboardingFlow - User already authenticated, going to workflow selection');
       setHasProcessedOAuth(true);
-      setCurrentStep('workflow-selection');
-      setIsInitialized(true);
+      
+      // Add a small delay to ensure HubSpot connection is fully established
+      setTimeout(() => {
+        setCurrentStep('workflow-selection');
+        setIsInitialized(true);
+      }, 1000); // 1 second delay
+      
       return;
     }
 
