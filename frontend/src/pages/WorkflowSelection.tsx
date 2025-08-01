@@ -577,75 +577,96 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               🚨 Nuclear Reset
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="mt-2 ml-2"
-              onClick={() => {
-                // Stop retrying
-                setRetryCount(maxRetries);
-                setError('Retry stopped by user. Please reconnect your HubSpot account.');
-              }}
-            >
-              ⏹️ Stop Retrying
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="mt-2 ml-2"
-              onClick={async () => {
-                try {
-                  console.log('WorkflowSelection - Manually updating portal ID');
-                  await ApiService.updateHubSpotPortalId();
-                  toast({
-                    title: "Portal ID Updated",
-                    description: "HubSpot portal ID has been updated. Please try fetching workflows again.",
-                  });
-                  // Retry fetching workflows
-                  setRetryCount(0);
-                  fetchWorkflows();
-                } catch (error) {
-                  console.error('Failed to update portal ID:', error);
-                  toast({
-                    title: "Update Failed",
-                    description: "Failed to update portal ID. Please reconnect your HubSpot account.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              🔧 Fix Portal ID
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="mt-2 ml-2"
-              onClick={async () => {
-                try {
-                  console.log('WorkflowSelection - Testing HubSpot connection');
-                  const result = await ApiService.testHubSpotConnection();
-                  console.log('WorkflowSelection - Connection test result:', result);
-                  toast({
-                    title: "Connection Test",
-                    description: result.data.success ? 
-                      `HubSpot connection working! Found ${result.data.workflowCount} workflows.` : 
-                      `Connection failed: ${result.data.error}`,
-                    variant: result.data.success ? "default" : "destructive",
-                  });
-                } catch (error) {
-                  console.error('Failed to test connection:', error);
-                  toast({
-                    title: "Test Failed",
-                    description: "Failed to test HubSpot connection.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              🧪 Test Connection
-            </Button>
+            {/* 
+              DEBUG BUTTONS - TO BE REMOVED AFTER WORKFLOW FETCHING IS FIXED
+              
+              These buttons are temporary debugging tools to help diagnose HubSpot connection issues.
+              Once workflow fetching is working reliably, these should be removed to clean up the UI.
+              
+              Buttons to remove:
+              - Stop Retrying
+              - Fix Portal ID  
+              - Test Connection
+              - Nuclear Reset
+              
+              Keep only:
+              - Reconnect HubSpot Account (if needed)
+              - Skip for now
+              - Start Protecting Workflows
+            */}
+            {process.env.NODE_ENV === 'development' && !workflowsFetched && (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2 ml-2"
+                  onClick={() => {
+                    // Stop retrying
+                    setRetryCount(maxRetries);
+                    setError('Retry stopped by user. Please reconnect your HubSpot account.');
+                  }}
+                >
+                  ⏹️ Stop Retrying
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2 ml-2"
+                  onClick={async () => {
+                    try {
+                      console.log('WorkflowSelection - Manually updating portal ID');
+                      await ApiService.updateHubSpotPortalId();
+                      toast({
+                        title: "Portal ID Updated",
+                        description: "HubSpot portal ID has been updated. Please try fetching workflows again.",
+                      });
+                      // Retry fetching workflows
+                      setRetryCount(0);
+                      fetchWorkflows();
+                    } catch (error) {
+                      console.error('Failed to update portal ID:', error);
+                      toast({
+                        title: "Update Failed",
+                        description: "Failed to update portal ID. Please reconnect your HubSpot account.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  🔧 Fix Portal ID
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="mt-2 ml-2"
+                  onClick={async () => {
+                    try {
+                      console.log('WorkflowSelection - Testing HubSpot connection');
+                      const result = await ApiService.testHubSpotConnection();
+                      console.log('WorkflowSelection - Connection test result:', result);
+                      toast({
+                        title: "Connection Test",
+                        description: result.data.success ? 
+                          `HubSpot connection working! Found ${result.data.workflowCount} workflows.` : 
+                          `Connection failed: ${result.data.error}`,
+                        variant: result.data.success ? "default" : "destructive",
+                      });
+                    } catch (error) {
+                      console.error('Failed to test connection:', error);
+                      toast({
+                        title: "Test Failed",
+                        description: "Failed to test HubSpot connection.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  🧪 Test Connection
+                </Button>
+              </>
+            )}
                       </>
                     ) : (
                       <>
