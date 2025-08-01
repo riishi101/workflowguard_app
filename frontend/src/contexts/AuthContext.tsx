@@ -54,8 +54,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           try {
             console.log('AuthContext - Fetching user after OAuth success');
             const response = await ApiService.getCurrentUser();
-            console.log('AuthContext - User fetched successfully:', response.data);
-            setUser(response.data);
+            console.log('AuthContext - User fetched successfully:', response);
+            // The backend returns user directly, not wrapped in ApiResponse
+            setUser(response);
           } catch (error) {
             console.error('AuthContext - Failed to get user after OAuth:', error);
             console.error('AuthContext - Error details:', {
@@ -70,8 +71,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('AuthContext - HubSpot OAuth callback detected');
           try {
             const response = await ApiService.getCurrentUser();
-            console.log('AuthContext - User fetched from OAuth callback:', response.data);
-            setUser(response.data);
+            console.log('AuthContext - User fetched from OAuth callback:', response);
+            setUser(response);
           } catch (error) {
             console.error('AuthContext - OAuth callback failed:', error);
           }
@@ -86,8 +87,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (existingToken) {
             try {
               const response = await ApiService.getCurrentUser();
-              console.log('AuthContext - User already authenticated:', response.data);
-              setUser(response.data);
+              console.log('AuthContext - User already authenticated:', response);
+              setUser(response);
             } catch (error) {
               console.log('AuthContext - Token exists but user fetch failed:', error.message);
               // Clear invalid token
@@ -131,8 +132,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     try {
       const response = await ApiService.getCurrentUser();
-      console.log('AuthContext - Manual auth test successful:', response.data);
-      setUser(response.data);
+      console.log('AuthContext - Manual auth test successful:', response);
+      setUser(response);
     } catch (error) {
       console.error('AuthContext - Manual auth test failed:', error);
     }

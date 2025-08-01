@@ -149,7 +149,7 @@ export class ApiService {
   }
 
   // User endpoints
-  static async getCurrentUser(): Promise<ApiResponse<User>> {
+  static async getCurrentUser(): Promise<User> {
     const response = await apiClient.get('/auth/me');
     return response.data;
   }
