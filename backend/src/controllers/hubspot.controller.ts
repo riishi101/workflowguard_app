@@ -68,6 +68,7 @@ export class HubSpotController {
       // Store HubSpot tokens using the service method
       try {
         await this.hubSpotService.storeUserTokens(user.id, tokens);
+        console.log('HubSpotController - Stored tokens with portal ID:', tokens.hub_id);
       } catch (tokenError) {
         console.error('Failed to store tokens:', tokenError);
         // Continue with OAuth flow even if token storage fails
@@ -244,6 +245,47 @@ export class HubSpotController {
         throw error;
       }
       throw new HttpException('Failed to get workflow', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('portal/update')
+  async updatePortalId(@Req() req: Request) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new HttpException('No authorization token provided', HttpStatus.UNAUTHORIZED);
+      }
+
+      const token = authHeader.substring(7);
+      const user = await this.authService.verifyToken(token);
+      if (!user) {
+        throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
+      }
+
+      console.log('HubSpotController - Manually updating portal ID for user:', user.id);
+      
+      // Get valid access token
+      const accessToken = await this.hubSpotService.getValidAccessToken(user.id);
+      
+      // Get user info to extract portal ID
+      const userInfo = await this.hubSpotService.getUserInfo(accessToken);
+      console.log('HubSpotController - User info for portal update:', userInfo);
+      
+      if (userInfo.portalId) {
+        // Update user with portal ID
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { hubspotPortalId: userInfo.portalId }
+        });
+        console.log('HubSpotController - Updated user with portal ID:', userInfo.portalId);
+        
+        return { success: true, portalId: userInfo.portalId };
+      } else {
+        throw new HttpException('Could not determine portal ID', HttpStatus.BAD_REQUEST);
+      }
+    } catch (error) {
+      console.error('HubSpotController - Error updating portal ID:', error);
+      throw new HttpException('Failed to update portal ID', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

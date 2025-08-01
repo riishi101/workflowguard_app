@@ -155,20 +155,48 @@ export class HubSpotService {
    */
   async getUserInfo(accessToken: string): Promise<HubSpotUser> {
     try {
-      const response = await this.apiClient.get('/integrations/v1/me', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      this.logger.log('Getting user info from HubSpot API');
+      
+      // Try multiple endpoints to get user info
+      let userData;
+      
+      try {
+        // Try the newer endpoint first
+        const response = await this.apiClient.get('/oauth/v1/access-tokens/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        userData = response.data;
+        this.logger.log('Got user info from oauth/v1/access-tokens/me:', userData);
+      } catch (error) {
+        this.logger.log('First endpoint failed, trying integrations/v1/me');
+        
+        // Fallback to the older endpoint
+        const response = await this.apiClient.get('/integrations/v1/me', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        userData = response.data;
+        this.logger.log('Got user info from integrations/v1/me:', userData);
+      }
 
-      const userData = response.data;
+      // Extract portal ID from various possible fields
+      const portalId = userData.portalId || userData.hub_id || userData.hubId || userData.hubId || userData.portal_id;
+      
+      this.logger.log('Extracted portal ID:', portalId);
+      
       return {
-        id: userData.user || userData.userId,
+        id: userData.user || userData.userId || userData.id,
         email: userData.user || userData.email || userData.userEmail,
-        portalId: userData.portalId,
+        portalId: portalId,
         firstName: userData.firstName,
         lastName: userData.lastName,
       };
     } catch (error) {
       this.logger.error('Error getting user info:', error);
+      this.logger.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       throw new HttpException('Failed to get user information from HubSpot', HttpStatus.BAD_REQUEST);
     }
   }

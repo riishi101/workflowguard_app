@@ -589,6 +589,34 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             >
               ⏹️ Stop Retrying
             </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2 ml-2"
+              onClick={async () => {
+                try {
+                  console.log('WorkflowSelection - Manually updating portal ID');
+                  await ApiService.updateHubSpotPortalId();
+                  toast({
+                    title: "Portal ID Updated",
+                    description: "HubSpot portal ID has been updated. Please try fetching workflows again.",
+                  });
+                  // Retry fetching workflows
+                  setRetryCount(0);
+                  fetchWorkflows();
+                } catch (error) {
+                  console.error('Failed to update portal ID:', error);
+                  toast({
+                    title: "Update Failed",
+                    description: "Failed to update portal ID. Please reconnect your HubSpot account.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              🔧 Fix Portal ID
+            </Button>
                       </>
                     ) : (
                       <>
