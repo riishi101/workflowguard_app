@@ -469,6 +469,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="mt-2"
                           onClick={() => {
+                            // Force complete fresh start
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            
                             // Direct OAuth redirect
                             const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
                             const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
@@ -478,7 +482,27 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                             window.location.href = authUrl;
                           }}
                         >
-                          🔗 Direct OAuth Connect
+                          🔗 Force Fresh OAuth
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => {
+                            // Nuclear option - complete reset
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            
+                            // Clear all cookies
+                            document.cookie.split(";").forEach(function(c) { 
+                                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                            });
+                            
+                            // Force hard reload to main page
+                            window.location.href = 'https://www.workflowguard.pro?reset=true';
+                          }}
+                        >
+                          🚨 Nuclear Reset
                         </Button>
                       </>
                     ) : (
