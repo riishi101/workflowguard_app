@@ -326,15 +326,21 @@ export class WorkflowService {
 
   async startWorkflowProtection(workflowIds: string[], userId: string) {
     try {
+      console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId });
       const protectedWorkflows = [];
       
       for (const hubspotWorkflowId of workflowIds) {
+        console.log('WorkflowService - Processing workflow:', hubspotWorkflowId);
+        
         // Check if workflow already exists
         let workflow = await this.prisma.workflow.findFirst({
           where: { hubspotId: hubspotWorkflowId }
         });
 
+        console.log('WorkflowService - Existing workflow found:', !!workflow);
+
         if (!workflow) {
+          console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId);
           // Create new workflow record
           workflow = await this.prisma.workflow.create({
             data: {
@@ -343,6 +349,7 @@ export class WorkflowService {
               ownerId: userId,
             },
           });
+          console.log('WorkflowService - Created workflow:', workflow.id);
         }
 
         // Check if workflow already has versions (already protected)
@@ -350,7 +357,10 @@ export class WorkflowService {
           where: { workflowId: workflow.id }
         });
 
+        console.log('WorkflowService - Existing versions count:', existingVersions.length);
+
         if (existingVersions.length === 0) {
+          console.log('WorkflowService - Creating initial version for workflow:', workflow.id);
           // Create initial version for the workflow
           await this.prisma.workflowVersion.create({
             data: {
@@ -367,11 +377,13 @@ export class WorkflowService {
               },
             },
           });
+          console.log('WorkflowService - Created initial version');
         }
 
         protectedWorkflows.push(workflow);
       }
 
+      console.log('WorkflowService - Successfully protected workflows:', protectedWorkflows.length);
       return {
         message: `Successfully started protection for ${protectedWorkflows.length} workflows`,
         protectedWorkflows: protectedWorkflows.map(w => ({
@@ -381,6 +393,12 @@ export class WorkflowService {
         }))
       };
     } catch (error) {
+      console.error('WorkflowService - startWorkflowProtection error:', error);
+      console.error('WorkflowService - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       throw new Error('Failed to start workflow protection');
     }
   }

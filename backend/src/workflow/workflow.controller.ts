@@ -218,14 +218,30 @@ export class WorkflowController {
   @Post('start-protection')
   async startWorkflowProtection(@Body() body: { workflowIds: string[] }, @Req() req: Request) {
     try {
+      console.log('WorkflowController - startWorkflowProtection called with body:', body);
+      console.log('WorkflowController - req.user:', req.user);
+      
       const userId = (req.user as any)?.sub;
+      console.log('WorkflowController - Extracted userId:', userId);
+      
       if (!userId) {
+        console.log('WorkflowController - No userId found, throwing unauthorized');
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
       
+      console.log('WorkflowController - Calling workflowService.startWorkflowProtection with:', { workflowIds: body.workflowIds, userId });
       const result = await this.workflowService.startWorkflowProtection(body.workflowIds, userId);
+      console.log('WorkflowController - startWorkflowProtection result:', result);
+      
       return { message: 'Workflow protection started successfully', data: result };
     } catch (error) {
+      console.error('WorkflowController - startWorkflowProtection error:', error);
+      console.error('WorkflowController - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
       if (error instanceof HttpException) {
         throw error;
       }
