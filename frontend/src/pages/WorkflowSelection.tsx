@@ -66,7 +66,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const maxRetries = 10; // Increased from 3 to 10
 
   // Fetch workflows from HubSpot
   const fetchWorkflows = async () => {
@@ -169,6 +169,20 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       fetchWorkflows();
     }
   }, [isAuthenticated, authLoading]);
+
+  // Auto-retry with exponential backoff
+  useEffect(() => {
+    if (error && retryCount < maxRetries && !loading) {
+      const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Max 30 seconds
+      console.log(`WorkflowSelection - Auto-retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      const timer = setTimeout(() => {
+        fetchWorkflows();
+      }, delay);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, retryCount, loading]);
 
   const handleWorkflowToggle = (workflowId: string) => {
     setSelectedWorkflows((prev) =>
