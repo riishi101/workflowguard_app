@@ -45,6 +45,7 @@ const OnboardingFlow = () => {
     const success = urlParams.get('success');
     const token = urlParams.get('token');
     const error = urlParams.get('error');
+    const forceConnect = urlParams.get('force_connect');
 
     console.log('OnboardingFlow - Processing:', { success, token: !!token, error, isAuthenticated, hasProcessedOAuth, timeoutReached });
 
@@ -76,6 +77,15 @@ const OnboardingFlow = () => {
 
     // Check if user is already authenticated and hasn't processed OAuth
     if (isAuthenticated && !loading && user && !hasProcessedOAuth) {
+      // If force_connect is requested, show connect modal instead
+      if (forceConnect === 'true') {
+        console.log('OnboardingFlow - Force connect requested, showing connect modal');
+        setCurrentStep('connect');
+        setShowConnectModal(true);
+        setIsInitialized(true);
+        return;
+      }
+      
       // User is authenticated, go directly to workflow selection
       console.log('OnboardingFlow - User already authenticated, going to workflow selection');
       setHasProcessedOAuth(true);
@@ -145,6 +155,19 @@ const OnboardingFlow = () => {
   // Show workflow selection if user is authenticated and on workflow-selection step
   if (isAuthenticated && currentStep === 'workflow-selection') {
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
+  }
+
+  // Force connect modal for authenticated users who need to reconnect
+  if (isAuthenticated && currentStep === 'connect') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ConnectHubSpotModal
+          open={showConnectModal}
+          onClose={() => setShowConnectModal(false)}
+          onConnect={handleConnectHubSpot}
+        />
+      </div>
+    );
   }
 
   // Show workflow selection if timeout reached AND user is authenticated

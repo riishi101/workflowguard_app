@@ -451,7 +451,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           variant="default" 
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => window.location.href = '/'}
+                          onClick={() => {
+                            // Force the connect step by adding a query parameter
+                            window.location.href = '/?force_connect=true';
+                          }}
                         >
                           🔗 Reconnect HubSpot Account
                         </Button>
