@@ -120,7 +120,13 @@ export class HubSpotController {
         console.log('HubSpotController - Portal ID missing, fetching from HubSpot API');
         try {
           const userInfo = await this.hubSpotService.getUserInfo(accessToken);
+          console.log('HubSpotController - User info from HubSpot:', userInfo);
           portalId = userInfo.portalId;
+          
+          if (!portalId) {
+            console.error('HubSpotController - Portal ID still missing from user info');
+            throw new Error('Portal ID not found in user info');
+          }
           
           // Update user with portal ID
           await this.prisma.user.update({
@@ -129,8 +135,50 @@ export class HubSpotController {
           });
           console.log('HubSpotController - Updated user with portal ID:', portalId);
         } catch (error) {
-          console.error('HubSpotController - Failed to get portal ID:', error);
-          throw new HttpException('Unable to determine HubSpot portal. Please reconnect your account.', HttpStatus.BAD_REQUEST);
+          console.error('HubSpotController - Failed to get portal ID from API:', error);
+          console.error('HubSpotController - Error details:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+          });
+          
+          // Try to get portal ID from stored tokens
+          console.log('HubSpotController - Trying to get portal ID from stored tokens');
+          const userWithTokens = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            select: { hubspotAccessToken: true, hubspotRefreshToken: true }
+          });
+          
+          if (userWithTokens?.hubspotAccessToken) {
+            // Try to decode the token to get portal ID
+            try {
+              const tokenParts = userWithTokens.hubspotAccessToken.split('.');
+              if (tokenParts.length === 3) {
+                const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+                console.log('HubSpotController - Token payload:', payload);
+                
+                // Look for portal ID in token payload
+                const tokenPortalId = payload.hub_id || payload.portalId || payload.hubId;
+                if (tokenPortalId) {
+                  portalId = tokenPortalId;
+                  await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { hubspotPortalId: portalId }
+                  });
+                  console.log('HubSpotController - Updated user with portal ID from token:', portalId);
+                } else {
+                  throw new Error('Portal ID not found in token payload');
+                }
+              } else {
+                throw new Error('Invalid token format');
+              }
+            } catch (tokenError) {
+              console.error('HubSpotController - Failed to extract portal ID from token:', tokenError);
+              throw new HttpException('Unable to determine HubSpot portal. Please reconnect your account.', HttpStatus.BAD_REQUEST);
+            }
+          } else {
+            throw new HttpException('Unable to determine HubSpot portal. Please reconnect your account.', HttpStatus.BAD_REQUEST);
+          }
         }
       }
       
