@@ -14,7 +14,7 @@ async function main() {
       name: 'Starter',
       price: 19.00,
       description: 'Perfect for small teams getting started with workflow protection',
-      features: [
+      features: JSON.stringify([
         'workflow_selection',
         'dashboard_overview', 
         'basic_version_history',
@@ -22,7 +22,7 @@ async function main() {
         'basic_restore',
         'email_support',
         'basic_settings'
-      ] as any,
+      ]),
     },
   });
   await prisma.plan.upsert({
@@ -33,7 +33,7 @@ async function main() {
       name: 'Professional',
       price: 49.00,
       description: 'For growing businesses that need advanced workflow management',
-      features: [
+      features: JSON.stringify([
         'enhanced_dashboard',
         'advanced_workflow_history',
         'improved_comparison',
@@ -42,7 +42,7 @@ async function main() {
         'api_access',
         'enhanced_settings',
         'priority_support'
-      ] as any,
+      ]),
     },
   });
   await prisma.plan.upsert({
@@ -53,7 +53,7 @@ async function main() {
       name: 'Enterprise',
       price: 99.00,
       description: 'For large organizations requiring unlimited workflow protection',
-      features: [
+      features: JSON.stringify([
         'unlimited_workflows',
         'extended_history',
         'advanced_analytics',
@@ -62,7 +62,7 @@ async function main() {
         'dedicated_support',
         'all_settings_features',
         'advanced_comparison'
-      ] as any,
+      ]),
     },
   });
   console.log('✅ Seeded plans');
