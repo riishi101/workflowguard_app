@@ -99,14 +99,19 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const apiEndTime = Date.now();
       console.log(`WorkflowSelection - API call completed in ${apiEndTime - apiStartTime}ms`);
       console.log('WorkflowSelection - HubSpot API response:', response);
+      console.log('WorkflowSelection - Response type:', typeof response);
+      console.log('WorkflowSelection - Is array:', Array.isArray(response));
+      if (Array.isArray(response) && response.length > 0) {
+        console.log('WorkflowSelection - First workflow:', response[0]);
+      }
       
       // Validate the response structure
-      if (!response || !response.data) {
+      if (!response) {
         throw new Error('Invalid response structure from HubSpot API');
       }
       
-      // Check if we got actual workflow data
-      const workflows = Array.isArray(response.data) ? response.data : [];
+      // Check if we got actual workflow data - backend returns workflows directly
+      const workflows = Array.isArray(response) ? response : [];
       console.log('WorkflowSelection - Parsed workflows:', workflows.length);
       
       if (workflows.length > 0) {
