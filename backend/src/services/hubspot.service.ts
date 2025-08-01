@@ -202,7 +202,61 @@ export class HubSpotService {
   }
 
   /**
-   * Get all workflows from HubSpot
+   * Get all workflows from HubSpot (simplified approach without portal ID)
+   */
+  async getWorkflowsSimplified(accessToken: string): Promise<HubSpotWorkflow[]> {
+    try {
+      this.logger.log('Fetching workflows using simplified approach (no portal ID)');
+      
+      // Try multiple endpoints without portal ID
+      const endpoints = [
+        '/automation/v3/workflows',
+        '/automation/v4/workflows',
+        '/automation/v1/workflows'
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          this.logger.log(`Trying endpoint: ${endpoint}`);
+          const response = await this.apiClient.get(endpoint, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params: {
+              limit: 100,
+            },
+          });
+
+          this.logger.log(`HubSpot API response status: ${response.status}`);
+          this.logger.log(`HubSpot API response data:`, response.data);
+
+          const workflows = response.data.workflows || response.data.results || response.data || [];
+          
+          if (workflows.length > 0) {
+            this.logger.log(`Successfully fetched ${workflows.length} workflows from ${endpoint}`);
+            return workflows.map((workflow: any) => ({
+              id: workflow.id,
+              name: workflow.name,
+              description: workflow.description || workflow.folder || 'General',
+              lastUpdated: workflow.updatedAt || workflow.lastUpdated || workflow.updated,
+              status: workflow.status || 'ACTIVE',
+              type: workflow.type || 'WORKFLOW',
+              portalId: 'auto-detected',
+            }));
+          }
+        } catch (endpointError) {
+          this.logger.log(`Endpoint ${endpoint} failed:`, endpointError.message);
+          continue;
+        }
+      }
+      
+      throw new Error('All endpoints failed');
+    } catch (error) {
+      this.logger.error('Error getting workflows (simplified):', error);
+      throw new HttpException('Failed to get workflows from HubSpot', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  /**
+   * Get all workflows from HubSpot (with portal ID)
    */
   async getWorkflows(accessToken: string, portalId: string): Promise<HubSpotWorkflow[]> {
     try {

@@ -617,6 +617,35 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             >
               🔧 Fix Portal ID
             </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2 ml-2"
+              onClick={async () => {
+                try {
+                  console.log('WorkflowSelection - Testing HubSpot connection');
+                  const result = await ApiService.testHubSpotConnection();
+                  console.log('WorkflowSelection - Connection test result:', result);
+                  toast({
+                    title: "Connection Test",
+                    description: result.data.success ? 
+                      `HubSpot connection working! Found ${result.data.workflowCount} workflows.` : 
+                      `Connection failed: ${result.data.error}`,
+                    variant: result.data.success ? "default" : "destructive",
+                  });
+                } catch (error) {
+                  console.error('Failed to test connection:', error);
+                  toast({
+                    title: "Test Failed",
+                    description: "Failed to test HubSpot connection.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              🧪 Test Connection
+            </Button>
                       </>
                     ) : (
                       <>

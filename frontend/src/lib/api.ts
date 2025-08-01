@@ -283,6 +283,11 @@ export class ApiService {
     return response.data;
   }
 
+  static async testHubSpotConnection(): Promise<ApiResponse<any>> {
+    const response = await apiClient.get('/hubspot/test-connection');
+    return response.data;
+  }
+
   static async startWorkflowProtection(workflowIds: string[]): Promise<ApiResponse<any>> {
     const response = await apiClient.post('/workflow/start-protection', { workflowIds });
     return response.data;
