@@ -3,6 +3,7 @@ import { Response, Request } from 'express';
 import { HubSpotService } from '../services/hubspot.service';
 import { AuthService } from '../auth/auth.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Public } from '../auth/public.decorator';
 
 @Controller('hubspot')
@@ -11,6 +12,7 @@ export class HubSpotController {
     private readonly hubSpotService: HubSpotService,
     private readonly authService: AuthService,
     private readonly workflowService: WorkflowService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Public()
@@ -111,7 +113,28 @@ export class HubSpotController {
       
       // Get workflows from HubSpot
       console.log('HubSpotController - Fetching workflows from HubSpot');
-      const hubspotWorkflows = await this.hubSpotService.getWorkflows(accessToken, user.hubspotPortalId);
+      
+      // Handle missing portal ID by getting it from HubSpot API
+      let portalId = user.hubspotPortalId;
+      if (!portalId) {
+        console.log('HubSpotController - Portal ID missing, fetching from HubSpot API');
+        try {
+          const userInfo = await this.hubSpotService.getUserInfo(accessToken);
+          portalId = userInfo.portalId;
+          
+          // Update user with portal ID
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: { hubspotPortalId: portalId }
+          });
+          console.log('HubSpotController - Updated user with portal ID:', portalId);
+        } catch (error) {
+          console.error('HubSpotController - Failed to get portal ID:', error);
+          throw new HttpException('Unable to determine HubSpot portal. Please reconnect your account.', HttpStatus.BAD_REQUEST);
+        }
+      }
+      
+      const hubspotWorkflows = await this.hubSpotService.getWorkflows(accessToken, portalId);
       console.log('HubSpotController - Workflows fetched:', hubspotWorkflows.length);
       
       // Get protected workflow IDs for this user
