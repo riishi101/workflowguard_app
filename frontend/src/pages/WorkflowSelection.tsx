@@ -441,27 +441,47 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              {error}
-              {isAuthenticated && (
-                <>
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto text-red-800 underline ml-2"
-                    onClick={refreshWorkflows}
-                  >
-                    Try again
-                  </Button>
-                  {error.includes('HubSpot connection has expired') && (
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto text-red-800 underline ml-2"
-                      onClick={() => window.location.href = '/'}
-                    >
-                      Reconnect HubSpot
-                    </Button>
-                  )}
-                </>
-              )}
+              <div className="space-y-2">
+                <p>{error}</p>
+                {isAuthenticated && (
+                  <div className="flex items-center gap-3 pt-2">
+                    {error.includes('HubSpot connection has expired') || error.includes('HubSpot connection required') ? (
+                      <>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => window.location.href = '/'}
+                        >
+                          🔗 Reconnect HubSpot Account
+                        </Button>
+                        <span className="text-sm text-red-700">
+                          This will take you to the main page to reconnect your HubSpot account
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={refreshWorkflows}
+                          disabled={refreshing}
+                        >
+                          {refreshing ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                          )}
+                          Try Again
+                        </Button>
+                        <span className="text-sm text-red-700">
+                          If the problem persists, try reconnecting your HubSpot account
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -609,11 +629,34 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               <tbody className="divide-y divide-gray-200">
                 {filteredWorkflows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                      {searchTerm || statusFilter !== "all" || folderFilter !== "all" 
-                        ? "No workflows match your filters. Try adjusting your search criteria."
-                        : "No workflows found in your HubSpot account."
-                      }
+                    <td colSpan={7} className="px-4 py-8 text-center">
+                      {searchTerm || statusFilter !== "all" || folderFilter !== "all" ? (
+                        <div className="text-gray-500">
+                          No workflows match your filters. Try adjusting your search criteria.
+                        </div>
+                      ) : error && (error.includes('HubSpot connection') || error.includes('connection required')) ? (
+                        <div className="space-y-4">
+                          <div className="text-gray-600 mb-4">
+                            <p className="text-lg font-medium mb-2">🔗 HubSpot Connection Required</p>
+                            <p className="text-sm">We need to reconnect to your HubSpot account to view your workflows.</p>
+                          </div>
+                          <Button 
+                            variant="default" 
+                            size="lg"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => window.location.href = '/'}
+                          >
+                            🔗 Reconnect HubSpot Account
+                          </Button>
+                          <p className="text-xs text-gray-500 mt-2">
+                            This will take you to the main page to reconnect your HubSpot account
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">
+                          No workflows found in your HubSpot account.
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -679,22 +722,40 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {workflows.filter(w => w.isProtected).length > 0 && (
-                <Button onClick={handleViewProtectedWorkflows} variant="outline" size="sm">
-                  View Protected Workflows
-                </Button>
+              {!isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={() => window.location.href = '/'} 
+                    variant="default" 
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    🔗 Connect HubSpot First
+                  </Button>
+                  <Button onClick={handleSkipForNow} variant="outline" size="sm">
+                    Skip for now
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {workflows.filter(w => w.isProtected).length > 0 && (
+                    <Button onClick={handleViewProtectedWorkflows} variant="outline" size="sm">
+                      View Protected Workflows
+                    </Button>
+                  )}
+                  <Button onClick={handleSkipForNow} variant="outline" size="sm">
+                    Skip for now
+                  </Button>
+                  <Button
+                    onClick={handleStartProtecting}
+                    disabled={selectedWorkflows.length === 0}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    size="sm"
+                  >
+                    Start Protecting Workflows
+                  </Button>
+                </>
               )}
-              <Button onClick={handleSkipForNow} variant="outline" size="sm">
-                Skip for now
-              </Button>
-              <Button
-                onClick={handleStartProtecting}
-                disabled={selectedWorkflows.length === 0 || !isAuthenticated}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                size="sm"
-              >
-                Start Protecting Workflows
-              </Button>
             </div>
           </div>
         </div>

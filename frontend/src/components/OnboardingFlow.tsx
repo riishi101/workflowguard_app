@@ -20,14 +20,22 @@ const OnboardingFlow = () => {
   // Timeout mechanism to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      console.log('OnboardingFlow - Timeout reached, forcing workflow selection');
+      console.log('OnboardingFlow - Timeout reached');
       setTimeoutReached(true);
       setHasProcessedOAuth(true);
-      setCurrentStep('workflow-selection');
+      
+      // If user is authenticated, go to workflow selection
+      // If not authenticated, show connect modal
+      if (isAuthenticated) {
+        setCurrentStep('workflow-selection');
+      } else {
+        setCurrentStep('connect');
+        setShowConnectModal(true);
+      }
     }, 15000); // Reduced to 15 seconds timeout
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (loading || isInitialized) return; // Don't process while loading or if already initialized
@@ -115,7 +123,9 @@ const OnboardingFlow = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
           <p className="mt-2 text-gray-600">Taking longer than expected...</p>
-          <p className="mt-1 text-sm text-gray-500">Redirecting to workflow selection</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {isAuthenticated ? "Redirecting to workflow selection" : "Redirecting to HubSpot connection"}
+          </p>
         </div>
       </div>
     );
