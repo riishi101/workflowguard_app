@@ -452,6 +452,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={() => {
+                            // Clear current authentication and force fresh OAuth
+                            localStorage.removeItem('authToken');
+                            localStorage.removeItem('user');
                             // Force the connect step by adding a query parameter
                             window.location.href = '/?force_connect=true';
                           }}
@@ -461,6 +464,22 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         <span className="text-sm text-red-700">
                           This will take you to the main page to reconnect your HubSpot account
                         </span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => {
+                            // Direct OAuth redirect
+                            const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
+                            const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
+                            const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+                            
+                            const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+                            window.location.href = authUrl;
+                          }}
+                        >
+                          🔗 Direct OAuth Connect
+                        </Button>
                       </>
                     ) : (
                       <>
