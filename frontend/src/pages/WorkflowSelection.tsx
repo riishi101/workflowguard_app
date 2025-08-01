@@ -128,8 +128,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         setError('Authentication failed. Please reconnect your HubSpot account.');
       } else if (err.response?.status === 400) {
         const errorMessage = err.response?.data?.message || err.response?.data;
-        if (errorMessage && errorMessage.includes('HubSpot connection required')) {
+        if (errorMessage && (errorMessage.includes('HubSpot connection required') || 
+                            errorMessage.includes('Unable to determine HubSpot portal') ||
+                            errorMessage.includes('Please reconnect'))) {
           setError('Your HubSpot connection has expired or is missing. Please reconnect your HubSpot account to view workflows.');
+          // Stop retrying for connection issues
+          setRetryCount(maxRetries);
         } else {
           setError('Invalid request. Please check your HubSpot connection and try again.');
         }
@@ -177,6 +181,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log(`WorkflowSelection - Auto-retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
       
       const timer = setTimeout(() => {
+        setRetryCount(prev => prev + 1);
         fetchWorkflows();
       }, delay);
       
@@ -498,26 +503,39 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         >
                           🔗 Force Fresh OAuth
                         </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => {
-                            // Nuclear option - complete reset
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            
-                            // Clear all cookies
-                            document.cookie.split(";").forEach(function(c) { 
-                                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-                            });
-                            
-                            // Force hard reload to main page
-                            window.location.href = 'https://www.workflowguard.pro?reset=true';
-                          }}
-                        >
-                          🚨 Nuclear Reset
-                        </Button>
+                                    <Button 
+              variant="destructive" 
+              size="sm"
+              className="mt-2"
+              onClick={() => {
+                // Nuclear option - complete reset
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Clear all cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                });
+                
+                // Force hard reload to main page
+                window.location.href = 'https://www.workflowguard.pro?reset=true';
+              }}
+            >
+              🚨 Nuclear Reset
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2 ml-2"
+              onClick={() => {
+                // Stop retrying
+                setRetryCount(maxRetries);
+                setError('Retry stopped by user. Please reconnect your HubSpot account.');
+              }}
+            >
+              ⏹️ Stop Retrying
+            </Button>
                       </>
                     ) : (
                       <>
