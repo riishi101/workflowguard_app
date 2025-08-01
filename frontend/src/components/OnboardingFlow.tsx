@@ -24,7 +24,7 @@ const OnboardingFlow = () => {
       setTimeoutReached(true);
       setHasProcessedOAuth(true);
       setCurrentStep('workflow-selection');
-    }, 30000); // 30 seconds timeout
+    }, 15000); // Reduced to 15 seconds timeout
 
     return () => clearTimeout(timeout);
   }, []);

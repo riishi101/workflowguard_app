@@ -65,6 +65,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   // Fetch workflows from HubSpot
   const fetchWorkflows = async () => {
@@ -125,7 +127,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       } else if (err.response?.status === 401) {
         setError('Authentication failed. Please reconnect your HubSpot account.');
       } else if (err.response?.status === 400) {
-        setError('Invalid request. Please check your HubSpot connection and try again.');
+        const errorMessage = err.response?.data?.message || err.response?.data;
+        if (errorMessage && errorMessage.includes('HubSpot connection required')) {
+          setError('Your HubSpot connection has expired or is missing. Please reconnect your HubSpot account to view workflows.');
+        } else {
+          setError('Invalid request. Please check your HubSpot connection and try again.');
+        }
       } else {
         setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
       }
@@ -138,20 +145,27 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   const refreshWorkflows = async () => {
+    if (retryCount >= maxRetries) {
+      setError('Maximum retry attempts reached. Please reconnect your HubSpot account.');
+      return;
+    }
+    
     try {
-    setRefreshing(true);
+      setRefreshing(true);
       setError(null);
-    await fetchWorkflows();
+      setRetryCount(prev => prev + 1);
+      await fetchWorkflows();
     } catch (error) {
       console.error('Failed to refresh workflows:', error);
     } finally {
-    setRefreshing(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     // Only fetch workflows if user is authenticated and auth loading is complete
     if (!authLoading) {
+      setRetryCount(0); // Reset retry count on new auth state
       fetchWorkflows();
     }
   }, [isAuthenticated, authLoading]);
@@ -429,13 +443,24 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             <AlertDescription className="text-red-800">
               {error}
               {isAuthenticated && (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-red-800 underline ml-2"
-                  onClick={refreshWorkflows}
-                >
-                  Try again
-                </Button>
+                <>
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-red-800 underline ml-2"
+                    onClick={refreshWorkflows}
+                  >
+                    Try again
+                  </Button>
+                  {error.includes('HubSpot connection has expired') && (
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-red-800 underline ml-2"
+                      onClick={() => window.location.href = '/'}
+                    >
+                      Reconnect HubSpot
+                    </Button>
+                  )}
+                </>
               )}
             </AlertDescription>
           </Alert>
