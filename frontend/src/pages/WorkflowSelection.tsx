@@ -174,6 +174,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
       // Set empty workflows array instead of demo data
       setWorkflows([]);
+      
+      // Mark as fetched even on error so user can see the screen
+      setWorkflowsFetched(true);
     } finally {
       // Ensure minimum loading time
       const totalTime = Date.now() - startTime;
@@ -211,6 +214,16 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     if (!authLoading) {
       setRetryCount(0); // Reset retry count on new auth state
       fetchWorkflows();
+      
+      // Fallback: if workflows don't load within 10 seconds, show the screen anyway
+      const fallbackTimer = setTimeout(() => {
+        if (!workflowsFetched) {
+          console.log('WorkflowSelection - Fallback: showing screen after 10 seconds');
+          setWorkflowsFetched(true);
+        }
+      }, 10000);
+      
+      return () => clearTimeout(fallbackTimer);
     }
   }, [isAuthenticated, authLoading]);
 
@@ -369,7 +382,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
   };
 
-  if (loading || authLoading || !workflowsFetched) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ContentPageHeader />

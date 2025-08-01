@@ -32,7 +32,7 @@ const OnboardingFlow = () => {
         setCurrentStep('connect');
         setShowConnectModal(true);
       }
-    }, 60000); // Increased to 60 seconds timeout for backend processing
+    }, 30000); // Reduced to 30 seconds timeout for backend processing
 
     return () => clearTimeout(timeout);
   }, [isAuthenticated]);
