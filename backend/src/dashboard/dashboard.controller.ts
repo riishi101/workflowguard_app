@@ -1,11 +1,13 @@
-import { Controller, Get, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Req, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { WorkflowService } from '../workflow/workflow.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly workflowService: WorkflowService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get('stats')
   async getDashboardStats(@Req() req: Request) {
     try {
@@ -23,13 +25,8 @@ export class DashboardController {
       
       console.log('DashboardController - Getting stats for userId:', userId);
       
-      // For now, return basic stats
-      const stats = {
-        totalWorkflows: 0,
-        protectedWorkflows: 0,
-        recentActivity: [],
-        lastUpdated: new Date().toISOString()
-      };
+      // Get real stats from workflow service
+      const stats = await this.workflowService.getDashboardStats(userId);
       
       console.log('DashboardController - Returning stats:', stats);
       return stats;
