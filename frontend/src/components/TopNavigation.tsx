@@ -187,35 +187,6 @@ const TopNavigation = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Quick Actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                Quick Actions
-                <ChevronDown className="w-3 h-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate("/workflow-selection")}>
-                <Shield className="w-4 h-4 mr-2" />
-                Add Workflow
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                <Shield className="w-4 h-4 mr-2" />
-                View Dashboard
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/workflow-history")}>
-                <Shield className="w-4 h-4 mr-2" />
-                Workflow History
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/help-support")}>
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Get Help
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
