@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // API base URL - will be configured via environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro/api';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
