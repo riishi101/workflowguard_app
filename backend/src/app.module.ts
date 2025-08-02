@@ -19,6 +19,7 @@ import { EmailModule } from './email/email.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { SupportModule } from './support/support.module';
+import { DashboardController } from './dashboard/dashboard.controller';
 
 @Module({
   imports: [
@@ -38,7 +39,7 @@ import { SupportModule } from './support/support.module';
     MetricsModule,
     SupportModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, DashboardController],
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
