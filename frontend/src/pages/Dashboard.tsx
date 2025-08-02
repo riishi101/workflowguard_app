@@ -90,6 +90,7 @@ const Dashboard = () => {
       console.log('🔍 DEBUG: Dashboard fetchDashboardData called');
       console.log('🔍 DEBUG: Current user object:', user);
       console.log('🔍 DEBUG: User ID being passed:', user?.id);
+      console.log('🔍 DEBUG: DEPLOYMENT TEST 2 - This should appear if code is deployed');
       console.log('🔍 DEBUG: User object details:', {
         id: user?.id,
         email: user?.email,
@@ -200,6 +201,7 @@ const Dashboard = () => {
     console.log('🔍 DEBUG: User from useAuth:', user);
     console.log('🔍 DEBUG: User ID:', user?.id);
     console.log('🔍 DEBUG: User email:', user?.email);
+    console.log('🔍 DEBUG: DEPLOYMENT TEST - This should appear if code is deployed');
     
     // Add a DOM element to verify code deployment
     const debugElement = document.createElement('div');
@@ -213,6 +215,12 @@ const Dashboard = () => {
     debugElement.style.zIndex = '9999';
     debugElement.textContent = user?.id ? `User ID: ${user.id}` : 'No User ID';
     document.body.appendChild(debugElement);
+    
+    console.log('Dashboard - Component mounted, fetching dashboard data');
+    console.log('Dashboard - Current workflow state:', {
+      hasSelected: WorkflowState.hasSelectedWorkflows(),
+      count: WorkflowState.getSelectedCount()
+    });
     
     fetchDashboardData();
   }, []);
