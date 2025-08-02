@@ -111,8 +111,39 @@ const Dashboard = () => {
       // Add a small delay to ensure backend is ready
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Get user ID from multiple sources
+      let userId = user?.id;
+      
+      // If no user ID from auth context, try to get from localStorage
+      if (!userId) {
+        try {
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            const storedUser = JSON.parse(userStr);
+            userId = storedUser.id;
+            console.log('🔍 DEBUG: Got userId from localStorage:', userId);
+          }
+        } catch (error) {
+          console.log('🔍 DEBUG: Failed to get userId from localStorage:', error);
+        }
+      }
+      
+      // If still no user ID, try to get from JWT token
+      if (!userId) {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+            userId = payload.sub || payload.userId || payload.id;
+            console.log('🔍 DEBUG: Got userId from JWT token:', userId);
+          }
+        } catch (error) {
+          console.log('🔍 DEBUG: Failed to get userId from JWT token:', error);
+        }
+      }
+
       // Check if user ID is available
-      if (!user?.id) {
+      if (!userId) {
         console.log('🔍 DEBUG: No user ID available, skipping API calls');
         setWorkflows([]);
         setStats(null);
@@ -120,9 +151,11 @@ const Dashboard = () => {
         return;
       }
 
+      console.log('🔍 DEBUG: Final userId being used:', userId);
+
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
-        ApiService.getProtectedWorkflows(user?.id),
+        ApiService.getProtectedWorkflows(userId),
         ApiService.getDashboardStats()
       ]);
 
@@ -169,11 +202,11 @@ const Dashboard = () => {
         setStats(null);
         setError(null);
       } else {
-        setError('Failed to load dashboard data. Please try again.');
-        setWorkflows([]);
-        setStats(null);
-        WorkflowState.setWorkflowSelection(false);
-        WorkflowState.setSelectedCount(0);
+      setError('Failed to load dashboard data. Please try again.');
+      setWorkflows([]);
+      setStats(null);
+      WorkflowState.setWorkflowSelection(false);
+      WorkflowState.setSelectedCount(0);
       }
     } finally {
       setLoading(false);

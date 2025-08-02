@@ -335,15 +335,39 @@ export class WorkflowService {
 
       if (!user) {
         console.log('WorkflowService - User not found, creating default user');
-        user = await this.prisma.user.create({
-          data: {
-            id: userId,
-            email: `user-${userId}@workflowguard.pro`,
-            name: 'Default User',
-            role: 'user'
+        
+        // Generate a more realistic email based on userId
+        const email = userId.includes('@') ? userId : `user-${userId}@workflowguard.pro`;
+        
+        try {
+          user = await this.prisma.user.create({
+            data: {
+              id: userId,
+              email: email,
+              name: 'Default User',
+              role: 'user'
+            }
+          });
+          console.log('WorkflowService - Created default user:', user.id);
+        } catch (createError) {
+          console.error('WorkflowService - Failed to create user:', createError);
+          
+          // If user creation fails (e.g., duplicate email), try to find existing user
+          user = await this.prisma.user.findFirst({
+            where: { 
+              OR: [
+                { id: userId },
+                { email: email }
+              ]
+            }
+          });
+          
+          if (!user) {
+            throw new Error('Failed to create or find user for workflow protection');
           }
-        });
-        console.log('WorkflowService - Created default user:', user.id);
+          
+          console.log('WorkflowService - Found existing user after creation failure:', user.id);
+        }
       } else {
         console.log('WorkflowService - Found existing user:', user.id);
       }
@@ -376,6 +400,15 @@ export class WorkflowService {
               },
             });
             console.log('WorkflowService - Created workflow:', workflow.id, 'with ownerId:', workflow.ownerId);
+          } else {
+            // Update existing workflow to ensure it's associated with the correct user
+            if (workflow.ownerId !== user.id) {
+              console.log('WorkflowService - Updating workflow owner from', workflow.ownerId, 'to', user.id);
+              workflow = await tx.workflow.update({
+                where: { id: workflow.id },
+                data: { ownerId: user.id }
+              });
+            }
           }
 
           // Check if workflow already has versions (already protected)
@@ -450,13 +483,23 @@ export class WorkflowService {
     try {
       console.log('WorkflowService - getProtectedWorkflows called with userId:', userId);
       
+      if (!userId) {
+        console.log('WorkflowService - No userId provided, returning empty array');
+        return [];
+      }
+      
       // First, let's check if the user exists
       const user = await this.prisma.user.findUnique({
         where: { id: userId }
       });
       console.log('WorkflowService - User found:', !!user);
       
-      // Check all workflows in the database
+      if (!user) {
+        console.log('WorkflowService - User not found, returning empty array');
+        return [];
+      }
+      
+      // Check all workflows in the database for debugging
       const allWorkflows = await this.prisma.workflow.findMany({
         include: {
           versions: true,
@@ -479,20 +522,24 @@ export class WorkflowService {
       console.log('WorkflowService - Workflows for userId', userId, ':', workflows.length);
       console.log('WorkflowService - Workflows found:', workflows.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })));
 
-      return workflows.map(workflow => {
+      // Transform workflows to match frontend expectations
+      const transformedWorkflows = workflows.map(workflow => {
         const latestVersion = workflow.versions[0];
         const status = this.determineWorkflowStatus(workflow);
+        
+        // Get user info for lastModifiedBy
+        const lastModifiedBy = {
+          name: latestVersion?.createdBy || user.name || 'Unknown',
+          initials: (latestVersion?.createdBy || user.name || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase(),
+          email: user.email || 'user@example.com',
+        };
         
         return {
           id: workflow.id,
           name: workflow.name,
           lastSnapshot: latestVersion?.createdAt.toISOString() || workflow.updatedAt.toISOString(),
           versions: workflow.versions.length,
-          lastModifiedBy: {
-            name: latestVersion?.createdBy || 'Unknown',
-            initials: (latestVersion?.createdBy || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase(),
-            email: 'user@example.com', // Would be fetched from user service
-          },
+          lastModifiedBy,
           status,
           protectionStatus: 'protected',
           lastModified: workflow.updatedAt.toISOString(),
@@ -500,8 +547,16 @@ export class WorkflowService {
           contacts: 0, // Will be populated from HubSpot API
         };
       });
+      
+      console.log('WorkflowService - Returning transformed workflows:', transformedWorkflows.length);
+      return transformedWorkflows;
     } catch (error) {
       console.error('WorkflowService - Error in getProtectedWorkflows:', error);
+      console.error('WorkflowService - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       throw new Error('Failed to get protected workflows');
     }
   }

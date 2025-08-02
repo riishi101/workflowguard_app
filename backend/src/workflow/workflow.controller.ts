@@ -48,14 +48,37 @@ export class WorkflowController {
       console.log('WorkflowController - Request query:', req.query);
       console.log('WorkflowController - JWT user:', req.user);
       
-      // Try to get userId from JWT token first
-      let userId = (req.user as any)?.sub;
-      console.log('WorkflowController - JWT userId (sub):', userId);
+      // Try multiple sources for userId in order of preference
+      let userId = null;
       
-      // If no userId from token, try to get it from query params or headers
-      if (!userId) {
-        userId = req.query.userId as string || req.headers['x-user-id'] as string;
-        console.log('WorkflowController - Fallback userId from query/headers:', userId);
+      // 1. Try JWT token sub (most reliable for authenticated requests)
+      if ((req.user as any)?.sub) {
+        userId = (req.user as any).sub;
+        console.log('WorkflowController - Using JWT userId (sub):', userId);
+      }
+      
+      // 2. Try x-user-id header (sent by frontend)
+      if (!userId && req.headers['x-user-id']) {
+        userId = req.headers['x-user-id'] as string;
+        console.log('WorkflowController - Using header userId:', userId);
+      }
+      
+      // 3. Try query parameter
+      if (!userId && req.query.userId) {
+        userId = req.query.userId as string;
+        console.log('WorkflowController - Using query userId:', userId);
+      }
+      
+      // 4. Try to extract from JWT token payload if sub is not available
+      if (!userId && req.headers.authorization) {
+        try {
+          const token = req.headers.authorization.replace('Bearer ', '');
+          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+          userId = payload.sub || payload.userId || payload.id;
+          console.log('WorkflowController - Extracted userId from JWT payload:', userId);
+        } catch (tokenError) {
+          console.log('WorkflowController - Failed to extract userId from JWT payload:', tokenError.message);
+        }
       }
       
       if (!userId) {
@@ -63,7 +86,8 @@ export class WorkflowController {
         console.log('WorkflowController - Available user info:', {
           jwtUser: req.user,
           queryUserId: req.query.userId,
-          headerUserId: req.headers['x-user-id']
+          headerUserId: req.headers['x-user-id'],
+          hasAuthHeader: !!req.headers.authorization
         });
         // Return empty array instead of throwing error during initial setup
         return [];
@@ -266,13 +290,6 @@ export class WorkflowController {
 
   // Start workflow protection
   @Public()
-  @Get('test')
-  async testEndpoint() {
-    console.log('WorkflowController - Test endpoint called');
-    return { message: 'Test endpoint working', timestamp: new Date().toISOString() };
-  }
-
-  @Public()
   @Post('start-protection')
   async startWorkflowProtection(@Body() body: any, @Req() req: Request) {
     try {
@@ -294,9 +311,29 @@ export class WorkflowController {
         throw new HttpException('workflowIds is required and must be an array', HttpStatus.BAD_REQUEST);
       }
       
-      if (!body.userId) {
+      // Determine the correct userId to use
+      let userId = body.userId;
+      
+      // If we have an authenticated user, prefer the JWT user ID for consistency
+      if ((req.user as any)?.sub) {
+        const jwtUserId = (req.user as any).sub;
+        console.log('WorkflowController - JWT userId available:', jwtUserId);
+        console.log('WorkflowController - Body userId:', body.userId);
+        
+        // If body userId is different from JWT userId, log a warning but use JWT userId for consistency
+        if (body.userId && body.userId !== jwtUserId) {
+          console.log('WorkflowController - WARNING: Body userId differs from JWT userId');
+          console.log('WorkflowController - Body userId:', body.userId);
+          console.log('WorkflowController - JWT userId:', jwtUserId);
+          console.log('WorkflowController - Using JWT userId for consistency');
+        }
+        
+        userId = jwtUserId;
+      } else if (!body.userId) {
         throw new HttpException('userId is required', HttpStatus.BAD_REQUEST);
       }
+      
+      console.log('WorkflowController - Final userId being used for workflow creation:', userId);
       
       // Extract workflow names if provided
       const workflowNames: { [key: string]: string } = {};
@@ -310,10 +347,10 @@ export class WorkflowController {
       
       console.log('WorkflowController - Starting workflow protection for:', body.workflowIds.length, 'workflows');
       console.log('WorkflowController - Workflow names:', workflowNames);
-      console.log('WorkflowController - Using userId for workflow creation:', body.userId);
+      console.log('WorkflowController - Using userId for workflow creation:', userId);
       
       // Actually process the workflows
-      const result = await this.workflowService.startWorkflowProtection(body.workflowIds, body.userId, workflowNames);
+      const result = await this.workflowService.startWorkflowProtection(body.workflowIds, userId, workflowNames);
       
       console.log('WorkflowController - Workflow protection completed:', result);
       console.log('=== WORKFLOW PROTECTION END ===');
@@ -466,6 +503,44 @@ export class WorkflowController {
       };
     } catch (error) {
       console.error('Debug endpoint error:', error);
+      return { error: error.message };
+    }
+  }
+
+  @Public()
+  @Get('debug/user/:userId')
+  async debugUserWorkflows(@Param('userId') userId: string) {
+    try {
+      console.log('=== USER WORKFLOWS DEBUG ===');
+      console.log('Debugging workflows for userId:', userId);
+      
+      // Get user
+      const user = await this.workflowService['prisma'].user.findUnique({
+        where: { id: userId }
+      });
+      console.log('User found:', user);
+      
+      // Get workflows for this user
+      const workflows = await this.workflowService['prisma'].workflow.findMany({
+        where: { ownerId: userId },
+        include: { versions: true }
+      });
+      console.log('Workflows for user:', workflows.length);
+      
+      return {
+        user,
+        workflows: workflows.map(w => ({
+          id: w.id,
+          name: w.name,
+          ownerId: w.ownerId,
+          hubspotId: w.hubspotId,
+          versionsCount: w.versions.length,
+          createdAt: w.createdAt
+        })),
+        totalWorkflows: workflows.length
+      };
+    } catch (error) {
+      console.error('User debug endpoint error:', error);
       return { error: error.message };
     }
   }

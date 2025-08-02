@@ -160,11 +160,11 @@ const OnboardingFlow = () => {
     // Add a small delay to ensure state is properly set
     setTimeout(() => {
       console.log('OnboardingFlow - Navigating to dashboard');
-      navigate('/dashboard');
-      toast({
-        title: "Setup Complete!",
-        description: "Your workflows are now being monitored.",
-      });
+    navigate('/dashboard');
+    toast({
+      title: "Setup Complete!",
+      description: "Your workflows are now being monitored.",
+    });
     }, 100);
   };
 

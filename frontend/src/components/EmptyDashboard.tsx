@@ -24,8 +24,8 @@ const EmptyDashboard = () => {
   const handleAddWorkflow = () => {
     // Only reset state if user hasn't just completed workflow selection
     if (!hasSelectedWorkflows) {
-      WorkflowState.reset();
-      navigate("/workflow-selection");
+    WorkflowState.reset();
+    navigate("/workflow-selection");
     } else {
       // If user has just completed workflow selection, just refresh the page
       // to wait for workflows to appear

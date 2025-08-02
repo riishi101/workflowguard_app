@@ -345,17 +345,32 @@ export class ApiService {
   static async getProtectedWorkflows(userId?: string): Promise<ApiResponse<any[]>> {
     console.log('🔍 DEBUG: getProtectedWorkflows called with userId:', userId);
     
-    // If no userId provided, try to get it from localStorage
+    // If no userId provided, try to get it from multiple sources
     if (!userId) {
       try {
+        // First try to get from localStorage user object
         const userStr = localStorage.getItem('user');
         if (userStr) {
           const user = JSON.parse(userStr);
           userId = user.id;
-          console.log('🔍 DEBUG: Got userId from localStorage:', userId);
+          console.log('🔍 DEBUG: Got userId from localStorage user object:', userId);
         }
       } catch (error) {
-        console.log('🔍 DEBUG: Failed to get userId from localStorage:', error);
+        console.log('🔍 DEBUG: Failed to get userId from localStorage user object:', error);
+      }
+      
+      // If still no userId, try to get from authToken payload
+      if (!userId) {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+            userId = payload.sub || payload.userId || payload.id;
+            console.log('🔍 DEBUG: Got userId from JWT token payload:', userId);
+          }
+        } catch (error) {
+          console.log('🔍 DEBUG: Failed to get userId from JWT token payload:', error);
+        }
       }
     }
     
