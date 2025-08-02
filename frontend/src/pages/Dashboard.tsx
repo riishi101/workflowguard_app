@@ -286,6 +286,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (workflows.length > 0) {
       console.log('Dashboard - Workflows detected, forcing re-render');
+      console.log('Dashboard - DEPLOYMENT TEST: This should appear if latest code is deployed');
       // Force a re-render by updating a state variable
       setForceUpdate(prev => prev + 1);
     }
