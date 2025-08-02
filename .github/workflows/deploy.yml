@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Test and Build
 
 on:
   push:
@@ -20,29 +20,7 @@ jobs:
     - run: cd backend && npm run build
     - run: cd frontend && npm ci
     - run: cd frontend && npm run build
-
-  deploy-backend:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v3
-    - name: Deploy to Render
-      uses: johnbeynon/render-deploy@v1
-      with:
-        service-id: ${{ secrets.RENDER_SERVICE_ID }}
-        api-key: ${{ secrets.RENDER_API_KEY }}
-
-  deploy-frontend:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v3
-    - name: Deploy to Vercel
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./frontend 
+    - name: Test Backend
+      run: cd backend && npm test
+    - name: Test Frontend
+      run: cd frontend && npm test 
