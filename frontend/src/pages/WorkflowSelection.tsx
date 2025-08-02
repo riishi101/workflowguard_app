@@ -53,7 +53,7 @@ interface HubSpotWorkflow {
 const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const [workflows, setWorkflows] = useState<HubSpotWorkflow[]>([]);
   const [selectedWorkflows, setSelectedWorkflows] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -294,9 +294,21 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       });
 
       console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
+      console.log('WorkflowSelection - Authentication state:', { isAuthenticated, user });
+
+      // Check if we have a valid token
+      const token = localStorage.getItem('authToken');
+      console.log('WorkflowSelection - Auth token exists:', !!token);
 
       // Call API to start protection
-      const response = await ApiService.startWorkflowProtection(selectedWorkflows);
+      const requestBody = {
+        workflowIds: selectedWorkflows,
+        userId: user?.id // Include user ID if available
+      };
+      
+      console.log('WorkflowSelection - API request body:', requestBody);
+      
+      const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id);
       
       console.log('WorkflowSelection - Protection API response:', response);
       
@@ -321,13 +333,31 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
     } catch (error: any) {
       console.error('WorkflowSelection - Failed to start protection:', error);
+      console.error('WorkflowSelection - Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        statusText: error.response?.statusText
+      });
       
       // Reset navigation state on error
       setIsNavigating(false);
       
+      let errorMessage = "Failed to start protection. Please try again.";
+      
+      if (error.response?.status === 401) {
+        errorMessage = "Authentication failed. Please reconnect your HubSpot account.";
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || "Invalid request. Please check your selection.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (error.message?.includes('Network Error')) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Setup Failed",
-        description: error.response?.data?.message || "Failed to start protection. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
