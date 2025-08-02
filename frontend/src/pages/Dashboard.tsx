@@ -110,6 +110,15 @@ const Dashboard = () => {
       // Add a small delay to ensure backend is ready
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Check if user ID is available
+      if (!user?.id) {
+        console.log('🔍 DEBUG: No user ID available, skipping API calls');
+        setWorkflows([]);
+        setStats(null);
+        setLoading(false);
+        return;
+      }
+
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
         ApiService.getProtectedWorkflows(user?.id),
@@ -187,11 +196,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    console.log('Dashboard - Component mounted, fetching dashboard data');
-    console.log('Dashboard - Current workflow state:', {
-      hasSelected: WorkflowState.hasSelectedWorkflows(),
-      count: WorkflowState.getSelectedCount()
-    });
+    console.log('🔍 DEBUG: Dashboard useEffect called');
+    console.log('🔍 DEBUG: User from useAuth:', user);
+    console.log('🔍 DEBUG: User ID:', user?.id);
+    console.log('🔍 DEBUG: User email:', user?.email);
+    
     fetchDashboardData();
   }, []);
 

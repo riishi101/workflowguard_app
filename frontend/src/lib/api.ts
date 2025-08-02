@@ -343,6 +343,22 @@ export class ApiService {
 
   // Dashboard endpoints
   static async getProtectedWorkflows(userId?: string): Promise<ApiResponse<any[]>> {
+    console.log('🔍 DEBUG: getProtectedWorkflows called with userId:', userId);
+    
+    // If no userId provided, try to get it from localStorage
+    if (!userId) {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          userId = user.id;
+          console.log('🔍 DEBUG: Got userId from localStorage:', userId);
+        }
+      } catch (error) {
+        console.log('🔍 DEBUG: Failed to get userId from localStorage:', error);
+      }
+    }
+    
     console.log('=== API GET PROTECTED WORKFLOWS DEBUG ===');
     console.log('ApiService - getProtectedWorkflows called with userId:', userId);
     
