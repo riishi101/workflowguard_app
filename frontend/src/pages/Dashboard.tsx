@@ -201,6 +201,13 @@ const Dashboard = () => {
     console.log('🔍 DEBUG: User ID:', user?.id);
     console.log('🔍 DEBUG: User email:', user?.email);
     
+    // Simple test to verify code deployment
+    if (user?.id) {
+      alert(`DEBUG: User ID found: ${user.id}`);
+    } else {
+      alert('DEBUG: No user ID found');
+    }
+    
     fetchDashboardData();
   }, []);
 
