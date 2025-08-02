@@ -222,7 +222,18 @@ export class WorkflowController {
   async startWorkflowProtection(@Body() body: StartWorkflowProtectionDto, @Req() req: Request) {
     try {
       console.log('WorkflowController - startWorkflowProtection called with body:', body);
+      console.log('WorkflowController - Body type:', typeof body);
+      console.log('WorkflowController - Body keys:', Object.keys(body));
+      console.log('WorkflowController - workflowIds type:', typeof body.workflowIds);
+      console.log('WorkflowController - workflowIds is array:', Array.isArray(body.workflowIds));
+      console.log('WorkflowController - userId:', body.userId);
       console.log('WorkflowController - req.user:', req.user);
+      
+      // Validate that workflowIds is present and is an array
+      if (!body.workflowIds || !Array.isArray(body.workflowIds)) {
+        console.error('WorkflowController - Invalid workflowIds:', body.workflowIds);
+        throw new HttpException('workflowIds must be an array', HttpStatus.BAD_REQUEST);
+      }
       
       // Try to get userId from authenticated user first, then from request body
       let userId = (req.user as any)?.sub;
@@ -250,7 +261,9 @@ export class WorkflowController {
       console.error('WorkflowController - Error details:', {
         message: error.message,
         stack: error.stack,
-        name: error.name
+        name: error.name,
+        status: error.status,
+        statusCode: error.statusCode
       });
       
       if (error instanceof HttpException) {
