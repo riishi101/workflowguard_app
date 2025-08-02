@@ -201,12 +201,18 @@ const Dashboard = () => {
     console.log('🔍 DEBUG: User ID:', user?.id);
     console.log('🔍 DEBUG: User email:', user?.email);
     
-    // Simple test to verify code deployment
-    if (user?.id) {
-      alert(`DEBUG: User ID found: ${user.id}`);
-    } else {
-      alert('DEBUG: No user ID found');
-    }
+    // Add a DOM element to verify code deployment
+    const debugElement = document.createElement('div');
+    debugElement.id = 'debug-deployment-test';
+    debugElement.style.position = 'fixed';
+    debugElement.style.top = '10px';
+    debugElement.style.right = '10px';
+    debugElement.style.background = 'red';
+    debugElement.style.color = 'white';
+    debugElement.style.padding = '5px';
+    debugElement.style.zIndex = '9999';
+    debugElement.textContent = user?.id ? `User ID: ${user.id}` : 'No User ID';
+    document.body.appendChild(debugElement);
     
     fetchDashboardData();
   }, []);
