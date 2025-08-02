@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto, UpdateWorkflowDto } from './dto';
 import { Public } from '../auth/public.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('workflow')
 export class WorkflowController {
@@ -38,6 +39,7 @@ export class WorkflowController {
   }
 
   // Get protected workflows - MUST be before :id route
+  @UseGuards(JwtAuthGuard)
   @Get('protected')
   async getProtectedWorkflows(@Req() req: Request) {
     try {
@@ -312,6 +314,7 @@ export class WorkflowController {
   }
 
   // Get dashboard stats
+  @UseGuards(JwtAuthGuard)
   @Get('stats')
   async getDashboardStats(@Req() req: Request) {
     try {
