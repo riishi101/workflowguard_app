@@ -316,11 +316,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       WorkflowState.setWorkflowSelection(true);
       WorkflowState.setSelectedCount(selectedWorkflows.length);
       
-      // Add a small delay to ensure state is properly set
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add a longer delay to ensure dashboard has time to load properly
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Increased from 500ms to 2000ms
       
       // Always navigate directly to dashboard instead of calling onComplete
-      console.log('WorkflowSelection - Navigating directly to dashboard');
+      console.log('WorkflowSelection - Navigating directly to dashboard after 2 second delay');
       navigate("/dashboard");
       
       // Show success toast after navigation

@@ -87,6 +87,9 @@ const Dashboard = () => {
 
       console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
 
+      // Add a small delay to ensure backend is ready
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
         ApiService.getProtectedWorkflows(),
@@ -309,6 +312,19 @@ const Dashboard = () => {
       <MainAppLayout title="Dashboard Overview">
         <ContentSection>
           <div className="space-y-6">
+            {/* Loading Message */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex items-center gap-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  Setting Up Your Dashboard
+                </p>
+                <p className="text-xs text-blue-800">
+                  Loading your protected workflows and dashboard statistics...
+                </p>
+              </div>
+            </div>
+
             {/* Loading Skeleton for Status Banner */}
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <Skeleton className="h-6 w-64 mb-2" />
