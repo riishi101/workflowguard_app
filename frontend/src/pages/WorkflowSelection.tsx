@@ -81,6 +81,14 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       return;
     }
 
+    // Debug authentication status
+    console.log('WorkflowSelection - Authentication check:', {
+      isAuthenticated,
+      authLoading,
+      user: user ? { id: user.id, email: user.email } : null,
+      token: localStorage.getItem('authToken') ? 'exists' : 'missing'
+    });
+
     // Ensure minimum loading time to prevent too quick completion
     const minLoadingTime = 2000; // 2 seconds minimum
     const startTime = Date.now();
