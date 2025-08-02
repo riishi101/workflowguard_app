@@ -427,4 +427,46 @@ export class WorkflowController {
       throw new HttpException('Failed to export dashboard data', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @Public()
+  @Get('debug/state')
+  async debugDatabaseState() {
+    try {
+      console.log('=== DATABASE DEBUG STATE ===');
+      
+      // Get all users
+      const users = await this.workflowService['prisma'].user.findMany({
+        select: { id: true, email: true, name: true, createdAt: true }
+      });
+      console.log('All users in database:', users);
+      
+      // Get all workflows
+      const workflows = await this.workflowService['prisma'].workflow.findMany({
+        include: { versions: true }
+      });
+      console.log('All workflows in database:', workflows.map(w => ({
+        id: w.id,
+        name: w.name,
+        ownerId: w.ownerId,
+        hubspotId: w.hubspotId,
+        versionsCount: w.versions.length,
+        createdAt: w.createdAt
+      })));
+      
+      return {
+        users,
+        workflows: workflows.map(w => ({
+          id: w.id,
+          name: w.name,
+          ownerId: w.ownerId,
+          hubspotId: w.hubspotId,
+          versionsCount: w.versions.length,
+          createdAt: w.createdAt
+        }))
+      };
+    } catch (error) {
+      console.error('Debug endpoint error:', error);
+      return { error: error.message };
+    }
+  }
 }
