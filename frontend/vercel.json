@@ -1,0 +1,85 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/dashboard",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/workflow-selection",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/settings",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/workflow-history",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/help-support",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/privacy-policy",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/terms-of-service",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/contact-us",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/manage-subscription",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/compare-versions",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/workflow-history-detail",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/setup-guide",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+} 
