@@ -344,6 +344,8 @@ export class WorkflowService {
           }
         });
         console.log('WorkflowService - Created default user:', user.id);
+      } else {
+        console.log('WorkflowService - Found existing user:', user.id);
       }
       
       // Use a transaction to ensure all workflows are created atomically
@@ -364,7 +366,7 @@ export class WorkflowService {
           console.log('WorkflowService - Existing workflow found:', !!workflow);
 
           if (!workflow) {
-            console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId, 'with name:', workflowName);
+            console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId, 'with name:', workflowName, 'for user:', user.id);
             // Create new workflow record
             workflow = await tx.workflow.create({
               data: {
@@ -373,7 +375,7 @@ export class WorkflowService {
                 ownerId: user.id,
               },
             });
-            console.log('WorkflowService - Created workflow:', workflow.id);
+            console.log('WorkflowService - Created workflow:', workflow.id, 'with ownerId:', workflow.ownerId);
           }
 
           // Check if workflow already has versions (already protected)
@@ -411,6 +413,7 @@ export class WorkflowService {
       });
 
       console.log('WorkflowService - Successfully protected workflows:', result.length);
+      console.log('WorkflowService - Protected workflows details:', result.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })));
       return {
         message: `Successfully started protection for ${result.length} workflows`,
         protectedWorkflows: result.map(w => ({
@@ -445,6 +448,24 @@ export class WorkflowService {
 
   async getProtectedWorkflows(userId: string) {
     try {
+      console.log('WorkflowService - getProtectedWorkflows called with userId:', userId);
+      
+      // First, let's check if the user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+      console.log('WorkflowService - User found:', !!user);
+      
+      // Check all workflows in the database
+      const allWorkflows = await this.prisma.workflow.findMany({
+        include: {
+          versions: true,
+        },
+      });
+      console.log('WorkflowService - Total workflows in database:', allWorkflows.length);
+      console.log('WorkflowService - All workflows:', allWorkflows.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })));
+      
+      // Now get workflows for this specific user
       const workflows = await this.prisma.workflow.findMany({
         where: { ownerId: userId },
         include: {
@@ -454,6 +475,9 @@ export class WorkflowService {
           },
         },
       });
+      
+      console.log('WorkflowService - Workflows for userId', userId, ':', workflows.length);
+      console.log('WorkflowService - Workflows found:', workflows.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })));
 
       return workflows.map(workflow => {
         const latestVersion = workflow.versions[0];
@@ -477,6 +501,7 @@ export class WorkflowService {
         };
       });
     } catch (error) {
+      console.error('WorkflowService - Error in getProtectedWorkflows:', error);
       throw new Error('Failed to get protected workflows');
     }
   }
