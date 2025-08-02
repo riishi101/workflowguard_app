@@ -295,6 +295,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
       console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
       console.log('WorkflowSelection - Authentication state:', { isAuthenticated, user });
+      console.log('WorkflowSelection - User object details:', {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        hasId: !!user?.id
+      });
 
       // Check if we have a valid token
       const token = localStorage.getItem('authToken');
@@ -312,6 +318,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       };
       
       console.log('WorkflowSelection - API request body:', requestBody);
+      console.log('WorkflowSelection - User ID being sent:', user?.id);
+      console.log('WorkflowSelection - Selected workflows count:', selectedWorkflows.length);
       
       const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id, selectedWorkflowObjects);
       

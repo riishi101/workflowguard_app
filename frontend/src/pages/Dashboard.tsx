@@ -90,6 +90,12 @@ const Dashboard = () => {
       console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
       console.log('Dashboard - Current user:', user);
       console.log('Dashboard - User ID being passed:', user?.id);
+      console.log('Dashboard - User object details:', {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        hasId: !!user?.id
+      });
 
       // Add a small delay to ensure backend is ready
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -102,6 +108,8 @@ const Dashboard = () => {
 
       console.log('Dashboard - Workflows response:', workflowsResponse);
       console.log('Dashboard - Stats response:', statsResponse);
+      console.log('Dashboard - Workflows data:', workflowsResponse.data);
+      console.log('Dashboard - Workflows array length:', workflowsResponse.data?.length || 0);
 
       const workflows = workflowsResponse.data || [];
       const stats = statsResponse.data || null;
