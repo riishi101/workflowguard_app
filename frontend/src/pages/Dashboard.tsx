@@ -163,9 +163,15 @@ const Dashboard = () => {
       console.log('Dashboard - Stats response:', statsResponse);
       console.log('Dashboard - Workflows data:', workflowsResponse.data);
       console.log('Dashboard - Workflows array length:', workflowsResponse.data?.length || 0);
+      console.log('Dashboard - Workflows response type:', typeof workflowsResponse.data);
+      console.log('Dashboard - Is workflows array:', Array.isArray(workflowsResponse.data));
 
       const workflows = workflowsResponse.data || [];
       const stats = statsResponse.data || null;
+
+      console.log('Dashboard - Final workflows array:', workflows);
+      console.log('Dashboard - Final workflows length:', workflows.length);
+      console.log('Dashboard - Final stats:', stats);
 
       setWorkflows(workflows);
       setStats(stats);
@@ -455,12 +461,14 @@ const Dashboard = () => {
   }
 
   // Show empty state if no workflows
-  if (!loading && (!stats || workflows.length === 0)) {
+  if (!loading && workflows.length === 0) {
     // Check if user has just completed workflow selection
     const hasSelectedWorkflows = WorkflowState.hasSelectedWorkflows();
     const selectedCount = WorkflowState.getSelectedCount();
     
     console.log('Dashboard - Showing empty state, workflow state:', { hasSelectedWorkflows, selectedCount });
+    console.log('Dashboard - Workflows length:', workflows.length);
+    console.log('Dashboard - Stats:', stats);
     
     // If user has selected workflows but none are showing yet, show processing message
     if (hasSelectedWorkflows && selectedCount > 0) {

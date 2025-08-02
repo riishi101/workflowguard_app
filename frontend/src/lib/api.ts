@@ -391,13 +391,30 @@ export class ApiService {
     
     const response = await apiClient.get('/workflow/protected', { headers });
     console.log('ApiService - Response received:', response.data);
+    console.log('ApiService - Response type:', typeof response.data);
+    console.log('ApiService - Is array:', Array.isArray(response.data));
     console.log('=== END API GET PROTECTED WORKFLOWS DEBUG ===');
-    return response.data;
+    
+    // The backend returns the workflows array directly, not wrapped in ApiResponse
+    // So we need to wrap it in the expected format
+    return {
+      data: Array.isArray(response.data) ? response.data : [],
+      success: true,
+      message: 'Workflows retrieved successfully'
+    };
   }
 
   static async getDashboardStats(): Promise<ApiResponse<any>> {
     const response = await apiClient.get('/dashboard/stats');
-    return response.data;
+    console.log('ApiService - Dashboard stats response:', response.data);
+    console.log('ApiService - Dashboard stats response type:', typeof response.data);
+    
+    // The backend returns the stats object directly, not wrapped in ApiResponse
+    return {
+      data: response.data,
+      success: true,
+      message: 'Dashboard stats retrieved successfully'
+    };
   }
 
   static async rollbackWorkflow(workflowId: string): Promise<ApiResponse<any>> {
