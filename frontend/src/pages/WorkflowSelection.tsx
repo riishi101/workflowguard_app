@@ -295,6 +295,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
       console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
       console.log('WorkflowSelection - Authentication state:', { isAuthenticated, user });
+      console.log('🔍 DEBUG: WorkflowSelection handleStartProtecting called');
+      console.log('🔍 DEBUG: User object:', user);
+      console.log('🔍 DEBUG: User ID:', user?.id);
       console.log('WorkflowSelection - User object details:', {
         id: user?.id,
         email: user?.email,

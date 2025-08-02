@@ -87,6 +87,16 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
+      console.log('🔍 DEBUG: Dashboard fetchDashboardData called');
+      console.log('🔍 DEBUG: Current user object:', user);
+      console.log('🔍 DEBUG: User ID being passed:', user?.id);
+      console.log('🔍 DEBUG: User object details:', {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        hasId: !!user?.id
+      });
+
       console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
       console.log('Dashboard - Current user:', user);
       console.log('Dashboard - User ID being passed:', user?.id);
