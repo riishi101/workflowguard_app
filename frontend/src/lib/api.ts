@@ -376,6 +376,8 @@ export class ApiService {
     
     console.log('=== API GET PROTECTED WORKFLOWS DEBUG ===');
     console.log('ApiService - getProtectedWorkflows called with userId:', userId);
+    console.log('ApiService - Auth token exists:', !!localStorage.getItem('authToken'));
+    console.log('ApiService - Auth token (first 50 chars):', localStorage.getItem('authToken')?.substring(0, 50));
     
     const headers: any = {};
     
@@ -388,33 +390,68 @@ export class ApiService {
     
     console.log('ApiService - Request headers:', headers);
     console.log('ApiService - Making request to /workflow/protected');
+    console.log('ApiService - Full URL:', `${API_BASE_URL}/workflow/protected`);
     
-    const response = await apiClient.get('/workflow/protected', { headers });
-    console.log('ApiService - Response received:', response.data);
-    console.log('ApiService - Response type:', typeof response.data);
-    console.log('ApiService - Is array:', Array.isArray(response.data));
-    console.log('=== END API GET PROTECTED WORKFLOWS DEBUG ===');
-    
-    // The backend returns the workflows array directly, not wrapped in ApiResponse
-    // So we need to wrap it in the expected format
-    return {
-      data: Array.isArray(response.data) ? response.data : [],
-      success: true,
-      message: 'Workflows retrieved successfully'
-    };
+    try {
+      const response = await apiClient.get('/workflow/protected', { headers });
+      console.log('ApiService - Response received:', response.data);
+      console.log('ApiService - Response type:', typeof response.data);
+      console.log('ApiService - Is array:', Array.isArray(response.data));
+      console.log('=== END API GET PROTECTED WORKFLOWS DEBUG ===');
+      
+      // The backend returns the workflows array directly, not wrapped in ApiResponse
+      // So we need to wrap it in the expected format
+      return {
+        data: Array.isArray(response.data) ? response.data : [],
+        success: true,
+        message: 'Workflows retrieved successfully'
+      };
+    } catch (error) {
+      console.error('ApiService - Error in getProtectedWorkflows:', error);
+      console.error('ApiService - Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+      throw error;
+    }
   }
 
   static async getDashboardStats(): Promise<ApiResponse<any>> {
-    const response = await apiClient.get('/dashboard/stats');
-    console.log('ApiService - Dashboard stats response:', response.data);
-    console.log('ApiService - Dashboard stats response type:', typeof response.data);
+    console.log('=== API GET DASHBOARD STATS DEBUG ===');
+    console.log('ApiService - getDashboardStats called');
+    console.log('ApiService - Auth token exists:', !!localStorage.getItem('authToken'));
+    console.log('ApiService - Auth token (first 50 chars):', localStorage.getItem('authToken')?.substring(0, 50));
+    console.log('ApiService - Making request to /dashboard/stats');
+    console.log('ApiService - Full URL:', `${API_BASE_URL}/dashboard/stats`);
     
-    // The backend returns the stats object directly, not wrapped in ApiResponse
-    return {
-      data: response.data,
-      success: true,
-      message: 'Dashboard stats retrieved successfully'
-    };
+    try {
+      const response = await apiClient.get('/dashboard/stats');
+      console.log('ApiService - Dashboard stats response:', response.data);
+      console.log('ApiService - Dashboard stats response type:', typeof response.data);
+      console.log('=== END API GET DASHBOARD STATS DEBUG ===');
+      
+      // The backend returns the stats object directly, not wrapped in ApiResponse
+      return {
+        data: response.data,
+        success: true,
+        message: 'Dashboard stats retrieved successfully'
+      };
+    } catch (error) {
+      console.error('ApiService - Error in getDashboardStats:', error);
+      console.error('ApiService - Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+      throw error;
+    }
   }
 
   static async rollbackWorkflow(workflowId: string): Promise<ApiResponse<any>> {
