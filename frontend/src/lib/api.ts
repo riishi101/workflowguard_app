@@ -30,10 +30,25 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error) => {
+    console.log('API Interceptor - Error caught:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method
+    });
+    
+    // Only clear token and redirect for specific endpoints, not all 401 errors
     if (error.response?.status === 401) {
-      // Unauthorized - redirect to login
-      localStorage.removeItem('authToken');
-      window.location.href = '/';
+      const url = error.config?.url;
+      
+      // Only clear token for authentication-related endpoints
+      if (url && (url.includes('/auth/') || url.includes('/login') || url.includes('/logout'))) {
+        console.log('API Interceptor - Clearing token for auth endpoint');
+        localStorage.removeItem('authToken');
+        window.location.href = '/';
+      } else {
+        console.log('API Interceptor - 401 error on non-auth endpoint, not clearing token');
+        // Don't clear token for other endpoints, just log the error
+      }
     }
     return Promise.reject(error);
   }

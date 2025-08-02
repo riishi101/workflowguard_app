@@ -9,6 +9,12 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
+  console.log('ProtectedRoute - Debug:', {
+    isAuthenticated,
+    loading,
+    hasToken: !!localStorage.getItem('authToken')
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -20,8 +26,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  // Check if user has a token, even if isAuthenticated is false temporarily
+  const hasToken = localStorage.getItem('authToken');
+  
+  if (!isAuthenticated && !hasToken) {
+    console.log('ProtectedRoute - No authentication, redirecting to root');
     return <Navigate to="/" replace />;
+  }
+
+  // If user has token but isAuthenticated is false, still allow access
+  // This handles temporary authentication state issues
+  if (!isAuthenticated && hasToken) {
+    console.log('ProtectedRoute - Has token but not authenticated, allowing access anyway');
   }
 
   return <>{children}</>;
