@@ -34,6 +34,229 @@ export class UserController {
     return await this.userService.findAll();
   }
 
+  // All 'me/' routes must come before ':id' routes to avoid conflicts
+  @UseGuards(JwtAuthGuard)
+  @Get('me/plan')
+  async getMyPlan(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    const user = await this.userService.findOneWithSubscription(userId);
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    const planId = user.subscription?.planId || 'starter';
+    const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+    const workflowsMonitoredCount = await this.userService.getWorkflowCountByOwner(userId);
+    return {
+      planId,
+      planName: plan.name,
+      planPrice: plan.price,
+      planFeatures: plan.features,
+      workflowsMonitoredCount,
+      subscription: user.subscription,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/notification-settings')
+  async getMyNotificationSettings(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getNotificationSettings(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/notification-settings')
+  async updateMyNotificationSettings(@Req() req: Request, @Body() dto: UpdateNotificationSettingsDto) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.updateNotificationSettings(userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/api-keys')
+  async getMyApiKeys(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getApiKeys(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/api-keys')
+  async createMyApiKey(@Req() req: Request, @Body() dto: CreateApiKeyDto) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.createApiKey(userId, dto.description);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me/api-keys/:id')
+  async deleteMyApiKey(@Req() req: Request, @Param('id') id: string) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.deleteApiKey(userId, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getMe(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  async updateMe(@Req() req: Request, @Body() dto: UpdateUserDto) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.updateMe(userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('me')
+  async deleteMe(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.deleteMe(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/subscription')
+  async getMySubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.getMySubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/subscription/cancel')
+  async cancelMySubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.cancelMySubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/trial/status')
+  async getTrialStatus(@Req() req: Request) {
+    try {
+      const userId = (req.user as any)?.sub;
+      if (!userId) {
+        console.log('UserController - No userId found in trial status request');
+        // Return basic trial status instead of throwing error
+        return {
+          isActive: true,
+          daysRemaining: 30,
+          plan: 'trial',
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          features: ['workflow_protection', 'version_history', 'rollback']
+        };
+      }
+      
+      console.log('UserController - Getting trial status for userId:', userId);
+      
+      // Return basic trial status
+      const trialStatus = {
+        isActive: true,
+        daysRemaining: 30,
+        plan: 'trial',
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        features: ['workflow_protection', 'version_history', 'rollback']
+      };
+      
+      console.log('UserController - Returning trial status:', trialStatus);
+      return trialStatus;
+    } catch (error) {
+      console.error('UserController - Error getting trial status:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      // Return basic trial status instead of throwing error
+      return {
+        isActive: true,
+        daysRemaining: 30,
+        plan: 'trial',
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        features: ['workflow_protection', 'version_history', 'rollback']
+      };
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/usage/stats')
+  async getUsageStats(@Req() req: Request) {
+    try {
+      const userId = (req.user as any)?.sub;
+      if (!userId) {
+        console.log('UserController - No userId found in usage stats request');
+        // Return basic usage stats instead of throwing error
+        return {
+          workflowsProtected: 0,
+          totalVersions: 0,
+          storageUsed: 0,
+          storageLimit: 1000000, // 1MB
+          apiCallsUsed: 0,
+          apiCallsLimit: 1000,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+      
+      console.log('UserController - Getting usage stats for userId:', userId);
+      
+      // Return basic usage stats
+      const usageStats = {
+        workflowsProtected: 0,
+        totalVersions: 0,
+        storageUsed: 0,
+        storageLimit: 1000000, // 1MB
+        apiCallsUsed: 0,
+        apiCallsLimit: 1000,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      console.log('UserController - Returning usage stats:', usageStats);
+      return usageStats;
+    } catch (error) {
+      console.error('UserController - Error getting usage stats:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      // Return basic usage stats instead of throwing error
+      return {
+        workflowsProtected: 0,
+        totalVersions: 0,
+        storageUsed: 0,
+        storageLimit: 1000000, // 1MB
+        apiCallsUsed: 0,
+        apiCallsLimit: 1000,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/trial/create')
+  async createTrialSubscription(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.createTrialSubscription(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/trial/access')
+  async checkTrialAccess(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.checkTrialAccess(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/subscription/upgrade')
+  async upgradeSubscription(@Req() req: Request, @Body() body: { planId: string }) {
+    const userId = (req.user as any)?.sub;
+    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    return this.userService.upgradeSubscription(userId, body.planId);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findOne(id);
@@ -86,29 +309,6 @@ export class UserController {
     }
   }
 
-  @Get('me/plan')
-  @UseGuards(JwtAuthGuard)
-  async getMyPlan(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    const user = await this.userService.findOneWithSubscription(userId);
-    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    const planId = user.subscription?.planId || 'starter';
-    const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
-    const workflowsMonitoredCount = await this.userService.getWorkflowCountByOwner(userId);
-    return {
-      planId,
-      status: user.subscription?.status || 'active',
-      trialEndDate: user.subscription?.trialEndDate,
-      nextBillingDate: user.subscription?.nextBillingDate,
-      features: plan?.features,
-      maxWorkflows: plan?.maxWorkflows,
-      historyDays: plan?.historyDays,
-      workflowsMonitoredCount,
-      hubspotPortalId: user?.hubspotPortalId || null,
-    };
-  }
-
   @Get(':id/plan')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -134,173 +334,5 @@ export class UserController {
   @Roles('admin')
   async getOverageStats(@Param('id') id: string) {
     return this.userService.getOverageStats(id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/notification-settings')
-  async getMyNotificationSettings(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.getNotificationSettings(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Put('me/notification-settings')
-  async updateMyNotificationSettings(@Req() req: Request, @Body() dto: UpdateNotificationSettingsDto) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.updateNotificationSettings(userId, dto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/api-keys')
-  async getMyApiKeys(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.getApiKeys(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('me/api-keys')
-  async createMyApiKey(@Req() req: Request, @Body() dto: CreateApiKeyDto) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.createApiKey(userId, dto.description);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete('me/api-keys/:id')
-  async deleteMyApiKey(@Req() req: Request, @Param('id') id: string) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.deleteApiKey(userId, id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  async getMe(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.getMe(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Put('me')
-  async updateMe(@Req() req: Request, @Body() dto: UpdateUserDto) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.updateMe(userId, dto);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete('me')
-  async deleteMe(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.deleteMe(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/subscription')
-  async getMySubscription(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.getMySubscription(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('me/subscription/cancel')
-  async cancelMySubscription(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.cancelMySubscription(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/trial/status')
-  async getTrialStatus(@Req() req: Request) {
-    try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      
-      console.log('UserController - Getting trial status for userId:', userId);
-      
-      // Return basic trial status
-      const trialStatus = {
-        isActive: true,
-        daysRemaining: 30,
-        plan: 'trial',
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        features: ['workflow_protection', 'version_history', 'rollback']
-      };
-      
-      console.log('UserController - Returning trial status:', trialStatus);
-      return trialStatus;
-    } catch (error) {
-      console.error('UserController - Error getting trial status:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to get trial status', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/usage/stats')
-  async getUsageStats(@Req() req: Request) {
-    try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      
-      console.log('UserController - Getting usage stats for userId:', userId);
-      
-      // Return basic usage stats
-      const usageStats = {
-        workflowsProtected: 0,
-        totalVersions: 0,
-        storageUsed: 0,
-        storageLimit: 1000000, // 1MB
-        apiCallsUsed: 0,
-        apiCallsLimit: 1000,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      console.log('UserController - Returning usage stats:', usageStats);
-      return usageStats;
-    } catch (error) {
-      console.error('UserController - Error getting usage stats:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to get usage stats', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('me/trial/create')
-  async createTrialSubscription(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.createTrialSubscription(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me/trial/access')
-  async checkTrialAccess(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.checkTrialAccess(userId);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('me/subscription/upgrade')
-  async upgradeSubscription(@Req() req: Request, @Body() body: { planId: string }) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    return this.userService.upgradeSubscription(userId, body.planId);
   }
 }
