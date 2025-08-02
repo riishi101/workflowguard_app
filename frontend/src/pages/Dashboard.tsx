@@ -88,6 +88,8 @@ const Dashboard = () => {
       setError(null);
 
       console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
+      console.log('Dashboard - Current user:', user);
+      console.log('Dashboard - User ID being passed:', user?.id);
 
       // Add a small delay to ensure backend is ready
       await new Promise(resolve => setTimeout(resolve, 1000));

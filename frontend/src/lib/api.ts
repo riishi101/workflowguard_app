@@ -343,13 +343,24 @@ export class ApiService {
 
   // Dashboard endpoints
   static async getProtectedWorkflows(userId?: string): Promise<ApiResponse<any[]>> {
+    console.log('=== API GET PROTECTED WORKFLOWS DEBUG ===');
+    console.log('ApiService - getProtectedWorkflows called with userId:', userId);
+    
     const headers: any = {};
     
     if (userId) {
       headers['x-user-id'] = userId;
+      console.log('ApiService - Added x-user-id header:', userId);
+    } else {
+      console.log('ApiService - No userId provided, not adding header');
     }
     
+    console.log('ApiService - Request headers:', headers);
+    console.log('ApiService - Making request to /workflow/protected');
+    
     const response = await apiClient.get('/workflow/protected', { headers });
+    console.log('ApiService - Response received:', response.data);
+    console.log('=== END API GET PROTECTED WORKFLOWS DEBUG ===');
     return response.data;
   }
 

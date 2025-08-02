@@ -43,12 +43,19 @@ export class WorkflowController {
   @Get('protected')
   async getProtectedWorkflows(@Req() req: Request) {
     try {
+      console.log('=== GET PROTECTED WORKFLOWS DEBUG ===');
+      console.log('WorkflowController - Request headers:', req.headers);
+      console.log('WorkflowController - Request query:', req.query);
+      console.log('WorkflowController - JWT user:', req.user);
+      
       // Try to get userId from JWT token first
       let userId = (req.user as any)?.sub;
+      console.log('WorkflowController - JWT userId (sub):', userId);
       
       // If no userId from token, try to get it from query params or headers
       if (!userId) {
         userId = req.query.userId as string || req.headers['x-user-id'] as string;
+        console.log('WorkflowController - Fallback userId from query/headers:', userId);
       }
       
       if (!userId) {
@@ -62,9 +69,12 @@ export class WorkflowController {
         return [];
       }
       
+      console.log('WorkflowController - Final userId being used:', userId);
       console.log('WorkflowController - Getting protected workflows for userId:', userId);
       const workflows = await this.workflowService.getProtectedWorkflows(userId);
       console.log('WorkflowController - Found protected workflows:', workflows?.length || 0);
+      console.log('WorkflowController - Workflows data:', workflows);
+      console.log('=== END GET PROTECTED WORKFLOWS DEBUG ===');
       return workflows || [];
     } catch (error) {
       console.error('WorkflowController - Error getting protected workflows:', error);
@@ -272,8 +282,9 @@ export class WorkflowController {
       console.log('WorkflowController - Body keys:', Object.keys(body));
       console.log('WorkflowController - workflowIds type:', typeof body.workflowIds);
       console.log('WorkflowController - workflowIds is array:', Array.isArray(body.workflowIds));
-      console.log('WorkflowController - userId:', body.userId);
+      console.log('WorkflowController - userId from body:', body.userId);
       console.log('WorkflowController - req.user:', req.user);
+      console.log('WorkflowController - JWT sub (if available):', (req.user as any)?.sub);
       console.log('WorkflowController - Request headers:', req.headers);
       console.log('WorkflowController - Request method:', req.method);
       console.log('WorkflowController - Request URL:', req.url);
@@ -299,6 +310,7 @@ export class WorkflowController {
       
       console.log('WorkflowController - Starting workflow protection for:', body.workflowIds.length, 'workflows');
       console.log('WorkflowController - Workflow names:', workflowNames);
+      console.log('WorkflowController - Using userId for workflow creation:', body.userId);
       
       // Actually process the workflows
       const result = await this.workflowService.startWorkflowProtection(body.workflowIds, body.userId, workflowNames);
