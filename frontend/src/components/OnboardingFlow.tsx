@@ -5,6 +5,7 @@ import WelcomeModal from "./WelcomeModal";
 import ConnectHubSpotModal from "./ConnectHubSpotModal";
 import WorkflowSelection from "@/pages/WorkflowSelection";
 import { useToast } from "@/hooks/use-toast";
+import { WorkflowState } from "@/lib/workflowState";
 
 const OnboardingFlow = () => {
   const [currentStep, setCurrentStep] = useState<'welcome' | 'connect' | 'workflow-selection' | 'dashboard'>('welcome');
@@ -123,12 +124,22 @@ const OnboardingFlow = () => {
 
   const handleWorkflowSelectionComplete = () => {
     console.log('OnboardingFlow - Workflow selection complete, going to dashboard');
+    
+    // Ensure workflow state is properly set
+    if (!WorkflowState.hasSelectedWorkflows()) {
+      console.log('OnboardingFlow - Warning: No workflow selection state found');
+    }
+    
     setCurrentStep('dashboard');
-    navigate('/dashboard');
-    toast({
-      title: "Setup Complete!",
-      description: "Your workflows are now being monitored.",
-    });
+    
+    // Add a small delay to ensure state is properly set
+    setTimeout(() => {
+      navigate('/dashboard');
+      toast({
+        title: "Setup Complete!",
+        description: "Your workflows are now being monitored.",
+      });
+    }, 100);
   };
 
   // Show timeout message if loading for too long

@@ -329,64 +329,69 @@ export class WorkflowService {
       console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId });
       const protectedWorkflows = [];
       
-      for (const hubspotWorkflowId of workflowIds) {
-        console.log('WorkflowService - Processing workflow:', hubspotWorkflowId);
-        
-        // Check if workflow already exists
-        let workflow = await this.prisma.workflow.findFirst({
-          where: { hubspotId: hubspotWorkflowId }
-        });
-
-        console.log('WorkflowService - Existing workflow found:', !!workflow);
-
-        if (!workflow) {
-          console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId);
-          // Create new workflow record
-          workflow = await this.prisma.workflow.create({
-            data: {
-              hubspotId: hubspotWorkflowId,
-              name: `Workflow ${hubspotWorkflowId}`, // This would be fetched from HubSpot in real implementation
-              ownerId: userId,
-            },
+      // Use a transaction to ensure all workflows are created atomically
+      const result = await this.prisma.$transaction(async (tx) => {
+        for (const hubspotWorkflowId of workflowIds) {
+          console.log('WorkflowService - Processing workflow:', hubspotWorkflowId);
+          
+          // Check if workflow already exists
+          let workflow = await tx.workflow.findFirst({
+            where: { hubspotId: hubspotWorkflowId }
           });
-          console.log('WorkflowService - Created workflow:', workflow.id);
-        }
 
-        // Check if workflow already has versions (already protected)
-        const existingVersions = await this.prisma.workflowVersion.findMany({
-          where: { workflowId: workflow.id }
-        });
+          console.log('WorkflowService - Existing workflow found:', !!workflow);
 
-        console.log('WorkflowService - Existing versions count:', existingVersions.length);
-
-        if (existingVersions.length === 0) {
-          console.log('WorkflowService - Creating initial version for workflow:', workflow.id);
-          // Create initial version for the workflow
-          await this.prisma.workflowVersion.create({
-            data: {
-              workflowId: workflow.id,
-              versionNumber: 1,
-              snapshotType: 'Initial Protection',
-              createdBy: userId,
+          if (!workflow) {
+            console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId);
+            // Create new workflow record
+            workflow = await tx.workflow.create({
               data: {
-                steps: [],
-                metadata: {
-                  hubspotWorkflowId,
-                  protectedAt: new Date().toISOString(),
-                }
+                hubspotId: hubspotWorkflowId,
+                name: `Workflow ${hubspotWorkflowId}`, // This would be fetched from HubSpot in real implementation
+                ownerId: userId,
               },
-            },
+            });
+            console.log('WorkflowService - Created workflow:', workflow.id);
+          }
+
+          // Check if workflow already has versions (already protected)
+          const existingVersions = await tx.workflowVersion.findMany({
+            where: { workflowId: workflow.id }
           });
-          console.log('WorkflowService - Created initial version');
+
+          console.log('WorkflowService - Existing versions count:', existingVersions.length);
+
+          if (existingVersions.length === 0) {
+            console.log('WorkflowService - Creating initial version for workflow:', workflow.id);
+            // Create initial version for the workflow
+            await tx.workflowVersion.create({
+              data: {
+                workflowId: workflow.id,
+                versionNumber: 1,
+                snapshotType: 'Initial Protection',
+                createdBy: userId,
+                data: {
+                  steps: [],
+                  metadata: {
+                    hubspotWorkflowId,
+                    protectedAt: new Date().toISOString(),
+                  }
+                },
+              },
+            });
+            console.log('WorkflowService - Created initial version');
+          }
+
+          protectedWorkflows.push(workflow);
         }
+        
+        return protectedWorkflows;
+      });
 
-        protectedWorkflows.push(workflow);
-      }
-
-      console.log('WorkflowService - Successfully protected workflows:', protectedWorkflows.length);
+      console.log('WorkflowService - Successfully protected workflows:', result.length);
       return {
-        message: `Successfully started protection for ${protectedWorkflows.length} workflows`,
-        protectedWorkflows: protectedWorkflows.map(w => ({
+        message: `Successfully started protection for ${result.length} workflows`,
+        protectedWorkflows: result.map(w => ({
           id: w.id,
           hubspotId: w.hubspotId,
           name: w.name,

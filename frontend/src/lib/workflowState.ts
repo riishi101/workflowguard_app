@@ -26,6 +26,15 @@ export const WorkflowState = {
     localStorage.setItem("workflowGuard_selectedCount", count.toString());
   },
 
+  // Clear workflow state after successful navigation
+  clearAfterNavigation(): void {
+    // Only clear if we have workflows (indicating successful setup)
+    if (this.hasSelectedWorkflows() && this.getSelectedCount() > 0) {
+      console.log('WorkflowState - Clearing state after successful navigation');
+      this.reset();
+    }
+  },
+
   // Reset all workflow state
   reset(): void {
     localStorage.removeItem("workflowGuard_hasSelectedWorkflows");

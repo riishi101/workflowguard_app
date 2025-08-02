@@ -80,10 +80,12 @@ const Dashboard = () => {
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
 
   // Fetch dashboard data
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (retryCount = 0) => {
     try {
       setLoading(true);
       setError(null);
+
+      console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
 
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
@@ -91,23 +93,53 @@ const Dashboard = () => {
         ApiService.getDashboardStats()
       ]);
 
-      setWorkflows(workflowsResponse.data || []);
-      setStats(statsResponse.data || null);
+      console.log('Dashboard - Workflows response:', workflowsResponse);
+      console.log('Dashboard - Stats response:', statsResponse);
+
+      const workflows = workflowsResponse.data || [];
+      const stats = statsResponse.data || null;
+
+      setWorkflows(workflows);
+      setStats(stats);
 
       // Check if user has workflows
-      const hasWorkflows = workflowsResponse.data && workflowsResponse.data.length > 0;
+      const hasWorkflows = workflows && workflows.length > 0;
       WorkflowState.setWorkflowSelection(hasWorkflows);
-      WorkflowState.setSelectedCount(hasWorkflows ? workflowsResponse.data.length : 0);
+      WorkflowState.setSelectedCount(hasWorkflows ? workflows.length : 0);
+
+      console.log('Dashboard - Set workflow state:', { hasWorkflows, count: workflows.length });
+
+      // If workflows are found and user had selected workflows, clear the selection state
+      if (hasWorkflows && WorkflowState.hasSelectedWorkflows()) {
+        console.log('Dashboard - Workflows found, clearing selection state');
+        WorkflowState.clearAfterNavigation();
+      }
+
+      // If no workflows found but user has selected workflows, retry after a delay
+      if (workflows.length === 0 && WorkflowState.hasSelectedWorkflows() && retryCount < 3) {
+        console.log('Dashboard - No workflows found but user has selected workflows, retrying...');
+        setTimeout(() => {
+          fetchDashboardData(retryCount + 1);
+        }, 2000 * (retryCount + 1)); // Exponential backoff: 2s, 4s, 6s
+        return;
+      }
 
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again.');
+      console.error('Dashboard - Failed to fetch dashboard data:', err);
       
-      // Set empty state
-      setWorkflows([]);
-      setStats(null);
-      WorkflowState.setWorkflowSelection(false);
-      WorkflowState.setSelectedCount(0);
+      // If this is a retry and we still have workflow selection state, don't show error
+      if (retryCount > 0 && WorkflowState.hasSelectedWorkflows()) {
+        console.log('Dashboard - Retry failed but user has selected workflows, showing empty state');
+        setWorkflows([]);
+        setStats(null);
+        setError(null);
+      } else {
+        setError('Failed to load dashboard data. Please try again.');
+        setWorkflows([]);
+        setStats(null);
+        WorkflowState.setWorkflowSelection(false);
+        WorkflowState.setSelectedCount(0);
+      }
     } finally {
       setLoading(false);
     }
@@ -130,6 +162,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    console.log('Dashboard - Component mounted, fetching dashboard data');
+    console.log('Dashboard - Current workflow state:', {
+      hasSelected: WorkflowState.hasSelectedWorkflows(),
+      count: WorkflowState.getSelectedCount()
+    });
     fetchDashboardData();
   }, []);
 
@@ -318,6 +355,59 @@ const Dashboard = () => {
 
   // Show empty state if no workflows
   if (!loading && (!stats || workflows.length === 0)) {
+    // Check if user has just completed workflow selection
+    const hasSelectedWorkflows = WorkflowState.hasSelectedWorkflows();
+    const selectedCount = WorkflowState.getSelectedCount();
+    
+    console.log('Dashboard - Showing empty state, workflow state:', { hasSelectedWorkflows, selectedCount });
+    
+    // If user has selected workflows but none are showing yet, show processing message
+    if (hasSelectedWorkflows && selectedCount > 0) {
+      return (
+        <MainAppLayout title="Dashboard Overview">
+          <ContentSection>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  Processing Your Workflows
+                </p>
+                <p className="text-xs text-blue-800">
+                  Your {selectedCount} workflow{selectedCount > 1 ? 's' : ''} are being set up for protection. This may take a moment...
+                </p>
+              </div>
+            </div>
+          </ContentSection>
+          
+          <ContentSection>
+            <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Setting Up Protection
+              </h3>
+              <p className="text-gray-600 text-base mb-6 max-w-lg">
+                WorkflowGuard is configuring protection for your {selectedCount} selected workflow{selectedCount > 1 ? 's' : ''}. 
+                This process usually takes 1-2 minutes.
+              </p>
+              <div className="flex flex-col items-center gap-4 w-full">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 text-lg font-semibold rounded-lg shadow"
+                >
+                  ↻ Refresh Dashboard
+                </button>
+                <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
+                  <span>Your workflows will appear here once processing is complete.</span>
+                </div>
+              </div>
+            </div>
+          </ContentSection>
+        </MainAppLayout>
+      );
+    }
+    
     return <EmptyDashboard />;
   }
 

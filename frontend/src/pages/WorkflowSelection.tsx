@@ -284,14 +284,21 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
 
     try {
+      // Set navigation state to prevent multiple clicks
+      setIsNavigating(true);
+      
       // Show loading state
       toast({
         title: "Setting up protection...",
         description: "Configuring WorkflowGuard for your selected workflows.",
       });
 
+      console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
+
       // Call API to start protection
       const response = await ApiService.startWorkflowProtection(selectedWorkflows);
+      
+      console.log('WorkflowSelection - Protection API response:', response);
       
       // Set workflow selection state
       WorkflowState.setWorkflowSelection(true);
@@ -302,21 +309,22 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         description: response.data?.message || `${selectedWorkflows.length} workflows are now being monitored.`,
       });
       
-      // Set navigation state to prevent further state updates
-      setIsNavigating(true);
+      // Add a small delay to ensure state is properly set
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Use setTimeout to ensure state updates complete before navigation
-      setTimeout(() => {
-        // Call onComplete if provided, otherwise navigate
-        if (onComplete) {
-          onComplete();
-        } else {
-          navigate("/dashboard");
-        }
-      }, 100);
+      // Call onComplete if provided, otherwise navigate
+      if (onComplete) {
+        onComplete();
+      } else {
+        navigate("/dashboard");
+      }
       
     } catch (error: any) {
-      console.error('Failed to start protection:', error);
+      console.error('WorkflowSelection - Failed to start protection:', error);
+      
+      // Reset navigation state on error
+      setIsNavigating(false);
+      
       toast({
         title: "Setup Failed",
         description: error.response?.data?.message || "Failed to start protection. Please try again.",
@@ -982,11 +990,18 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   </Button>
                   <Button
                     onClick={handleStartProtecting}
-                    disabled={selectedWorkflows.length === 0}
+                    disabled={selectedWorkflows.length === 0 || isNavigating}
                     className="bg-blue-500 hover:bg-blue-600 text-white"
                     size="sm"
                   >
-                    Start Protecting Workflows
+                    {isNavigating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Setting up protection...
+                      </>
+                    ) : (
+                      "Start Protecting Workflows"
+                    )}
                   </Button>
                 </>
               )}
