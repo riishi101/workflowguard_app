@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpS
 import { Request } from 'express';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto, UpdateWorkflowDto } from './dto';
+import { StartWorkflowProtectionDto } from './dto/start-workflow-protection.dto';
 import { Public } from '../auth/public.decorator';
 
 @Controller('workflow')
@@ -218,7 +219,7 @@ export class WorkflowController {
   // Start workflow protection
   @Public()
   @Post('start-protection')
-  async startWorkflowProtection(@Body() body: { workflowIds: string[]; userId?: string }, @Req() req: Request) {
+  async startWorkflowProtection(@Body() body: StartWorkflowProtectionDto, @Req() req: Request) {
     try {
       console.log('WorkflowController - startWorkflowProtection called with body:', body);
       console.log('WorkflowController - req.user:', req.user);
