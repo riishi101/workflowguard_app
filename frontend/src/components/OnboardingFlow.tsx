@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import WelcomeModal from "./WelcomeModal";
 import ConnectHubSpotModal from "./ConnectHubSpotModal";
@@ -17,6 +17,13 @@ const OnboardingFlow = () => {
   const { isAuthenticated, loading, user, connectHubSpot } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
+
+  // Don't render OnboardingFlow if user is on dashboard route
+  if (location.pathname === '/dashboard') {
+    console.log('OnboardingFlow - User is on dashboard, not rendering');
+    return null;
+  }
 
   // Timeout mechanism to prevent infinite loading
   useEffect(() => {
@@ -145,10 +152,14 @@ const OnboardingFlow = () => {
       console.log('OnboardingFlow - Warning: No workflow selection state found');
     }
     
+    // Clear onboarding state completely
     setCurrentStep('dashboard');
+    setHasProcessedOAuth(true);
+    setIsInitialized(true);
     
     // Add a small delay to ensure state is properly set
     setTimeout(() => {
+      console.log('OnboardingFlow - Navigating to dashboard');
       navigate('/dashboard');
       toast({
         title: "Setup Complete!",
