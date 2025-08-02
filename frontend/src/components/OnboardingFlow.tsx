@@ -35,8 +35,23 @@ const OnboardingFlow = () => {
       }
     }, 30000); // Reduced to 30 seconds timeout for backend processing
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [isAuthenticated]);
+
+  // Handle timeout state changes
+  useEffect(() => {
+    if (timeoutReached && !isAuthenticated && currentStep !== 'connect') {
+      console.log('OnboardingFlow - Timeout reached but user not authenticated, showing connect modal');
+      setCurrentStep('connect');
+      setShowConnectModal(true);
+    }
+    
+    return () => {
+      // Cleanup function to prevent memory leaks
+    };
+  }, [timeoutReached, isAuthenticated, currentStep]);
 
   useEffect(() => {
     if (loading || isInitialized) return; // Don't process while loading or if already initialized
@@ -107,7 +122,7 @@ const OnboardingFlow = () => {
       setShowWelcomeModal(true);
       setIsInitialized(true);
     }
-  }, [isAuthenticated, loading, user, navigate, toast, hasProcessedOAuth, isInitialized, timeoutReached]);
+  }, [isAuthenticated, loading, user, hasProcessedOAuth, isInitialized, timeoutReached, toast]);
 
   const handleWelcomeComplete = () => {
     console.log('OnboardingFlow - Welcome complete, showing connect modal');
@@ -192,10 +207,8 @@ const OnboardingFlow = () => {
   }
 
   // If timeout reached but user is not authenticated, show connect modal
-  if (timeoutReached && !isAuthenticated) {
+  if (timeoutReached && !isAuthenticated && currentStep === 'connect') {
     console.log('OnboardingFlow - Timeout reached but user not authenticated, showing connect modal');
-    setCurrentStep('connect');
-    setShowConnectModal(true);
     return (
       <div className="min-h-screen bg-gray-50">
         <ConnectHubSpotModal
