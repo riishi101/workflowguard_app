@@ -327,10 +327,11 @@ export class WorkflowService {
   async startWorkflowProtection(workflowIds: string[], userId: string) {
     try {
       console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId });
-      const protectedWorkflows = [];
       
       // Use a transaction to ensure all workflows are created atomically
       const result = await this.prisma.$transaction(async (tx) => {
+        const protectedWorkflows: any[] = [];
+        
         for (const hubspotWorkflowId of workflowIds) {
           console.log('WorkflowService - Processing workflow:', hubspotWorkflowId);
           
