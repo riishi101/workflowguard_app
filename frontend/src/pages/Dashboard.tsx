@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import EmptyDashboard from "@/components/EmptyDashboard";
@@ -69,6 +70,7 @@ interface DashboardStats {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [workflows, setWorkflows] = useState<DashboardWorkflow[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ const Dashboard = () => {
 
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
-        ApiService.getProtectedWorkflows(),
+        ApiService.getProtectedWorkflows(user?.id),
         ApiService.getDashboardStats()
       ]);
 

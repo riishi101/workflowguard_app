@@ -43,9 +43,21 @@ export class WorkflowController {
   @Get('protected')
   async getProtectedWorkflows(@Req() req: Request) {
     try {
-      const userId = (req.user as any)?.sub;
+      // Try to get userId from JWT token first
+      let userId = (req.user as any)?.sub;
+      
+      // If no userId from token, try to get it from query params or headers
+      if (!userId) {
+        userId = req.query.userId as string || req.headers['x-user-id'] as string;
+      }
+      
       if (!userId) {
         console.log('WorkflowController - No userId found in protected workflows request');
+        console.log('WorkflowController - Available user info:', {
+          jwtUser: req.user,
+          queryUserId: req.query.userId,
+          headerUserId: req.headers['x-user-id']
+        });
         // Return empty array instead of throwing error during initial setup
         return [];
       }

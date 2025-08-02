@@ -342,8 +342,14 @@ export class ApiService {
   }
 
   // Dashboard endpoints
-  static async getProtectedWorkflows(): Promise<ApiResponse<any[]>> {
-    const response = await apiClient.get('/workflow/protected');
+  static async getProtectedWorkflows(userId?: string): Promise<ApiResponse<any[]>> {
+    const headers: any = {};
+    
+    if (userId) {
+      headers['x-user-id'] = userId;
+    }
+    
+    const response = await apiClient.get('/workflow/protected', { headers });
     return response.data;
   }
 
