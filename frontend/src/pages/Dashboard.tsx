@@ -80,6 +80,7 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0); // State to force re-render
 
   // Fetch dashboard data
   const fetchDashboardData = async (retryCount = 0) => {
@@ -201,6 +202,12 @@ const Dashboard = () => {
         return;
       }
 
+      // Add a small delay to ensure state is properly updated
+      setTimeout(() => {
+        console.log('Dashboard - State update delay completed');
+        console.log('Dashboard - Current workflows state after delay:', workflows.length);
+      }, 100);
+
     } catch (err) {
       console.error('Dashboard - Failed to fetch dashboard data:', err);
       
@@ -271,7 +278,18 @@ const Dashboard = () => {
   useEffect(() => {
     console.log('Dashboard - Workflows state changed:', workflows.length);
     console.log('Dashboard - Current workflows:', workflows);
+    console.log('Dashboard - Workflows state type:', typeof workflows);
+    console.log('Dashboard - Workflows is array:', Array.isArray(workflows));
   }, [workflows]);
+
+  // Add effect to force re-render when workflows change
+  useEffect(() => {
+    if (workflows.length > 0) {
+      console.log('Dashboard - Workflows detected, forcing re-render');
+      // Force a re-render by updating a state variable
+      setForceUpdate(prev => prev + 1);
+    }
+  }, [workflows.length]);
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     // Store the current workflow context for the history page
@@ -482,6 +500,9 @@ const Dashboard = () => {
     console.log('Dashboard - Workflows state:', workflows);
     console.log('Dashboard - Condition check: !loading && workflows.length === 0');
     console.log('Dashboard - Condition result:', !loading && workflows.length === 0);
+    console.log('Dashboard - Workflows array type:', typeof workflows);
+    console.log('Dashboard - Workflows is array:', Array.isArray(workflows));
+    console.log('Dashboard - Workflows content:', JSON.stringify(workflows, null, 2));
     
     // If user has selected workflows but none are showing yet, show processing message
     if (hasSelectedWorkflows && selectedCount > 0) {
