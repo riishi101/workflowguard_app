@@ -328,6 +328,24 @@ export class WorkflowService {
     try {
       console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId });
       
+      // First, check if the user exists, if not create a default user
+      let user = await this.prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        console.log('WorkflowService - User not found, creating default user');
+        user = await this.prisma.user.create({
+          data: {
+            id: userId,
+            email: `user-${userId}@workflowguard.pro`,
+            name: 'Default User',
+            role: 'user'
+          }
+        });
+        console.log('WorkflowService - Created default user:', user.id);
+      }
+      
       // Use a transaction to ensure all workflows are created atomically
       const result = await this.prisma.$transaction(async (tx) => {
         const protectedWorkflows: any[] = [];
@@ -337,7 +355,7 @@ export class WorkflowService {
           
           // Check if workflow already exists
           let workflow = await tx.workflow.findFirst({
-            where: { hubspotId: hubspotWorkflowId }
+            where: { hubspotId: hubspotWorkflowId.toString() }
           });
 
           console.log('WorkflowService - Existing workflow found:', !!workflow);
@@ -347,9 +365,9 @@ export class WorkflowService {
             // Create new workflow record
             workflow = await tx.workflow.create({
               data: {
-                hubspotId: hubspotWorkflowId,
+                hubspotId: hubspotWorkflowId.toString(), // Convert to string since schema expects string
                 name: `Workflow ${hubspotWorkflowId}`, // This would be fetched from HubSpot in real implementation
-                ownerId: userId,
+                ownerId: user.id,
               },
             });
             console.log('WorkflowService - Created workflow:', workflow.id);
@@ -370,7 +388,7 @@ export class WorkflowService {
                 workflowId: workflow.id,
                 versionNumber: 1,
                 snapshotType: 'Initial Protection',
-                createdBy: userId,
+                createdBy: user.id,
                 data: {
                   steps: [],
                   metadata: {
