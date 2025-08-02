@@ -227,6 +227,7 @@ export class WorkflowController {
   @Post('start-protection')
   async startWorkflowProtection(@Body() body: any, @Req() req: Request) {
     try {
+      console.log('=== WORKFLOW PROTECTION START ===');
       console.log('WorkflowController - startWorkflowProtection called with body:', body);
       console.log('WorkflowController - Body type:', typeof body);
       console.log('WorkflowController - Body keys:', Object.keys(body));
@@ -234,11 +235,14 @@ export class WorkflowController {
       console.log('WorkflowController - workflowIds is array:', Array.isArray(body.workflowIds));
       console.log('WorkflowController - userId:', body.userId);
       console.log('WorkflowController - req.user:', req.user);
+      console.log('WorkflowController - Request headers:', req.headers);
+      console.log('WorkflowController - Request method:', req.method);
+      console.log('WorkflowController - Request URL:', req.url);
       
       // For now, just return success without doing any complex operations
       console.log('WorkflowController - Returning success response');
       
-      return { 
+      const response = { 
         message: 'Workflow protection started successfully', 
         data: { 
           workflowIds: body.workflowIds,
@@ -246,6 +250,11 @@ export class WorkflowController {
           timestamp: new Date().toISOString()
         } 
       };
+      
+      console.log('WorkflowController - Response:', response);
+      console.log('=== WORKFLOW PROTECTION END ===');
+      
+      return response;
       
     } catch (error) {
       console.error('WorkflowController - startWorkflowProtection error:', error);

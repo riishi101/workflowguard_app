@@ -316,20 +316,18 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       WorkflowState.setWorkflowSelection(true);
       WorkflowState.setSelectedCount(selectedWorkflows.length);
       
+      // Add a small delay to ensure state is properly set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Always navigate directly to dashboard instead of calling onComplete
+      console.log('WorkflowSelection - Navigating directly to dashboard');
+      navigate("/dashboard");
+      
+      // Show success toast after navigation
       toast({
         title: "Protection Activated!",
         description: response.data?.message || `${selectedWorkflows.length} workflows are now being monitored.`,
       });
-      
-      // Add a small delay to ensure state is properly set
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Call onComplete if provided, otherwise navigate
-      if (onComplete) {
-        onComplete();
-      } else {
-        navigate("/dashboard");
-      }
       
     } catch (error: any) {
       console.error('WorkflowSelection - Failed to start protection:', error);
