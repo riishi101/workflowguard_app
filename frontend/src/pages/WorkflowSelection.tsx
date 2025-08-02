@@ -301,14 +301,19 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log('WorkflowSelection - Auth token exists:', !!token);
 
       // Call API to start protection
+      const selectedWorkflowObjects = workflows.filter(workflow => 
+        selectedWorkflows.includes(workflow.id)
+      );
+      
       const requestBody = {
         workflowIds: selectedWorkflows,
+        workflows: selectedWorkflowObjects, // Include full workflow objects with names
         userId: user?.id // Include user ID if available
       };
       
       console.log('WorkflowSelection - API request body:', requestBody);
       
-      const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id);
+      const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id, selectedWorkflowObjects);
       
       console.log('WorkflowSelection - Protection API response:', response);
       

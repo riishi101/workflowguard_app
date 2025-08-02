@@ -264,22 +264,35 @@ export class WorkflowController {
       console.log('WorkflowController - Request method:', req.method);
       console.log('WorkflowController - Request URL:', req.url);
       
-      // For now, just return success without doing any complex operations
-      console.log('WorkflowController - Returning success response');
+      // Validate required fields
+      if (!body.workflowIds || !Array.isArray(body.workflowIds)) {
+        throw new HttpException('workflowIds is required and must be an array', HttpStatus.BAD_REQUEST);
+      }
       
-      const response = { 
-        message: 'Workflow protection started successfully', 
-        data: { 
-          workflowIds: body.workflowIds,
-          userId: body.userId,
-          timestamp: new Date().toISOString()
-        } 
-      };
+      if (!body.userId) {
+        throw new HttpException('userId is required', HttpStatus.BAD_REQUEST);
+      }
       
-      console.log('WorkflowController - Response:', response);
+      // Extract workflow names if provided
+      const workflowNames: { [key: string]: string } = {};
+      if (body.workflows && Array.isArray(body.workflows)) {
+        body.workflows.forEach((workflow: any) => {
+          if (workflow.id && workflow.name) {
+            workflowNames[workflow.id] = workflow.name;
+          }
+        });
+      }
+      
+      console.log('WorkflowController - Starting workflow protection for:', body.workflowIds.length, 'workflows');
+      console.log('WorkflowController - Workflow names:', workflowNames);
+      
+      // Actually process the workflows
+      const result = await this.workflowService.startWorkflowProtection(body.workflowIds, body.userId, workflowNames);
+      
+      console.log('WorkflowController - Workflow protection completed:', result);
       console.log('=== WORKFLOW PROTECTION END ===');
       
-      return response;
+      return result;
       
     } catch (error) {
       console.error('WorkflowController - startWorkflowProtection error:', error);

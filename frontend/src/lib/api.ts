@@ -303,9 +303,10 @@ export class ApiService {
     return response.data;
   }
 
-  static async startWorkflowProtection(workflowIds: string[], userId?: string): Promise<ApiResponse<any>> {
+  static async startWorkflowProtection(workflowIds: string[], userId?: string, workflows?: any[]): Promise<ApiResponse<any>> {
     const requestBody = {
       workflowIds,
+      workflows, // Include full workflow objects with names
       userId
     };
     const response = await apiClient.post('/workflow/start-protection', requestBody);

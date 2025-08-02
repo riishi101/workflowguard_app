@@ -324,9 +324,9 @@ export class WorkflowService {
     return { added, modified, removed };
   }
 
-  async startWorkflowProtection(workflowIds: string[], userId: string) {
+  async startWorkflowProtection(workflowIds: string[], userId: string, workflowNames?: { [key: string]: string }) {
     try {
-      console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId });
+      console.log('WorkflowService - startWorkflowProtection called with:', { workflowIds, userId, workflowNames });
       
       // First, check if the user exists, if not create a default user
       let user = await this.prisma.user.findUnique({
@@ -353,6 +353,9 @@ export class WorkflowService {
         for (const hubspotWorkflowId of workflowIds) {
           console.log('WorkflowService - Processing workflow:', hubspotWorkflowId);
           
+          // Get the workflow name from the provided names or use a default
+          const workflowName = workflowNames?.[hubspotWorkflowId] || `Workflow ${hubspotWorkflowId}`;
+          
           // Check if workflow already exists
           let workflow = await tx.workflow.findFirst({
             where: { hubspotId: hubspotWorkflowId.toString() }
@@ -361,12 +364,12 @@ export class WorkflowService {
           console.log('WorkflowService - Existing workflow found:', !!workflow);
 
           if (!workflow) {
-            console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId);
+            console.log('WorkflowService - Creating new workflow for:', hubspotWorkflowId, 'with name:', workflowName);
             // Create new workflow record
             workflow = await tx.workflow.create({
               data: {
                 hubspotId: hubspotWorkflowId.toString(), // Convert to string since schema expects string
-                name: `Workflow ${hubspotWorkflowId}`, // This would be fetched from HubSpot in real implementation
+                name: workflowName, // Use the actual workflow name
                 ownerId: user.id,
               },
             });
