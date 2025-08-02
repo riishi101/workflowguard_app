@@ -176,6 +176,9 @@ const Dashboard = () => {
       setWorkflows(workflows);
       setStats(stats);
 
+      console.log('Dashboard - State set with workflows:', workflows.length);
+      console.log('Dashboard - State set with stats:', !!stats);
+
       // Check if user has workflows
       const hasWorkflows = workflows && workflows.length > 0;
       WorkflowState.setWorkflowSelection(hasWorkflows);
@@ -263,6 +266,12 @@ const Dashboard = () => {
     
     fetchDashboardData();
   }, []);
+
+  // Add effect to track workflows state changes
+  useEffect(() => {
+    console.log('Dashboard - Workflows state changed:', workflows.length);
+    console.log('Dashboard - Current workflows:', workflows);
+  }, [workflows]);
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     // Store the current workflow context for the history page
@@ -469,6 +478,10 @@ const Dashboard = () => {
     console.log('Dashboard - Showing empty state, workflow state:', { hasSelectedWorkflows, selectedCount });
     console.log('Dashboard - Workflows length:', workflows.length);
     console.log('Dashboard - Stats:', stats);
+    console.log('Dashboard - Loading state:', loading);
+    console.log('Dashboard - Workflows state:', workflows);
+    console.log('Dashboard - Condition check: !loading && workflows.length === 0');
+    console.log('Dashboard - Condition result:', !loading && workflows.length === 0);
     
     // If user has selected workflows but none are showing yet, show processing message
     if (hasSelectedWorkflows && selectedCount > 0) {
