@@ -36,13 +36,19 @@ const RootRoute = () => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
   
-  // Only show OnboardingFlow on root route if user is not authenticated
-  if (location.pathname === '/' && !loading && !isAuthenticated) {
+  // Check if this is an OAuth callback (has success/token params)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isOAuthCallback = urlParams.get('success') === 'true' && urlParams.get('token');
+  
+  // Show OnboardingFlow on root route if:
+  // 1. User is not authenticated, OR
+  // 2. User is authenticated but this is an OAuth callback (needs workflow selection)
+  if (location.pathname === '/' && !loading && (!isAuthenticated || isOAuthCallback)) {
     return <OnboardingFlow />;
   }
   
-  // If user is authenticated and on root route, redirect to dashboard
-  if (location.pathname === '/' && !loading && isAuthenticated) {
+  // If user is authenticated and on root route (but not OAuth callback), redirect to dashboard
+  if (location.pathname === '/' && !loading && isAuthenticated && !isOAuthCallback) {
     return <Navigate to="/dashboard" replace />;
   }
   
