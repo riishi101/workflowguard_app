@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TrialAccessGuard from "@/components/TrialAccessGuard";
 import OnboardingFlow from "@/components/OnboardingFlow";
@@ -31,6 +31,25 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Component to conditionally render OnboardingFlow
+const RootRoute = () => {
+  const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
+  
+  // Only show OnboardingFlow on root route if user is not authenticated
+  if (location.pathname === '/' && !loading && !isAuthenticated) {
+    return <OnboardingFlow />;
+  }
+  
+  // If user is authenticated and on root route, redirect to dashboard
+  if (location.pathname === '/' && !loading && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // For all other routes, return null (let other routes handle rendering)
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -39,7 +58,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<OnboardingFlow />} />
+            <Route path="/" element={<RootRoute />} />
             <Route path="/workflow-selection" element={<ProtectedRoute><TrialAccessGuard><WorkflowSelection /></TrialAccessGuard></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
             <Route path="/workflow-history" element={<ProtectedRoute><TrialAccessGuard><WorkflowHistory /></TrialAccessGuard></ProtectedRoute>} />

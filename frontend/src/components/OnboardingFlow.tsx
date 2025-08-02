@@ -18,12 +18,6 @@ const OnboardingFlow = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Only render OnboardingFlow on the root route
-  if (window.location.pathname !== '/') {
-    console.log('OnboardingFlow - Not on root route, returning null');
-    return null;
-  }
-
   // Timeout mechanism to prevent infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -61,12 +55,6 @@ const OnboardingFlow = () => {
 
   useEffect(() => {
     if (loading || isInitialized) return; // Don't process while loading or if already initialized
-
-    // Only handle the root route "/"
-    if (window.location.pathname !== '/') {
-      console.log('OnboardingFlow - Not on root route, skipping initialization');
-      return;
-    }
 
     // Check if this is an OAuth success callback
     const urlParams = new URLSearchParams(window.location.search);
