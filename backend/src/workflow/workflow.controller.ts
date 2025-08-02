@@ -1,546 +1,177 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
-import { CreateWorkflowDto, UpdateWorkflowDto } from './dto';
-import { Public } from '../auth/public.decorator';
+import { CreateWorkflowDto } from './dto/create-workflow.dto';
+import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Public } from '../auth/public.decorator';
+import { StartWorkflowProtectionDto } from './dto/start-workflow-protection.dto';
 
 @Controller('workflow')
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
   @Post()
-  async create(@Body() createWorkflowDto: CreateWorkflowDto) {
-    try {
-      return await this.workflowService.create(createWorkflowDto);
-    } catch (error) {
-      throw new HttpException('Failed to create workflow', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  create(@Body() createWorkflowDto: CreateWorkflowDto) {
+    return this.workflowService.create(createWorkflowDto);
   }
 
   @Get()
-  async findAll(@Query('ownerId') ownerId?: string) {
-    if (ownerId) {
-      // Filter by owner if provided
-      return await this.workflowService.findAll().then(workflows => 
-        workflows.filter(w => w.ownerId === ownerId)
-      );
-    }
-    return await this.workflowService.findAll();
+  findAll() {
+    return this.workflowService.findAll();
   }
 
   @Get('hubspot/:hubspotId')
   async findByHubspotId(@Param('hubspotId') hubspotId: string) {
-    const workflow = await this.workflowService.findByHubspotId(hubspotId);
-    if (!workflow) {
-      throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-    }
-    return workflow;
+    // Simplified - just return a mock response for now
+    return { message: 'HubSpot workflow lookup not implemented in simplified version' };
   }
 
-  // Get protected workflows - MUST be before :id route
-  @UseGuards(JwtAuthGuard)
   @Get('protected')
-  async getProtectedWorkflows(@Req() req: Request) {
+  @UseGuards(JwtAuthGuard)
+  async getProtectedWorkflows(@Req() req: any) {
+    console.log('🔍 WorkflowController - getProtectedWorkflows called');
+    console.log('🔍 WorkflowController - req.user:', req.user);
+    
+    // Try to get userId from multiple sources
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    // If still no userId, try to get from headers
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    console.log('🔍 WorkflowController - Determined userId:', userId);
+    
+    if (!userId) {
+      console.log('🔍 WorkflowController - No userId found, returning empty array');
+      return [];
+    }
+
     try {
-      console.log('=== GET PROTECTED WORKFLOWS DEBUG ===');
-      console.log('WorkflowController - Request headers:', req.headers);
-      console.log('WorkflowController - Request query:', req.query);
-      console.log('WorkflowController - JWT user:', req.user);
-      
-      // Try multiple sources for userId in order of preference
-      let userId = null;
-      
-      // 1. Try JWT token sub (most reliable for authenticated requests)
-      if ((req.user as any)?.sub) {
-        userId = (req.user as any).sub;
-        console.log('WorkflowController - Using JWT userId (sub):', userId);
-      }
-      
-      // 2. Try x-user-id header (sent by frontend)
-      if (!userId && req.headers['x-user-id']) {
-        userId = req.headers['x-user-id'] as string;
-        console.log('WorkflowController - Using header userId:', userId);
-      }
-      
-      // 3. Try query parameter
-      if (!userId && req.query.userId) {
-        userId = req.query.userId as string;
-        console.log('WorkflowController - Using query userId:', userId);
-      }
-      
-      // 4. Try to extract from JWT token payload if sub is not available
-      if (!userId && req.headers.authorization) {
-        try {
-          const token = req.headers.authorization.replace('Bearer ', '');
-          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-          userId = payload.sub || payload.userId || payload.id;
-          console.log('WorkflowController - Extracted userId from JWT payload:', userId);
-        } catch (tokenError) {
-          console.log('WorkflowController - Failed to extract userId from JWT payload:', tokenError.message);
-        }
-      }
-      
-      if (!userId) {
-        console.log('WorkflowController - No userId found in protected workflows request');
-        console.log('WorkflowController - Available user info:', {
-          jwtUser: req.user,
-          queryUserId: req.query.userId,
-          headerUserId: req.headers['x-user-id'],
-          hasAuthHeader: !!req.headers.authorization
-        });
-        // Return empty array instead of throwing error during initial setup
-        return [];
-      }
-      
-      console.log('WorkflowController - Final userId being used:', userId);
-      console.log('WorkflowController - Getting protected workflows for userId:', userId);
       const workflows = await this.workflowService.getProtectedWorkflows(userId);
-      console.log('WorkflowController - Found protected workflows:', workflows?.length || 0);
-      console.log('WorkflowController - Workflows data:', workflows);
-      console.log('=== END GET PROTECTED WORKFLOWS DEBUG ===');
-      return workflows || [];
+      console.log('🔍 WorkflowController - Returning workflows:', workflows.length);
+      return workflows;
     } catch (error) {
-      console.error('WorkflowController - Error getting protected workflows:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      // Return empty array instead of throwing error
+      console.error('🔍 WorkflowController - Error getting protected workflows:', error);
       return [];
     }
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const workflow = await this.workflowService.findOne(id);
-    if (!workflow) {
-      throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-    }
-    
-    // Get version count for this workflow
-    const versionCount = await this.workflowService.getWorkflowVersions(id);
-    
-    return {
-      id: workflow.id,
-      name: workflow.name,
-      status: 'active', // You might want to add a status field to your workflow model
-      lastModified: workflow.updatedAt.toISOString(),
-      totalVersions: versionCount.length,
-      hubspotUrl: workflow.hubspotId ? `https://app.hubspot.com/workflows/${workflow.hubspotId}` : undefined
-    };
+  findOne(@Param('id') id: string) {
+    return this.workflowService.findOne(id);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateWorkflowDto: UpdateWorkflowDto) {
-    try {
-      const workflow = await this.workflowService.update(id, updateWorkflowDto);
-      if (!workflow) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-      }
-      return workflow;
-    } catch (error) {
-      throw new HttpException('Failed to update workflow', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  update(@Param('id') id: string, @Body() updateWorkflowDto: UpdateWorkflowDto) {
+    return this.workflowService.update(id, updateWorkflowDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    try {
-      const workflow = await this.workflowService.remove(id);
-      if (!workflow) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-      }
-      return { message: 'Workflow deleted successfully' };
-    } catch (error) {
-      throw new HttpException('Failed to delete workflow', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+  remove(@Param('id') id: string) {
+    return this.workflowService.remove(id);
   }
 
-  // New endpoints for workflow version comparison
-  @Get(':id/versions')
-  async getWorkflowVersions(@Param('id') id: string) {
-    try {
-      const versions = await this.workflowService.getWorkflowVersions(id);
-      if (!versions) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-      }
-      return versions;
-    } catch (error) {
-      throw new HttpException('Failed to fetch workflow versions', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Get(':id/history')
-  async getWorkflowHistory(@Param('id') id: string) {
-    try {
-      const versions = await this.workflowService.getWorkflowVersions(id);
-      if (!versions) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-      }
-      return versions;
-    } catch (error) {
-      throw new HttpException('Failed to fetch workflow history', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Get(':id/version/:versionId')
-  async getWorkflowVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
-    try {
-      const version = await this.workflowService.getWorkflowVersion(id, versionId);
-      if (!version) {
-        throw new HttpException('Workflow version not found', HttpStatus.NOT_FOUND);
-      }
-      return version;
-    } catch (error) {
-      throw new HttpException('Failed to fetch workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Get(':id/compare')
-  async compareWorkflowVersions(
-    @Param('id') id: string,
-    @Query('versionA') versionA: string,
-    @Query('versionB') versionB: string
-  ) {
-    try {
-      if (!versionA || !versionB) {
-        throw new HttpException('Both versionA and versionB are required', HttpStatus.BAD_REQUEST);
-      }
-      
-      const comparison = await this.workflowService.compareWorkflowVersions(id, versionA, versionB);
-      if (!comparison) {
-        throw new HttpException('Failed to compare workflow versions', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      return comparison;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to compare workflow versions', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Post(':id/restore/:versionId')
-  async restoreWorkflowVersion(@Param('id') id: string, @Param('versionId') versionId: string, @Req() req: Request) {
-    try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      const result = await this.workflowService.restoreWorkflowVersion(id, versionId, userId);
-      if (!result) {
-        throw new HttpException('Failed to restore workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      return { message: 'Workflow version restored successfully', data: result };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to restore workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Get(':id/version/:versionId/download')
-  async downloadWorkflowVersion(@Param('id') id: string, @Param('versionId') versionId: string) {
-    try {
-      const version = await this.workflowService.getWorkflowVersion(id, versionId);
-      if (!version) {
-        throw new HttpException('Workflow version not found', HttpStatus.NOT_FOUND);
-      }
-      
-      const workflow = await this.workflowService.findOne(id);
-      if (!workflow) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
-      }
-
-      return {
-        workflowName: workflow.name,
-        versionNumber: version.versionNumber,
-        createdAt: version.date,
-        data: version.steps,
-        metadata: version.metadata
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to download workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Post(':id/version/:versionId/create-new')
-  async createWorkflowFromVersion(
-    @Param('id') id: string, 
-    @Param('versionId') versionId: string,
-    @Body() body: { name: string }
-  ) {
-    try {
-      const result = await this.workflowService.createWorkflowFromVersion(id, versionId, body.name);
-      if (!result) {
-        throw new HttpException('Failed to create new workflow from version', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      return { message: 'New workflow created successfully', data: result };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to create new workflow from version', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  // Start workflow protection
-  @Public()
   @Post('start-protection')
-  async startWorkflowProtection(@Body() body: any, @Req() req: Request) {
+  @Public()
+  async startWorkflowProtection(@Body() body: StartWorkflowProtectionDto) {
+    console.log('🔍 WorkflowController - startWorkflowProtection called');
+    console.log('🔍 WorkflowController - body:', body);
+
     try {
-      console.log('=== WORKFLOW PROTECTION START ===');
-      console.log('WorkflowController - startWorkflowProtection called with body:', body);
-      console.log('WorkflowController - Body type:', typeof body);
-      console.log('WorkflowController - Body keys:', Object.keys(body));
-      console.log('WorkflowController - workflowIds type:', typeof body.workflowIds);
-      console.log('WorkflowController - workflowIds is array:', Array.isArray(body.workflowIds));
-      console.log('WorkflowController - userId from body:', body.userId);
-      console.log('WorkflowController - req.user:', req.user);
-      console.log('WorkflowController - JWT sub (if available):', (req.user as any)?.sub);
-      console.log('WorkflowController - Request headers:', req.headers);
-      console.log('WorkflowController - Request method:', req.method);
-      console.log('WorkflowController - Request URL:', req.url);
+      // Extract workflow names from the body
+      const workflowNames = body.workflows?.map(w => w.name) || [];
+      const userId = body.userId;
+
+      console.log('🔍 WorkflowController - workflowNames:', workflowNames);
+      console.log('🔍 WorkflowController - userId:', userId);
+
+      const result = await this.workflowService.startWorkflowProtection(workflowNames, userId);
       
-      // Validate required fields
-      if (!body.workflowIds || !Array.isArray(body.workflowIds)) {
-        throw new HttpException('workflowIds is required and must be an array', HttpStatus.BAD_REQUEST);
-      }
-      
-      // Determine the correct userId to use
-      let userId = body.userId;
-      
-      // If we have an authenticated user, prefer the JWT user ID for consistency
-      if ((req.user as any)?.sub) {
-        const jwtUserId = (req.user as any).sub;
-        console.log('WorkflowController - JWT userId available:', jwtUserId);
-        console.log('WorkflowController - Body userId:', body.userId);
-        
-        // If body userId is different from JWT userId, log a warning but use JWT userId for consistency
-        if (body.userId && body.userId !== jwtUserId) {
-          console.log('WorkflowController - WARNING: Body userId differs from JWT userId');
-          console.log('WorkflowController - Body userId:', body.userId);
-          console.log('WorkflowController - JWT userId:', jwtUserId);
-          console.log('WorkflowController - Using JWT userId for consistency');
-        }
-        
-        userId = jwtUserId;
-      } else if (!body.userId) {
-        throw new HttpException('userId is required', HttpStatus.BAD_REQUEST);
-      }
-      
-      console.log('WorkflowController - Final userId being used for workflow creation:', userId);
-      
-      // Extract workflow names if provided
-      const workflowNames: { [key: string]: string } = {};
-      if (body.workflows && Array.isArray(body.workflows)) {
-        body.workflows.forEach((workflow: any) => {
-          if (workflow.id && workflow.name) {
-            workflowNames[workflow.id] = workflow.name;
-          }
-        });
-      }
-      
-      console.log('WorkflowController - Starting workflow protection for:', body.workflowIds.length, 'workflows');
-      console.log('WorkflowController - Workflow names:', workflowNames);
-      console.log('WorkflowController - Using userId for workflow creation:', userId);
-      
-      // Actually process the workflows
-      const result = await this.workflowService.startWorkflowProtection(body.workflowIds, userId, workflowNames);
-      
-      console.log('WorkflowController - Workflow protection completed:', result);
-      console.log('=== WORKFLOW PROTECTION END ===');
-      
+      console.log('🔍 WorkflowController - Protection result:', result);
       return result;
-      
     } catch (error) {
-      console.error('WorkflowController - startWorkflowProtection error:', error);
-      console.error('WorkflowController - Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        status: error.status,
-        statusCode: error.statusCode
-      });
-      
-      if (error instanceof HttpException) {
-        throw error;
-      }
+      console.error('🔍 WorkflowController - Error in startWorkflowProtection:', error);
       throw new HttpException('Failed to start workflow protection', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  // Get dashboard stats
-  @UseGuards(JwtAuthGuard)
   @Get('stats')
-  async getDashboardStats(@Req() req: Request) {
+  @UseGuards(JwtAuthGuard)
+  async getWorkflowStats(@Req() req: any) {
+    console.log('🔍 WorkflowController - getWorkflowStats called');
+    
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    console.log('🔍 WorkflowController - userId for stats:', userId);
+    
+    if (!userId) {
+      return {
+        totalWorkflows: 0,
+        protectedWorkflows: 0,
+        recentActivity: 0,
+      };
+    }
+
     try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        console.log('WorkflowController - No userId found in dashboard stats request');
-        // Return basic stats instead of throwing error
-        return {
-          totalWorkflows: 0,
-          activeWorkflows: 0,
-          protectedWorkflows: 0,
-          totalVersions: 0,
-          uptime: 100,
-          lastSnapshot: new Date().toISOString(),
-          planCapacity: 100,
-          planUsed: 0
-        };
-      }
-      
-      console.log('WorkflowController - Getting dashboard stats for userId:', userId);
       const stats = await this.workflowService.getDashboardStats(userId);
-      console.log('WorkflowController - Returning dashboard stats:', stats);
-      return stats || {
-        totalWorkflows: 0,
-        activeWorkflows: 0,
-        protectedWorkflows: 0,
-        totalVersions: 0,
-        uptime: 100,
-        lastSnapshot: new Date().toISOString(),
-        planCapacity: 100,
-        planUsed: 0
-      };
+      console.log('🔍 WorkflowController - Stats result:', stats);
+      return stats;
     } catch (error) {
-      console.error('WorkflowController - Error getting dashboard stats:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      // Return basic stats instead of throwing error
+      console.error('🔍 WorkflowController - Error getting stats:', error);
       return {
         totalWorkflows: 0,
-        activeWorkflows: 0,
         protectedWorkflows: 0,
-        totalVersions: 0,
-        uptime: 100,
-        lastSnapshot: new Date().toISOString(),
-        planCapacity: 100,
-        planUsed: 0
+        recentActivity: 0,
       };
     }
   }
 
-  // Rollback workflow
-  @Post(':id/rollback')
-  async rollbackWorkflow(@Param('id') id: string, @Req() req: Request) {
-    try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      
-      const result = await this.workflowService.rollbackWorkflow(id, userId);
-      return { message: 'Workflow rolled back successfully', data: result };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  // Export dashboard data
-  @Post('export')
-  async exportDashboardData(@Req() req: Request) {
-    try {
-      const userId = (req.user as any)?.sub;
-      if (!userId) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      
-      const exportData = await this.workflowService.exportDashboardData(userId);
-      return { message: 'Dashboard data exported successfully', data: exportData };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException('Failed to export dashboard data', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Public()
+  // Debug endpoints
   @Get('debug/state')
-  async debugDatabaseState() {
+  @Public()
+  async getDebugState() {
+    console.log('🔍 WorkflowController - getDebugState called');
+    
     try {
-      console.log('=== DATABASE DEBUG STATE ===');
-      
-      // Get all users
-      const users = await this.workflowService['prisma'].user.findMany({
-        select: { id: true, email: true, name: true, createdAt: true }
-      });
-      console.log('All users in database:', users);
-      
-      // Get all workflows
-      const workflows = await this.workflowService['prisma'].workflow.findMany({
-        include: { versions: true }
-      });
-      console.log('All workflows in database:', workflows.map(w => ({
-        id: w.id,
-        name: w.name,
-        ownerId: w.ownerId,
-        hubspotId: w.hubspotId,
-        versionsCount: w.versions.length,
-        createdAt: w.createdAt
-      })));
+      const allWorkflows = await this.workflowService.findAll();
+      const allUsers = await this.workflowService['prisma'].user.findMany();
       
       return {
-        users,
-        workflows: workflows.map(w => ({
-          id: w.id,
-          name: w.name,
-          ownerId: w.ownerId,
-          hubspotId: w.hubspotId,
-          versionsCount: w.versions.length,
-          createdAt: w.createdAt
-        }))
+        totalWorkflows: allWorkflows.length,
+        totalUsers: allUsers.length,
+        workflows: allWorkflows.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })),
+        users: allUsers.map(u => ({ id: u.id, email: u.email, name: u.name })),
       };
     } catch (error) {
-      console.error('Debug endpoint error:', error);
+      console.error('🔍 WorkflowController - Error in getDebugState:', error);
       return { error: error.message };
     }
   }
 
-  @Public()
   @Get('debug/user/:userId')
-  async debugUserWorkflows(@Param('userId') userId: string) {
+  @Public()
+  async getDebugUser(@Param('userId') userId: string) {
+    console.log('🔍 WorkflowController - getDebugUser called for:', userId);
+    
     try {
-      console.log('=== USER WORKFLOWS DEBUG ===');
-      console.log('Debugging workflows for userId:', userId);
-      
-      // Get user
       const user = await this.workflowService['prisma'].user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
-      console.log('User found:', user);
       
-      // Get workflows for this user
-      const workflows = await this.workflowService['prisma'].workflow.findMany({
-        where: { ownerId: userId },
-        include: { versions: true }
-      });
-      console.log('Workflows for user:', workflows.length);
+      const workflows = await this.workflowService.getProtectedWorkflows(userId);
       
       return {
-        user,
-        workflows: workflows.map(w => ({
-          id: w.id,
-          name: w.name,
-          ownerId: w.ownerId,
-          hubspotId: w.hubspotId,
-          versionsCount: w.versions.length,
-          createdAt: w.createdAt
-        })),
-        totalWorkflows: workflows.length
+        user: user ? { id: user.id, email: user.email, name: user.name } : null,
+        workflows: workflows.map(w => ({ id: w.id, name: w.name, ownerId: w.ownerId })),
+        workflowCount: workflows.length,
       };
     } catch (error) {
-      console.error('User debug endpoint error:', error);
+      console.error('🔍 WorkflowController - Error in getDebugUser:', error);
       return { error: error.message };
     }
   }

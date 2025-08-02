@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -52,7 +58,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          Json
+  data          Json     // Raw workflow JSON from HubSpot
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
@@ -100,96 +106,86 @@ model Plan {
   name        String
   description String?
   price       Float
-  currency    String   @default("USD")
-  interval    String   @default("month")
-  features    String?
+  interval    String
+  features    String?  // Comma-separated list of features
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Overage {
-  id            String    @id @default(uuid())
-  userId        String
-  month         String
-  workflowCount Int
-  limit         Int
-  overage       Int
-  amount        Float     @default(0)
-  billed        Boolean   @default(false)
-  periodStart   DateTime?
-  periodEnd     DateTime?
-  type          String    @default("workflow")
-  createdAt     DateTime  @default(now())
-  user          User      @relation(fields: [userId], references: [id])
-
-  @@unique([userId, month])
-}
-
-model NotificationSettings {
-  id                   String   @id @default(uuid())
-  userId               String   @unique
-  emailNotifications   Boolean  @default(true)
-  webhookNotifications Boolean  @default(false)
-  dailyDigest          Boolean  @default(false)
-  weeklyReport         Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  user                 User     @relation(fields: [userId], references: [id])
-}
-
-model ApiKey {
   id          String    @id @default(uuid())
   userId      String
-  name        String
-  key         String    @unique
+  planId      String
+  amount      Float
   description String?
-  permissions String?
-  revoked     Boolean   @default(false)
-  lastUsed    DateTime?
-  isActive    Boolean   @default(true)
+  isBilled    Boolean   @default(false)
+  billedAt    DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   user        User      @relation(fields: [userId], references: [id])
 }
 
+model NotificationSettings {
+  id                    String @id @default(uuid())
+  userId                String @unique
+  enabled               Boolean @default(true)
+  email                 String
+  workflowDeleted       Boolean @default(true)
+  enrollmentTriggerModified Boolean @default(true)
+  workflowRolledBack    Boolean @default(true)
+  criticalActionModified Boolean @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id])
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  key         String   @unique
+  isActive    Boolean  @default(true)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+}
+
 model SsoConfig {
-  id           String   @id @default(uuid())
-  provider     String
-  clientId     String
-  clientSecret String
-  redirectUri  String
-  scopes       String?
-  metadata     String?
-  enabled      Boolean  @default(true)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String @id @default(uuid())
+  provider          String @unique
+  clientId          String
+  clientSecret      String
+  redirectUri       String
+  isEnabled         Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model SupportTicket {
-  id        String   @id @default(uuid())
-  userId    String?
-  fullName  String
-  email     String
-  subject   String
-  message   String
-  category  String   @default("general")
-  priority  String   @default("medium")
-  status    String   @default("open")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User?    @relation(fields: [userId], references: [id])
-  replies   SupportReply[]
+  id          String           @id @default(uuid())
+  userId      String
+  subject     String
+  description String
+  status      String           @default("open")
+  priority    String           @default("medium")
+  category    String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User             @relation(fields: [userId], references: [id])
+  replies     SupportReply[]
 }
 
 model SupportReply {
-  id         String   @id @default(uuid())
-  ticketId   String
-  userId     String?
-  message    String
-  isFromUser Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  ticket     SupportTicket @relation(fields: [ticketId], references: [id])
-  user       User?    @relation(fields: [userId], references: [id])
-}
+  id          String         @id @default(uuid())
+  ticketId    String
+  userId      String
+  message     String
+  isInternal  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  ticket      SupportTicket  @relation(fields: [ticketId], references: [id])
+  user        User           @relation(fields: [userId], references: [id])
+} 
