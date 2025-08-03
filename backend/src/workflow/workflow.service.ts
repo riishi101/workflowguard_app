@@ -304,13 +304,42 @@ export class WorkflowService {
     console.log('🔍 WorkflowService - userId:', userId);
 
     try {
+      // Validate that we have a version to rollback to
+      if (!version) {
+        throw new HttpException('No version found for rollback', HttpStatus.BAD_REQUEST);
+      }
+
+      // Get the latest version number to increment
+      const latestVersion = await this.prisma.workflowVersion.findFirst({
+        where: { workflowId },
+        orderBy: { versionNumber: 'desc' },
+      });
+
+      const newVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+      // Handle the data field properly - ensure it's a valid JSON object
+      let rollbackData;
+      try {
+        // If version.data is already a string, parse it
+        if (typeof version.data === 'string') {
+          rollbackData = JSON.parse(version.data);
+        } else {
+          // If it's already an object, use it directly
+          rollbackData = version.data;
+        }
+      } catch (parseError) {
+        console.error('🔍 WorkflowService - Error parsing version data:', parseError);
+        // Use a default empty object if parsing fails
+        rollbackData = { steps: [] };
+      }
+
       // Create a new version with the rollback data
       const rollbackVersion = await this.prisma.workflowVersion.create({
         data: {
           workflowId: workflowId,
-          versionNumber: Date.now(), // Use timestamp as version number
+          versionNumber: newVersionNumber,
           snapshotType: 'Rollback Snapshot',
-          data: version.data, // Use the data from the version we're rolling back to
+          data: rollbackData, // Prisma will handle the JSON conversion
           createdBy: userId,
           createdAt: new Date(),
         },
@@ -335,6 +364,9 @@ export class WorkflowService {
       };
     } catch (error) {
       console.error('🔍 WorkflowService - Error in rollbackWorkflow:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
