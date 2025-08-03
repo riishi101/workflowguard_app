@@ -78,10 +78,16 @@ const WorkflowHistoryDetail = () => {
       console.log('🔍 WorkflowHistoryDetail - Details response:', detailsResponse);
       console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
       
+      // Check if workflow details were found
+      if (!detailsResponse.data) {
+        throw new Error('Workflow not found');
+      }
+      
       setWorkflowDetails(detailsResponse.data);
       
       // Transform the backend data to match frontend interface
-      const historyData = historyResponse.data;
+      // The backend returns the data directly, not wrapped in a data property
+      const historyData = Array.isArray(historyResponse) ? historyResponse : historyResponse.data || [];
       console.log('🔍 WorkflowHistoryDetail - History response data:', historyData);
       console.log('🔍 WorkflowHistoryDetail - History data type:', typeof historyData);
       console.log('🔍 WorkflowHistoryDetail - Is array:', Array.isArray(historyData));
@@ -114,7 +120,10 @@ const WorkflowHistoryDetail = () => {
         data: err.response?.data
       });
       
-      if (err.response?.status === 404) {
+      if (err.message === 'Workflow not found') {
+        setError('Workflow not found. Please check the URL and try again.');
+        setVersions([]);
+      } else if (err.response?.status === 404) {
         setError('No version history available for this workflow yet. Versions will appear here once changes are made.');
         setVersions([]);
       } else {
