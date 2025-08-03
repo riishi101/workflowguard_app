@@ -96,18 +96,23 @@ const WorkflowHistoryDetail = () => {
       // Ensure we have an array to work with
       const versionsArray = Array.isArray(historyData) ? historyData : [];
       
-      const transformedVersions = versionsArray.map((version: any) => ({
-        id: version.id,
-        versionNumber: version.versionNumber.toString(),
-        dateTime: version.dateTime || version.date || version.createdAt,
-        modifiedBy: {
-          name: version.modifiedBy?.name || version.initiator || 'Unknown User',
-          initials: (version.modifiedBy?.name || version.initiator || 'Unknown User').split(' ').map((n: string) => n[0]).join('').toUpperCase(),
-        },
-        changeSummary: version.changeSummary || version.notes || `Version ${version.versionNumber}`,
-        type: version.type || 'Manual Snapshot',
-        status: version.status || 'active'
-      }));
+      const transformedVersions = versionsArray.map((version: any) => {
+        const userName = version.modifiedBy?.name || version.initiator || 'Unknown User';
+        const userInitials = userName ? userName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU';
+        
+        return {
+          id: version.id,
+          versionNumber: version.versionNumber.toString(),
+          dateTime: version.dateTime || version.date || version.createdAt,
+          modifiedBy: {
+            name: userName,
+            initials: userInitials,
+          },
+          changeSummary: version.changeSummary || version.notes || `Version ${version.versionNumber}`,
+          type: version.type || 'Manual Snapshot',
+          status: version.status || 'active'
+        };
+      });
       
       console.log('🔍 WorkflowHistoryDetail - Transformed versions:', transformedVersions);
       setVersions(transformedVersions);
