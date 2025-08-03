@@ -160,22 +160,31 @@ const Dashboard = () => {
       const stats = statsResponse.data || null;
 
       // Transform workflows to match expected frontend format
-      const transformedWorkflows = workflows.map((workflow: any) => ({
-        id: workflow.id,
-        name: workflow.name,
-        lastSnapshot: workflow.hubspotId || 'N/A',
-        versions: workflow.versions?.length || 0,
-        lastModifiedBy: {
-          name: workflow.owner?.name || workflow.owner?.email || 'Unknown User',
-          initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
-          email: workflow.owner?.email || 'unknown@example.com'
-        },
-        status: workflow.status || 'active',
-        protectionStatus: 'protected',
-        lastModified: workflow.updatedAt || workflow.createdAt || new Date().toISOString(),
-        steps: workflow.steps || 0,
-        contacts: workflow.contacts || 0
-      }));
+      const transformedWorkflows = workflows.map((workflow: any) => {
+        console.log('🔍 Dashboard - Processing workflow:', {
+          id: workflow.id,
+          name: workflow.name,
+          hubspotId: workflow.hubspotId,
+          owner: workflow.owner
+        });
+        
+        return {
+          id: workflow.id,
+          name: workflow.name,
+          lastSnapshot: workflow.hubspotId || 'N/A',
+          versions: workflow.versions?.length || 0,
+          lastModifiedBy: {
+            name: workflow.owner?.name || workflow.owner?.email || 'Unknown User',
+            initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
+            email: workflow.owner?.email || 'unknown@example.com'
+          },
+          status: workflow.status || 'active',
+          protectionStatus: 'protected',
+          lastModified: workflow.updatedAt || workflow.createdAt || new Date().toISOString(),
+          steps: workflow.steps || 0,
+          contacts: workflow.contacts || 0
+        };
+      });
 
       console.log('Dashboard - Final workflows array:', transformedWorkflows);
       console.log('Dashboard - Final workflows length:', transformedWorkflows.length);
@@ -291,6 +300,11 @@ const Dashboard = () => {
   }, [workflows.length]);
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
+    console.log('🔍 Dashboard - handleViewHistory called with:', {
+      workflowId,
+      workflowName
+    });
+    
     // Store the current workflow context for the history page
     localStorage.setItem('currentWorkflow', JSON.stringify({ id: workflowId, name: workflowName }));
     
