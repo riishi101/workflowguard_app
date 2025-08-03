@@ -500,11 +500,11 @@ const WorkflowHistoryDetail = () => {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs bg-red-100 text-red-800">
-                            {version.modifiedBy.initials}
+                            {version.modifiedBy?.initials || (version.modifiedBy?.name || 'Unknown').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm text-gray-900">
-                          {version.modifiedBy.name}
+                          {version.modifiedBy?.name || 'Unknown User'}
                         </span>
                       </div>
                     </td>

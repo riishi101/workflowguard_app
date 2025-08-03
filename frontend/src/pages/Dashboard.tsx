@@ -170,22 +170,40 @@ const Dashboard = () => {
       const workflows = workflowsResponse.data || [];
       const stats = statsResponse.data || null;
 
-      console.log('Dashboard - Final workflows array:', workflows);
-      console.log('Dashboard - Final workflows length:', workflows.length);
+      // Transform workflows to match expected frontend format
+      const transformedWorkflows = workflows.map((workflow: any) => ({
+        id: workflow.id,
+        name: workflow.name,
+        lastSnapshot: workflow.hubspotId || 'N/A',
+        versions: workflow.versions?.length || 0,
+        lastModifiedBy: {
+          name: workflow.owner?.name || workflow.owner?.email || 'Unknown User',
+          initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
+          email: workflow.owner?.email || 'unknown@example.com'
+        },
+        status: workflow.status || 'active',
+        protectionStatus: 'protected',
+        lastModified: workflow.updatedAt || workflow.createdAt || new Date().toISOString(),
+        steps: workflow.steps || 0,
+        contacts: workflow.contacts || 0
+      }));
+
+      console.log('Dashboard - Final workflows array:', transformedWorkflows);
+      console.log('Dashboard - Final workflows length:', transformedWorkflows.length);
       console.log('Dashboard - Final stats:', stats);
 
-      setWorkflows(workflows);
+      setWorkflows(transformedWorkflows);
       setStats(stats);
 
-      console.log('Dashboard - State set with workflows:', workflows.length);
+      console.log('Dashboard - State set with workflows:', transformedWorkflows.length);
       console.log('Dashboard - State set with stats:', !!stats);
 
       // Check if user has workflows
-      const hasWorkflows = workflows && workflows.length > 0;
+      const hasWorkflows = transformedWorkflows && transformedWorkflows.length > 0;
       WorkflowState.setWorkflowSelection(hasWorkflows);
-      WorkflowState.setSelectedCount(hasWorkflows ? workflows.length : 0);
+      WorkflowState.setSelectedCount(hasWorkflows ? transformedWorkflows.length : 0);
 
-      console.log('Dashboard - Set workflow state:', { hasWorkflows, count: workflows.length });
+      console.log('Dashboard - Set workflow state:', { hasWorkflows, count: transformedWorkflows.length });
 
       // If workflows are found and user had selected workflows, clear the selection state
       if (hasWorkflows && WorkflowState.hasSelectedWorkflows()) {
@@ -194,7 +212,7 @@ const Dashboard = () => {
       }
 
       // If no workflows found but user has selected workflows, retry after a delay
-      if (workflows.length === 0 && WorkflowState.hasSelectedWorkflows() && retryCount < 3) {
+      if (transformedWorkflows.length === 0 && WorkflowState.hasSelectedWorkflows() && retryCount < 3) {
         console.log('Dashboard - No workflows found but user has selected workflows, retrying...');
         setTimeout(() => {
           fetchDashboardData(retryCount + 1);
@@ -205,7 +223,7 @@ const Dashboard = () => {
       // Add a small delay to ensure state is properly updated
       setTimeout(() => {
         console.log('Dashboard - State update delay completed');
-        console.log('Dashboard - Current workflows state after delay:', workflows.length);
+        console.log('Dashboard - Current workflows state after delay:', transformedWorkflows.length);
       }, 100);
 
     } catch (err) {
@@ -807,11 +825,11 @@ const Dashboard = () => {
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
                             <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
-                              {workflow.lastModifiedBy.initials}
+                              {workflow.lastModifiedBy?.initials || (workflow.lastModifiedBy?.name || 'Unknown').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-gray-600">
-                            {workflow.lastModifiedBy.name}
+                            {workflow.lastModifiedBy?.name || 'Unknown User'}
                           </span>
                         </div>
                       </td>
