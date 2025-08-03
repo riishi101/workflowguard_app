@@ -15,15 +15,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-        },
+        format: 'es',
+        manualChunks: undefined, // Disable manual chunks to avoid MIME issues
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2000, // Increase limit to avoid warnings
   },
 }));
