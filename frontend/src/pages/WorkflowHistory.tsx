@@ -20,10 +20,7 @@ import CreateNewWorkflowModal from "@/components/CreateNewWorkflowModal";
 import RestoreVersionModal from "@/components/RestoreVersionModal";
 import { WorkflowState } from "@/lib/workflowState";
 import { ApiService, WorkflowHistoryVersion } from "@/lib/api";
-
-interface ExtendedWorkflowHistoryVersion extends WorkflowHistoryVersion {
-  selected?: boolean;
-}
+import { useAuth } from "@/contexts/AuthContext";
 import {
   MoreHorizontal,
   ExternalLink,
@@ -33,7 +30,13 @@ import {
   Copy,
   RefreshCw,
   AlertCircle,
+  Clock,
+  Shield,
 } from "lucide-react";
+
+interface ExtendedWorkflowHistoryVersion extends WorkflowHistoryVersion {
+  selected?: boolean;
+}
 
 interface WorkflowDetails {
   id: string;
@@ -44,16 +47,32 @@ interface WorkflowDetails {
   totalVersions: number;
 }
 
+interface ProtectedWorkflow {
+  id: string;
+  name: string;
+  status: string;
+  protectionStatus: string;
+  lastModified: string;
+  versions: number;
+  lastModifiedBy: {
+    name: string;
+    initials: string;
+    email: string;
+  };
+}
+
 const WorkflowHistory = () => {
   const navigate = useNavigate();
   const { workflowId } = useParams<{ workflowId: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [hasWorkflows, setHasWorkflows] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [versions, setVersions] = useState<ExtendedWorkflowHistoryVersion[]>([]);
   const [workflowDetails, setWorkflowDetails] = useState<WorkflowDetails | null>(null);
+  const [protectedWorkflows, setProtectedWorkflows] = useState<ProtectedWorkflow[]>([]);
   const [showViewDetails, setShowViewDetails] = useState(false);
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
@@ -61,14 +80,32 @@ const WorkflowHistory = () => {
   const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
-    setHasWorkflows(WorkflowState.hasSelectedWorkflows());
-  }, []);
-
-  useEffect(() => {
     if (workflowId) {
       fetchWorkflowData();
+    } else {
+      fetchProtectedWorkflows();
     }
   }, [workflowId]);
+
+  const fetchProtectedWorkflows = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await ApiService.getProtectedWorkflows(user?.id);
+      const workflows = response.data || [];
+      
+      setProtectedWorkflows(workflows);
+      setHasWorkflows(workflows.length > 0);
+      
+    } catch (err: any) {
+      console.error('Failed to fetch protected workflows:', err);
+      setError(err.response?.data?.message || 'Failed to load workflows. Please try again.');
+      setHasWorkflows(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchWorkflowData = async () => {
     if (!workflowId) return;
@@ -172,15 +209,137 @@ const WorkflowHistory = () => {
   }
 
   if (!workflowId) {
+    // Show list of protected workflows
     return (
       <MainAppLayout title="Workflow History">
         <ContentSection>
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              No workflow ID provided. Please select a workflow from the dashboard.
-            </AlertDescription>
-          </Alert>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Workflow History</h2>
+              <p className="text-gray-600 mt-1">Select a workflow to view its version history</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchProtectedWorkflows}
+              disabled={loading}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-8 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {error}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchProtectedWorkflows}
+                  className="ml-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Workflow Name
+                      </th>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Status
+                      </th>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Protection
+                      </th>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Versions
+                      </th>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Last Modified
+                      </th>
+                      <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {protectedWorkflows.map((workflow) => (
+                      <tr key={workflow.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <Shield className="w-5 h-5 text-blue-500" />
+                            <span className="text-sm font-medium text-gray-900">
+                              {workflow.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            variant="secondary"
+                            className={workflow.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                          >
+                            {workflow.status}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-800"
+                          >
+                            {workflow.protectionStatus}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            {workflow.versions} versions
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(workflow.lastModified).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/workflow-history/${workflow.id}`)}
+                            className="text-blue-600"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View History
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </ContentSection>
       </MainAppLayout>
     );
