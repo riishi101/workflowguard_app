@@ -279,4 +279,63 @@ export class WorkflowService {
     console.log('🔍 WorkflowService - Found version:', version ? version.id : null);
     return version;
   }
+
+  async getLatestWorkflowVersion(workflowId: string) {
+    console.log('🔍 WorkflowService - getLatestWorkflowVersion called');
+    console.log('🔍 WorkflowService - workflowId:', workflowId);
+
+    const latestVersion = await this.prisma.workflowVersion.findFirst({
+      where: {
+        workflowId: workflowId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    console.log('🔍 WorkflowService - Latest version found:', latestVersion ? latestVersion.id : null);
+    return latestVersion;
+  }
+
+  async rollbackWorkflow(workflowId: string, version: any, userId: string) {
+    console.log('🔍 WorkflowService - rollbackWorkflow called');
+    console.log('🔍 WorkflowService - workflowId:', workflowId);
+    console.log('🔍 WorkflowService - version:', version?.id);
+    console.log('🔍 WorkflowService - userId:', userId);
+
+    try {
+      // Create a new version with the rollback data
+      const rollbackVersion = await this.prisma.workflowVersion.create({
+        data: {
+          workflowId: workflowId,
+          versionNumber: Date.now(), // Use timestamp as version number
+          snapshotType: 'Rollback Snapshot',
+          data: version.data, // Use the data from the version we're rolling back to
+          createdBy: userId,
+          createdAt: new Date(),
+        },
+      });
+
+      console.log('🔍 WorkflowService - Rollback version created:', rollbackVersion.id);
+
+      // Update the workflow to reflect the rollback
+      await this.prisma.workflow.update({
+        where: { id: workflowId },
+        data: {
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log('🔍 WorkflowService - Workflow updated after rollback');
+
+      return {
+        success: true,
+        rollbackVersionId: rollbackVersion.id,
+        message: 'Workflow rolled back successfully',
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error in rollbackWorkflow:', error);
+      throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

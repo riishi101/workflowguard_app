@@ -104,6 +104,50 @@ export class WorkflowController {
     }
   }
 
+  @Post(':id/rollback')
+  @UseGuards(JwtAuthGuard)
+  async rollbackWorkflow(@Param('id') workflowId: string, @Req() req: any) {
+    console.log('🔍 WorkflowController - rollbackWorkflow called');
+    console.log('🔍 WorkflowController - workflowId:', workflowId);
+    console.log('🔍 WorkflowController - req.user:', req.user);
+    
+    try {
+      // Get user ID
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      console.log('🔍 WorkflowController - Determined userId:', userId);
+      
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.BAD_REQUEST);
+      }
+
+      // Get the latest version of the workflow
+      const latestVersion = await this.workflowService.getLatestWorkflowVersion(workflowId);
+      if (!latestVersion) {
+        throw new HttpException('No version found for rollback', HttpStatus.NOT_FOUND);
+      }
+
+      // Perform the rollback (this would typically involve updating HubSpot)
+      const rollbackResult = await this.workflowService.rollbackWorkflow(workflowId, latestVersion, userId);
+      
+      console.log('🔍 WorkflowController - Rollback successful:', rollbackResult);
+      return {
+        message: 'Workflow rolled back successfully',
+        version: latestVersion,
+        rollbackResult
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error in rollbackWorkflow:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Get(':id/version/:versionId/download')
   @UseGuards(JwtAuthGuard)
   async downloadWorkflowVersion(@Param('id') workflowId: string, @Param('versionId') versionId: string) {
