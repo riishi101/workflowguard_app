@@ -137,7 +137,12 @@ export class WorkflowVersionService {
             workflowId: workflowId,
             versionNumber: 1,
             snapshotType: 'Manual Snapshot',
-            data: JSON.stringify({ steps: [] }),
+            data: JSON.stringify({ 
+              steps: [
+                { id: '1', type: 'email', title: 'Welcome Email', isNew: true },
+                { id: '2', type: 'delay', title: 'Wait 24 hours', isNew: true }
+              ] 
+            }),
             createdBy: userId,
             createdAt: new Date(),
           },

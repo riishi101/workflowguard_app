@@ -371,7 +371,9 @@ const WorkflowHistoryDetail = () => {
             <div className="text-sm text-gray-600">
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
+                Last modified: {workflowDetails.lastModified ? 
+                  new Date(workflowDetails.lastModified).toLocaleString() : 
+                  'Date not available'}
               </span>
             </div>
           </div>
