@@ -13,13 +13,17 @@ export class HubSpotController {
     console.log('🔍 HubSpotController - getWorkflows called');
     
     try {
-      // Get user from request
-      const userId = (req.user as any)?.sub;
-      console.log('🔍 HubSpotController - userId:', userId);
+      // Get user from request - the JWT strategy returns the full user object
+      const user = (req.user as any);
+      console.log('🔍 HubSpotController - req.user:', user);
       
-      if (!userId) {
+      if (!user || !user.id) {
+        console.log('🔍 HubSpotController - No user or user.id found in request');
         throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
       }
+
+      const userId = user.id;
+      console.log('🔍 HubSpotController - userId:', userId);
 
       // Use the real HubSpot service to fetch actual workflows
       const workflows = await this.hubSpotService.getWorkflows(userId);
