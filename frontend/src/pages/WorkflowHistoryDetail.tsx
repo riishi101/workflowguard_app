@@ -75,10 +75,21 @@ const WorkflowHistoryDetail = () => {
         ApiService.getWorkflowHistory(workflowId!)
       ]);
       
+      console.log('🔍 WorkflowHistoryDetail - Details response:', detailsResponse);
+      console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
+      
       setWorkflowDetails(detailsResponse.data);
       
       // Transform the backend data to match frontend interface
-      const transformedVersions = (historyResponse.data as any[]).map((version: any) => ({
+      const historyData = historyResponse.data;
+      console.log('🔍 WorkflowHistoryDetail - History response data:', historyData);
+      console.log('🔍 WorkflowHistoryDetail - History data type:', typeof historyData);
+      console.log('🔍 WorkflowHistoryDetail - Is array:', Array.isArray(historyData));
+      
+      // Ensure we have an array to work with
+      const versionsArray = Array.isArray(historyData) ? historyData : [];
+      
+      const transformedVersions = versionsArray.map((version: any) => ({
         id: version.id,
         versionNumber: version.versionNumber.toString(),
         dateTime: version.dateTime || version.date || version.createdAt,
@@ -91,10 +102,17 @@ const WorkflowHistoryDetail = () => {
         status: version.status || 'active'
       }));
       
+      console.log('🔍 WorkflowHistoryDetail - Transformed versions:', transformedVersions);
       setVersions(transformedVersions);
       
     } catch (err: any) {
       console.error('Failed to fetch workflow history:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      });
       
       if (err.response?.status === 404) {
         setError('No version history available for this workflow yet. Versions will appear here once changes are made.');
