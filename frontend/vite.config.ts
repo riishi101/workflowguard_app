@@ -15,13 +15,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext',
+    target: 'es2015',
     rollupOptions: {
       output: {
         format: 'es',
-        manualChunks: undefined, // Disable manual chunks to avoid MIME issues
       },
     },
-    chunkSizeWarningLimit: 2000, // Increase limit to avoid warnings
+    chunkSizeWarningLimit: 2000,
   },
 }));
