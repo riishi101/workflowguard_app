@@ -21,6 +21,8 @@ import { EmailModule } from './email/email.module';
 import { DashboardController } from './dashboard/dashboard.controller';
 import { HubSpotController } from './controllers/hubspot.controller';
 import { HubSpotService } from './services/hubspot.service';
+import { HubSpotBillingController } from './controllers/hubspot-billing.controller';
+import { HubSpotBillingService } from './services/hubspot-billing.service';
 
 @Module({
   imports: [
@@ -39,10 +41,11 @@ import { HubSpotService } from './services/hubspot.service';
     // AnalyticsModule,
     // OverageModule,
   ],
-  controllers: [AppController, DashboardController, HubSpotController],
+  controllers: [AppController, DashboardController, HubSpotController, HubSpotBillingController],
   providers: [
     AppService,
     HubSpotService,
+    HubSpotBillingService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

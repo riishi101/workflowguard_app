@@ -45,17 +45,18 @@ const PlanBillingTab = () => {
 
   const handleUpgrade = async (planId: string) => {
     try {
-      await ApiService.upgradeSubscription(planId);
+      // Redirect to HubSpot billing instead of in-app upgrade
+      const hubspotBillingUrl = `https://app.hubspot.com/billing/${planId}`;
+      window.open(hubspotBillingUrl, '_blank');
+      
       toast({
-        title: "Subscription Updated",
-        description: "Your subscription has been successfully upgraded.",
+        title: "Redirecting to HubSpot",
+        description: "You're being redirected to HubSpot to complete your subscription upgrade.",
       });
-      // Refresh data
-      window.location.reload();
     } catch (error: any) {
       toast({
         title: "Upgrade Failed",
-        description: error.response?.data?.message || "Failed to upgrade subscription.",
+        description: "Failed to redirect to HubSpot billing. Please try again.",
         variant: "destructive",
       });
     }
@@ -387,17 +388,32 @@ const PlanBillingTab = () => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600 mb-4">
-            To change your plan, update payment methods, or manage your
-            subscription details, you will be redirected to your HubSpot
-            account.
+            Your subscription is managed through HubSpot. To change your plan, update payment methods, 
+            or manage your subscription details, you will be redirected to your HubSpot account billing section.
           </p>
-          <Button
-            onClick={() => navigate("/manage-subscription")}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            <span>Manage Subscription in HubSpot</span>
-            <ExternalLink className="w-4 h-4 ml-2" />
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={() => window.open('https://app.hubspot.com/billing', '_blank')}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <span>Manage Subscription in HubSpot</span>
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open('https://app.hubspot.com/billing/payment-methods', '_blank')}
+            >
+              <span>Update Payment Methods</span>
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.open('https://app.hubspot.com/billing/invoices', '_blank')}
+            >
+              <span>View Billing History</span>
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
