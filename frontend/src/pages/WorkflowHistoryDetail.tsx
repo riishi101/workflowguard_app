@@ -2,21 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -25,17 +12,13 @@ import TopNavigation from "@/components/TopNavigation";
 import Footer from "@/components/Footer";
 import {
   Search,
-  ChevronDown,
   ExternalLink,
-  MoreHorizontal,
-  Eye,
-  RotateCcw,
-  Copy,
   AlertTriangle,
   Loader2,
   RefreshCw,
   Download,
   ArrowLeft,
+  RotateCcw,
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -45,11 +28,9 @@ interface WorkflowVersion {
   modifiedBy: {
     name: string;
     initials: string;
-    avatar?: string;
   };
   changeSummary: string;
   type: string;
-  steps: number;
   status: string;
 }
 
@@ -72,8 +53,6 @@ const WorkflowHistoryDetail = () => {
   const [workflowDetails, setWorkflowDetails] = useState<WorkflowDetails | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [userFilter, setUserFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("all");
   const [restoring, setRestoring] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
 
@@ -96,9 +75,6 @@ const WorkflowHistoryDetail = () => {
         ApiService.getWorkflowHistory(workflowId!)
       ]);
       
-      console.log('🔍 WorkflowHistoryDetail - Details response:', detailsResponse);
-      console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
-      
       setWorkflowDetails(detailsResponse.data);
       
       // Transform the backend data to match frontend interface
@@ -109,21 +85,17 @@ const WorkflowHistoryDetail = () => {
         modifiedBy: {
           name: version.modifiedBy?.name || version.initiator || 'Unknown User',
           initials: (version.modifiedBy?.name || version.initiator || 'Unknown User').split(' ').map((n: string) => n[0]).join('').toUpperCase(),
-          avatar: undefined
         },
         changeSummary: version.changeSummary || version.notes || `Version ${version.versionNumber}`,
         type: version.type || 'Manual Snapshot',
-        steps: version.steps || 0,
         status: version.status || 'active'
       }));
       
-      console.log('🔍 WorkflowHistoryDetail - Transformed versions:', transformedVersions);
       setVersions(transformedVersions);
       
     } catch (err: any) {
       console.error('Failed to fetch workflow history:', err);
       
-      // If it's a 404 error, show a message that no history is available
       if (err.response?.status === 404) {
         setError('No version history available for this workflow yet. Versions will appear here once changes are made.');
         setVersions([]);
@@ -208,48 +180,9 @@ const WorkflowHistoryDetail = () => {
     }
   };
 
-  const handleViewChanges = (versionId: string) => {
-    navigate(`/compare-versions?workflowId=${workflowId}&versionId=${versionId}`);
-  };
-
-  const handleCopyVersionId = (versionId: string) => {
-    navigator.clipboard.writeText(versionId);
-    toast({
-      title: "Copied",
-      description: "Version ID copied to clipboard.",
-    });
-  };
-
   const filteredVersions = versions.filter((version) => {
-    const matchesSearch = version.changeSummary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         version.modifiedBy.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesUser = userFilter === "all" || version.modifiedBy.name.toLowerCase().includes(userFilter.toLowerCase());
-    
-    // Date filtering logic
-    let matchesDate = true;
-    if (dateFilter !== "all") {
-      const versionDate = new Date(version.dateTime);
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      switch (dateFilter) {
-        case "today":
-          matchesDate = versionDate >= startOfDay;
-          break;
-        case "week":
-          matchesDate = versionDate >= startOfWeek;
-          break;
-        case "month":
-          matchesDate = versionDate >= startOfMonth;
-          break;
-        default:
-          matchesDate = true;
-      }
-    }
-    
-    return matchesSearch && matchesUser && matchesDate;
+    return version.changeSummary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           version.modifiedBy.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getStatusColor = (status: string) => {
@@ -275,29 +208,16 @@ const WorkflowHistoryDetail = () => {
       <div className="min-h-screen bg-white flex flex-col">
         <TopNavigation />
         <main className="max-w-7xl mx-auto px-6 py-8 flex-1">
-          {/* Breadcrumb Skeleton */}
           <Skeleton className="h-4 w-64 mb-6" />
-          
-          {/* Header Skeleton */}
           <div className="mb-8">
             <Skeleton className="h-8 w-96 mb-4" />
             <Skeleton className="h-10 w-48" />
           </div>
-          
-          {/* Workflow Status Skeleton */}
           <Skeleton className="h-20 w-full mb-8" />
-          
-          {/* Search and Filters Skeleton */}
           <div className="flex items-center justify-between gap-4 mb-6">
             <Skeleton className="h-10 w-80" />
-            <div className="flex gap-3">
-              <Skeleton className="h-10 w-40" />
-              <Skeleton className="h-10 w-36" />
-              <Skeleton className="h-10 w-24" />
-            </div>
+            <Skeleton className="h-10 w-24" />
           </div>
-          
-          {/* Table Skeleton */}
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />
@@ -366,13 +286,6 @@ const WorkflowHistoryDetail = () => {
             Dashboard
           </button>
           <span>&gt;</span>
-          <button
-            onClick={() => navigate("/workflow-history")}
-            className="hover:text-gray-900"
-          >
-            Workflow History
-          </button>
-          <span>&gt;</span>
           <span className="text-gray-900 font-medium">{workflowDetails.name}</span>
         </nav>
 
@@ -426,55 +339,25 @@ const WorkflowHistoryDetail = () => {
           <div className="text-sm text-gray-600">{workflowDetails.totalVersions} versions tracked</div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search history by change summary or user..."
+              placeholder="Search versions by change summary or user..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <Select value={userFilter} onValueChange={setUserFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Modified By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {Array.from(new Set(versions.map(v => v.modifiedBy.name))).map(user => (
-                  <SelectItem key={user} value={user.toLowerCase()}>
-                    {user}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-blue-600"
-              onClick={() => {
-                setSearchTerm("");
-                setUserFilter("all");
-                setDateFilter("all");
-              }}
-            >
-              Clear Filters
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-blue-600"
+            onClick={() => setSearchTerm("")}
+          >
+            Clear Search
+          </Button>
         </div>
 
         {/* Version History Table */}
@@ -537,14 +420,6 @@ const WorkflowHistoryDetail = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-blue-600 hover:text-blue-700"
-                          onClick={() => handleViewChanges(version.id)}
-                        >
-                          View Changes
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           className="text-orange-600 hover:text-orange-700"
                           onClick={() => handleRollbackVersion(version.id)}
                           disabled={restoring === version.id}
@@ -556,27 +431,20 @@ const WorkflowHistoryDetail = () => {
                           )}
                           Rollback
                         </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewChanges(version.id)}>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDownloadVersion(version.id)}>
-                              <Download className="w-4 h-4 mr-2" />
-                              Download Version
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyVersionId(version.id)}>
-                              <Copy className="w-4 h-4 mr-2" />
-                              Copy Version ID
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700"
+                          onClick={() => handleDownloadVersion(version.id)}
+                          disabled={downloading === version.id}
+                        >
+                          {downloading === version.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                          Download
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -590,8 +458,8 @@ const WorkflowHistoryDetail = () => {
                 No Versions Found
               </h3>
               <p className="text-gray-600">
-                {searchTerm || userFilter !== "all" || dateFilter !== "all" 
-                  ? "No versions match your current filters. Try adjusting your search criteria."
+                {searchTerm 
+                  ? "No versions match your search criteria. Try adjusting your search."
                   : "No version history found for this workflow."
                 }
               </p>

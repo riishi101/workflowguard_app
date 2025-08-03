@@ -72,6 +72,68 @@ export class WorkflowController {
     return this.workflowService.remove(id);
   }
 
+  @Post(':id/restore/:versionId')
+  @UseGuards(JwtAuthGuard)
+  async restoreWorkflowVersion(@Param('id') workflowId: string, @Param('versionId') versionId: string, @Req() req: any) {
+    console.log('🔍 WorkflowController - restoreWorkflowVersion called');
+    console.log('🔍 WorkflowController - workflowId:', workflowId);
+    console.log('🔍 WorkflowController - versionId:', versionId);
+    
+    try {
+      // Get the version to restore
+      const version = await this.workflowService.getWorkflowVersion(workflowId, versionId);
+      if (!version) {
+        throw new HttpException('Version not found', HttpStatus.NOT_FOUND);
+      }
+      
+      // Create a new version with the restored content
+      const restoredVersion = await this.workflowService.createWorkflowVersion(workflowId, {
+        versionNumber: Date.now(), // Use timestamp as version number
+        snapshotType: 'Manual Snapshot',
+        data: version.data,
+        createdBy: req.user?.id || req.user?.sub || 'system'
+      });
+      
+      console.log('🔍 WorkflowController - Restore successful:', restoredVersion.id);
+      return {
+        message: 'Workflow restored successfully',
+        version: restoredVersion
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error in restoreWorkflowVersion:', error);
+      throw new HttpException('Failed to restore workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get(':id/version/:versionId/download')
+  @UseGuards(JwtAuthGuard)
+  async downloadWorkflowVersion(@Param('id') workflowId: string, @Param('versionId') versionId: string) {
+    console.log('🔍 WorkflowController - downloadWorkflowVersion called');
+    console.log('🔍 WorkflowController - workflowId:', workflowId);
+    console.log('🔍 WorkflowController - versionId:', versionId);
+    
+    try {
+      const version = await this.workflowService.getWorkflowVersion(workflowId, versionId);
+      if (!version) {
+        throw new HttpException('Version not found', HttpStatus.NOT_FOUND);
+      }
+      
+      // Return the version data for download
+      return {
+        versionId: version.id,
+        workflowId: version.workflowId,
+        versionNumber: version.versionNumber,
+        snapshotType: version.snapshotType,
+        data: version.data,
+        createdAt: version.createdAt,
+        createdBy: version.createdBy
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error in downloadWorkflowVersion:', error);
+      throw new HttpException('Failed to download workflow version', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Post('start-protection')
   @Public()
   async startWorkflowProtection(@Body() body: StartWorkflowProtectionDto) {

@@ -241,4 +241,20 @@ export class WorkflowService {
     console.log('🔍 WorkflowService - Created version:', version.id);
     return version;
   }
+
+  async getWorkflowVersion(workflowId: string, versionId: string) {
+    console.log('🔍 WorkflowService - getWorkflowVersion called');
+    console.log('🔍 WorkflowService - workflowId:', workflowId);
+    console.log('🔍 WorkflowService - versionId:', versionId);
+
+    const version = await this.prisma.workflowVersion.findFirst({
+      where: {
+        id: versionId,
+        workflowId: workflowId,
+      },
+    });
+
+    console.log('🔍 WorkflowService - Found version:', version ? version.id : null);
+    return version;
+  }
 }
