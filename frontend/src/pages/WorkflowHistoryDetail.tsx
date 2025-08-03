@@ -88,37 +88,53 @@ const WorkflowHistoryDetail = () => {
       setLoading(true);
       setError(null);
       
+      console.log('🔍 WorkflowHistoryDetail - Fetching history for workflowId:', workflowId);
+      
       // Fetch workflow details and history
       const [detailsResponse, historyResponse] = await Promise.all([
         ApiService.getWorkflowDetails(workflowId!),
         ApiService.getWorkflowHistory(workflowId!)
       ]);
       
+      console.log('🔍 WorkflowHistoryDetail - Details response:', detailsResponse);
+      console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
+      
       setWorkflowDetails(detailsResponse.data);
+      
       // Transform the backend data to match frontend interface
       const transformedVersions = (historyResponse.data as any[]).map((version: any) => ({
         id: version.id,
         versionNumber: version.versionNumber.toString(),
-        dateTime: version.dateTime || version.date,
+        dateTime: version.dateTime || version.date || version.createdAt,
         modifiedBy: {
           name: version.modifiedBy?.name || version.initiator || 'Unknown User',
           initials: (version.modifiedBy?.name || version.initiator || 'Unknown User').split(' ').map((n: string) => n[0]).join('').toUpperCase(),
           avatar: undefined
         },
         changeSummary: version.changeSummary || version.notes || `Version ${version.versionNumber}`,
-        type: version.type,
+        type: version.type || 'Manual Snapshot',
         steps: version.steps || 0,
         status: version.status || 'active'
       }));
+      
+      console.log('🔍 WorkflowHistoryDetail - Transformed versions:', transformedVersions);
       setVersions(transformedVersions);
+      
     } catch (err: any) {
       console.error('Failed to fetch workflow history:', err);
-      setError(err.response?.data?.message || 'Failed to load workflow history. Please try again.');
-      toast({
-        title: "Error",
-        description: "Failed to load workflow history. Please try again.",
-        variant: "destructive",
-      });
+      
+      // If it's a 404 error, show a message that no history is available
+      if (err.response?.status === 404) {
+        setError('No version history available for this workflow yet. Versions will appear here once changes are made.');
+        setVersions([]);
+      } else {
+        setError(err.response?.data?.message || 'Failed to load workflow history. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load workflow history. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
