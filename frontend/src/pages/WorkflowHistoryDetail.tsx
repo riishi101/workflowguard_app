@@ -214,12 +214,17 @@ const WorkflowHistoryDetail = () => {
   };
 
   const filteredVersions = versions.filter((version) => {
-    return version.changeSummary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           version.modifiedBy.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const changeSummary = version.changeSummary || '';
+    const userName = version.modifiedBy?.name || '';
+    const searchLower = searchTerm.toLowerCase();
+    
+    return changeSummary.toLowerCase().includes(searchLower) ||
+           userName.toLowerCase().includes(searchLower);
   });
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = status?.toLowerCase() || '';
+    switch (statusLower) {
       case 'active': return 'bg-green-100 text-green-800';
       case 'draft': return 'bg-yellow-100 text-yellow-800';
       case 'inactive': return 'bg-gray-100 text-gray-800';
@@ -228,7 +233,8 @@ const WorkflowHistoryDetail = () => {
   };
 
   const getTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
+    const typeLower = type?.toLowerCase() || '';
+    switch (typeLower) {
       case 'manual': return 'bg-blue-100 text-blue-800';
       case 'automatic': return 'bg-green-100 text-green-800';
       case 'system': return 'bg-purple-100 text-purple-800';
