@@ -597,7 +597,7 @@ const Dashboard = () => {
                   {filteredStats.active} of {filteredWorkflows.length} workflows are active
                 </p>
                 <p className="text-xs text-green-700">
-                  Last Snapshot: {stats.lastSnapshot}
+                  Last Snapshot: {stats?.lastSnapshot ? new Date(stats.lastSnapshot).toLocaleString() : 'Not available'}
                 </p>
                 {(searchTerm || statusFilter !== "all") && (
                   <p className="text-xs text-blue-600 mt-1">
@@ -636,11 +636,11 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stats.activeWorkflows}
+                {stats?.activeWorkflows || 0}
               </div>
               <div className="text-sm text-gray-600">Active Workflows</div>
               <div className="text-xs text-gray-500 mt-1">
-                {stats.protectedWorkflows} protected
+                {stats?.protectedWorkflows || 0} protected
               </div>
             </CardContent>
           </Card>
@@ -655,7 +655,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stats.uptime}%
+                {stats?.uptime || 0}%
               </div>
               <div className="text-sm text-gray-600">Total Uptime</div>
               <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
@@ -672,11 +672,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stats.planUsed}/{stats.planCapacity}
+                {stats?.planUsed || 0}/{stats?.planCapacity || 100}
               </div>
               <div className="text-sm text-gray-600">Plan Usage</div>
               <div className="text-xs text-gray-500 mt-1">
-                {Math.round((stats.planUsed / stats.planCapacity) * 100)}% used
+                {stats?.planCapacity && stats?.planUsed ? 
+                  Math.round((stats.planUsed / stats.planCapacity) * 100) : 0}% used
               </div>
             </CardContent>
           </Card>
