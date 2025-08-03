@@ -58,7 +58,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me/notification-settings')
   async getMyNotificationSettings(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.getNotificationSettings(userId);
   }
@@ -66,7 +72,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Patch('me/notification-settings')
   async updateMyNotificationSettings(@Req() req: Request, @Body() dto: UpdateNotificationSettingsDto) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.updateNotificationSettings(userId, dto);
   }
@@ -74,7 +86,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me/api-keys')
   async getMyApiKeys(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.getApiKeys(userId);
   }
@@ -82,7 +100,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Post('me/api-keys')
   async createMyApiKey(@Req() req: Request, @Body() dto: CreateApiKeyDto) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.createApiKey(userId, dto.description);
   }
@@ -90,7 +114,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Delete('me/api-keys/:id')
   async deleteMyApiKey(@Req() req: Request, @Param('id') id: string) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.deleteApiKey(userId, id);
   }
@@ -98,7 +128,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.getMe(userId);
   }
@@ -106,7 +142,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   async updateMe(@Req() req: Request, @Body() dto: UpdateUserDto) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.updateMe(userId, dto);
   }
@@ -114,7 +156,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Delete('me')
   async deleteMe(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.deleteMe(userId);
   }
@@ -122,7 +170,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get('me/subscription')
   async getMySubscription(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.getMySubscription(userId);
   }
@@ -130,7 +184,13 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Post('me/subscription/cancel')
   async cancelMySubscription(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
+    // Use the same robust user ID extraction as other controllers
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
     if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     return this.userService.cancelMySubscription(userId);
   }
