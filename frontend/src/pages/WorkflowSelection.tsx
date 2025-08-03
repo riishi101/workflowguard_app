@@ -123,34 +123,76 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const workflows = Array.isArray(response) ? response : [];
       console.log('WorkflowSelection - Parsed workflows:', workflows.length);
       
-      if (workflows.length > 0) {
-        console.log('WorkflowSelection - Found workflows:', workflows.length);
-        console.log('WorkflowSelection - Sample workflow:', workflows[0]);
+      // Handle new response format from backend
+      if (response && typeof response === 'object' && 'workflows' in response) {
+        // New format with message and isEmpty properties
+        const responseData = response as any;
+        const workflows = responseData.workflows || [];
+        const message = responseData.message;
+        const isEmpty = responseData.isEmpty;
         
-        // Validate workflow structure
-        const validWorkflows = workflows.filter(workflow => 
-          workflow && workflow.id && workflow.name
-        );
+        console.log('WorkflowSelection - New response format:', { workflows: workflows.length, message, isEmpty });
         
-        if (validWorkflows.length === 0) {
-          throw new Error('No valid workflows found in response');
+        if (workflows.length > 0) {
+          console.log('WorkflowSelection - Found workflows:', workflows.length);
+          console.log('WorkflowSelection - Sample workflow:', workflows[0]);
+          
+          // Validate workflow structure
+          const validWorkflows = workflows.filter(workflow => 
+            workflow && workflow.id && workflow.name
+          );
+          
+          if (validWorkflows.length === 0) {
+            throw new Error('No valid workflows found in response');
+          }
+          
+          setWorkflows(validWorkflows);
+          setWorkflowsFetched(true);
+          toast({
+            title: "Connected to HubSpot",
+            description: `Found ${validWorkflows.length} workflows in your account.`,
+          });
+        } else {
+          // No workflows found in HubSpot
+          console.log('WorkflowSelection - No workflows found in HubSpot');
+          setWorkflows([]);
+          toast({
+            title: "No Workflows Found",
+            description: message || "No active workflows found in your HubSpot account. Please create workflows in HubSpot and try again.",
+            variant: "destructive",
+          });
         }
-        
-        setWorkflows(validWorkflows);
-        setWorkflowsFetched(true);
-        toast({
-          title: "Connected to HubSpot",
-          description: `Found ${validWorkflows.length} workflows in your account.`,
-        });
       } else {
-        // No workflows found in HubSpot
-        console.log('WorkflowSelection - No workflows found in HubSpot');
-        setWorkflows([]);
-        toast({
-          title: "No Workflows Found",
-          description: "No active workflows found in your HubSpot account.",
-          variant: "destructive",
-        });
+        // Legacy format - direct array
+        if (workflows.length > 0) {
+          console.log('WorkflowSelection - Found workflows (legacy format):', workflows.length);
+          console.log('WorkflowSelection - Sample workflow:', workflows[0]);
+          
+          // Validate workflow structure
+          const validWorkflows = workflows.filter(workflow => 
+            workflow && workflow.id && workflow.name
+          );
+          
+          if (validWorkflows.length === 0) {
+            throw new Error('No valid workflows found in response');
+          }
+          
+          setWorkflows(validWorkflows);
+          setWorkflowsFetched(true);
+          toast({
+            title: "Connected to HubSpot",
+            description: `Found ${validWorkflows.length} workflows in your account.`,
+          });
+        } else {
+          // No workflows found in HubSpot
+          console.log('WorkflowSelection - No workflows found in HubSpot');
+          setWorkflows([]);
+          toast({
+            title: "No Workflows Found",
+            description: "No active workflows found in your HubSpot account. Please create workflows in HubSpot and try again.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (err) {
       console.error('WorkflowSelection - Failed to fetch workflows:', err);
@@ -169,19 +211,23 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         setError('Request timed out. The server is taking too long to respond. Please try again.');
       } else if (isNetworkError) {
         setError('Unable to connect to HubSpot. Please check your internet connection and try again.');
-      } else if (err.response?.status === 401) {
-        setError('Authentication failed. Please reconnect your HubSpot account.');
       } else if (err.response?.status === 400) {
         const errorMessage = err.response?.data?.message || err.response?.data;
-        if (errorMessage && (errorMessage.includes('HubSpot connection required') || 
-                            errorMessage.includes('Unable to determine HubSpot portal') ||
-                            errorMessage.includes('Please reconnect'))) {
-          setError('Your HubSpot connection has expired or is missing. Please reconnect your HubSpot account to view workflows.');
+        if (errorMessage && (errorMessage.includes('HubSpot not connected') || 
+                            errorMessage.includes('HubSpot account not connected') ||
+                            errorMessage.includes('Please connect your HubSpot account'))) {
+          setError('Your HubSpot account is not connected. Please connect your HubSpot account to view workflows.');
+          // Stop retrying for connection issues
+          setRetryCount(maxRetries);
+        } else if (errorMessage && errorMessage.includes('token expired')) {
+          setError('Your HubSpot connection has expired. Please reconnect your HubSpot account to view workflows.');
           // Stop retrying for connection issues
           setRetryCount(maxRetries);
         } else {
           setError('Invalid request. Please check your HubSpot connection and try again.');
         }
+      } else if (err.response?.status === 401) {
+        setError('Authentication failed. Please reconnect your HubSpot account.');
       } else {
         setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
       }

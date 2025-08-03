@@ -29,10 +29,44 @@ export class HubSpotController {
       const workflows = await this.hubSpotService.getWorkflows(userId);
       
       console.log('🔍 HubSpotController - Returning real workflows from HubSpot:', workflows.length);
-      return workflows;
+      
+      // If no workflows found, return a helpful message
+      if (workflows.length === 0) {
+        return {
+          workflows: [],
+          message: 'No workflows found in your HubSpot account. Please create workflows in HubSpot and try again.',
+          isEmpty: true
+        };
+      }
+      
+      return {
+        workflows: workflows,
+        message: `Found ${workflows.length} workflow(s) in your HubSpot account`,
+        isEmpty: false
+      };
       
     } catch (error) {
       console.error('🔍 HubSpotController - Error fetching workflows:', error);
+      
+      // Provide specific error messages based on error type
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      if (error.message?.includes('HubSpot not connected')) {
+        throw new HttpException(
+          'HubSpot account not connected. Please connect your HubSpot account first.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      
+      if (error.message?.includes('token expired')) {
+        throw new HttpException(
+          'HubSpot connection expired. Please reconnect your HubSpot account.',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+      
       throw new HttpException(
         `Failed to fetch HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR

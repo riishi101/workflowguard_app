@@ -170,51 +170,10 @@ export class HubSpotService {
 
       if (workflows.length === 0) {
         console.log('🔍 HubSpotService - No workflows found from any endpoint');
-        console.log('🔍 HubSpotService - Returning mock workflows for testing');
+        console.log('🔍 HubSpotService - Returning empty array - no mock data');
         
-        // Return mock workflows for testing purposes
-        return [
-          {
-            id: 'mock-1',
-            name: 'WG Test - Deal Created & Internal Alerts',
-            description: 'Mock workflow for testing',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-1', name: 'WG Test - Deal Created & Internal Alerts' }
-          },
-          {
-            id: 'mock-2',
-            name: 'WG Test - Meeting Outcome Automation',
-            description: 'Mock workflow for testing',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-2', name: 'WG Test - Meeting Outcome Automation' }
-          },
-          {
-            id: 'mock-3',
-            name: 'WG Test - Email Engagement & Score Update',
-            description: 'Mock workflow for testing',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-3', name: 'WG Test - Email Engagement & Score Update' }
-          },
-          {
-            id: 'mock-4',
-            name: 'WG Test - Website Visitor Record Creation',
-            description: 'Mock workflow for testing',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-4', name: 'WG Test - Website Visitor Record Creation' }
-          },
-          {
-            id: 'mock-5',
-            name: 'WG Test - List Based Automation',
-            description: 'Mock workflow for testing',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-5', name: 'WG Test - List Based Automation' }
-          }
-        ];
+        // Return empty array instead of mock data
+        return [];
       }
 
       console.log('🔍 HubSpotService - Final transformed workflows:', workflows.length);
