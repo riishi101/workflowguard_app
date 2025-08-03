@@ -11,11 +11,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { WebhookModule } from './webhook/webhook.module';
-import { HubSpotModule } from './modules/hubspot.module';
+// import { HubSpotModule } from './modules/hubspot.module';
 import { EmailModule } from './email/email.module';
-import { RealtimeModule } from './realtime/realtime.module';
-import { MetricsModule } from './metrics/metrics.module';
-import { SupportModule } from './support/support.module';
+// import { RealtimeModule } from './realtime/realtime.module';
+// import { MetricsModule } from './metrics/metrics.module';
+// import { SupportModule } from './support/support.module';
+// import { AnalyticsModule } from './analytics/analytics.module';
+// import { OverageModule } from './overage/overage.module';
 import { DashboardController } from './dashboard/dashboard.controller';
 
 @Module({
@@ -27,11 +29,13 @@ import { DashboardController } from './dashboard/dashboard.controller';
     AuditLogModule,
     UserModule,
     WebhookModule,
-    HubSpotModule,
+    // HubSpotModule,
     EmailModule,
-    RealtimeModule,
-    MetricsModule,
-    SupportModule,
+    // RealtimeModule,
+    // MetricsModule,
+    // SupportModule,
+    // AnalyticsModule,
+    // OverageModule,
   ],
   controllers: [AppController, DashboardController],
   providers: [

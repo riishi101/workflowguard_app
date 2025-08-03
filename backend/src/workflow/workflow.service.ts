@@ -132,6 +132,25 @@ export class WorkflowService {
     return workflows;
   }
 
+  async getProtectedWorkflowIds(userId?: string) {
+    console.log('🔍 WorkflowService - getProtectedWorkflowIds called');
+    console.log('🔍 WorkflowService - userId:', userId);
+
+    if (!userId) {
+      console.log('🔍 WorkflowService - No userId provided, returning empty array');
+      return [];
+    }
+
+    const workflows = await this.prisma.workflow.findMany({
+      where: { ownerId: userId },
+      select: { id: true },
+    });
+
+    const workflowIds = workflows.map(w => w.id);
+    console.log('🔍 WorkflowService - Found workflow IDs:', workflowIds);
+    return workflowIds;
+  }
+
   async getDashboardStats(userId?: string) {
     console.log('🔍 WorkflowService - getDashboardStats called');
     console.log('🔍 WorkflowService - userId:', userId);

@@ -47,9 +47,9 @@ export class UserController {
     const workflowsMonitoredCount = await this.userService.getWorkflowCountByOwner(userId);
     return {
       planId,
-      planName: plan.name,
-      planPrice: plan.price,
-      planFeatures: plan.features,
+      planName: plan?.name || 'Starter',
+      planPrice: plan?.price || 0,
+      planFeatures: plan?.features || '',
       workflowsMonitoredCount,
       subscription: user.subscription,
     };
