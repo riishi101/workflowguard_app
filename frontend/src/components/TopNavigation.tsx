@@ -153,43 +153,60 @@ const TopNavigation = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="relative p-2 hover:bg-gray-100 transition-colors duration-200 group"
+                className="relative p-2.5 hover:bg-gray-100 transition-all duration-200 group rounded-lg"
               >
-                <Bell className="w-5 h-5 text-gray-800 group-hover:text-gray-900 transition-colors duration-200" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600 border-2 border-white shadow-sm">
-                  2
-                </Badge>
+                <div className="relative">
+                  <Bell className="w-5 h-5 text-gray-700 group-hover:text-gray-900 transition-all duration-200 group-hover:scale-105" />
+                  {/* Animated notification indicator */}
+                  <div className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                    <Badge className="relative h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600 border-2 border-white shadow-lg font-semibold flex items-center justify-center">
+                      2
+                    </Badge>
+                  </div>
+                </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 shadow-lg border-0">
-              <div className="bg-white rounded-lg border border-gray-200 shadow-xl">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <div className="flex items-center space-x-2">
-                    <Bell className="w-4 h-4 text-blue-600" />
-                    <span className="font-semibold text-gray-900">Notifications</span>
+            <DropdownMenuContent align="end" className="w-80 p-0 shadow-xl border-0 rounded-xl overflow-hidden">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-2xl">
+                {/* Enhanced Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <Bell className="w-5 h-5 text-blue-600" />
+                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-900 text-base">Notifications</span>
+                      <p className="text-xs text-gray-500">Stay updated with your workflow activity</p>
+                    </div>
                   </div>
-                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border border-blue-200">
+                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border border-blue-200 font-medium px-2 py-1">
                     2 new
                   </Badge>
                 </div>
                 
-                {/* Notification Items */}
+                {/* Enhanced Notification Items */}
                 <div className="max-h-80 overflow-y-auto">
-                  {/* Notification 1 */}
-                  <div className="p-4 hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50">
+                  {/* Notification 1 - Enhanced */}
+                  <div className="p-4 hover:bg-blue-50 transition-all duration-200 border-b border-gray-50 cursor-pointer group">
                     <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0 animate-pulse"></div>
+                      <div className="relative">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                        <div className="absolute inset-0 w-3 h-3 bg-blue-400 rounded-full animate-ping opacity-30"></div>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-gray-900">Workflow Protection Active</p>
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors duration-200">
+                            Workflow Protection Active
+                          </p>
                           <span className="text-xs text-gray-400">2m ago</span>
                         </div>
                         <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                           Your workflows are being monitored and protected. All 16 workflows are now under active protection.
                         </p>
                         <div className="flex items-center mt-2 space-x-2">
-                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 font-medium">
                             Active
                           </Badge>
                           <span className="text-xs text-gray-500">16 workflows protected</span>
@@ -198,20 +215,25 @@ const TopNavigation = () => {
                     </div>
                   </div>
                   
-                  {/* Notification 2 */}
-                  <div className="p-4 hover:bg-green-50 transition-colors duration-150 border-b border-gray-50">
+                  {/* Notification 2 - Enhanced */}
+                  <div className="p-4 hover:bg-green-50 transition-all duration-200 border-b border-gray-50 cursor-pointer group">
                     <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0 animate-pulse"></div>
+                      <div className="relative">
+                        <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                        <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-30"></div>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-gray-900">Rollback Feature Available</p>
+                          <p className="text-sm font-semibold text-gray-900 group-hover:text-green-700 transition-colors duration-200">
+                            Rollback Feature Available
+                          </p>
                           <span className="text-xs text-gray-400">1h ago</span>
                         </div>
                         <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                           Advanced workflow versioning and rollback functionality is now live. You can now revert workflows to previous versions.
                         </p>
                         <div className="flex items-center mt-2 space-x-2">
-                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium">
                             New Feature
                           </Badge>
                           <span className="text-xs text-gray-500">Version control enabled</span>
@@ -221,12 +243,12 @@ const TopNavigation = () => {
                   </div>
                 </div>
                 
-                {/* Footer */}
-                <div className="p-3 border-t border-gray-100 bg-gray-50">
+                {/* Enhanced Footer */}
+                <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium transition-all duration-200 rounded-lg"
                   >
                     View All Notifications
                   </Button>
