@@ -94,7 +94,6 @@ const TopNavigation = () => {
 
   const getBreadcrumb = () => {
     const path = location.pathname;
-    if (path === "/dashboard") return "Dashboard";
     if (path.startsWith("/workflow-history")) return "Workflow History";
     if (path === "/settings") return "Settings";
     if (path === "/help-support") return "Help & Support";
@@ -108,22 +107,14 @@ const TopNavigation = () => {
   return (
     <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
       <div className="flex items-center justify-between px-6 py-3">
-        {/* Logo */}
+        {/* Logo - Consistent placement */}
         <div className="flex-shrink-0">
           <Link to="/dashboard">
             <WorkflowGuardLogo />
           </Link>
         </div>
 
-        {/* Breadcrumb */}
-        {breadcrumb && (
-          <div className="flex items-center text-sm text-gray-500">
-            <span className="mx-2">/</span>
-            <span className="font-medium">{breadcrumb}</span>
-          </div>
-        )}
-
-        {/* Navigation */}
+        {/* Navigation - Centered */}
         <nav className="flex items-center space-x-8">
           {navItems.map((item) => (
             <Link
@@ -155,33 +146,51 @@ const TopNavigation = () => {
               </Badge>
             </div>
           )}
-          {/* Notifications */}
+          
+          {/* Enhanced Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="w-4 h-4" />
-            <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">
-              2
-            </Badge>
-          </Button>
+              <Button variant="ghost" size="sm" className="relative p-2">
+                <Bell className="w-5 h-5" />
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600">
+                  2
+                </Badge>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span>Notifications</span>
+                <Badge variant="secondary" className="text-xs">
+                  2 new
+                </Badge>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">Workflow Protection Active</p>
-                  <p className="text-xs text-gray-500">Your workflows are being monitored</p>
+              
+              {/* Enhanced Notification Items */}
+              <DropdownMenuItem className="p-3 hover:bg-blue-50">
+                <div className="flex items-start space-x-3 w-full">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">Workflow Protection Active</p>
+                    <p className="text-xs text-gray-500 mt-1">Your workflows are being monitored and protected</p>
+                    <p className="text-xs text-gray-400 mt-1">2 minutes ago</p>
+                  </div>
                 </div>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/settings")}>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">New Feature Available</p>
-                  <p className="text-xs text-gray-500">Check out our latest updates</p>
+              
+              <DropdownMenuItem className="p-3 hover:bg-green-50">
+                <div className="flex items-start space-x-3 w-full">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">New Feature Available</p>
+                    <p className="text-xs text-gray-500 mt-1">Advanced workflow versioning is now live</p>
+                    <p className="text-xs text-gray-400 mt-1">1 hour ago</p>
+                  </div>
                 </div>
               </DropdownMenuItem>
+              
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <DropdownMenuItem className="text-blue-600 font-medium">
                 View All Notifications
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -255,8 +264,6 @@ const TopNavigation = () => {
           </DropdownMenu>
         </div>
       </div>
-
-
     </header>
   );
 };
