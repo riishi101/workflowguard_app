@@ -22,22 +22,34 @@ export class HubSpotService {
         },
       });
 
+      console.log('🔍 HubSpotService - User found:', user ? {
+        id: user.id,
+        email: user.email,
+        hasAccessToken: !!user.hubspotAccessToken,
+        hasRefreshToken: !!user.hubspotRefreshToken,
+        hasPortalId: !!user.hubspotPortalId,
+        tokenExpiresAt: user.hubspotTokenExpiresAt
+      } : null);
+
       if (!user) {
+        console.log('🔍 HubSpotService - User not found');
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       if (!user.hubspotAccessToken) {
-        throw new HttpException('HubSpot not connected', HttpStatus.BAD_REQUEST);
+        console.log('🔍 HubSpotService - No HubSpot access token found for user');
+        throw new HttpException('HubSpot not connected. Please connect your HubSpot account first.', HttpStatus.BAD_REQUEST);
       }
 
-      // Check if token is expired and refresh if needed
+      // Check if token is expired
       const now = new Date();
       if (user.hubspotTokenExpiresAt && user.hubspotTokenExpiresAt < now) {
         console.log('🔍 HubSpotService - Token expired, refreshing...');
         if (user.hubspotRefreshToken) {
           await this.refreshAccessToken(userId, user.hubspotRefreshToken);
         } else {
-          throw new HttpException('No refresh token available', HttpStatus.UNAUTHORIZED);
+          console.log('🔍 HubSpotService - No refresh token available');
+          throw new HttpException('HubSpot token expired and no refresh token available. Please reconnect your HubSpot account.', HttpStatus.UNAUTHORIZED);
         }
       }
 
@@ -48,8 +60,11 @@ export class HubSpotService {
       });
 
       if (!currentUser?.hubspotAccessToken) {
+        console.log('🔍 HubSpotService - No valid HubSpot access token after refresh');
         throw new HttpException('No valid HubSpot access token', HttpStatus.UNAUTHORIZED);
       }
+
+      console.log('🔍 HubSpotService - Calling HubSpot API with token:', currentUser.hubspotAccessToken.substring(0, 20) + '...');
 
       // Call HubSpot API to get workflows
       const workflows = await this.fetchWorkflowsFromHubSpot(
@@ -62,6 +77,16 @@ export class HubSpotService {
 
     } catch (error) {
       console.error('🔍 HubSpotService - Error fetching workflows:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      if (error.message?.includes('HubSpot API error')) {
+        throw new HttpException(`HubSpot API error: ${error.message}`, HttpStatus.BAD_REQUEST);
+      }
+      
       throw new HttpException(
         `Failed to fetch HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
