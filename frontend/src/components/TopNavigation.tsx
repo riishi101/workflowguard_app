@@ -155,8 +155,8 @@ const TopNavigation = () => {
                 size="sm" 
                 className="relative p-2 hover:bg-gray-100 transition-colors duration-200 group"
               >
-                <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-800 transition-colors duration-200" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600 border-2 border-white shadow-sm animate-pulse">
+                <Bell className="w-5 h-5 text-gray-800 group-hover:text-gray-900 transition-colors duration-200" />
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600 border-2 border-white shadow-sm">
                   2
                 </Badge>
               </Button>
