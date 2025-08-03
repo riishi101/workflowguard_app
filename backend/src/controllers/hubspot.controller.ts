@@ -1,57 +1,39 @@
 import { Controller, Get, Post, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Request } from 'express';
+import { HubSpotService } from '../services/hubspot.service';
 
 @Controller('hubspot')
 export class HubSpotController {
+  constructor(private readonly hubSpotService: HubSpotService) {}
   
   @Get('workflows')
   @UseGuards(JwtAuthGuard)
   async getWorkflows(@Req() req: Request) {
     console.log('🔍 HubSpotController - getWorkflows called');
     
-    // For now, return mock workflows since we don't have the full HubSpot integration
-    // In a real implementation, this would call the HubSpot API
-    const mockWorkflows = [
-      {
-        id: 'workflow_1',
-        name: 'Lead Nurturing Campaign',
-        description: 'Automated email sequence for lead nurturing',
-        type: 'workflow',
-        status: 'active'
-      },
-      {
-        id: 'workflow_2', 
-        name: 'Welcome Series',
-        description: 'New customer onboarding emails',
-        type: 'workflow',
-        status: 'active'
-      },
-      {
-        id: 'workflow_3',
-        name: 'Abandoned Cart Recovery',
-        description: 'Recover abandoned shopping carts',
-        type: 'workflow', 
-        status: 'active'
-      },
-      {
-        id: 'workflow_4',
-        name: 'Product Recommendation',
-        description: 'Personalized product suggestions',
-        type: 'workflow',
-        status: 'active'
-      },
-      {
-        id: 'workflow_5',
-        name: 'Customer Feedback Survey',
-        description: 'Post-purchase feedback collection',
-        type: 'workflow',
-        status: 'active'
+    try {
+      // Get user from request
+      const userId = (req.user as any)?.sub;
+      console.log('🔍 HubSpotController - userId:', userId);
+      
+      if (!userId) {
+        throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
       }
-    ];
 
-    console.log('🔍 HubSpotController - Returning mock workflows:', mockWorkflows.length);
-    return mockWorkflows;
+      // Use the real HubSpot service to fetch actual workflows
+      const workflows = await this.hubSpotService.getWorkflows(userId);
+      
+      console.log('🔍 HubSpotController - Returning real workflows from HubSpot:', workflows.length);
+      return workflows;
+      
+    } catch (error) {
+      console.error('🔍 HubSpotController - Error fetching workflows:', error);
+      throw new HttpException(
+        `Failed to fetch HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Get('test-connection')
