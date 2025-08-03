@@ -11,15 +11,25 @@ export class DashboardController {
   @Get('stats')
   async getDashboardStats(@Req() req: Request) {
     try {
-      const userId = (req.user as any)?.sub;
+      // Use the same robust user ID extraction as workflow controller
+      let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
       if (!userId) {
         console.log('DashboardController - No userId found in dashboard stats request');
         // Return basic stats instead of throwing error
         return {
           totalWorkflows: 0,
+          activeWorkflows: 0,
           protectedWorkflows: 0,
-          recentActivity: [],
-          lastUpdated: new Date().toISOString()
+          totalVersions: 0,
+          uptime: 0,
+          lastSnapshot: new Date().toISOString(),
+          planCapacity: 100,
+          planUsed: 0,
         };
       }
       
@@ -38,9 +48,13 @@ export class DashboardController {
       // Return basic stats instead of throwing error
       return {
         totalWorkflows: 0,
+        activeWorkflows: 0,
         protectedWorkflows: 0,
-        recentActivity: [],
-        lastUpdated: new Date().toISOString()
+        totalVersions: 0,
+        uptime: 0,
+        lastSnapshot: new Date().toISOString(),
+        planCapacity: 100,
+        planUsed: 0,
       };
     }
   }
