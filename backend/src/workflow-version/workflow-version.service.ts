@@ -140,7 +140,6 @@ export class WorkflowVersionService {
             data: JSON.stringify({ steps: [] }),
             createdBy: userId,
             createdAt: new Date(),
-            updatedAt: new Date(),
           },
           include: { workflow: true }
         });

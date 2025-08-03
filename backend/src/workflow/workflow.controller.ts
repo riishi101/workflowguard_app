@@ -91,8 +91,7 @@ export class WorkflowController {
         versionNumber: Date.now(), // Use timestamp as version number
         snapshotType: 'Manual Snapshot',
         data: version.data,
-        createdBy: req.user?.id || req.user?.sub || 'system'
-      });
+      }, req.user?.id || req.user?.sub || 'system');
       
       console.log('🔍 WorkflowController - Restore successful:', restoredVersion.id);
       return {
