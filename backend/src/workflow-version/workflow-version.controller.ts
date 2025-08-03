@@ -46,8 +46,24 @@ export class WorkflowVersionController {
   @Get('workflow/:workflowId/history')
   @UseGuards(JwtAuthGuard)
   async getWorkflowHistory(@Req() req: Request, @Param('workflowId') workflowId: string) {
-    const userId = (req.user as any)?.sub;
-    if (!userId) throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    console.log('🔍 WorkflowVersionController - getWorkflowHistory called');
+    console.log('🔍 WorkflowVersionController - req.user:', req.user);
+    
+    // Try to get userId from multiple sources (same as workflow controller)
+    let userId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    // If still no userId, try to get from headers
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    console.log('🔍 WorkflowVersionController - Determined userId:', userId);
+    
+    if (!userId) {
+      console.log('🔍 WorkflowVersionController - No userId found, throwing unauthorized');
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    
     return await this.workflowVersionService.findByWorkflowIdWithHistoryLimit(workflowId, userId);
   }
 
