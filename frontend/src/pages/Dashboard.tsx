@@ -178,8 +178,8 @@ const Dashboard = () => {
             initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
             email: workflow.owner?.email || 'unknown@example.com'
           },
-          status: workflow.status || 'active',
-          protectionStatus: 'protected',
+          status: (workflow.status || 'active') as "active" | "inactive" | "error",
+          protectionStatus: 'protected' as "protected" | "unprotected" | "error",
           lastModified: workflow.updatedAt || workflow.createdAt || new Date().toISOString(),
           steps: workflow.steps || 0,
           contacts: workflow.contacts || 0
