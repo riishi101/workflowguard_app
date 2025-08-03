@@ -134,25 +134,64 @@ export class WorkflowController {
   }
 
   @Post('start-protection')
-  @Public()
-  async startWorkflowProtection(@Body() body: StartWorkflowProtectionDto) {
+  @UseGuards(JwtAuthGuard)
+  async startWorkflowProtection(@Body() body: any, @Req() req: any) {
     console.log('🔍 WorkflowController - startWorkflowProtection called');
     console.log('🔍 WorkflowController - body:', body);
+    console.log('🔍 WorkflowController - req.user:', req.user);
 
     try {
+      // Get user ID from request
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      // If no userId from JWT, try to get from body
+      if (!userId) {
+        userId = body.userId;
+      }
+      
+      // If still no userId, try to get from headers
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      console.log('🔍 WorkflowController - Determined userId:', userId);
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.BAD_REQUEST);
+      }
+
       // Extract workflow names from the body
-      const workflowNames = body.workflows?.map(w => w.name) || [];
-      const userId = body.userId;
+      let workflowNames: string[] = [];
+      
+      if (body.workflows && Array.isArray(body.workflows)) {
+        // If workflows array is provided, extract names
+        workflowNames = body.workflows.map((w: any) => w.name).filter(Boolean);
+      } else if (body.workflowIds && Array.isArray(body.workflowIds)) {
+        // If workflowIds are provided, we need to get the names from the workflows array
+        const selectedWorkflows = body.workflows || [];
+        const workflowMap = new Map(selectedWorkflows.map((w: any) => [w.id, w.name]));
+        workflowNames = body.workflowIds.map((id: string) => workflowMap.get(id)).filter(Boolean);
+      }
 
       console.log('🔍 WorkflowController - workflowNames:', workflowNames);
-      console.log('🔍 WorkflowController - userId:', userId);
+
+      if (workflowNames.length === 0) {
+        throw new HttpException('No valid workflow names provided', HttpStatus.BAD_REQUEST);
+      }
 
       const result = await this.workflowService.startWorkflowProtection(workflowNames, userId);
       
       console.log('🔍 WorkflowController - Protection result:', result);
-      return result;
+      return {
+        success: true,
+        message: `Successfully started protection for ${workflowNames.length} workflows`,
+        protectedWorkflows: result.protectedWorkflows
+      };
     } catch (error) {
       console.error('🔍 WorkflowController - Error in startWorkflowProtection:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException('Failed to start workflow protection', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
