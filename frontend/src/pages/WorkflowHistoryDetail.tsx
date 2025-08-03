@@ -79,11 +79,12 @@ const WorkflowHistoryDetail = () => {
       console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
       
       // Check if workflow details were found
-      if (!detailsResponse.data) {
+      // The details response is the workflow object directly, not wrapped in data
+      if (!detailsResponse) {
         throw new Error('Workflow not found');
       }
       
-      setWorkflowDetails(detailsResponse.data);
+      setWorkflowDetails(detailsResponse);
       
       // Transform the backend data to match frontend interface
       // The backend returns the data directly, not wrapped in a data property
