@@ -83,21 +83,21 @@ const PlanBillingTab = () => {
   const isTrialExpired = trialStatus?.isTrialExpired;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Trial Banner */}
       {isTrialActive && (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-        <div>
-          <p className="text-blue-900 font-medium text-sm">
-            You are currently on a 21-day free trial with access to Professional
-            Plan features!
-          </p>
-          <p className="text-blue-800 text-sm">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center justify-between shadow-sm">
+          <div className="space-y-2">
+            <p className="text-blue-900 font-semibold text-base">
+              You are currently on a 21-day free trial with access to Professional
+              Plan features!
+            </p>
+            <p className="text-blue-800 text-sm">
               Trial ends in {trialDaysRemaining} days. Upgrade now to continue using WorkflowGuard.
-          </p>
+            </p>
           </div>
           <Button 
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             onClick={() => handleUpgrade('professional')}
           >
             Upgrade Now
@@ -105,317 +105,222 @@ const PlanBillingTab = () => {
         </div>
       )}
 
-      {/* Trial Expired Banner */}
-      {isTrialExpired && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
-          <div>
-            <p className="text-red-900 font-medium text-sm">
-              Your trial has expired. Please upgrade to continue using WorkflowGuard.
-            </p>
-            <p className="text-red-800 text-sm">
-              You can no longer access the app features until you upgrade.
-            </p>
+      {/* Your Subscription Overview */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Subscription Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">Current Plan</p>
+            <p className="text-lg font-semibold text-gray-900">Starter Plan</p>
           </div>
-          <Button 
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={() => handleUpgrade('professional')}
-          >
-          Upgrade Now
-        </Button>
-      </div>
-      )}
-
-      {/* Current Subscription */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Your Subscription Overview
-        </h3>
-
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h4 className="text-base font-semibold">
-              {subscription?.plan === 'professional' ? 'Professional Plan' : 
-               subscription?.plan === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan'}
-            </h4>
-            {isTrialActive && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Trial
-            </Badge>
-            )}
-            {isTrialExpired && (
-              <Badge variant="secondary" className="bg-red-100 text-red-800">
-                Expired
-              </Badge>
-            )}
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">Price</p>
+            <p className="text-lg font-semibold text-gray-900">$19/month (billed annually)</p>
           </div>
-          
-          <p className="text-gray-600 text-sm">
-            ${subscription?.plan === 'professional' ? '49' : 
-              subscription?.plan === 'enterprise' ? '99' : '19'}/month (billed annually)
-          </p>
-
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">
-                  Workflows Monitored
-                </span>
-                <span className="text-sm font-medium">
-                  {usageStats?.totalWorkflows || 0}/{usageStats?.workflowLimit || 5}
-                </span>
-              </div>
-              <Progress 
-                value={usageStats?.usagePercentage || 0} 
-                className="h-2" 
-              />
-              {usageStats?.isOverLimit && (
-                <p className="text-xs text-red-600 mt-1">
-                  You've exceeded your plan limit
-                </p>
-              )}
-            </div>
-            
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Version History</span>
-                <span className="text-sm font-medium">
-                  {subscription?.plan === 'enterprise' ? 'Unlimited' : 
-                   subscription?.plan === 'professional' ? '90 days' : '30 days'} retained
-                </span>
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Next billing on:</span>
-                <span className="text-sm font-medium">
-                  {subscription?.nextBillingDate ? 
-                    new Date(subscription.nextBillingDate).toLocaleDateString() : 
-                    'Not set'}
-                </span>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">Workflows Monitored</p>
+            <p className="text-lg font-semibold text-gray-900">0/5</p>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600">Version History</p>
+            <p className="text-lg font-semibold text-gray-900">30 days retained</p>
           </div>
         </div>
       </div>
 
       {/* Explore Other Plans */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Explore Other Plans
-        </h3>
-        <div className="grid grid-cols-3 gap-6">
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold text-gray-900">Explore Other Plans</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Starter Plan */}
-          <Card className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-xl">Starter</CardTitle>
-              <div className="text-3xl font-bold">
-                $19<span className="text-base font-normal">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 flex-1 flex flex-col">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Up to 5 workflows</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Workflow Selection</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Dashboard Overview</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Basic Version History</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Simple Comparison</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Basic Restore</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Email Support</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Basic Settings</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  <strong>Limitations:</strong> 30 days version history, Basic comparison only
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                className="w-full mt-auto"
-                onClick={() => handleUpgrade('starter')}
-                disabled={subscription?.plan === 'starter'}
-              >
-                {subscription?.plan === 'starter' ? 'Current Plan' : 'Select Plan'}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Starter</h4>
+              <Badge variant="secondary" className="bg-gray-100 text-gray-700">Current Plan</Badge>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 mb-4">$19/month</p>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Up to 5 workflows
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Workflow Selection
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Dashboard Overview
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Basic Version History
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Simple Comparison
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Basic Restore
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Email Support
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Basic Settings
+              </li>
+            </ul>
+            <p className="text-xs text-gray-500 mb-4">30 days version history, Basic comparison only</p>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              disabled
+            >
+              Select Plan
+            </Button>
+          </div>
 
           {/* Professional Plan */}
-          <Card className="border-blue-500 border-2 flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-xl">Professional</CardTitle>
-              <div className="text-3xl font-bold">
-                $49<span className="text-base font-normal">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 flex-1 flex flex-col">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Up to 25 workflows</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Enhanced Dashboard</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Advanced Workflow History</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Improved Comparison</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Team Management</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Audit Log</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>API Access</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Enhanced Settings</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Priority Support</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  <strong>Limitations:</strong> 90 days version history, Up to 5 team members
-                </div>
-              </div>
-              <Button 
-                className="w-full bg-blue-500 hover:bg-blue-600 mt-auto"
-                onClick={() => handleUpgrade('professional')}
-                disabled={subscription?.plan === 'professional'}
-              >
-                {subscription?.plan === 'professional' ? 'Current Plan' : 'Select Plan'}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-white border-2 border-blue-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <Badge className="bg-blue-500 text-white px-3 py-1">Popular</Badge>
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Professional</h4>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 mb-4">$49/month</p>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Up to 25 workflows
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Enhanced Dashboard
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Workflow History
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Improved Comparison
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Team Management
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Audit Log
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                API Access
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Enhanced Settings
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Priority Support
+              </li>
+            </ul>
+            <p className="text-xs text-gray-500 mb-4">90 days version history, Up to 5 team members</p>
+            <Button 
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() => handleUpgrade('professional')}
+            >
+              Select Plan
+            </Button>
+          </div>
 
           {/* Enterprise Plan */}
-          <Card className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-xl">Enterprise</CardTitle>
-              <div className="text-3xl font-bold">
-                $99<span className="text-base font-normal">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 flex-1 flex flex-col">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Unlimited workflows</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Extended History</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Advanced Analytics</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Unlimited Team</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Extended Audit Log</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Dedicated Support</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>All Settings Features</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Advanced Comparison</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  <strong>Limitations:</strong> 1 year version history, All features unlocked
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                className="w-full mt-auto"
-                onClick={() => handleUpgrade('enterprise')}
-                disabled={subscription?.plan === 'enterprise'}
-              >
-                {subscription?.plan === 'enterprise' ? 'Current Plan' : 'Select Plan'}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Enterprise</h4>
+            </div>
+            <p className="text-2xl font-bold text-gray-900 mb-4">$99/month</p>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Unlimited workflows
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Extended History
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Analytics
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Unlimited Team
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Extended Audit Log
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Dedicated Support
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                All Settings Features
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Comparison
+              </li>
+            </ul>
+            <p className="text-xs text-gray-500 mb-4">1 year version history, All features unlocked</p>
+            <Button 
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+              onClick={() => handleUpgrade('enterprise')}
+            >
+              Select Plan
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Manage Your Subscription & Plan */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Your Subscription & Plan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600 mb-4">
-            Your subscription is managed through HubSpot. To change your plan, update payment methods, 
-            or manage your subscription details, you will be redirected to your HubSpot account billing section.
-          </p>
-          <div className="space-y-3">
-            <Button
-              onClick={() => window.open('https://app.hubspot.com/billing', '_blank')}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              <span>Manage Subscription in HubSpot</span>
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => window.open('https://app.hubspot.com/billing/payment-methods', '_blank')}
-            >
-              <span>Update Payment Methods</span>
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => window.open('https://app.hubspot.com/billing/invoices', '_blank')}
-            >
-              <span>View Billing History</span>
-              <ExternalLink className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Manage Your Subscription & Plan</h3>
+        <p className="text-gray-600 mb-6">
+          Your subscription is managed through HubSpot. To change your plan, update payment methods, 
+          or manage your subscription details, you will be redirected to your HubSpot account billing section.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button
+            onClick={() => window.open('https://app.hubspot.com/billing', '_blank')}
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            <span>Manage Subscription in HubSpot</span>
+            <ExternalLink className="w-4 h-4 ml-2" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => window.open('https://app.hubspot.com/billing/payment-methods', '_blank')}
+          >
+            <span>Update Payment Methods</span>
+            <ExternalLink className="w-4 h-4 ml-2" />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => window.open('https://app.hubspot.com/billing/invoices', '_blank')}
+          >
+            <span>View Billing History</span>
+            <ExternalLink className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
