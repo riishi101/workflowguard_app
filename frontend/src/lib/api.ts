@@ -466,7 +466,7 @@ export class ApiService {
 
   // Workflow history endpoints
   static async getWorkflowHistory(workflowId: string): Promise<ApiResponse<WorkflowHistoryVersion[]>> {
-    const response = await apiClient.get(`/workflow/${workflowId}/history`);
+    const response = await apiClient.get(`/workflow-version/workflow/${workflowId}/history`);
     return response.data;
   }
 

@@ -88,17 +88,6 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🔍 DEBUG: Dashboard fetchDashboardData called');
-      console.log('🔍 DEBUG: Current user object:', user);
-      console.log('🔍 DEBUG: User ID being passed:', user?.id);
-      console.log('🔍 DEBUG: DEPLOYMENT TEST 2 - This should appear if code is deployed');
-      console.log('🔍 DEBUG: User object details:', {
-        id: user?.id,
-        email: user?.email,
-        name: user?.name,
-        hasId: !!user?.id
-      });
-
       console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
       console.log('Dashboard - Current user:', user);
       console.log('Dashboard - User ID being passed:', user?.id);
@@ -268,20 +257,12 @@ const Dashboard = () => {
     console.log('🔍 DEBUG: User from useAuth:', user);
     console.log('🔍 DEBUG: User ID:', user?.id);
     console.log('🔍 DEBUG: User email:', user?.email);
-    console.log('🔍 DEBUG: DEPLOYMENT TEST - This should appear if code is deployed');
     
-    // Add a DOM element to verify code deployment
-    const debugElement = document.createElement('div');
-    debugElement.id = 'debug-deployment-test';
-    debugElement.style.position = 'fixed';
-    debugElement.style.top = '10px';
-    debugElement.style.right = '10px';
-    debugElement.style.background = 'red';
-    debugElement.style.color = 'white';
-    debugElement.style.padding = '5px';
-    debugElement.style.zIndex = '9999';
-    debugElement.textContent = user?.id ? `User ID: ${user.id}` : 'No User ID';
-    document.body.appendChild(debugElement);
+    // Remove any existing debug element
+    const existingDebugElement = document.getElementById('debug-deployment-test');
+    if (existingDebugElement) {
+      existingDebugElement.remove();
+    }
     
     console.log('Dashboard - Component mounted, fetching dashboard data');
     console.log('Dashboard - Current workflow state:', {
@@ -304,7 +285,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (workflows.length > 0) {
       console.log('Dashboard - Workflows detected, forcing re-render');
-      console.log('Dashboard - DEPLOYMENT TEST: This should appear if latest code is deployed');
       // Force a re-render by updating a state variable
       setForceUpdate(prev => prev + 1);
     }
