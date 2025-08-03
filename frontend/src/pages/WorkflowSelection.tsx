@@ -993,7 +993,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         {workflow.steps} steps
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {workflow.contacts.toLocaleString()}
+                        {(workflow.contacts || 0).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {workflow.lastModified}
