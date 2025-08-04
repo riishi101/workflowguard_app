@@ -97,58 +97,41 @@ const TopNavigation = () => {
       console.error('Logout failed:', error);
       // Force logout even if API call fails
       localStorage.removeItem('authToken');
-    navigate("/");
+      navigate("/");
     }
   };
 
   const getUserInitials = () => {
-    if (user?.name) {
-      return user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (user?.email) {
-      return user.email[0].toUpperCase();
-    }
-    return "U";
+    if (!user) return "U";
+    const name = user.name || user.email || "";
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const getUserName = () => {
-    if (user?.name) return user.name;
-    if (user?.email) return user.email.split("@")[0];
-    return "User";
+    if (!user) return "User";
+    return user.name || user.email?.split("@")[0] || "User";
   };
 
   const getSubscriptionStatus = () => {
     if (!user?.subscription) return null;
     return {
-      plan: user.subscription.plan,
-      status: user.subscription.status,
-      isActive: user.subscription.status === 'active'
+      plan: user.subscription.planId || "Starter",
+      status: user.subscription.status || "Active",
+      isActive: user.subscription.status === "active" || user.subscription.status === "trial"
     };
   };
 
   const subscriptionStatus = getSubscriptionStatus();
 
-  const getBreadcrumb = () => {
-    const path = location.pathname;
-    if (path.startsWith("/workflow-history")) return "Workflow History";
-    if (path === "/settings") return "Settings";
-    if (path === "/help-support") return "Help & Support";
-    if (path === "/manage-subscription") return "Billing & Subscription";
-    if (path === "/contact") return "Contact Support";
-    return "";
-  };
-
-  const breadcrumb = getBreadcrumb();
-
   return (
     <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Logo - Consistent placement */}
+      <div className="flex items-center justify-between px-6 py-4">
+        {/* Logo - Left side */}
         <div className="flex-shrink-0">
           <Link to="/dashboard">
             <WorkflowGuardLogo size="md" />
@@ -162,7 +145,7 @@ const TopNavigation = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "text-sm font-medium transition-colors",
+                "text-sm font-medium transition-colors duration-200",
                 isActive(item.path)
                   ? "text-blue-600"
                   : "text-gray-600 hover:text-gray-900",
@@ -174,20 +157,8 @@ const TopNavigation = () => {
         </nav>
 
         {/* Right Side - Notifications & User */}
-        <div className="flex items-center space-x-3">
-          {/* Plan Status */}
-          {subscriptionStatus && (
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant={subscriptionStatus.isActive ? "default" : "secondary"}
-                className="text-xs"
-              >
-                {subscriptionStatus.plan}
-              </Badge>
-            </div>
-          )}
-          
-          {/* Simplified Notifications */}
+        <div className="flex items-center space-x-4">
+          {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -205,7 +176,7 @@ const TopNavigation = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 p-0 shadow-lg border-0 rounded-lg overflow-hidden">
               <div className="bg-white rounded-lg border border-gray-200 shadow-xl">
-                {/* Simple Header */}
+                {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
                   <div className="flex items-center space-x-2">
                     <Bell className="w-4 h-4 text-gray-600" />
@@ -269,7 +240,7 @@ const TopNavigation = () => {
                   )}
                 </div>
                 
-                {/* Simple Footer */}
+                {/* Footer */}
                 <div className="p-3 border-t border-gray-100 bg-gray-50">
                   <Button 
                     variant="ghost" 
@@ -286,7 +257,7 @@ const TopNavigation = () => {
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
+              <Button variant="ghost" className="flex items-center gap-2 p-2 hover:bg-gray-100 transition-colors duration-200 rounded-lg">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
                     {getUserInitials()}
@@ -295,7 +266,7 @@ const TopNavigation = () => {
                 <span className="text-sm text-gray-700 font-medium">
                   {getUserName()}
                 </span>
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="w-3 h-3 text-gray-500" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

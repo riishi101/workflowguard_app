@@ -30,20 +30,22 @@ async function bootstrap() {
   });
   app.use(limiter);
 
-  // CORS configuration
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:8080',
-    'https://www.workflowguard.pro',
-    'https://workflowguard.pro',
-    'https://api.workflowguard.pro'
-  ];
-
+  // CORS configuration - More permissive for development
   app.enableCors({
-    origin: allowedOrigins,
+    origin: true, // Allow all origins for now
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
+    allowedHeaders: [
+      'Content-Type', 
+      'Authorization', 
+      'x-user-id',
+      'Accept',
+      'Origin',
+      'X-Requested-With'
+    ],
+    exposedHeaders: ['Content-Length', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   });
 
   // Global prefix

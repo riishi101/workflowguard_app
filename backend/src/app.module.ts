@@ -13,6 +13,7 @@ import { SupportModule } from './support/support.module';
 import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebhookModule } from './webhook/webhook.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { WebhookModule } from './webhook/webhook.module';
     SupportModule,
     MetricsModule,
     SubscriptionModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
