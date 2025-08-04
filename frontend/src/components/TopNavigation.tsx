@@ -19,6 +19,7 @@ import {
   User, 
   Settings, 
   LogOut, 
+  HelpCircle,
   CreditCard,
   ChevronDown
 } from "lucide-react";
