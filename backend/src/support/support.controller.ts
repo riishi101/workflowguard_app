@@ -9,8 +9,6 @@ export class SupportController {
   @Post('diagnose')
   @UseGuards(JwtAuthGuard)
   async diagnoseIssue(@Body() body: { description: string }, @Req() req: any) {
-    console.log('🔍 SupportController - diagnoseIssue called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -28,7 +26,6 @@ export class SupportController {
       const diagnosis = await this.supportService.diagnoseIssue(body.description, userId);
       return diagnosis;
     } catch (error) {
-      console.error('🔍 SupportController - Error in diagnoseIssue:', error);
       throw new HttpException(
         `Failed to diagnose issue: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -39,8 +36,6 @@ export class SupportController {
   @Post('fix-rollback')
   @UseGuards(JwtAuthGuard)
   async fixRollbackIssue(@Req() req: any) {
-    console.log('🔍 SupportController - fixRollbackIssue called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -54,7 +49,6 @@ export class SupportController {
       const result = await this.supportService.fixRollbackIssue(userId);
       return result;
     } catch (error) {
-      console.error('🔍 SupportController - Error in fixRollbackIssue:', error);
       throw new HttpException(
         `Failed to fix rollback issue: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -65,8 +59,6 @@ export class SupportController {
   @Post('fix-sync')
   @UseGuards(JwtAuthGuard)
   async fixSyncIssue(@Req() req: any) {
-    console.log('🔍 SupportController - fixSyncIssue called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -80,7 +72,6 @@ export class SupportController {
       const result = await this.supportService.fixSyncIssue(userId);
       return result;
     } catch (error) {
-      console.error('🔍 SupportController - Error in fixSyncIssue:', error);
       throw new HttpException(
         `Failed to fix sync issue: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -91,8 +82,6 @@ export class SupportController {
   @Post('fix-auth')
   @UseGuards(JwtAuthGuard)
   async fixAuthIssue(@Req() req: any) {
-    console.log('🔍 SupportController - fixAuthIssue called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -106,7 +95,6 @@ export class SupportController {
       const result = await this.supportService.fixAuthIssue(userId);
       return result;
     } catch (error) {
-      console.error('🔍 SupportController - Error in fixAuthIssue:', error);
       throw new HttpException(
         `Failed to fix auth issue: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -117,8 +105,6 @@ export class SupportController {
   @Post('fix-data')
   @UseGuards(JwtAuthGuard)
   async fixDataIssue(@Req() req: any) {
-    console.log('🔍 SupportController - fixDataIssue called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -132,7 +118,6 @@ export class SupportController {
       const result = await this.supportService.fixDataIssue(userId);
       return result;
     } catch (error) {
-      console.error('🔍 SupportController - Error in fixDataIssue:', error);
       throw new HttpException(
         `Failed to fix data issue: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -143,8 +128,6 @@ export class SupportController {
   @Post('optimize-performance')
   @UseGuards(JwtAuthGuard)
   async optimizePerformance(@Req() req: any) {
-    console.log('🔍 SupportController - optimizePerformance called');
-    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -158,7 +141,6 @@ export class SupportController {
       const result = await this.supportService.optimizePerformance(userId);
       return result;
     } catch (error) {
-      console.error('🔍 SupportController - Error in optimizePerformance:', error);
       throw new HttpException(
         `Failed to optimize performance: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR

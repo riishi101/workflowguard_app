@@ -7,7 +7,7 @@ import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 export class WorkflowService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createWorkflowDto: CreateWorkflowDto) {
+  async create(createWorkflowDto: any) {
     return this.prisma.workflow.create({
       data: createWorkflowDto,
     });
@@ -32,7 +32,7 @@ export class WorkflowService {
     });
   }
 
-  async update(id: string, updateWorkflowDto: UpdateWorkflowDto) {
+  async update(id: string, updateWorkflowDto: any) {
     return this.prisma.workflow.update({
       where: { id },
       data: updateWorkflowDto,
@@ -45,350 +45,106 @@ export class WorkflowService {
     });
   }
 
-  async startWorkflowProtection(workflowNames: string[], userId?: string) {
-    console.log('🔍 WorkflowService - startWorkflowProtection called');
-    console.log('🔍 WorkflowService - workflowNames:', workflowNames);
-    console.log('🔍 WorkflowService - userId:', userId);
-
-    // Determine the user ID to use
+  async startWorkflowProtection(workflowNames: string[], userId: string, selectedWorkflowObjects: any[]): Promise<any[]> {
     let finalUserId = userId;
+
     if (!finalUserId) {
-      // Try to find a default user or create one
-      const defaultUser = await this.prisma.user.findFirst();
-      if (defaultUser) {
-        finalUserId = defaultUser.id;
-        console.log('🔍 WorkflowService - Using default user:', finalUserId);
-      } else {
-        // Create a default user
-        const newUser = await this.prisma.user.create({
-          data: {
-            email: 'default@workflowguard.pro',
-            name: 'Default User',
-            role: 'admin',
-          },
-        });
-        finalUserId = newUser.id;
-        console.log('🔍 WorkflowService - Created default user:', finalUserId);
-      }
+      finalUserId = 'default-user-id';
     }
 
-    const protectedWorkflows: any[] = [];
-
-    // Use a transaction to ensure data consistency
-    await this.prisma.$transaction(async (tx) => {
-      for (const workflowName of workflowNames) {
-        console.log('🔍 WorkflowService - Processing workflow:', workflowName);
-
-        // Check if workflow already exists
-        const existingWorkflow = await tx.workflow.findFirst({
-          where: { name: workflowName },
-        });
-
-        if (existingWorkflow) {
-          // Update existing workflow's owner
-          await tx.workflow.update({
-            where: { id: existingWorkflow.id },
-            data: { ownerId: finalUserId },
-          });
-          protectedWorkflows.push(existingWorkflow);
-          console.log('🔍 WorkflowService - Updated existing workflow:', existingWorkflow.id);
-        } else {
-          // Create new workflow
-          const newWorkflow = await tx.workflow.create({
-            data: {
-              hubspotId: `hubspot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              name: workflowName,
-              ownerId: finalUserId,
-            },
-          });
-          protectedWorkflows.push(newWorkflow);
-          console.log('🔍 WorkflowService - Created new workflow:', newWorkflow.id);
-        }
-      }
+    // Check if user exists, create if not
+    let user = await this.prisma.user.findUnique({
+      where: { id: finalUserId },
     });
 
-    console.log('🔍 WorkflowService - Protected workflows:', protectedWorkflows.length);
-    return { protectedWorkflows };
-  }
-
-  async getProtectedWorkflows(userId?: string) {
-    console.log('🔍 WorkflowService - getProtectedWorkflows called');
-    console.log('🔍 WorkflowService - userId:', userId);
-
-    if (!userId) {
-      console.log('🔍 WorkflowService - No userId provided, returning empty array');
-      return [];
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          id: finalUserId,
+          email: 'default@example.com',
+          name: 'Default User',
+          role: 'user',
+        },
+      });
     }
 
-    const workflows = await this.prisma.workflow.findMany({
-      where: { ownerId: userId },
-      include: {
-        owner: true,
-        versions: true,
-      },
-    });
+    const protectedWorkflows = [];
 
-    console.log('🔍 WorkflowService - Found workflows:', workflows.length);
-    return workflows;
-  }
-
-  async getProtectedWorkflowIds(userId?: string) {
-    console.log('🔍 WorkflowService - getProtectedWorkflowIds called');
-    console.log('🔍 WorkflowService - userId:', userId);
-
-    if (!userId) {
-      console.log('🔍 WorkflowService - No userId provided, returning empty array');
-      return [];
-    }
-
-    const workflows = await this.prisma.workflow.findMany({
-      where: { ownerId: userId },
-      select: { id: true },
-    });
-
-    const workflowIds = workflows.map(w => w.id);
-    console.log('🔍 WorkflowService - Found workflow IDs:', workflowIds);
-    return workflowIds;
-  }
-
-  async getDashboardStats(userId?: string) {
-    console.log('🔍 WorkflowService - getDashboardStats called');
-    console.log('🔍 WorkflowService - userId:', userId);
-
-    if (!userId) {
-      console.log('🔍 WorkflowService - No userId provided, returning default stats');
-      return {
-        totalWorkflows: 0,
-        activeWorkflows: 0,
-        protectedWorkflows: 0,
-        totalVersions: 0,
-        uptime: 0,
-        lastSnapshot: new Date().toISOString(),
-        planCapacity: 100,
-        planUsed: 0,
-      };
-    }
-
-    const [totalWorkflows, protectedWorkflows, totalVersions, recentActivity] = await Promise.all([
-      this.prisma.workflow.count({ where: { ownerId: userId } }),
-      this.prisma.workflow.count({ where: { ownerId: userId } }),
-      this.prisma.workflowVersion.count({ 
+    for (const workflowName of workflowNames) {
+      const existingWorkflow = await this.prisma.workflow.findFirst({
         where: { 
-          workflow: { ownerId: userId } 
-        } 
-      }),
-      this.prisma.auditLog.count({ where: { userId } }),
-    ]);
-
-    // Calculate uptime based on recent activity (simplified calculation)
-    const uptime = recentActivity > 0 ? 99.9 : 0;
-    
-    // Calculate plan usage (simplified - using workflow count as usage)
-    const planCapacity = 100; // Default plan capacity
-    const planUsed = totalWorkflows;
-
-    const stats = {
-      totalWorkflows,
-      activeWorkflows: totalWorkflows, // All workflows are considered active
-      protectedWorkflows,
-      totalVersions,
-      uptime,
-      lastSnapshot: new Date().toISOString(),
-      planCapacity,
-      planUsed,
-    };
-
-    console.log('🔍 WorkflowService - Dashboard stats:', stats);
-    return stats;
-  }
-
-  // Temporarily commented out overage-related code
-  /*
-  async trackWorkflowUsage(userId: string) {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-
-    try {
-      // Try to update existing overage record
-      await this.prisma.overage.upsert({
-        where: {
-          userId_month: {
-            userId,
-            month: currentMonth,
-          },
-        },
-        update: {
-          workflowCount: { increment: 1 },
-        },
-        create: {
-          userId,
-          month: currentMonth,
-          workflowCount: 1,
-          limit: 10, // Default limit
-          overage: 0,
-          type: 'workflow',
-        },
-      });
-    } catch (error) {
-      console.error('Error tracking workflow usage:', error);
-    }
-  }
-  */
-
-  async createWorkflowVersion(workflowId: string, data: any, createdBy: string) {
-    console.log('🔍 WorkflowService - createWorkflowVersion called');
-    console.log('🔍 WorkflowService - workflowId:', workflowId);
-    console.log('🔍 WorkflowService - createdBy:', createdBy);
-
-    // Get the latest version number
-    const latestVersion = await this.prisma.workflowVersion.findFirst({
-      where: { workflowId },
-      orderBy: { versionNumber: 'desc' },
-    });
-
-    const versionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
-
-    // Convert data to string for SQLite
-    const dataString = JSON.stringify(data);
-
-    const version = await this.prisma.workflowVersion.create({
-      data: {
-        workflowId,
-        versionNumber,
-        snapshotType: 'manual',
-        createdBy,
-        data: dataString,
-      },
-    });
-
-    console.log('🔍 WorkflowService - Created version:', version.id);
-    return version;
-  }
-
-  async getWorkflowVersion(workflowId: string, versionId: string) {
-    console.log('🔍 WorkflowService - getWorkflowVersion called');
-    console.log('🔍 WorkflowService - workflowId:', workflowId);
-    console.log('🔍 WorkflowService - versionId:', versionId);
-
-    const version = await this.prisma.workflowVersion.findFirst({
-      where: {
-        id: versionId,
-        workflowId: workflowId,
-      },
-    });
-
-    console.log('🔍 WorkflowService - Found version:', version ? version.id : null);
-    return version;
-  }
-
-  async getLatestWorkflowVersion(workflowId: string) {
-    console.log('🔍 WorkflowService - getLatestWorkflowVersion called');
-    console.log('🔍 WorkflowService - workflowId:', workflowId);
-
-    const latestVersion = await this.prisma.workflowVersion.findFirst({
-      where: {
-        workflowId: workflowId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    console.log('🔍 WorkflowService - Latest version found:', latestVersion ? latestVersion.id : null);
-    return latestVersion;
-  }
-
-  async rollbackWorkflow(workflowId: string, version: any, userId: string) {
-    console.log('🔍 WorkflowService - rollbackWorkflow called');
-    console.log('🔍 WorkflowService - workflowId:', workflowId);
-    console.log('🔍 WorkflowService - version:', version?.id);
-    console.log('🔍 WorkflowService - userId:', userId);
-
-    try {
-      // Validate that we have a version to rollback to
-      if (!version) {
-        throw new HttpException('No version found for rollback', HttpStatus.BAD_REQUEST);
-      }
-
-      // Get the latest version number to increment
-      const latestVersion = await this.prisma.workflowVersion.findFirst({
-        where: { workflowId },
-        orderBy: { versionNumber: 'desc' },
-      });
-
-      const newVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
-
-      // Handle the data field properly - ensure it's a valid JSON object
-      let rollbackData;
-      try {
-        // If version.data is already a string, parse it
-        if (typeof version.data === 'string') {
-          rollbackData = JSON.parse(version.data);
-        } else {
-          // If it's already an object, use it directly
-          rollbackData = version.data;
+          name: workflowName,
+          ownerId: finalUserId 
         }
-      } catch (parseError) {
-        console.error('🔍 WorkflowService - Error parsing version data:', parseError);
-        // Use a default empty object if parsing fails
-        rollbackData = { steps: [] };
-      }
-
-      // Create a new version with the rollback data
-      const rollbackVersion = await this.prisma.workflowVersion.create({
-        data: {
-          workflowId: workflowId,
-          versionNumber: newVersionNumber,
-          snapshotType: 'Rollback Snapshot',
-          data: rollbackData, // Prisma will handle the JSON conversion
-          createdBy: userId,
-          createdAt: new Date(),
-        },
       });
 
-      console.log('🔍 WorkflowService - Rollback version created:', rollbackVersion.id);
-
-      // Update the workflow to reflect the rollback
-      await this.prisma.workflow.update({
-        where: { id: workflowId },
-        data: {
-          updatedAt: new Date(),
-        },
-      });
-
-      console.log('🔍 WorkflowService - Workflow updated after rollback');
-
-      return {
-        success: true,
-        rollbackVersionId: rollbackVersion.id,
-        message: 'Workflow rolled back successfully',
-      };
-    } catch (error) {
-      console.error('🔍 WorkflowService - Error in rollbackWorkflow:', error);
-      if (error instanceof HttpException) {
-        throw error;
+      if (existingWorkflow) {
+        const updatedWorkflow = await this.prisma.workflow.update({
+          where: { id: existingWorkflow.id },
+          data: {
+            updatedAt: new Date(),
+          },
+          include: {
+            owner: true,
+            versions: true,
+          }
+        });
+        protectedWorkflows.push(updatedWorkflow);
+      } else {
+        const newWorkflow = await this.prisma.workflow.create({
+          data: {
+            hubspotId: `mock-${Date.now()}`,
+            name: workflowName,
+            ownerId: finalUserId,
+          },
+          include: {
+            owner: true,
+            versions: true,
+          }
+        });
+        protectedWorkflows.push(newWorkflow);
       }
-      throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    return protectedWorkflows;
+  }
+
+  async getProtectedWorkflows(userId: string): Promise<any[]> {
+    if (!userId) {
+      return [];
+    }
+
+    try {
+      const workflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        include: {
+          owner: true,
+          versions: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      return workflows;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getProtectedWorkflowIds(userId: string): Promise<string[]> {
+    const workflows = await this.getProtectedWorkflows(userId);
+    return workflows.map(workflow => workflow.id);
   }
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
-    console.log('🔍 WorkflowService - syncHubSpotWorkflows called');
-    console.log('🔍 WorkflowService - userId:', userId);
-
     try {
-      // Import HubSpotService dynamically to avoid circular dependency
       const { HubSpotService } = await import('../services/hubspot.service');
       const hubspotService = new HubSpotService(this.prisma);
       
-      // Fetch workflows from HubSpot
       const hubspotWorkflows = await hubspotService.getWorkflows(userId);
-      console.log('🔍 WorkflowService - Fetched HubSpot workflows:', hubspotWorkflows.length);
 
-      // Sync with local database
       const syncedWorkflows = [];
       
       for (const hubspotWorkflow of hubspotWorkflows) {
-        // Check if workflow already exists in local database
         const existingWorkflow = await this.prisma.workflow.findFirst({
           where: { 
             hubspotId: hubspotWorkflow.id,
@@ -397,7 +153,6 @@ export class WorkflowService {
         });
 
         if (existingWorkflow) {
-          // Update existing workflow with latest data
           const updatedWorkflow = await this.prisma.workflow.update({
             where: { id: existingWorkflow.id },
             data: {
@@ -410,9 +165,7 @@ export class WorkflowService {
             }
           });
           syncedWorkflows.push(updatedWorkflow);
-          console.log('🔍 WorkflowService - Updated workflow:', updatedWorkflow.id);
         } else {
-          // Create new workflow in local database
           const newWorkflow = await this.prisma.workflow.create({
             data: {
               hubspotId: hubspotWorkflow.id,
@@ -425,15 +178,12 @@ export class WorkflowService {
             }
           });
           syncedWorkflows.push(newWorkflow);
-          console.log('🔍 WorkflowService - Created new workflow:', newWorkflow.id);
         }
       }
 
-      console.log('🔍 WorkflowService - Synced workflows:', syncedWorkflows.length);
       return syncedWorkflows;
 
     } catch (error) {
-      console.error('🔍 WorkflowService - Error syncing HubSpot workflows:', error);
       throw new HttpException(
         `Failed to sync HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -442,22 +192,17 @@ export class WorkflowService {
   }
 
   async createAutomatedBackup(workflowId: string, userId: string): Promise<any> {
-    console.log('🔍 WorkflowService - createAutomatedBackup called');
-    
     try {
-      // Import WorkflowVersionService dynamically to avoid circular dependency
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
       const workflowVersionService = new WorkflowVersionService(
         this.prisma,
-        {} as any, // UserService
-        {} as any  // AuditLogService
+        {} as any,
+        {} as any
       );
       
       const backup = await workflowVersionService.createAutomatedBackup(workflowId, userId);
-      console.log('🔍 WorkflowService - Created automated backup:', backup.id);
       return backup;
     } catch (error) {
-      console.error('🔍 WorkflowService - Error creating automated backup:', error);
       throw new HttpException(
         `Failed to create automated backup: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -466,21 +211,16 @@ export class WorkflowService {
   }
 
   async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
-    console.log('🔍 WorkflowService - createChangeNotification called');
-    
     try {
-      // Import WorkflowVersionService dynamically to avoid circular dependency
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
       const workflowVersionService = new WorkflowVersionService(
         this.prisma,
-        {} as any, // UserService
-        {} as any  // AuditLogService
+        {} as any,
+        {} as any
       );
       
       await workflowVersionService.createChangeNotification(workflowId, userId, changes);
-      console.log('🔍 WorkflowService - Created change notification');
     } catch (error) {
-      console.error('🔍 WorkflowService - Error creating change notification:', error);
       throw new HttpException(
         `Failed to create change notification: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -489,22 +229,17 @@ export class WorkflowService {
   }
 
   async createApprovalRequest(workflowId: string, userId: string, requestedChanges: any): Promise<any> {
-    console.log('🔍 WorkflowService - createApprovalRequest called');
-    
     try {
-      // Import WorkflowVersionService dynamically to avoid circular dependency
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
       const workflowVersionService = new WorkflowVersionService(
         this.prisma,
-        {} as any, // UserService
-        {} as any  // AuditLogService
+        {} as any,
+        {} as any
       );
       
       const approvalRequest = await workflowVersionService.createApprovalWorkflow(workflowId, userId, requestedChanges);
-      console.log('🔍 WorkflowService - Created approval request:', approvalRequest.id);
       return approvalRequest;
     } catch (error) {
-      console.error('🔍 WorkflowService - Error creating approval request:', error);
       throw new HttpException(
         `Failed to create approval request: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -513,24 +248,122 @@ export class WorkflowService {
   }
 
   async generateComplianceReport(workflowId: string, startDate: Date, endDate: Date): Promise<any> {
-    console.log('🔍 WorkflowService - generateComplianceReport called');
-    
     try {
-      // Import WorkflowVersionService dynamically to avoid circular dependency
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
       const workflowVersionService = new WorkflowVersionService(
         this.prisma,
-        {} as any, // UserService
-        {} as any  // AuditLogService
+        {} as any,
+        {} as any
       );
       
       const report = await workflowVersionService.generateComplianceReport(workflowId, startDate, endDate);
-      console.log('🔍 WorkflowService - Generated compliance report');
       return report;
     } catch (error) {
-      console.error('🔍 WorkflowService - Error generating compliance report:', error);
       throw new HttpException(
         `Failed to generate compliance report: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async restoreWorkflowVersion(workflowId: string, versionId: string, userId: string): Promise<any> {
+    try {
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any,
+        {} as any
+      );
+      
+      const result = await workflowVersionService.restoreWorkflowVersion(workflowId, versionId, userId);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to restore workflow version: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
+    try {
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any,
+        {} as any
+      );
+      
+      const result = await workflowVersionService.rollbackWorkflow(workflowId, userId);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to rollback workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async downloadWorkflowVersion(workflowId: string, versionId: string): Promise<any> {
+    try {
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any,
+        {} as any
+      );
+      
+      const version = await workflowVersionService.findOne(versionId);
+      return version;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to download workflow version: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async getWorkflowStats(userId: string): Promise<any> {
+    try {
+      const workflows = await this.getProtectedWorkflows(userId);
+      const totalVersions = workflows.reduce((sum, workflow) => sum + workflow.versions.length, 0);
+      
+      return {
+        totalWorkflows: workflows.length,
+        activeWorkflows: workflows.filter(w => w.status === 'active').length,
+        protectedWorkflows: workflows.length,
+        totalVersions: totalVersions,
+        uptime: 99.9,
+        lastSnapshot: new Date().toISOString(),
+        planCapacity: 100,
+        planUsed: workflows.length
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get workflow stats: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async getDashboardStats(userId: string): Promise<any> {
+    try {
+      const workflows = await this.getProtectedWorkflows(userId);
+      const totalVersions = workflows.reduce((sum, workflow) => sum + workflow.versions.length, 0);
+      
+      return {
+        totalWorkflows: workflows.length,
+        activeWorkflows: workflows.filter(w => w.status === 'active').length,
+        protectedWorkflows: workflows.length,
+        totalVersions: totalVersions,
+        uptime: 99.9,
+        lastSnapshot: new Date().toISOString(),
+        planCapacity: 100,
+        planUsed: workflows.length
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get dashboard stats: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
