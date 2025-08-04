@@ -96,25 +96,8 @@ export class UserController {
         throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
 
-      // Mock API keys for now
-      const apiKeys = [
-        {
-          id: '1',
-          name: 'Production API Key',
-          key: 'wg_live_...',
-          created: new Date().toISOString(),
-          lastUsed: new Date().toISOString(),
-          permissions: ['read', 'write']
-        },
-        {
-          id: '2',
-          name: 'Development API Key',
-          key: 'wg_test_...',
-          created: new Date().toISOString(),
-          lastUsed: null,
-          permissions: ['read']
-        }
-      ];
+      // Return empty array for now - API keys will be implemented later
+      const apiKeys: any[] = [];
 
       return {
         success: true,
@@ -149,21 +132,8 @@ export class UserController {
         throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
 
-      // Mock API key creation
-      const newApiKey = {
-        id: Date.now().toString(),
-        name: apiKeyData.name,
-        key: `wg_${Math.random().toString(36).substr(2, 9)}_${Date.now()}`,
-        created: new Date().toISOString(),
-        lastUsed: null,
-        permissions: apiKeyData.permissions || ['read']
-      };
-
-      return {
-        success: true,
-        data: newApiKey,
-        message: 'API key created successfully'
-      };
+      // API key creation not implemented yet
+      throw new HttpException('API key creation not implemented yet', HttpStatus.NOT_IMPLEMENTED);
     } catch (error) {
       throw new HttpException(
         `Failed to create API key: ${error.message}`,

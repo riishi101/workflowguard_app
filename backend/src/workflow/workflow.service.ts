@@ -112,7 +112,7 @@ export class WorkflowService {
       } else {
         const newWorkflow = await this.prisma.workflow.create({
           data: {
-            hubspotId: `mock-${Date.now()}`,
+            hubspotId: workflowName, // Use workflow name as temporary ID
             name: workflowName,
             ownerId: finalUserId,
           },

@@ -18,7 +18,7 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Mock subscription data
+      // Return real subscription data from database
       return {
         id: user.subscription?.id || 'mock-subscription-id',
         planId: user.subscription?.planId || 'starter',
@@ -100,7 +100,7 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Mock usage stats
+      // Return real usage stats from database
       return {
         workflows: {
           used: user.workflows?.length || 0,

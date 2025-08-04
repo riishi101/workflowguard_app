@@ -66,22 +66,8 @@ export class WorkflowVersionService {
       });
 
       if (versions.length === 0) {
-        // Create mock data for demonstration
-        const mockVersion = await this.prisma.workflowVersion.create({
-          data: {
-            workflowId: workflowId,
-            versionNumber: 1,
-            snapshotType: 'Manual Save',
-            data: { steps: [], triggers: [] },
-            createdBy: 'system',
-            createdAt: new Date(),
-          },
-          include: {
-            workflow: true,
-          },
-        });
-
-        return this.transformVersionsForFrontend([mockVersion]);
+        // Return empty array instead of creating mock data
+        return [];
       }
 
       return this.transformVersionsForFrontend(versions);
