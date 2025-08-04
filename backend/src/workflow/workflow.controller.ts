@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
@@ -88,6 +88,126 @@ export class WorkflowController {
       console.error('🔍 WorkflowController - Error syncing HubSpot workflows:', error);
       throw new HttpException(
         `Failed to sync HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post(':id/automated-backup')
+  @UseGuards(JwtAuthGuard)
+  async createAutomatedBackup(@Param('id') workflowId: string, @Req() req: any) {
+    console.log('🔍 WorkflowController - createAutomatedBackup called');
+    
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const backup = await this.workflowService.createAutomatedBackup(workflowId, userId);
+      return {
+        message: 'Automated backup created successfully',
+        backup: backup
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error creating automated backup:', error);
+      throw new HttpException(
+        `Failed to create automated backup: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post(':id/change-notification')
+  @UseGuards(JwtAuthGuard)
+  async createChangeNotification(@Param('id') workflowId: string, @Body() changes: any, @Req() req: any) {
+    console.log('🔍 WorkflowController - createChangeNotification called');
+    
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      await this.workflowService.createChangeNotification(workflowId, userId, changes);
+      return {
+        message: 'Change notification created successfully'
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error creating change notification:', error);
+      throw new HttpException(
+        `Failed to create change notification: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post(':id/approval-request')
+  @UseGuards(JwtAuthGuard)
+  async createApprovalRequest(@Param('id') workflowId: string, @Body() requestedChanges: any, @Req() req: any) {
+    console.log('🔍 WorkflowController - createApprovalRequest called');
+    
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const approvalRequest = await this.workflowService.createApprovalRequest(workflowId, userId, requestedChanges);
+      return {
+        message: 'Approval request created successfully',
+        approvalRequest: approvalRequest
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error creating approval request:', error);
+      throw new HttpException(
+        `Failed to create approval request: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Get(':id/compliance-report')
+  @UseGuards(JwtAuthGuard)
+  async generateComplianceReport(
+    @Param('id') workflowId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Req() req: any
+  ) {
+    console.log('🔍 WorkflowController - generateComplianceReport called');
+    
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      const report = await this.workflowService.generateComplianceReport(workflowId, start, end);
+      return report;
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error generating compliance report:', error);
+      throw new HttpException(
+        `Failed to generate compliance report: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

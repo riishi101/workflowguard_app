@@ -440,4 +440,99 @@ export class WorkflowService {
       );
     }
   }
+
+  async createAutomatedBackup(workflowId: string, userId: string): Promise<any> {
+    console.log('🔍 WorkflowService - createAutomatedBackup called');
+    
+    try {
+      // Import WorkflowVersionService dynamically to avoid circular dependency
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any, // UserService
+        {} as any  // AuditLogService
+      );
+      
+      const backup = await workflowVersionService.createAutomatedBackup(workflowId, userId);
+      console.log('🔍 WorkflowService - Created automated backup:', backup.id);
+      return backup;
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error creating automated backup:', error);
+      throw new HttpException(
+        `Failed to create automated backup: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
+    console.log('🔍 WorkflowService - createChangeNotification called');
+    
+    try {
+      // Import WorkflowVersionService dynamically to avoid circular dependency
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any, // UserService
+        {} as any  // AuditLogService
+      );
+      
+      await workflowVersionService.createChangeNotification(workflowId, userId, changes);
+      console.log('🔍 WorkflowService - Created change notification');
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error creating change notification:', error);
+      throw new HttpException(
+        `Failed to create change notification: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async createApprovalRequest(workflowId: string, userId: string, requestedChanges: any): Promise<any> {
+    console.log('🔍 WorkflowService - createApprovalRequest called');
+    
+    try {
+      // Import WorkflowVersionService dynamically to avoid circular dependency
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any, // UserService
+        {} as any  // AuditLogService
+      );
+      
+      const approvalRequest = await workflowVersionService.createApprovalWorkflow(workflowId, userId, requestedChanges);
+      console.log('🔍 WorkflowService - Created approval request:', approvalRequest.id);
+      return approvalRequest;
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error creating approval request:', error);
+      throw new HttpException(
+        `Failed to create approval request: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async generateComplianceReport(workflowId: string, startDate: Date, endDate: Date): Promise<any> {
+    console.log('🔍 WorkflowService - generateComplianceReport called');
+    
+    try {
+      // Import WorkflowVersionService dynamically to avoid circular dependency
+      const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+      const workflowVersionService = new WorkflowVersionService(
+        this.prisma,
+        {} as any, // UserService
+        {} as any  // AuditLogService
+      );
+      
+      const report = await workflowVersionService.generateComplianceReport(workflowId, startDate, endDate);
+      console.log('🔍 WorkflowService - Generated compliance report');
+      return report;
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error generating compliance report:', error);
+      throw new HttpException(
+        `Failed to generate compliance report: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 }

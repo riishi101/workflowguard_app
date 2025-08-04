@@ -399,6 +399,112 @@ const WorkflowHistory = () => {
     }
   };
 
+  const handleAutomatedBackup = async () => {
+    if (!selectedWorkflow) return;
+    
+    try {
+      setLoading(true);
+      const response = await ApiService.createAutomatedBackup(selectedWorkflow);
+      
+      toast({
+        title: "Backup Created",
+        description: "Automated backup created successfully",
+      });
+      
+      // Refresh the workflow data
+      await fetchWorkflowData();
+    } catch (err: any) {
+      console.error('Failed to create automated backup:', err);
+      toast({
+        title: "Backup Failed",
+        description: err.message || "Failed to create automated backup",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangeNotification = async (changes: any) => {
+    if (!selectedWorkflow) return;
+    
+    try {
+      await ApiService.createChangeNotification(selectedWorkflow, changes);
+      
+      toast({
+        title: "Change Notified",
+        description: "Change notification sent successfully",
+      });
+    } catch (err: any) {
+      console.error('Failed to create change notification:', err);
+      toast({
+        title: "Notification Failed",
+        description: err.message || "Failed to send change notification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleApprovalRequest = async (requestedChanges: any) => {
+    if (!selectedWorkflow) return;
+    
+    try {
+      setLoading(true);
+      const response = await ApiService.createApprovalRequest(selectedWorkflow, requestedChanges);
+      
+      toast({
+        title: "Approval Requested",
+        description: "Approval request created successfully",
+      });
+    } catch (err: any) {
+      console.error('Failed to create approval request:', err);
+      toast({
+        title: "Request Failed",
+        description: err.message || "Failed to create approval request",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleComplianceReport = async () => {
+    if (!selectedWorkflow) return;
+    
+    try {
+      setLoading(true);
+      const endDate = new Date().toISOString();
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(); // Last 30 days
+      
+      const report = await ApiService.generateComplianceReport(selectedWorkflow, startDate, endDate);
+      
+      // Create and download the report
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance-report-${selectedWorkflow}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Report Generated",
+        description: "Compliance report downloaded successfully",
+      });
+    } catch (err: any) {
+      console.error('Failed to generate compliance report:', err);
+      toast({
+        title: "Report Failed",
+        description: err.message || "Failed to generate compliance report",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRollback = (versionId: string) => {
     setSelectedVersionForRollback(versionId);
     setRollbackConfirmOpen(true);
@@ -565,6 +671,24 @@ const WorkflowHistory = () => {
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                   Sync HubSpot
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAutomatedBackup}
+                  disabled={loading || !selectedWorkflow}
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Auto Backup
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleComplianceReport}
+                  disabled={loading || !selectedWorkflow}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Compliance Report
                 </Button>
                 <Button
                   variant="outline"

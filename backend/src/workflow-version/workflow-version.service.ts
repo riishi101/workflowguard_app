@@ -158,6 +158,195 @@ export class WorkflowVersionService {
     return this.transformVersionsForFrontend(versions);
   }
 
+  async createAutomatedBackup(workflowId: string, userId: string): Promise<WorkflowVersion> {
+    console.log('🔍 WorkflowVersionService - createAutomatedBackup called');
+    console.log('🔍 WorkflowVersionService - workflowId:', workflowId);
+    console.log('🔍 WorkflowVersionService - userId:', userId);
+
+    try {
+      // Get the latest version to create a backup
+      const latestVersion = await this.findLatestByWorkflowId(workflowId);
+      
+      if (!latestVersion) {
+        throw new Error('No existing version found for workflow');
+      }
+
+      // Create automated backup
+      const backupVersion = await this.prisma.workflowVersion.create({
+        data: {
+          workflowId: workflowId,
+          versionNumber: latestVersion.versionNumber + 1,
+          snapshotType: 'Auto Backup',
+          data: latestVersion.data, // Backup current state
+          createdBy: 'system',
+          createdAt: new Date(),
+        },
+        include: {
+          workflow: true,
+        },
+      });
+
+      console.log('🔍 WorkflowVersionService - Created automated backup:', backupVersion.id);
+      
+      // Create audit log for automated backup
+      await this.auditLogService.create({
+        userId: userId,
+        action: 'automated_backup',
+        entityType: 'workflow',
+        entityId: workflowId,
+        oldValue: latestVersion,
+        newValue: backupVersion,
+      });
+
+      return backupVersion;
+    } catch (error) {
+      console.error('🔍 WorkflowVersionService - Error creating automated backup:', error);
+      throw error;
+    }
+  }
+
+  async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
+    console.log('🔍 WorkflowVersionService - createChangeNotification called');
+    
+    try {
+      // Create audit log for change notification
+      await this.auditLogService.create({
+        userId: userId,
+        action: 'workflow_changed',
+        entityType: 'workflow',
+        entityId: workflowId,
+        oldValue: null,
+        newValue: changes,
+      });
+
+      // Here you would integrate with your notification system
+      // For now, we'll just log the change
+      console.log('🔍 WorkflowVersionService - Change notification created for workflow:', workflowId);
+      console.log('🔍 WorkflowVersionService - Changes:', changes);
+    } catch (error) {
+      console.error('🔍 WorkflowVersionService - Error creating change notification:', error);
+    }
+  }
+
+  async createApprovalWorkflow(workflowId: string, userId: string, requestedChanges: any): Promise<any> {
+    console.log('🔍 WorkflowVersionService - createApprovalWorkflow called');
+    
+    try {
+      // Create approval request
+      const approvalRequest = await this.prisma.approvalRequest.create({
+        data: {
+          workflowId: workflowId,
+          requestedBy: userId,
+          requestedChanges: requestedChanges,
+          status: 'pending',
+          createdAt: new Date(),
+        },
+      });
+
+      console.log('🔍 WorkflowVersionService - Created approval request:', approvalRequest.id);
+      
+      // Create audit log for approval request
+      await this.auditLogService.create({
+        userId: userId,
+        action: 'approval_requested',
+        entityType: 'workflow',
+        entityId: workflowId,
+        oldValue: null,
+        newValue: approvalRequest,
+      });
+
+      return approvalRequest;
+    } catch (error) {
+      console.error('🔍 WorkflowVersionService - Error creating approval workflow:', error);
+      throw error;
+    }
+  }
+
+  async generateComplianceReport(workflowId: string, startDate: Date, endDate: Date): Promise<any> {
+    console.log('🔍 WorkflowVersionService - generateComplianceReport called');
+    
+    try {
+      // Get all versions in the date range
+      const versions = await this.prisma.workflowVersion.findMany({
+        where: {
+          workflowId: workflowId,
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        include: {
+          workflow: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      // Get audit logs for the workflow
+      const auditLogs = await this.prisma.auditLog.findMany({
+        where: {
+          entityId: workflowId,
+          entityType: 'workflow',
+          timestamp: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        include: {
+          user: true,
+        },
+        orderBy: {
+          timestamp: 'asc',
+        },
+      });
+
+      // Generate compliance report
+      const report = {
+        workflowId: workflowId,
+        reportPeriod: {
+          startDate: startDate,
+          endDate: endDate,
+        },
+        summary: {
+          totalVersions: versions.length,
+          totalChanges: auditLogs.length,
+          automatedBackups: versions.filter(v => v.snapshotType === 'Auto Backup').length,
+          manualSaves: versions.filter(v => v.snapshotType === 'Manual Save').length,
+          systemBackups: versions.filter(v => v.snapshotType === 'System Backup').length,
+        },
+        versions: versions.map(version => ({
+          id: version.id,
+          versionNumber: version.versionNumber,
+          snapshotType: version.snapshotType,
+          createdBy: version.createdBy,
+          createdAt: version.createdAt,
+          changes: this.calculateChanges(version.data),
+        })),
+        auditTrail: auditLogs.map(log => ({
+          id: log.id,
+          action: log.action,
+          userId: log.userId,
+          userEmail: log.user?.email,
+          timestamp: log.timestamp,
+          details: log.oldValue || log.newValue,
+        })),
+        compliance: {
+          hasCompleteAuditTrail: auditLogs.length > 0,
+          hasVersionHistory: versions.length > 0,
+          hasUserAttribution: auditLogs.every(log => log.userId),
+          hasTimestampTracking: auditLogs.every(log => log.timestamp),
+        },
+      };
+
+      console.log('🔍 WorkflowVersionService - Generated compliance report');
+      return report;
+    } catch (error) {
+      console.error('🔍 WorkflowVersionService - Error generating compliance report:', error);
+      throw error;
+    }
+  }
+
   private calculateChanges(data: any) {
     if (!data || !Array.isArray((data as any).steps)) {
       return { added: 0, modified: 0, removed: 0 };

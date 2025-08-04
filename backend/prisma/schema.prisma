@@ -38,6 +38,8 @@ model User {
   workflows             Workflow[]
   supportTickets        SupportTicket[]
   supportReplies        SupportReply[]
+  approvalRequests      ApprovalRequest[] @relation("ApprovalRequests")
+  approvedRequests      ApprovalRequest[] @relation("ApprovedRequests")
 }
 
 model Workflow {
@@ -49,6 +51,7 @@ model Workflow {
   updatedAt DateTime          @updatedAt
   owner     User              @relation(fields: [ownerId], references: [id])
   versions  WorkflowVersion[]
+  approvalRequests ApprovalRequest[]
 }
 
 model WorkflowVersion {
@@ -188,4 +191,20 @@ model SupportReply {
   updatedAt   DateTime       @updatedAt
   ticket      SupportTicket  @relation(fields: [ticketId], references: [id])
   user        User           @relation(fields: [userId], references: [id])
+}
+
+model ApprovalRequest {
+  id                String   @id @default(uuid())
+  workflowId        String
+  requestedBy       String
+  requestedChanges  Json
+  status            String   @default("pending") // pending, approved, rejected
+  approvedBy        String?
+  approvedAt        DateTime?
+  rejectionReason   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  workflow          Workflow @relation(fields: [workflowId], references: [id])
+  requester         User     @relation("ApprovalRequests", fields: [requestedBy], references: [id])
+  approver          User?    @relation("ApprovedRequests", fields: [approvedBy], references: [id])
 } 

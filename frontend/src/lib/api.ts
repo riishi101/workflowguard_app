@@ -403,6 +403,94 @@ export class ApiService {
     }
   }
 
+  static async createAutomatedBackup(workflowId: string): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - createAutomatedBackup called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post(`/workflow/${workflowId}/automated-backup`, {}, { headers });
+      console.log('🔍 ApiService - Automated backup response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in createAutomatedBackup:', error);
+      throw error;
+    }
+  }
+
+  static async createChangeNotification(workflowId: string, changes: any): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - createChangeNotification called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post(`/workflow/${workflowId}/change-notification`, changes, { headers });
+      console.log('🔍 ApiService - Change notification response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in createChangeNotification:', error);
+      throw error;
+    }
+  }
+
+  static async createApprovalRequest(workflowId: string, requestedChanges: any): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - createApprovalRequest called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post(`/workflow/${workflowId}/approval-request`, requestedChanges, { headers });
+      console.log('🔍 ApiService - Approval request response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in createApprovalRequest:', error);
+      throw error;
+    }
+  }
+
+  static async generateComplianceReport(workflowId: string, startDate: string, endDate: string): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - generateComplianceReport called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.get(`/workflow/${workflowId}/compliance-report?startDate=${startDate}&endDate=${endDate}`, { headers });
+      console.log('🔍 ApiService - Compliance report response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in generateComplianceReport:', error);
+      throw error;
+    }
+  }
+
   static async getDashboardStats(): Promise<ApiResponse<any>> {
     console.log('=== API GET DASHBOARD STATS DEBUG ===');
     console.log('ApiService - getDashboardStats called');
