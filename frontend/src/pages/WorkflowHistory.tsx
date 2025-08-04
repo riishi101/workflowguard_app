@@ -93,14 +93,42 @@ const WorkflowHistory = () => {
       setError(null);
       
       const response = await ApiService.getProtectedWorkflows(user?.id);
-      const workflows = response.data || [];
       
-      setProtectedWorkflows(workflows);
-      setHasWorkflows(workflows.length > 0);
+      // Add safety checks for response
+      if (!response || !response.data || !Array.isArray(response.data)) {
+        setProtectedWorkflows([]);
+        setHasWorkflows(false);
+        return;
+      }
+      
+      // Safely filter and map workflows
+      const safeWorkflows = response.data
+        .filter((workflow: any) => workflow && typeof workflow === 'object')
+        .map((workflow: any) => ({
+          id: typeof workflow.id === 'string' ? workflow.id : '',
+          name: typeof workflow.name === 'string' ? workflow.name : 'Unknown Workflow',
+          status: typeof workflow.status === 'string' ? workflow.status : 'unknown',
+          protectionStatus: typeof workflow.protectionStatus === 'string' ? workflow.protectionStatus : 'unknown',
+          lastModified: typeof workflow.lastModified === 'string' ? workflow.lastModified : new Date().toISOString(),
+          versions: typeof workflow.versions === 'number' ? workflow.versions : 0,
+          lastModifiedBy: workflow.lastModifiedBy && typeof workflow.lastModifiedBy === 'object' ? {
+            name: typeof workflow.lastModifiedBy.name === 'string' ? workflow.lastModifiedBy.name : 'Unknown',
+            initials: typeof workflow.lastModifiedBy.initials === 'string' ? workflow.lastModifiedBy.initials : 'U',
+            email: typeof workflow.lastModifiedBy.email === 'string' ? workflow.lastModifiedBy.email : 'unknown@example.com'
+          } : {
+            name: 'Unknown',
+            initials: 'U',
+            email: 'unknown@example.com'
+          }
+        }));
+      
+      setProtectedWorkflows(safeWorkflows);
+      setHasWorkflows(safeWorkflows.length > 0);
       
     } catch (err: any) {
       console.error('Failed to fetch protected workflows:', err);
       setError(err.response?.data?.message || 'Failed to load workflows. Please try again.');
+      setProtectedWorkflows([]);
       setHasWorkflows(false);
     } finally {
       setLoading(false);
@@ -120,15 +148,38 @@ const WorkflowHistory = () => {
         ApiService.getWorkflowHistory(workflowId)
       ]);
       
+      // Add safety checks for responses
+      if (!detailsResponse || !detailsResponse.data) {
+        throw new Error('No workflow details received from server');
+      }
+      
+      if (!historyResponse || !historyResponse.data || !Array.isArray(historyResponse.data)) {
+        throw new Error('No workflow history received from server');
+      }
+      
       setWorkflowDetails(detailsResponse.data);
-      setVersions(historyResponse.data.map((version: WorkflowHistoryVersion) => ({
-        ...version,
-        selected: false
-      })));
+      
+      // Safely map versions with validation
+      const safeVersions = historyResponse.data
+        .filter((version: any) => version && typeof version === 'object')
+        .map((version: WorkflowHistoryVersion) => ({
+          id: typeof version.id === 'string' ? version.id : '',
+          date: typeof version.date === 'string' ? version.date : new Date().toISOString(),
+          type: typeof version.type === 'string' ? version.type : 'Unknown',
+          initiator: typeof version.initiator === 'string' ? version.initiator : 'Unknown',
+          notes: typeof version.notes === 'string' ? version.notes : 'No notes available',
+          workflowId: typeof version.workflowId === 'string' ? version.workflowId : '',
+          versionNumber: typeof version.versionNumber === 'number' ? version.versionNumber : 0,
+          changes: version.changes && typeof version.changes === 'object' ? version.changes : null,
+          status: typeof version.status === 'string' ? version.status : 'unknown',
+          selected: false
+        }));
+      
+      setVersions(safeVersions);
       
     } catch (err: any) {
       console.error('Failed to fetch workflow data:', err);
-      setError(err.response?.data?.message || 'Failed to load workflow history. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to load workflow history. Please try again.');
       toast({
         title: "Error",
         description: "Failed to load workflow history. Please try again.",
