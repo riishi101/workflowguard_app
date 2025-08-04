@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class UserService {
@@ -100,29 +101,59 @@ export class UserService {
   }
 
   async getApiKeys(userId: string) {
-    return this.prisma.apiKey.findMany({
-      where: { userId, isActive: true },
+    const apiKeys = await this.prisma.apiKey.findMany({
+      where: { 
+        userId,
+        isActive: true 
+      },
       select: {
         id: true,
         name: true,
         description: true,
         createdAt: true,
         lastUsed: true,
+        isActive: true,
       },
     });
+    
+    return apiKeys.map(key => ({
+      ...key,
+      key: key.id.substring(0, 8) + '...' + key.id.substring(key.id.length - 4), // Mask the actual key
+    }));
   }
 
-  async createApiKey(userId: string, name: string, description?: string) {
-    const key = `wg_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}`;
+  async createApiKey(userId: string, apiKeyData: any) {
+    const { name, description } = apiKeyData;
     
-    return this.prisma.apiKey.create({
+    if (!name) {
+      throw new HttpException('API key name is required', HttpStatus.BAD_REQUEST);
+    }
+
+    // Generate a secure API key
+    const apiKeyValue = `wg_${randomUUID().replace(/-/g, '')}`;
+    
+    const apiKey = await this.prisma.apiKey.create({
       data: {
         userId,
         name,
-        description,
-        key,
+        description: description || '',
+        key: apiKeyValue, // Store the actual key
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        key: true, // Return the actual key only on creation
+        createdAt: true,
+        isActive: true,
       },
     });
+
+    return {
+      ...apiKey,
+      message: 'Store this API key securely. You won\'t be able to see it again.',
+    };
   }
 
   async revokeApiKey(userId: string, keyId: string) {
@@ -288,10 +319,20 @@ export class UserService {
   }
 
   async deleteApiKey(userId: string, keyId: string) {
-    return this.prisma.apiKey.updateMany({
-      where: { userId, id: keyId },
+    const result = await this.prisma.apiKey.updateMany({
+      where: { 
+        userId, 
+        id: keyId,
+        isActive: true 
+      },
       data: { isActive: false },
     });
+
+    if (result.count === 0) {
+      throw new HttpException('API key not found or already inactive', HttpStatus.NOT_FOUND);
+    }
+
+    return { success: true };
   }
 
   async getMe(userId: string) {

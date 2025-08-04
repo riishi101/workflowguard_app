@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { randomUUID } from 'crypto';
 
 @Controller('user')
 export class UserController {
@@ -75,6 +76,61 @@ export class UserController {
     }
   }
 
+  @Get('notification-settings')
+  @UseGuards(JwtAuthGuard)
+  async getNotificationSettings(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const settings = await this.userService.getNotificationSettings(userId);
+      
+      return {
+        success: true,
+        data: settings
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get notification settings: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Put('notification-settings')
+  @UseGuards(JwtAuthGuard)
+  async updateNotificationSettings(@Req() req: any, @Body() settings: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const updatedSettings = await this.userService.updateNotificationSettings(userId, settings);
+      
+      return {
+        success: true,
+        data: updatedSettings,
+        message: 'Notification settings updated successfully'
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to update notification settings: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Get('api-keys')
   @UseGuards(JwtAuthGuard)
   async getApiKeys(@Req() req: any) {
@@ -96,8 +152,7 @@ export class UserController {
         throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
 
-      // Return empty array for now - API keys will be implemented later
-      const apiKeys: any[] = [];
+      const apiKeys = await this.userService.getApiKeys(userId);
 
       return {
         success: true,
@@ -132,8 +187,13 @@ export class UserController {
         throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
 
-      // API key creation not implemented yet
-      throw new HttpException('API key creation not implemented yet', HttpStatus.NOT_IMPLEMENTED);
+      const apiKey = await this.userService.createApiKey(userId, apiKeyData);
+
+      return {
+        success: true,
+        data: apiKey,
+        message: 'API key created successfully'
+      };
     } catch (error) {
       throw new HttpException(
         `Failed to create API key: ${error.message}`,
@@ -162,6 +222,8 @@ export class UserController {
       if (!plan?.features?.includes('api_access')) {
         throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
+
+      await this.userService.deleteApiKey(userId, keyId);
 
       return {
         success: true,
