@@ -490,14 +490,22 @@ const WorkflowHistory = () => {
   };
 
   const getChangesSummary = (version: ExtendedWorkflowHistoryVersion) => {
-    if (!version.changes) return "No changes recorded";
+    if (!version.changes || typeof version.changes !== 'object') {
+      return "No changes recorded";
+    }
     
     const { added, modified, removed } = version.changes;
     const changes = [];
     
-    if (added > 0) changes.push(`${added} added`);
-    if (modified > 0) changes.push(`${modified} modified`);
-    if (removed > 0) changes.push(`${removed} removed`);
+    if (added && typeof added === 'number' && added > 0) {
+      changes.push(`${added} added`);
+    }
+    if (modified && typeof modified === 'number' && modified > 0) {
+      changes.push(`${modified} modified`);
+    }
+    if (removed && typeof removed === 'number' && removed > 0) {
+      changes.push(`${removed} removed`);
+    }
     
     return changes.length > 0 ? changes.join(', ') : "No changes recorded";
   };
@@ -539,19 +547,19 @@ const WorkflowHistory = () => {
       <ContentSection>
         {workflowDetails && (
           <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {workflowDetails.name}
-              </h2>
-              <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${getStatusColor(workflowDetails.status)}`}></div>
-                <span className="text-sm text-gray-600 capitalize">{workflowDetails.status}</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {workflowDetails.name}
+                </h2>
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${getStatusColor(workflowDetails.status)}`}></div>
+                  <span className="text-sm text-gray-600 capitalize">{workflowDetails.status}</span>
+                </div>
+                <span className="text-sm text-gray-500">ID: {workflowDetails.id}</span>
               </div>
-              <span className="text-sm text-gray-500">ID: {workflowDetails.id}</span>
-            </div>
-            <div className="text-sm text-gray-500">
-              Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
+              <div className="text-sm text-gray-500">
+                Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -618,20 +626,20 @@ const WorkflowHistory = () => {
                           />
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {new Date(version.date).toLocaleString()}
+                          {version.date ? new Date(version.date).toLocaleString() : 'Unknown date'}
                         </td>
                         <td className="px-6 py-4">
                           <Badge
                             variant="secondary"
                             className={getTypeColor(version.type)}
                           >
-                            {version.type}
+                            {typeof version.type === 'string' ? version.type : 'Unknown'}
                           </Badge>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <span>👤</span>
-                            <span>{version.initiator}</span>
+                            <span>{typeof version.initiator === 'string' ? version.initiator : 'Unknown'}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
@@ -644,7 +652,7 @@ const WorkflowHistory = () => {
                                   : ""
                               }
                             >
-                              {version.notes}
+                              {typeof version.notes === 'string' ? version.notes : 'No notes available'}
                             </span>
                           </div>
                         </td>
