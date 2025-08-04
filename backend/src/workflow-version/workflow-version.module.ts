@@ -8,7 +8,17 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
 @Module({
   imports: [PrismaModule, UserModule, AuditLogModule],
   controllers: [WorkflowVersionController],
-  providers: [WorkflowVersionService],
+  providers: [
+    WorkflowVersionService,
+    {
+      provide: 'UserService',
+      useExisting: UserModule,
+    },
+    {
+      provide: 'AuditLogService',
+      useExisting: AuditLogModule,
+    },
+  ],
   exports: [WorkflowVersionService],
 })
 export class WorkflowVersionModule {}

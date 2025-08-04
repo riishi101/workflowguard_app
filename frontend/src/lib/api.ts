@@ -523,4 +523,5 @@ class ApiService {
   }
 }
 
+export { ApiService };
 export default ApiService; 

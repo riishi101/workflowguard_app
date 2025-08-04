@@ -194,11 +194,7 @@ export class WorkflowService {
   async createAutomatedBackup(workflowId: string, userId: string): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const backup = await workflowVersionService.createAutomatedBackup(workflowId, userId);
       return backup;
@@ -213,11 +209,7 @@ export class WorkflowService {
   async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       await workflowVersionService.createChangeNotification(workflowId, userId, changes);
     } catch (error) {
@@ -231,11 +223,7 @@ export class WorkflowService {
   async createApprovalRequest(workflowId: string, userId: string, requestedChanges: any): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const approvalRequest = await workflowVersionService.createApprovalWorkflow(workflowId, userId, requestedChanges);
       return approvalRequest;
@@ -250,11 +238,7 @@ export class WorkflowService {
   async generateComplianceReport(workflowId: string, startDate: Date, endDate: Date): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const report = await workflowVersionService.generateComplianceReport(workflowId, startDate, endDate);
       return report;
@@ -269,11 +253,7 @@ export class WorkflowService {
   async restoreWorkflowVersion(workflowId: string, versionId: string, userId: string): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const result = await workflowVersionService.restoreWorkflowVersion(workflowId, versionId, userId);
       return result;
@@ -288,11 +268,7 @@ export class WorkflowService {
   async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const result = await workflowVersionService.rollbackWorkflow(workflowId, userId);
       return result;
@@ -307,11 +283,7 @@ export class WorkflowService {
   async downloadWorkflowVersion(workflowId: string, versionId: string): Promise<any> {
     try {
       const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-      const workflowVersionService = new WorkflowVersionService(
-        this.prisma,
-        {} as any,
-        {} as any
-      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
       
       const version = await workflowVersionService.findOne(versionId);
       return version;

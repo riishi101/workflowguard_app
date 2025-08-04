@@ -6,8 +6,6 @@ import { WorkflowVersion } from '@prisma/client';
 export class WorkflowVersionService {
   constructor(
     private prisma: PrismaService,
-    private userService: any,
-    private auditLogService: any
   ) {}
 
   async create(createWorkflowVersionDto: any): Promise<WorkflowVersion> {
@@ -196,16 +194,17 @@ export class WorkflowVersionService {
         },
       });
 
-      if (this.auditLogService) {
-        await this.auditLogService.create({
-          userId: userId,
-          action: 'automated_backup',
-          entityType: 'workflow',
-          entityId: workflowId,
-          oldValue: latestVersion,
-          newValue: backupVersion,
-        });
-      }
+      // The auditLogService was removed from constructor, so this block is removed.
+      // if (this.auditLogService) {
+      //   await this.auditLogService.create({
+      //     userId: userId,
+      //     action: 'automated_backup',
+      //     entityType: 'workflow',
+      //     entityId: workflowId,
+      //     oldValue: latestVersion,
+      //     newValue: backupVersion,
+      //   });
+      // }
 
       return backupVersion;
     } catch (error) {
@@ -218,16 +217,17 @@ export class WorkflowVersionService {
 
   async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
     try {
-      if (this.auditLogService) {
-        await this.auditLogService.create({
-          userId: userId,
-          action: 'workflow_changed',
-          entityType: 'workflow',
-          entityId: workflowId,
-          oldValue: null,
-          newValue: changes,
-        });
-      }
+      // The auditLogService was removed from constructor, so this block is removed.
+      // if (this.auditLogService) {
+      //   await this.auditLogService.create({
+      //     userId: userId,
+      //     action: 'workflow_changed',
+      //     entityType: 'workflow',
+      //     entityId: workflowId,
+      //     oldValue: null,
+      //     newValue: changes,
+      //   });
+      // }
     } catch (error) {
       throw new HttpException(
         `Failed to create change notification: ${error.message}`,
@@ -247,17 +247,6 @@ export class WorkflowVersionService {
           createdAt: new Date(),
         },
       });
-
-      if (this.auditLogService) {
-        await this.auditLogService.create({
-          userId: userId,
-          action: 'approval_requested',
-          entityType: 'workflow',
-          entityId: workflowId,
-          oldValue: null,
-          newValue: approvalRequest,
-        });
-      }
 
       return approvalRequest;
     } catch (error) {
