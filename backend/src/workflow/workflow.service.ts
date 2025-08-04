@@ -370,4 +370,74 @@ export class WorkflowService {
       throw new HttpException('Failed to rollback workflow', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async syncHubSpotWorkflows(userId: string): Promise<any[]> {
+    console.log('🔍 WorkflowService - syncHubSpotWorkflows called');
+    console.log('🔍 WorkflowService - userId:', userId);
+
+    try {
+      // Import HubSpotService dynamically to avoid circular dependency
+      const { HubSpotService } = await import('../services/hubspot.service');
+      const hubspotService = new HubSpotService(this.prisma);
+      
+      // Fetch workflows from HubSpot
+      const hubspotWorkflows = await hubspotService.getWorkflows(userId);
+      console.log('🔍 WorkflowService - Fetched HubSpot workflows:', hubspotWorkflows.length);
+
+      // Sync with local database
+      const syncedWorkflows = [];
+      
+      for (const hubspotWorkflow of hubspotWorkflows) {
+        // Check if workflow already exists in local database
+        const existingWorkflow = await this.prisma.workflow.findFirst({
+          where: { 
+            hubspotId: hubspotWorkflow.id,
+            ownerId: userId 
+          }
+        });
+
+        if (existingWorkflow) {
+          // Update existing workflow with latest data
+          const updatedWorkflow = await this.prisma.workflow.update({
+            where: { id: existingWorkflow.id },
+            data: {
+              name: hubspotWorkflow.name,
+              updatedAt: new Date(),
+            },
+            include: {
+              owner: true,
+              versions: true,
+            }
+          });
+          syncedWorkflows.push(updatedWorkflow);
+          console.log('🔍 WorkflowService - Updated workflow:', updatedWorkflow.id);
+        } else {
+          // Create new workflow in local database
+          const newWorkflow = await this.prisma.workflow.create({
+            data: {
+              hubspotId: hubspotWorkflow.id,
+              name: hubspotWorkflow.name,
+              ownerId: userId,
+            },
+            include: {
+              owner: true,
+              versions: true,
+            }
+          });
+          syncedWorkflows.push(newWorkflow);
+          console.log('🔍 WorkflowService - Created new workflow:', newWorkflow.id);
+        }
+      }
+
+      console.log('🔍 WorkflowService - Synced workflows:', syncedWorkflows.length);
+      return syncedWorkflows;
+
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error syncing HubSpot workflows:', error);
+      throw new HttpException(
+        `Failed to sync HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
 }

@@ -375,6 +375,30 @@ const WorkflowHistory = () => {
     navigate(`/workflow-history/${workflowId}`);
   };
 
+  const handleSyncHubSpot = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.syncHubSpotWorkflows();
+      
+      toast({
+        title: "Sync Successful",
+        description: response.message || "Successfully synced workflows from HubSpot",
+      });
+      
+      // Refresh the workflows list
+      await fetchProtectedWorkflows();
+    } catch (err: any) {
+      console.error('Failed to sync HubSpot workflows:', err);
+      toast({
+        title: "Sync Failed",
+        description: err.message || "Failed to sync workflows from HubSpot",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRollback = (versionId: string) => {
     setSelectedVersionForRollback(versionId);
     setRollbackConfirmOpen(true);
@@ -532,15 +556,26 @@ const WorkflowHistory = () => {
               <h1 className="text-2xl font-semibold text-gray-900">
                 Workflow History
               </h1>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchWorkflowData}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSyncHubSpot}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Sync HubSpot
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchWorkflowData}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </div>
         </div>

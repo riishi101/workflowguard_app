@@ -343,79 +343,62 @@ export class ApiService {
 
   // Dashboard endpoints
   static async getProtectedWorkflows(userId?: string): Promise<ApiResponse<any[]>> {
-    console.log('🔍 DEBUG: getProtectedWorkflows called with userId:', userId);
+    console.log('🔍 ApiService - getProtectedWorkflows called with userId:', userId);
     
-    // If no userId provided, try to get it from multiple sources
-    if (!userId) {
-      try {
-        // First try to get from localStorage user object
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          userId = user.id;
-          console.log('🔍 DEBUG: Got userId from localStorage user object:', userId);
-        }
-      } catch (error) {
-        console.log('🔍 DEBUG: Failed to get userId from localStorage user object:', error);
-      }
-      
-      // If still no userId, try to get from authToken payload
-      if (!userId) {
-        try {
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-            userId = payload.sub || payload.userId || payload.id;
-            console.log('🔍 DEBUG: Got userId from JWT token payload:', userId);
-          }
-        } catch (error) {
-          console.log('🔍 DEBUG: Failed to get userId from JWT token payload:', error);
-        }
-      }
-    }
-    
-    console.log('=== API GET PROTECTED WORKFLOWS DEBUG ===');
-    console.log('ApiService - getProtectedWorkflows called with userId:', userId);
-    console.log('ApiService - Auth token exists:', !!localStorage.getItem('authToken'));
-    console.log('ApiService - Auth token (first 50 chars):', localStorage.getItem('authToken')?.substring(0, 50));
-    
-    const headers: any = {};
-    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add user ID to headers if provided
     if (userId) {
       headers['x-user-id'] = userId;
-      console.log('ApiService - Added x-user-id header:', userId);
-    } else {
-      console.log('ApiService - No userId provided, not adding header');
+      console.log('🔍 ApiService - Added x-user-id header:', userId);
     }
-    
-    console.log('ApiService - Request headers:', headers);
-    console.log('ApiService - Making request to /workflow/protected');
-    console.log('ApiService - Full URL:', `${API_BASE_URL}/workflow/protected`);
-    
+
+    // Add auth token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔍 ApiService - Auth token exists:', !!token);
+      console.log('🔍 ApiService - Auth token (first 50 chars):', token.substring(0, 50));
+    }
+
+    console.log('🔍 ApiService - Request headers:', headers);
+    console.log('🔍 ApiService - Making request to /workflow/protected');
+    console.log('🔍 ApiService - Full URL:', `${apiClient.defaults.baseURL}/workflow/protected`);
+
     try {
       const response = await apiClient.get('/workflow/protected', { headers });
-      console.log('ApiService - Response received:', response.data);
-      console.log('ApiService - Response type:', typeof response.data);
-      console.log('ApiService - Is array:', Array.isArray(response.data));
-      console.log('=== END API GET PROTECTED WORKFLOWS DEBUG ===');
-      
-      // The backend returns the workflows array directly, not wrapped in ApiResponse
-      // So we need to wrap it in the expected format
-      return {
-        data: Array.isArray(response.data) ? response.data : [],
-        success: true,
-        message: 'Workflows retrieved successfully'
-      };
+      console.log('🔍 ApiService - Response received:', response.data);
+      console.log('🔍 ApiService - Response type:', typeof response.data);
+      console.log('🔍 ApiService - Is array:', Array.isArray(response.data));
+      console.log('🔍 ApiService - === END API GET PROTECTED WORKFLOWS DEBUG ===');
+      return response.data;
     } catch (error) {
-      console.error('ApiService - Error in getProtectedWorkflows:', error);
-      console.error('ApiService - Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      });
+      console.error('🔍 ApiService - Error in getProtectedWorkflows:', error);
+      throw error;
+    }
+  }
+
+  static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - syncHubSpotWorkflows called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    // Add auth token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/workflow/sync-hubspot', {}, { headers });
+      console.log('🔍 ApiService - Sync response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in syncHubSpotWorkflows:', error);
       throw error;
     }
   }

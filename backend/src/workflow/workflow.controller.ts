@@ -57,6 +57,42 @@ export class WorkflowController {
     }
   }
 
+  @Post('sync-hubspot')
+  @UseGuards(JwtAuthGuard)
+  async syncHubSpotWorkflows(@Req() req: any) {
+    console.log('🔍 WorkflowController - syncHubSpotWorkflows called');
+    
+    // Try to get userId from multiple sources
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    // If still no userId, try to get from headers
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    console.log('🔍 WorkflowController - Determined userId:', userId);
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const syncedWorkflows = await this.workflowService.syncHubSpotWorkflows(userId);
+      console.log('🔍 WorkflowController - Synced workflows:', syncedWorkflows.length);
+      
+      return {
+        message: `Successfully synced ${syncedWorkflows.length} workflows from HubSpot`,
+        workflows: syncedWorkflows
+      };
+    } catch (error) {
+      console.error('🔍 WorkflowController - Error syncing HubSpot workflows:', error);
+      throw new HttpException(
+        `Failed to sync HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.workflowService.findOne(id);
