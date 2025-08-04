@@ -99,7 +99,7 @@ export class WorkflowVersionService {
     });
   }
 
-  async findByWorkflowIdWithHistoryLimit(workflowId: string, userId: string): Promise<WorkflowVersion[]> {
+  async findByWorkflowIdWithHistoryLimit(workflowId: string, userId: string): Promise<any[]> {
     console.log('🔍 WorkflowVersionService - findByWorkflowIdWithHistoryLimit called');
     console.log('🔍 WorkflowVersionService - workflowId:', workflowId);
     console.log('🔍 WorkflowVersionService - userId:', userId);
@@ -150,12 +150,12 @@ export class WorkflowVersionService {
         });
 
         console.log('🔍 WorkflowVersionService - Created mock version:', mockVersion.id);
-        return [mockVersion];
+        return this.transformVersionsForFrontend([mockVersion]);
       }
     }
 
-    // Return the original WorkflowVersion objects without transformation
-    return versions;
+    // Transform the versions to match frontend expectations
+    return this.transformVersionsForFrontend(versions);
   }
 
   private calculateChanges(data: any) {
@@ -169,5 +169,40 @@ export class WorkflowVersionService {
       modified: steps.filter((step: any) => step.isModified).length,
       removed: steps.filter((step: any) => step.isRemoved).length,
     };
+  }
+
+  private transformVersionsForFrontend(versions: WorkflowVersion[]): any[] {
+    return versions.map((version, index) => {
+      const data = typeof version.data === 'string' ? JSON.parse(version.data) : version.data;
+      const changes = this.calculateChanges(data);
+      
+      return {
+        id: version.id,
+        workflowId: version.workflowId,
+        versionNumber: version.versionNumber,
+        date: version.createdAt.toISOString(),
+        type: version.snapshotType,
+        initiator: version.createdBy,
+        notes: this.generateChangeSummary(changes, data),
+        changes: changes,
+        status: index === 0 ? 'active' : 'inactive', // First version is current
+        selected: false
+      };
+    });
+  }
+
+  private generateChangeSummary(changes: any, data: any): string {
+    const { added, modified, removed } = changes;
+    const summaries = [];
+    
+    if (added > 0) summaries.push(`${added} step(s) added`);
+    if (modified > 0) summaries.push(`${modified} step(s) modified`);
+    if (removed > 0) summaries.push(`${removed} step(s) removed`);
+    
+    if (summaries.length === 0) {
+      return 'No changes detected';
+    }
+    
+    return summaries.join(', ');
   }
 }
