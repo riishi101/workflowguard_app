@@ -79,18 +79,53 @@ const CompareVersions = () => {
         ApiService.getWorkflowVersionsForComparison(workflowId)
       ]);
       
-      setWorkflowDetails(workflowResponse.data);
-      setVersions(versionsResponse.data);
+      // Add safety checks for responses
+      if (!workflowResponse || !workflowResponse.data) {
+        throw new Error('No workflow details received from server');
+      }
+      
+      if (!versionsResponse || !versionsResponse.data || !Array.isArray(versionsResponse.data)) {
+        throw new Error('No workflow versions received from server');
+      }
+      
+      // Safely set workflow details
+      const safeWorkflowDetails = {
+        id: typeof workflowResponse.data.id === 'string' ? workflowResponse.data.id : '',
+        name: typeof workflowResponse.data.name === 'string' ? workflowResponse.data.name : 'Unknown Workflow',
+        status: typeof workflowResponse.data.status === 'string' ? workflowResponse.data.status : 'unknown',
+        lastModified: typeof workflowResponse.data.lastModified === 'string' ? workflowResponse.data.lastModified : new Date().toISOString(),
+        totalVersions: typeof workflowResponse.data.totalVersions === 'number' ? workflowResponse.data.totalVersions : 0
+      };
+      
+      setWorkflowDetails(safeWorkflowDetails);
+      
+      // Safely filter and map versions
+      const safeVersions = versionsResponse.data
+        .filter((version: any) => version && typeof version === 'object')
+        .map((version: any) => ({
+          id: typeof version.id === 'string' ? version.id : '',
+          date: typeof version.date === 'string' ? version.date : new Date().toISOString(),
+          type: typeof version.type === 'string' ? version.type : 'Unknown',
+          initiator: typeof version.initiator === 'string' ? version.initiator : 'Unknown',
+          notes: typeof version.notes === 'string' ? version.notes : 'No notes available',
+          workflowId: typeof version.workflowId === 'string' ? version.workflowId : '',
+          versionNumber: typeof version.versionNumber === 'number' ? version.versionNumber : 0,
+          changes: version.changes && typeof version.changes === 'object' ? version.changes : null,
+          status: typeof version.status === 'string' ? version.status : 'unknown'
+        }));
+      
+      setVersions(safeVersions);
       
       // Set default versions if not already set
-      if (versionsResponse.data.length >= 2) {
-        if (!versionA) setVersionA(versionsResponse.data[0].id);
-        if (!versionB) setVersionB(versionsResponse.data[1].id);
+      if (safeVersions.length >= 2) {
+        if (!versionA) setVersionA(safeVersions[0].id);
+        if (!versionB) setVersionB(safeVersions[1].id);
       }
       
     } catch (err: any) {
       console.error('Failed to fetch versions:', err);
-      setError(err.response?.data?.message || 'Failed to load workflow versions. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to load workflow versions. Please try again.');
+      setVersions([]);
       toast({
         title: "Error",
         description: "Failed to load workflow versions. Please try again.",
@@ -107,12 +142,34 @@ const CompareVersions = () => {
     try {
       setLoading(true);
       const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
-      setComparisonData(response.data);
+      
+      // Add safety checks for response
+      if (!response || !response.data) {
+        throw new Error('No comparison data received from server');
+      }
+      
+      // Safely set comparison data with validation
+      const safeComparisonData = {
+        versionA: response.data.versionA && typeof response.data.versionA === 'object' ? response.data.versionA : null,
+        versionB: response.data.versionB && typeof response.data.versionB === 'object' ? response.data.versionB : null,
+        differences: response.data.differences && typeof response.data.differences === 'object' ? {
+          added: Array.isArray(response.data.differences.added) ? response.data.differences.added : [],
+          modified: Array.isArray(response.data.differences.modified) ? response.data.differences.modified : [],
+          removed: Array.isArray(response.data.differences.removed) ? response.data.differences.removed : []
+        } : {
+          added: [],
+          modified: [],
+          removed: []
+        }
+      };
+      
+      setComparisonData(safeComparisonData);
     } catch (err: any) {
       console.error('Failed to fetch comparison data:', err);
+      setComparisonData(null);
       toast({
         title: "Comparison Failed",
-        description: "Failed to compare workflow versions. Please try again.",
+        description: err.response?.data?.message || err.message || "Failed to compare workflow versions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -157,12 +214,18 @@ const CompareVersions = () => {
     try {
       const response = await ApiService.downloadWorkflowVersion(workflowId, versionId);
       
+      // Add safety check for response.data
+      if (!response || !response.data) {
+        throw new Error('No data received from server');
+      }
+      
       // Create and download the file
       const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `workflow-${workflowDetails?.name}-${versionLabel}.json`;
+      const workflowName = workflowDetails?.name || 'unknown-workflow';
+      a.download = `workflow-${workflowName}-${versionLabel}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -177,7 +240,7 @@ const CompareVersions = () => {
       console.error('Failed to download version:', err);
       toast({
         title: "Download Failed",
-        description: "Failed to download workflow version. Please try again.",
+        description: err.response?.data?.message || err.message || "Failed to download workflow version. Please try again.",
         variant: "destructive",
       });
     }

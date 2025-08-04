@@ -78,39 +78,60 @@ const WorkflowHistoryDetail = () => {
       console.log('🔍 WorkflowHistoryDetail - Details response:', detailsResponse);
       console.log('🔍 WorkflowHistoryDetail - History response:', historyResponse);
       
-      // Check if workflow details were found
-      // The details response is the workflow object directly, not wrapped in data
+      // Add safety checks for responses
       if (!detailsResponse) {
         throw new Error('Workflow not found');
       }
       
-      setWorkflowDetails(detailsResponse);
+      // Safely set workflow details with validation
+      const safeWorkflowDetails = {
+        id: typeof detailsResponse.id === 'string' ? detailsResponse.id : '',
+        name: typeof detailsResponse.name === 'string' ? detailsResponse.name : 'Unknown Workflow',
+        status: typeof detailsResponse.status === 'string' ? detailsResponse.status : 'unknown',
+        lastModified: typeof detailsResponse.lastModified === 'string' ? detailsResponse.lastModified : new Date().toISOString(),
+        totalVersions: typeof detailsResponse.totalVersions === 'number' ? detailsResponse.totalVersions : 0,
+        hubspotUrl: typeof detailsResponse.hubspotUrl === 'string' ? detailsResponse.hubspotUrl : undefined
+      };
       
-      // Transform the backend data to match frontend interface
-      // The backend returns the data directly, not wrapped in a data property
-      const historyData = Array.isArray(historyResponse) ? historyResponse : historyResponse.data || [];
+      setWorkflowDetails(safeWorkflowDetails);
+      
+      // Transform the backend data to match frontend interface with safety checks
+      const historyData = Array.isArray(historyResponse) ? historyResponse : (historyResponse?.data || []);
       console.log('🔍 WorkflowHistoryDetail - History response data:', historyData);
       console.log('🔍 WorkflowHistoryDetail - History data type:', typeof historyData);
       console.log('🔍 WorkflowHistoryDetail - Is array:', Array.isArray(historyData));
       
-      // Ensure we have an array to work with
-      const versionsArray = Array.isArray(historyData) ? historyData : [];
+      // Ensure we have an array to work with and filter valid objects
+      const versionsArray = Array.isArray(historyData) ? historyData.filter((item: any) => item && typeof item === 'object') : [];
       
       const transformedVersions = versionsArray.map((version: any) => {
-        const userName = version.modifiedBy?.name || version.initiator || 'Unknown User';
-        const userInitials = userName ? userName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU';
+        // Safe user name extraction
+        const userName = (version.modifiedBy?.name && typeof version.modifiedBy.name === 'string') 
+          ? version.modifiedBy.name 
+          : (version.initiator && typeof version.initiator === 'string') 
+            ? version.initiator 
+            : 'Unknown User';
+        
+        // Safe initials generation
+        const userInitials = userName && userName !== 'Unknown User' 
+          ? userName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) 
+          : 'UU';
         
         return {
-          id: version.id,
-          versionNumber: version.versionNumber.toString(),
-          dateTime: version.dateTime || version.date || version.createdAt,
+          id: typeof version.id === 'string' ? version.id : '',
+          versionNumber: typeof version.versionNumber === 'number' ? version.versionNumber.toString() : '0',
+          dateTime: typeof version.dateTime === 'string' ? version.dateTime : 
+                   (typeof version.date === 'string' ? version.date : 
+                   (typeof version.createdAt === 'string' ? version.createdAt : new Date().toISOString())),
           modifiedBy: {
             name: userName,
             initials: userInitials,
           },
-          changeSummary: version.changeSummary || version.notes || `Version ${version.versionNumber}`,
-          type: version.type || 'Manual Snapshot',
-          status: version.status || 'active'
+          changeSummary: typeof version.changeSummary === 'string' ? version.changeSummary : 
+                        (typeof version.notes === 'string' ? version.notes : 
+                        `Version ${typeof version.versionNumber === 'number' ? version.versionNumber : '0'}`),
+          type: typeof version.type === 'string' ? version.type : 'Manual Snapshot',
+          status: typeof version.status === 'string' ? version.status : 'active'
         };
       });
       
@@ -133,7 +154,7 @@ const WorkflowHistoryDetail = () => {
         setError('No version history available for this workflow yet. Versions will appear here once changes are made.');
         setVersions([]);
       } else {
-        setError(err.response?.data?.message || 'Failed to load workflow history. Please try again.');
+        setError(err.response?.data?.message || err.message || 'Failed to load workflow history. Please try again.');
         toast({
           title: "Error",
           description: "Failed to load workflow history. Please try again.",
