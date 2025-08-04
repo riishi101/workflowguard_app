@@ -3,11 +3,12 @@ import { WorkflowService } from './workflow.service';
 import { WorkflowController } from './workflow.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UserModule } from '../user/user.module';
+import { HubSpotService } from '../services/hubspot.service';
 
 @Module({
   imports: [PrismaModule, UserModule],
   controllers: [WorkflowController],
-  providers: [WorkflowService],
+  providers: [WorkflowService, HubSpotService],
   exports: [WorkflowService],
 })
 export class WorkflowModule {}

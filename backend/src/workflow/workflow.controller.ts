@@ -25,6 +25,35 @@ export class WorkflowController {
     return { message: 'HubSpot workflow lookup not implemented in simplified version' };
   }
 
+  @Get('hubspot')
+  @UseGuards(JwtAuthGuard)
+  async getHubSpotWorkflows(@Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const workflows = await this.workflowService.getHubSpotWorkflows(userId);
+      return {
+        success: true,
+        data: workflows,
+        message: `Successfully fetched ${workflows.length} workflows from HubSpot`
+      };
+    } catch (error) {
+      console.error('Failed to fetch HubSpot workflows:', error);
+      throw new HttpException(
+        `Failed to fetch HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Get('protected')
   @UseGuards(JwtAuthGuard)
   async getProtectedWorkflows(@Req() req: any) {

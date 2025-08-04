@@ -2,10 +2,14 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
+import { HubSpotService } from '../services/hubspot.service';
 
 @Injectable()
 export class WorkflowService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private hubspotService: HubSpotService
+  ) {}
 
   async create(createWorkflowDto: any) {
     return this.prisma.workflow.create({
@@ -20,6 +24,21 @@ export class WorkflowService {
         versions: true,
       },
     });
+  }
+
+  async getHubSpotWorkflows(userId: string): Promise<any[]> {
+    try {
+      console.log('🔍 WorkflowService - getHubSpotWorkflows called for userId:', userId);
+      const workflows = await this.hubspotService.getWorkflows(userId);
+      console.log('🔍 WorkflowService - Retrieved workflows from HubSpot:', workflows.length);
+      return workflows;
+    } catch (error) {
+      console.error('🔍 WorkflowService - Error getting HubSpot workflows:', error);
+      throw new HttpException(
+        `Failed to get HubSpot workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   async findOne(id: string) {
