@@ -24,11 +24,53 @@ import {
   ChevronDown
 } from "lucide-react";
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+  timestamp: string;
+  isRead: boolean;
+}
+
 const TopNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: "1",
+      title: "Workflow Protection Active",
+      message: "Your workflows are being monitored and protected. All 16 workflows are now under active protection.",
+      type: "success",
+      timestamp: "2m ago",
+      isRead: false
+    },
+    {
+      id: "2", 
+      title: "Rollback Feature Available",
+      message: "Advanced workflow versioning and rollback functionality is now live. You can now revert workflows to previous versions.",
+      type: "info",
+      timestamp: "1h ago", 
+      isRead: false
+    }
+  ]);
 
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(n => 
+        n.id === notificationId ? { ...n, isRead: true } : n
+      )
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(n => ({ ...n, isRead: true }))
+    );
+  };
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
@@ -109,7 +151,7 @@ const TopNavigation = () => {
         {/* Logo - Consistent placement */}
         <div className="flex-shrink-0">
           <Link to="/dashboard">
-            <WorkflowGuardLogo />
+            <WorkflowGuardLogo size="md" />
           </Link>
         </div>
 
@@ -145,108 +187,94 @@ const TopNavigation = () => {
             </div>
           )}
           
-          {/* Enhanced Notifications */}
+          {/* Simplified Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="relative p-2.5 hover:bg-gray-100 transition-all duration-200 group rounded-lg"
+                className="relative p-2 hover:bg-gray-100 transition-colors duration-200 rounded-lg"
               >
-                <div className="relative">
-                  <Bell className="w-5 h-5 text-gray-700 group-hover:text-gray-900 transition-all duration-200 group-hover:scale-105" />
-                  {/* Animated notification indicator */}
-                  <div className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
-                    <Badge className="relative h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-600 border-2 border-white shadow-lg font-semibold flex items-center justify-center">
-                      2
-                    </Badge>
-                  </div>
-                </div>
+                <Bell className="w-5 h-5 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 text-white border-2 border-white shadow-sm flex items-center justify-center">
+                    {unreadCount}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 shadow-xl border-0 rounded-xl overflow-hidden">
-              <div className="bg-white rounded-xl border border-gray-200 shadow-2xl">
-                {/* Enhanced Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <Bell className="w-5 h-5 text-blue-600" />
-                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    </div>
-                    <div>
-                      <span className="font-semibold text-gray-900 text-base">Notifications</span>
-                      <p className="text-xs text-gray-500">Stay updated with your workflow activity</p>
-                    </div>
+            <DropdownMenuContent align="end" className="w-80 p-0 shadow-lg border-0 rounded-lg overflow-hidden">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-xl">
+                {/* Simple Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="w-4 h-4 text-gray-600" />
+                    <span className="font-medium text-gray-900">Notifications</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border border-blue-200 font-medium px-2 py-1">
-                    2 new
-                  </Badge>
+                  {unreadCount > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={markAllAsRead}
+                      className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      Mark all read
+                    </Button>
+                  )}
                 </div>
                 
-                {/* Enhanced Notification Items */}
+                {/* Notification Items */}
                 <div className="max-h-80 overflow-y-auto">
-                  {/* Notification 1 - Enhanced */}
-                  <div className="p-4 hover:bg-blue-50 transition-all duration-200 border-b border-gray-50 cursor-pointer group">
-                    <div className="flex items-start space-x-3">
-                      <div className="relative">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
-                        <div className="absolute inset-0 w-3 h-3 bg-blue-400 rounded-full animate-ping opacity-30"></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors duration-200">
-                            Workflow Protection Active
-                          </p>
-                          <span className="text-xs text-gray-400">2m ago</span>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                          Your workflows are being monitored and protected. All 16 workflows are now under active protection.
-                        </p>
-                        <div className="flex items-center mt-2 space-x-2">
-                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 font-medium">
-                            Active
-                          </Badge>
-                          <span className="text-xs text-gray-500">16 workflows protected</span>
-                        </div>
-                      </div>
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No notifications
                     </div>
-                  </div>
-                  
-                  {/* Notification 2 - Enhanced */}
-                  <div className="p-4 hover:bg-green-50 transition-all duration-200 border-b border-gray-50 cursor-pointer group">
-                    <div className="flex items-start space-x-3">
-                      <div className="relative">
-                        <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
-                        <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-30"></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-gray-900 group-hover:text-green-700 transition-colors duration-200">
-                            Rollback Feature Available
-                          </p>
-                          <span className="text-xs text-gray-400">1h ago</span>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div 
+                        key={notification.id}
+                        className={cn(
+                          "p-4 border-b border-gray-50 cursor-pointer transition-colors duration-150",
+                          notification.isRead 
+                            ? "bg-white hover:bg-gray-50" 
+                            : "bg-blue-50 hover:bg-blue-100"
+                        )}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full mt-2 flex-shrink-0",
+                            notification.isRead ? "bg-gray-300" : "bg-blue-500"
+                          )}></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className={cn(
+                                "text-sm font-medium",
+                                notification.isRead ? "text-gray-600" : "text-gray-900"
+                              )}>
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-400">{notification.timestamp}</span>
+                            </div>
+                            <p className={cn(
+                              "text-xs mt-1 leading-relaxed",
+                              notification.isRead ? "text-gray-500" : "text-gray-600"
+                            )}>
+                              {notification.message}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                          Advanced workflow versioning and rollback functionality is now live. You can now revert workflows to previous versions.
-                        </p>
-                        <div className="flex items-center mt-2 space-x-2">
-                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 font-medium">
-                            New Feature
-                          </Badge>
-                          <span className="text-xs text-gray-500">Version control enabled</span>
-                        </div>
                       </div>
-                    </div>
-                  </div>
+                    ))
+                  )}
                 </div>
                 
-                {/* Enhanced Footer */}
-                <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+                {/* Simple Footer */}
+                <div className="p-3 border-t border-gray-100 bg-gray-50">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium transition-all duration-200 rounded-lg"
+                    className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
                   >
                     View All Notifications
                   </Button>

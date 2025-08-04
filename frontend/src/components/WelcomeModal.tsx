@@ -24,7 +24,7 @@ const WelcomeModal = ({
         </VisuallyHidden>
         <div className="text-center space-y-6">
           <div className="flex justify-center">
-            <WorkflowGuardLogo />
+            <WorkflowGuardLogo size="lg" />
           </div>
 
           <div>

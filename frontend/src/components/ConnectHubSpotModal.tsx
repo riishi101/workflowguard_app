@@ -41,7 +41,7 @@ const ConnectHubSpotModal = ({
           </div>
 
           <div className="flex items-center justify-center space-x-4 py-4">
-            <WorkflowGuardLogo showText={false} />
+            <WorkflowGuardLogo showText={false} size="sm" />
             <div className="flex items-center space-x-2">
               <div className="w-8 h-0.5 bg-gray-300"></div>
               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
