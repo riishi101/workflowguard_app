@@ -1,256 +1,269 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import MainAppLayout from "@/components/MainAppLayout";
-import ContentSection from "@/components/ContentSection";
-import {
-  Search,
-  Link,
-  RotateCcw,
-  Users,
-  MessageSquare,
-  ChevronDown,
-  FileText,
-  Lightbulb,
-  Rocket,
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  MessageCircle, 
+  BookOpen, 
+  Video, 
+  Users, 
+  Mail, 
+  Phone,
+  Bot,
+  CheckCircle,
   AlertTriangle,
-  Code,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+  Clock
+} from 'lucide-react';
+import SupportAI from '@/components/SupportAI';
 
 const HelpSupport = () => {
-  const navigate = useNavigate();
-  const [openQuestion, setOpenQuestion] = useState<string | null>(null);
-
-  const popularTopics = [
-    {
-      icon: Link,
-      title: "How to connect your HubSpot account",
-      color: "text-blue-500",
-      route: "/help/connect-hubspot"
-    },
-    {
-      icon: RotateCcw,
-      title: "Restoring a workflow to a previous state",
-      color: "text-blue-500",
-      route: "/help/restore-workflow"
-    },
-    {
-      icon: Users,
-      title: "Managing user permissions",
-      color: "text-blue-500",
-      route: "/help/user-permissions"
-    },
-    {
-      icon: MessageSquare,
-      title: "Integrating with Slack",
-      color: "text-blue-500",
-      route: "/help/slack-integration"
-    },
-  ];
-
-  const commonQuestions = [
-    {
-      id: "1",
-      question: "How do I get started with WorkflowGuard?",
-      answer:
-        "Getting started with WorkflowGuard is easy! First, connect your HubSpot account, then select the workflows you want to protect. Our onboarding guide will walk you through each step.",
-    },
-    {
-      id: "2",
-      question: "Can I restore a workflow to a previous version?",
-      answer:
-        "Yes! WorkflowGuard automatically saves versions of your workflows. You can restore any previous version through the Workflow History page with just a few clicks.",
-    },
-    {
-      id: "3",
-      question: "What integrations are currently supported?",
-      answer:
-        "WorkflowGuard currently supports HubSpot workflows, Slack notifications, and webhook integrations. We're continuously adding new integrations based on user feedback.",
-    },
-    {
-      id: "4",
-      question: "How does billing work for team accounts?",
-      answer:
-        "Team billing is based on the number of workflows monitored and team members. You can add or remove team members at any time, and billing is prorated automatically.",
-    },
-    {
-      id: "5",
-      question: "Is my data secure with WorkflowGuard?",
-      answer:
-        "Absolutely! We use enterprise-grade security with encrypted data transmission, secure storage, and regular security audits. Your workflow data is never shared with third parties.",
-    },
-  ];
-
-  const documentationCards = [
-    {
-      icon: FileText,
-      title: "User Manual",
-      description:
-        "Complete step-by-step guide to using all WorkflowGuard features.",
-      color: "text-blue-500",
-      route: "/help/user-manual"
-    },
-    {
-      icon: Lightbulb,
-      title: "Feature Spotlights",
-      description:
-        "In-depth tutorials highlighting specific features and capabilities.",
-      color: "text-blue-500",
-      route: "/help/feature-spotlights"
-    },
-    {
-      icon: Rocket,
-      title: "Advanced Use Cases",
-      description: "Real-world examples and complex workflow implementations.",
-      color: "text-blue-500",
-      route: "/help/advanced-use-cases"
-    },
-    {
-      icon: AlertTriangle,
-      title: "Troubleshooting",
-      description:
-        "Common issues and their solutions to keep your workflows running smoothly.",
-      color: "text-blue-500",
-      route: "/help/troubleshooting"
-    },
-    {
-      icon: Code,
-      title: "API Docs",
-      description:
-        "Technical documentation for developers integrating with our API.",
-      color: "text-blue-500",
-      route: "/help/api-docs"
-    },
-  ];
-
-  const handleTopicClick = (route: string) => {
-    navigate(route);
-  };
-
   return (
-    <MainAppLayout 
-      title="Help & Support Center"
-      description="Find answers to your questions, explore tutorials, and connect with our support team"
-    >
-      {/* Search Bar */}
-      <ContentSection>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <Input
-            placeholder="Search for articles, topics, or FAQs..."
-            className="pl-10 py-3 text-base"
-          />
-        </div>
-      </ContentSection>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Help & Support</h1>
+        <p className="text-gray-600">
+          Get help with WorkflowGuard and find answers to common questions.
+        </p>
+      </div>
 
-      {/* Popular Topics */}
-      <ContentSection>
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Popular Topics
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {popularTopics.map((topic, index) => {
-            const IconComponent = topic.icon;
-            return (
-              <Card
-                key={index}
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => handleTopicClick(topic.route)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <IconComponent
-                      className={`w-5 h-5 ${topic.color} flex-shrink-0`}
-                    />
-                    <span className="text-sm font-medium text-gray-900">
-                      {topic.title}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </ContentSection>
+      {/* AI Support Assistant */}
+      <div className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-blue-500" />
+              AI Support Assistant
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Our AI assistant can automatically diagnose and fix most common issues. 
+              Describe your problem and get instant help!
+            </p>
+            <SupportAI />
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Common Questions */}
-      <ContentSection>
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Common Questions
-        </h2>
-        <div className="space-y-3">
-          {commonQuestions.map((question) => (
-            <Collapsible
-              key={question.id}
-              open={openQuestion === question.id}
-              onOpenChange={(isOpen) =>
-                setOpenQuestion(isOpen ? question.id : null)
-              }
-            >
-              <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="text-sm font-medium text-gray-900 text-left">
-                    {question.question}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-gray-500 transition-transform ${
-                      openQuestion === question.id ? "rotate-180" : ""
-                    }`}
-                  />
+      {/* Support Options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Knowledge Base */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-blue-500" />
+              Knowledge Base
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Comprehensive guides, tutorials, and troubleshooting articles.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Setup guides
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Video tutorials
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Best practices
+              </div>
+            </div>
+            <Button className="w-full mt-4" variant="outline">
+              Browse Knowledge Base
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Community Forum */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-green-500" />
+              Community Forum
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Connect with other users and share tips and solutions.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                User discussions
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Tips & tricks
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Feature requests
+              </div>
+            </div>
+            <Button className="w-full mt-4" variant="outline">
+              Join Community
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Video Tutorials */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-purple-500" />
+              Video Tutorials
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">
+              Step-by-step video guides for all features.
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Getting started
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Advanced features
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Troubleshooting
+              </div>
+            </div>
+            <Button className="w-full mt-4" variant="outline">
+              Watch Tutorials
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Support Tiers */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-900">Support Tiers</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Starter Support */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Starter Support</span>
+                <Badge variant="secondary">Free</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Email Support</span>
                 </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-lg">
-                  {question.answer}
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">24-48 hour response</span>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
-        </div>
-      </ContentSection>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Knowledge Base</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">AI Support Assistant</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Documentation */}
-      <ContentSection>
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Comprehensive Guides & Documentation
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {documentationCards.map((card, index) => {
-            const IconComponent = card.icon;
-            return (
-              <Card
-                key={index}
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => handleTopicClick(card.route)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-3">
-                    <IconComponent
-                      className={`w-6 h-6 ${card.color} flex-shrink-0 mt-1`}
-                    />
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {card.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {/* Professional Support */}
+          <Card className="border-2 border-blue-200">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Professional Support</span>
+                <Badge className="bg-blue-500">Priority</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Live Chat (Business Hours)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Phone Support</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">4-8 hour response</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm">Emergency After-Hours</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enterprise Support */}
+          <Card className="border-2 border-purple-200">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Enterprise Support</span>
+                <Badge className="bg-purple-500">24/7</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">24/7 Phone Support</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">Dedicated Support Manager</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">1-2 hour critical response</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm">Custom Training Sessions</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </ContentSection>
-    </MainAppLayout>
+      </div>
+
+      {/* Contact Information */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Email Support</h3>
+                <p className="text-gray-600">support@workflowguard.pro</p>
+                <p className="text-sm text-gray-500">Available 24/7 for all users</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Phone Support</h3>
+                <p className="text-gray-600">+1 (555) 123-4567</p>
+                <p className="text-sm text-gray-500">Professional & Enterprise plans only</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

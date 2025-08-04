@@ -491,6 +491,139 @@ export class ApiService {
     }
   }
 
+  // AI Support Methods
+  static async diagnoseIssue(description: string): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - diagnoseIssue called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/diagnose', { description }, { headers });
+      console.log('🔍 ApiService - Issue diagnosis response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in diagnoseIssue:', error);
+      throw error;
+    }
+  }
+
+  static async fixRollbackIssue(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - fixRollbackIssue called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/fix-rollback', {}, { headers });
+      console.log('🔍 ApiService - Rollback fix response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in fixRollbackIssue:', error);
+      throw error;
+    }
+  }
+
+  static async fixSyncIssue(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - fixSyncIssue called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/fix-sync', {}, { headers });
+      console.log('🔍 ApiService - Sync fix response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in fixSyncIssue:', error);
+      throw error;
+    }
+  }
+
+  static async fixAuthIssue(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - fixAuthIssue called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/fix-auth', {}, { headers });
+      console.log('🔍 ApiService - Auth fix response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in fixAuthIssue:', error);
+      throw error;
+    }
+  }
+
+  static async fixDataIssue(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - fixDataIssue called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/fix-data', {}, { headers });
+      console.log('🔍 ApiService - Data fix response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in fixDataIssue:', error);
+      throw error;
+    }
+  }
+
+  static async optimizePerformance(): Promise<ApiResponse<any>> {
+    console.log('🔍 ApiService - optimizePerformance called');
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/optimize-performance', {}, { headers });
+      console.log('🔍 ApiService - Performance optimization response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('🔍 ApiService - Error in optimizePerformance:', error);
+      throw error;
+    }
+  }
+
   static async getDashboardStats(): Promise<ApiResponse<any>> {
     console.log('=== API GET DASHBOARD STATS DEBUG ===');
     console.log('ApiService - getDashboardStats called');

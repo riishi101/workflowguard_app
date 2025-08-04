@@ -1,53 +1,49 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { WorkflowVersionModule } from './workflow-version/workflow-version.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
-import { UserModule } from './user/user.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { RolesGuard } from './auth/roles.guard';
-import { WebhookModule } from './webhook/webhook.module';
-// import { HubSpotModule } from './modules/hubspot.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { EmailModule } from './email/email.module';
-// import { RealtimeModule } from './realtime/realtime.module';
-// import { MetricsModule } from './metrics/metrics.module';
-// import { SupportModule } from './support/support.module';
-// import { AnalyticsModule } from './analytics/analytics.module';
-// import { OverageModule } from './overage/overage.module';
-import { DashboardController } from './dashboard/dashboard.controller';
-import { HubSpotController } from './controllers/hubspot.controller';
-import { HubSpotService } from './services/hubspot.service';
-import { HubSpotBillingController } from './controllers/hubspot-billing.controller';
-import { HubSpotBillingService } from './services/hubspot-billing.service';
+import { NotificationModule } from './notification/notification.module';
+import { WebhookModule } from './webhook/webhook.module';
+import { SupportModule } from './support/support.module';
+import { HubSpotModule } from './modules/hubspot.module';
+import { HubSpotBillingModule } from './modules/hubspot-billing.module';
+import { OverageModule } from './overage/overage.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { SupportTicketModule } from './support/support-ticket.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PrismaModule,
     AuthModule,
+    UserModule,
     WorkflowModule,
     WorkflowVersionModule,
     AuditLogModule,
-    UserModule,
-    WebhookModule,
-    // HubSpotModule,
+    AnalyticsModule,
     EmailModule,
-    // RealtimeModule,
-    // MetricsModule,
-    // SupportModule,
-    // AnalyticsModule,
-    // OverageModule,
+    NotificationModule,
+    WebhookModule,
+    SupportModule,
+    HubSpotModule,
+    HubSpotBillingModule,
+    OverageModule,
+    RealtimeModule,
+    SupportTicketModule,
+    MetricsModule,
   ],
-  controllers: [AppController, DashboardController, HubSpotController, HubSpotBillingController],
-  providers: [
-    AppService,
-    HubSpotService,
-    HubSpotBillingService,
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
