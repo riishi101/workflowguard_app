@@ -1,73 +1,94 @@
 import { Injectable, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService, 
+    private userService: UserService,
+    private jwtService: JwtService
+  ) {}
 
-  async validateUser(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
-  }
-
-  async createUser(email: string, name?: string, role: string = 'viewer', password?: string) {
-    let data: any = { email, name, role };
-    if (password) {
-      data.password = await bcrypt.hash(password, 10);
-    }
-    return this.prisma.user.create({
-      data,
-    });
-  }
-
-  async login(email: string, password: string) {
+  async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user || !(user as any).password) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (user && user.password && await bcrypt.compare(password, user.password)) {
+      const { password, ...result } = user;
+      return result;
     }
-    const isMatch = await bcrypt.compare(password, (user as any).password);
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    // Remove password from user object before returning
-    const { password: _, ...userWithoutPassword } = user as any;
+    return null;
+  }
+
+  async login(user: any) {
+    const payload = { email: user.email, sub: user.id };
     return {
-      access_token: this.jwtService.sign({ sub: user.id, email: user.email, role: user.role }),
-      user: userWithoutPassword,
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
     };
   }
 
-  async findOrCreateUser(email: string, name?: string) {
-    try {
-      console.log('Finding or creating user with email:', email);
-      
-    let user = await this.prisma.user.findUnique({
-      where: { email },
+  async register(createUserDto: any) {
+    const { password, ...userData } = createUserDto;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const user = await this.prisma.user.create({
+      data: {
+        ...userData,
+        password: hashedPassword,
+        role: 'user', // All users get 'user' role - no admin roles
+      },
     });
 
+    // Automatically create trial subscription for new users
+    await this.userService.createTrialSubscription(user.id);
+
+    const { password: _, ...result } = user;
+    return result;
+  }
+
+  async validateHubSpotUser(hubspotUser: any) {
+    // For HubSpot App Marketplace users, create account if doesn't exist
+    let user = await this.prisma.user.findUnique({ where: { email: hubspotUser.email } });
+    
     if (!user) {
-        console.log('User not found, creating new user');
+      // Create new user from HubSpot
       user = await this.prisma.user.create({
         data: {
-          email,
-          name,
-          role: 'viewer',
+          email: hubspotUser.email,
+          name: hubspotUser.name || hubspotUser.email,
+          role: 'user', // All users get 'user' role
+          hubspotPortalId: hubspotUser.portalId,
+          hubspotAccessToken: hubspotUser.accessToken,
+          hubspotRefreshToken: hubspotUser.refreshToken,
+          hubspotTokenExpiresAt: hubspotUser.tokenExpiresAt,
         },
       });
-        console.log('New user created with ID:', user.id);
-      } else {
-        console.log('Existing user found with ID:', user.id);
+
+      // Automatically create trial subscription for HubSpot users
+      await this.userService.createTrialSubscription(user.id);
+    } else {
+      // Update existing user's HubSpot tokens
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          hubspotPortalId: hubspotUser.portalId,
+          hubspotAccessToken: hubspotUser.accessToken,
+          hubspotRefreshToken: hubspotUser.refreshToken,
+          hubspotTokenExpiresAt: hubspotUser.tokenExpiresAt,
+        },
+      });
     }
 
-    return user;
-    } catch (error) {
-      console.error('Error in findOrCreateUser:', error);
-      throw error;
-    }
+    const { password, ...result } = user;
+    return result;
   }
 
   async validateJwtPayload(payload: { sub: string; email: string; role: string }) {

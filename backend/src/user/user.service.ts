@@ -141,13 +141,13 @@ export class UserService {
 
   // Add missing methods that UserController expects
   async createTrialSubscription(userId: string) {
-    // Create a trial subscription for the user
+    // Create a trial subscription for the user (21 days for HubSpot App Marketplace)
     const trialSubscription = await this.prisma.subscription.create({
       data: {
         userId,
         planId: 'trial',
         status: 'active',
-        trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days trial
+        trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days trial
       },
     });
     return trialSubscription;

@@ -3,6 +3,28 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Create trial plan
+  await prisma.plan.upsert({
+    where: { id: 'trial' },
+    update: {},
+    create: {
+      id: 'trial',
+      name: 'Trial',
+      price: 0,
+      interval: 'month',
+      description: '21-day free trial for HubSpot App Marketplace users',
+      features: JSON.stringify([
+        'Basic workflow protection',
+        'Email support',
+        '5 workflows',
+        'Version history',
+        'Manual backups',
+        'Basic rollback',
+        '21-day trial period'
+      ]),
+    },
+  });
+
   // Create default plans
   await prisma.plan.upsert({
     where: { id: 'starter' },

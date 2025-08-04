@@ -1,12 +1,14 @@
-import { Controller, Get, Post, Body, Param, HttpException, HttpStatus, Query, Res, Req } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Controller, Get, Post, Body, Param, Query, Res, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Public } from './public.decorator';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
+import { Response, Request } from 'express';
 import axios from 'axios';
+import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly prisma: PrismaService) {}
 
   @Public()
   @Get('hubspot/url')
@@ -127,38 +129,19 @@ export class AuthController {
       console.log('Creating/updating user in database...');
       let user;
       try {
-        user = await this.authService.findOrCreateUser(email);
-        console.log('User found/created:', user.id);
-        
-        // Store HubSpot tokens and portal ID
-        await this.authService.updateUserHubspotPortalId(user.id, hub_id);
-        await this.authService.updateUserHubspotTokens(user.id, {
-          access_token,
-          refresh_token,
-          expires_in: tokenRes.data.expires_in,
+        user = await this.authService.validateHubSpotUser({
+          email,
+          name: email.split('@')[0], // Use email prefix as name
+          portalId: hub_id,
+          accessToken: access_token,
+          refreshToken: refresh_token,
+          tokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
         });
-        console.log('User HubSpot data updated');
+        console.log('User found/created:', user.id);
       } catch (dbError) {
         console.error('Database operation failed:', dbError);
-        // Try to create user again with a simpler approach
-        try {
-          console.log('Retrying user creation with fallback approach');
-          user = await this.authService.createUser(email, undefined, 'viewer');
-          console.log('User created with fallback approach:', user.id);
-          
-          // Store HubSpot tokens and portal ID
-          await this.authService.updateUserHubspotPortalId(user.id, hub_id);
-          await this.authService.updateUserHubspotTokens(user.id, {
-            access_token,
-            refresh_token,
-            expires_in: tokenRes.data.expires_in,
-          });
-          console.log('User HubSpot data updated with fallback');
-        } catch (fallbackError) {
-          console.error('Fallback user creation also failed:', fallbackError);
-          // If all else fails, redirect with error
-          return res.redirect('https://www.workflowguard.pro?error=user_creation_failed');
-        }
+        // If all else fails, redirect with error
+        return res.redirect('https://www.workflowguard.pro?error=user_creation_failed');
       }
 
       // 4. Generate JWT token for the user
@@ -195,9 +178,9 @@ export class AuthController {
   }
 
   @Post('validate')
-  async validateUser(@Body() body: { email: string }) {
+  async validateUser(@Body() body: { email: string; password: string }) {
     try {
-      const user = await this.authService.validateUser(body.email);
+      const user = await this.authService.validateUser(body.email, body.password);
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
@@ -210,64 +193,53 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
     try {
-      return await this.authService.login(body.email, body.password);
+      const user = await this.authService.validateUser(body.email, body.password);
+      if (!user) {
+        throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      }
+      return await this.authService.login(user);
     } catch (error) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
   }
 
   @Post('register')
-  async registerUser(@Body() body: { email: string; name?: string; role?: string; password?: string }) {
+  async register(@Body() createUserDto: any) {
     try {
-      return await this.authService.createUser(body.email, body.name, body.role, body.password);
+      const user = await this.authService.register(createUserDto);
+      return await this.authService.login(user);
     } catch (error) {
-      throw new HttpException('User registration failed', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @Get('user/:email')
-  async findOrCreateUser(@Param('email') email: string) {
-    try {
-      return await this.authService.findOrCreateUser(email);
-    } catch (error) {
-      throw new HttpException('Failed to find or create user', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException('Registration failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @Get('me')
+  @UseGuards(JwtAuthGuard)
   async getCurrentUser(@Req() req: Request) {
     try {
-      console.log('AuthController - getCurrentUser called');
-      
-      // Get the authorization header
-      const authHeader = req.headers.authorization;
-      console.log('AuthController - Auth header present:', !!authHeader);
-      
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.log('AuthController - No valid authorization header');
-        throw new HttpException('No authorization token provided', HttpStatus.UNAUTHORIZED);
+      const userId = (req.user as any)?.sub || (req.user as any)?.id;
+      if (!userId) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-
-      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-      console.log('AuthController - Token extracted (first 50 chars):', token.substring(0, 50) + '...');
       
-      // Verify the JWT token and get user data
-      console.log('AuthController - Calling verifyToken...');
-      const user = await this.authService.verifyToken(token);
-      console.log('AuthController - verifyToken result:', user ? { id: user.id, email: user.email } : null);
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          hubspotPortalId: true,
+          createdAt: true,
+        },
+      });
       
       if (!user) {
-        console.log('AuthController - No user returned from verifyToken');
-        throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-
-      console.log('AuthController - Returning user:', { id: user.id, email: user.email });
+      
       return user;
     } catch (error) {
-      console.error('AuthController - getCurrentUser error:', error);
-      if (error instanceof HttpException) {
-        throw error;
-      }
       throw new HttpException('Failed to get current user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

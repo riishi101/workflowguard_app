@@ -89,6 +89,29 @@ export class AuditLogController {
     return await this.auditLogService.findByEntity(entityType, entityId);
   }
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMyAuditLogs(@Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const auditLogs = await this.auditLogService.findByUser(userId);
+      return auditLogs;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get audit logs: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Delete(':id')
   @Roles('admin', 'restorer')
   async remove(@Param('id') id: string) {
