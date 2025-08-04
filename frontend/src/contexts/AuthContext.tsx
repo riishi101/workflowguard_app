@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // OAuth was successful, store the token and get user
           console.log('AuthContext - OAuth success detected, storing token');
           console.log('AuthContext - Token received (first 50 chars):', token.substring(0, 50) + '...');
-          localStorage.setItem('authToken', token);
+          localStorage.setItem('token', token);
           
           try {
             console.log('AuthContext - Fetching user after OAuth success');
@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('AuthContext - Checking existing authentication');
           
           // Check if there's a token in localStorage
-          const existingToken = localStorage.getItem('authToken');
+          const existingToken = localStorage.getItem('token');
           console.log('AuthContext - Existing token in localStorage:', !!existingToken);
           
           if (existingToken) {
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } catch (error) {
               console.log('AuthContext - Token exists but user fetch failed:', error.message);
               // Clear invalid token
-              localStorage.removeItem('authToken');
+              localStorage.removeItem('token');
             }
           } else {
             // User not authenticated, that's okay for HubSpot app
@@ -127,7 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const testAuthentication = async () => {
     console.log('AuthContext - Testing authentication manually');
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     console.log('AuthContext - Current token:', token ? token.substring(0, 50) + '...' : 'none');
     
     try {
@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       // Ignore logout errors
     } finally {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
       setUser(null);
     }
   };
