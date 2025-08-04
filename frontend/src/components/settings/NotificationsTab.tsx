@@ -43,10 +43,35 @@ const NotificationsTab = () => {
       setLoading(true);
       setError(null);
       const response = await ApiService.getNotificationSettings();
-      setSettings(response.data);
+      
+      // Add null check for response.data
+      if (response && response.data) {
+        setSettings(response.data);
+      } else {
+        // Set default settings if no data received
+        setSettings({
+          enabled: false,
+          email: "",
+          workflowDeleted: false,
+          enrollmentTriggerModified: false,
+          workflowRolledBack: false,
+          criticalActionModified: false,
+        });
+      }
     } catch (err: any) {
       console.error('Failed to fetch notification settings:', err);
       setError(err.response?.data?.message || 'Failed to load notification settings. Please try again.');
+      
+      // Set default settings on error
+      setSettings({
+        enabled: false,
+        email: "",
+        workflowDeleted: false,
+        enrollmentTriggerModified: false,
+        workflowRolledBack: false,
+        criticalActionModified: false,
+      });
+      
       toast({
         title: "Error",
         description: "Failed to load notification settings. Please try again.",

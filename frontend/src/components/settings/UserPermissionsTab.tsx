@@ -47,10 +47,21 @@ const UserPermissionsTab = () => {
       setLoading(true);
       setError(null);
       const response = await ApiService.getUserPermissions();
-      setUserList(response.data);
+      
+      // Add null check for response.data
+      if (response && response.data && Array.isArray(response.data)) {
+        setUserList(response.data);
+      } else {
+        // Set empty array if no data received
+        setUserList([]);
+      }
     } catch (err: any) {
       console.error('Failed to fetch user permissions:', err);
       setError(err.response?.data?.message || 'Failed to load user permissions. Please try again.');
+      
+      // Set empty array on error
+      setUserList([]);
+      
       toast({
         title: "Error",
         description: "Failed to load user permissions. Please try again.",

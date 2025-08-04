@@ -56,10 +56,21 @@ const AuditLogTab = () => {
         user: userFilter !== "all" ? userFilter : undefined,
         action: actionFilter !== "all" ? actionFilter : undefined,
       });
-      setAuditLogs(response.data);
+      
+      // Add null check for response.data
+      if (response && response.data && Array.isArray(response.data)) {
+        setAuditLogs(response.data);
+      } else {
+        // Set empty array if no data received
+        setAuditLogs([]);
+      }
     } catch (err: any) {
       console.error('Failed to fetch audit logs:', err);
       setError(err.response?.data?.message || 'Failed to load audit logs. Please try again.');
+      
+      // Set empty array on error
+      setAuditLogs([]);
+      
       toast({
         title: "Error",
         description: "Failed to load audit logs. Please try again.",

@@ -47,10 +47,21 @@ const ApiAccessTab = () => {
       setLoading(true);
       setError(null);
       const response = await ApiService.getApiKeys();
-      setApiKeys(response.data);
+      
+      // Add null check for response.data
+      if (response && response.data && Array.isArray(response.data)) {
+        setApiKeys(response.data);
+      } else {
+        // Set empty array if no data received
+        setApiKeys([]);
+      }
     } catch (err: any) {
       console.error('Failed to fetch API keys:', err);
       setError(err.response?.data?.message || 'Failed to load API keys. Please try again.');
+      
+      // Set empty array on error
+      setApiKeys([]);
+      
       toast({
         title: "Error",
         description: "Failed to load API keys. Please try again.",
