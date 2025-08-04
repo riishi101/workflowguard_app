@@ -19,9 +19,7 @@ import {
   User, 
   Settings, 
   LogOut, 
-  HelpCircle, 
   CreditCard,
-  Shield,
   ChevronDown
 } from "lucide-react";
 
@@ -32,10 +30,10 @@ const TopNavigation = () => {
 
 
   const navItems = [
-    { label: "Dashboard", path: "/dashboard", icon: Shield },
-    { label: "Workflow History", path: "/workflow-history", icon: Shield },
-    { label: "Settings", path: "/settings", icon: Settings },
-    { label: "Help & Support", path: "/help-support", icon: HelpCircle },
+    { label: "Dashboard", path: "/dashboard" },
+    { label: "Workflow History", path: "/workflow-history" },
+    { label: "Settings", path: "/settings" },
+    { label: "Help & Support", path: "/help-support" },
   ];
 
   // Check if user has workflows to determine if Workflow History should be active
@@ -121,13 +119,12 @@ const TopNavigation = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "text-sm font-medium transition-colors flex items-center gap-2",
+                "text-sm font-medium transition-colors",
                 isActive(item.path)
                   ? "text-blue-600"
                   : "text-gray-600 hover:text-gray-900",
               )}
             >
-              <item.icon className="w-4 h-4" />
               {item.label}
             </Link>
           ))}
