@@ -158,11 +158,15 @@ const PlanBillingTab = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Simple Comparison
+                Manual Backups
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Basic Restore
+                Basic Rollback
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Simple Comparison
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -203,11 +207,31 @@ const PlanBillingTab = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Advanced Workflow History
+                Complete Version History
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Improved Comparison
+                Automated Backups
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Change Notifications
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Rollback
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Side-by-side Comparisons
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Compliance Reporting
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Audit Trails
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -215,15 +239,7 @@ const PlanBillingTab = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Audit Log
-              </li>
-              <li className="flex items-center gap-2 text-sm text-gray-700">
-                <CheckCircle className="w-4 h-4 text-green-500" />
                 API Access
-              </li>
-              <li className="flex items-center gap-2 text-sm text-gray-700">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                Enhanced Settings
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -252,7 +268,35 @@ const PlanBillingTab = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Extended History
+                Extended Version History
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Real-time Change Notifications
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Approval Workflows
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Compliance Reporting
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Complete Audit Trails
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Team Collaboration Features
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Custom Retention Policies
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Advanced Security Features
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
@@ -260,23 +304,15 @@ const PlanBillingTab = () => {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Unlimited Team
+                Unlimited Team Members
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                Extended Audit Log
+                White-label Options
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-700">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 Dedicated Support
-              </li>
-              <li className="flex items-center gap-2 text-sm text-gray-700">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                All Settings Features
-              </li>
-              <li className="flex items-center gap-2 text-sm text-gray-700">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                Advanced Comparison
               </li>
             </ul>
             <p className="text-xs text-gray-500 mb-4">1 year version history, All features unlocked</p>

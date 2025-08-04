@@ -13,7 +13,14 @@ async function main() {
       price: 29,
       interval: 'month',
       description: 'Perfect for small teams',
-      features: JSON.stringify(['Basic workflow protection', 'Email support', '5 workflows']),
+      features: JSON.stringify([
+        'Basic workflow protection',
+        'Email support',
+        '5 workflows',
+        'Version history',
+        'Manual backups',
+        'Basic rollback'
+      ]),
     },
   });
 
@@ -26,7 +33,18 @@ async function main() {
       price: 99,
       interval: 'month',
       description: 'Ideal for growing businesses',
-      features: JSON.stringify(['Advanced workflow protection', 'Priority support', 'Unlimited workflows', 'Version history']),
+      features: JSON.stringify([
+        'Advanced workflow protection',
+        'Priority support',
+        'Unlimited workflows',
+        'Complete version history',
+        'Automated backups',
+        'Change notifications',
+        'Advanced rollback',
+        'Side-by-side comparisons',
+        'Compliance reporting',
+        'Audit trails'
+      ]),
     },
   });
 
@@ -39,7 +57,23 @@ async function main() {
       price: 299,
       interval: 'month',
       description: 'For large organizations',
-      features: JSON.stringify(['Enterprise workflow protection', '24/7 support', 'Unlimited workflows', 'Advanced analytics', 'Custom integrations']),
+      features: JSON.stringify([
+        'Enterprise workflow protection',
+        '24/7 support',
+        'Unlimited workflows',
+        'Advanced analytics',
+        'Custom integrations',
+        'Automated backups',
+        'Real-time change notifications',
+        'Approval workflows',
+        'Advanced compliance reporting',
+        'Complete audit trails',
+        'Team collaboration features',
+        'Custom retention policies',
+        'Advanced security features',
+        'API access',
+        'White-label options'
+      ]),
     },
   });
 
