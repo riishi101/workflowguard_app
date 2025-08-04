@@ -550,21 +550,21 @@ const WorkflowHistory = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {workflowDetails.name}
+                  {typeof workflowDetails.name === 'string' ? workflowDetails.name : 'Unknown Workflow'}
                 </h2>
                 <div className="flex items-center gap-1">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor(workflowDetails.status)}`}></div>
-                  <span className="text-sm text-gray-600 capitalize">{workflowDetails.status}</span>
+                  <span className="text-sm text-gray-600 capitalize">{typeof workflowDetails.status === 'string' ? workflowDetails.status : 'Unknown'}</span>
                 </div>
-                <span className="text-sm text-gray-500">ID: {workflowDetails.id}</span>
+                <span className="text-sm text-gray-500">ID: {typeof workflowDetails.id === 'string' ? workflowDetails.id : 'Unknown'}</span>
               </div>
               <div className="text-sm text-gray-500">
-                Last modified: {new Date(workflowDetails.lastModified).toLocaleString()}
+                Last modified: {workflowDetails.lastModified ? new Date(workflowDetails.lastModified).toLocaleString() : 'Unknown'}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span>📊 {versions.length} versions</span>
-              <span>📅 {new Date(versions[0]?.date || Date.now()).toLocaleDateString()} - {new Date(versions[versions.length - 1]?.date || Date.now()).toLocaleDateString()}</span>
+              <span>📊 {Array.isArray(versions) ? versions.length : 0} versions</span>
+              <span>📅 {versions.length > 0 && versions[0]?.date ? new Date(versions[0].date).toLocaleDateString() : 'Unknown'} - {versions.length > 0 && versions[versions.length - 1]?.date ? new Date(versions[versions.length - 1].date).toLocaleDateString() : 'Unknown'}</span>
             </div>
           </div>
         )}

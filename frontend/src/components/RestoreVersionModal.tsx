@@ -69,12 +69,12 @@ const RestoreVersionModal = ({
               </h3>
               <div className="space-y-2 text-sm">
                 <p>
-                  <strong>Version to Restore:</strong> {new Date(version.date).toLocaleString()} by {version.initiator} ({version.type})
+                  <strong>Version to Restore:</strong> {version.date ? new Date(version.date).toLocaleString() : 'Unknown date'} by {typeof version.initiator === 'string' ? version.initiator : 'Unknown'} ({typeof version.type === 'string' ? version.type : 'Unknown'})
                 </p>
                 <p>
-                  <strong>Version Number:</strong> {version.versionNumber}
+                  <strong>Version Number:</strong> {typeof version.versionNumber === 'number' ? version.versionNumber : 'Unknown'}
                 </p>
-                {version.notes && version.notes !== "No notes available" && (
+                {version.notes && typeof version.notes === 'string' && version.notes !== "No notes available" && (
                   <p>
                     <strong>Notes:</strong> {version.notes}
                   </p>
