@@ -441,7 +441,7 @@ class ApiService {
 
   static async getAuditLogs(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/audit-log');
+      const response = await apiClient.get('/audit-logs');
       return response.data;
     } catch (error) {
       throw error;

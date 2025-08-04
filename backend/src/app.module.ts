@@ -8,10 +8,11 @@ import { UserModule } from './user/user.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { WorkflowVersionModule } from './workflow-version/workflow-version.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
-import { EmailModule } from './email/email.module';
-import { WebhookModule } from './webhook/webhook.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { SupportModule } from './support/support.module';
+import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MetricsModule } from './metrics/metrics.module';
     WebhookModule,
     SupportModule,
     MetricsModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

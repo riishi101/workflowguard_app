@@ -28,76 +28,76 @@ const Settings = () => {
       <ContentSection>
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Enhanced TabsList with better spacing and responsive design */}
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-gray-50 p-2 rounded-xl mb-8 gap-1 shadow-sm">
+            {/* Enhanced TabsList with improved design */}
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-2xl mb-8 gap-2 shadow-lg border border-gray-200">
               <TabsTrigger
                 value="plan-billing"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
+                <CreditCard className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">My Plan & Billing</span>
                 <span className="sm:hidden">Plan</span>
               </TabsTrigger>
               <TabsTrigger
                 value="notifications"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <Bell className="w-3 h-3 md:w-4 md:h-4" />
+                <Bell className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Notifications</span>
                 <span className="sm:hidden">Alerts</span>
               </TabsTrigger>
               <TabsTrigger
                 value="user-permissions"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <Users className="w-3 h-3 md:w-4 md:h-4" />
+                <Users className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">User Permissions</span>
                 <span className="sm:hidden">Users</span>
               </TabsTrigger>
               <TabsTrigger
                 value="audit-log"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <FileText className="w-3 h-3 md:w-4 md:h-4" />
+                <FileText className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Audit Log</span>
                 <span className="sm:hidden">Log</span>
               </TabsTrigger>
               <TabsTrigger
                 value="api-access"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <Code className="w-3 h-3 md:w-4 md:h-4" />
+                <Code className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">API Access</span>
                 <span className="sm:hidden">API</span>
               </TabsTrigger>
               <TabsTrigger
                 value="profile"
-                className="flex items-center gap-2 text-xs md:text-sm px-3 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 rounded-lg transition-all duration-200"
+                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
               >
-                <UserCircle className="w-3 h-3 md:w-4 md:h-4" />
+                <UserCircle className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">My Profile</span>
                 <span className="sm:hidden">Profile</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Enhanced TabsContent with better spacing */}
-            <div className="w-full space-y-6">
-              <TabsContent value="plan-billing" className="mt-0 space-y-6">
+            <div className="w-full space-y-8">
+              <TabsContent value="plan-billing" className="mt-0 space-y-8">
                 <PlanBillingTab />
               </TabsContent>
-              <TabsContent value="notifications" className="mt-0 space-y-6">
+              <TabsContent value="notifications" className="mt-0 space-y-8">
                 <NotificationsTab />
               </TabsContent>
-              <TabsContent value="user-permissions" className="mt-0 space-y-6">
+              <TabsContent value="user-permissions" className="mt-0 space-y-8">
                 <UserPermissionsTab />
               </TabsContent>
-              <TabsContent value="audit-log" className="mt-0 space-y-6">
+              <TabsContent value="audit-log" className="mt-0 space-y-8">
                 <AuditLogTab />
               </TabsContent>
-              <TabsContent value="api-access" className="mt-0 space-y-6">
+              <TabsContent value="api-access" className="mt-0 space-y-8">
                 <ApiAccessTab />
               </TabsContent>
-              <TabsContent value="profile" className="mt-0 space-y-6">
+              <TabsContent value="profile" className="mt-0 space-y-8">
                 <ProfileTab />
               </TabsContent>
             </div>
