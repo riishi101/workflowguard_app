@@ -178,12 +178,19 @@ const WorkflowHistory = () => {
     try {
       const response = await ApiService.downloadWorkflowVersion(workflowId, version.id);
       
+      // Add safety check for response.data
+      if (!response || !response.data) {
+        throw new Error('No data received from server');
+      }
+      
       // Create and download the file
       const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `workflow-${workflowDetails?.name}-version-${version.versionNumber}.json`;
+      const workflowName = workflowDetails?.name || 'unknown-workflow';
+      const versionNumber = typeof version.versionNumber === 'number' ? version.versionNumber : 'unknown';
+      a.download = `workflow-${workflowName}-version-${versionNumber}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -405,9 +412,18 @@ const WorkflowHistory = () => {
 
   const handleCompareVersions = () => {
     if (selectedCount === 2) {
-      navigate(
-        `/compare-versions?versionA=${selectedVersions[0].id}&versionB=${selectedVersions[1].id}`,
-      );
+      const selectedVersions = versions.filter((v) => v.selected);
+      if (selectedVersions.length === 2 && selectedVersions[0]?.id && selectedVersions[1]?.id) {
+        navigate(
+          `/compare-versions?versionA=${selectedVersions[0].id}&versionB=${selectedVersions[1].id}`,
+        );
+      } else {
+        toast({
+          title: "Error",
+          description: "Unable to compare versions. Please try selecting different versions.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
