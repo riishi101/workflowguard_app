@@ -1,5 +1,5 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +55,19 @@ const TopNavigation = () => {
       isRead: false
     }
   ]);
+
+  // Load notifications from localStorage if available
+  useEffect(() => {
+    const saved = localStorage.getItem('notifications');
+    if (saved) {
+      setNotifications(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save notifications to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
