@@ -675,14 +675,10 @@ class ApiService {
       return response.data;
     } catch (error) {
       // Return mock data for development when OAuth is disabled
+      // During trial, subscription should be null
       return {
         success: true,
-        data: {
-          planId: 'starter',
-          planName: 'Starter Plan',
-          status: 'active',
-          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        }
+        data: null
       };
     }
   }
