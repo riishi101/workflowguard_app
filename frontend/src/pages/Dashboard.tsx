@@ -159,15 +159,13 @@ const Dashboard = () => {
       const workflows = workflowsResponse.data || [];
       const stats = statsResponse.data || null;
 
-      // Transform workflows to match expected frontend format
-      const transformedWorkflows = workflows.map((workflow: any) => {
-        console.log('🔍 Dashboard - Processing workflow:', {
-          id: workflow.id,
-          name: workflow.name,
-          hubspotId: workflow.hubspotId,
-          owner: workflow.owner
-        });
-        
+      // Validate and transform workflows data
+      const transformedWorkflows = (workflows || []).map((workflow: any) => {
+        if (!workflow || !workflow.id || !workflow.name) {
+          console.warn('Dashboard - Skipping invalid workflow:', workflow);
+          return null;
+        }
+
         return {
           id: workflow.id,
           name: workflow.name,
@@ -175,26 +173,33 @@ const Dashboard = () => {
           versions: workflow.versions?.length || 0,
           lastModifiedBy: {
             name: workflow.owner?.name || workflow.owner?.email || 'Unknown User',
-            initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
-            email: workflow.owner?.email || 'unknown@example.com'
+            initials: workflow.owner?.name
+              ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+              : 'UU',
+            email: workflow.owner?.email || 'unknown@example.com',
           },
           status: (workflow.status || 'active') as "active" | "inactive" | "error",
-          protectionStatus: 'protected' as "protected" | "unprotected" | "error",
+          protectionStatus: workflow.protectionStatus || 'unprotected',
           lastModified: workflow.updatedAt || workflow.createdAt || new Date().toISOString(),
           steps: workflow.steps || 0,
-          contacts: workflow.contacts || 0
+          contacts: workflow.contacts || 0,
         };
-      });
+      }).filter(Boolean); // Remove null entries
 
-      console.log('Dashboard - Final workflows array:', transformedWorkflows);
-      console.log('Dashboard - Final workflows length:', transformedWorkflows.length);
-      console.log('Dashboard - Final stats:', stats);
+      // Add detailed logs for debugging
+      console.log('Dashboard - Transformed workflows:', transformedWorkflows);
+      console.log('Dashboard - Stats:', stats);
 
+      // Update state with transformed data
       setWorkflows(transformedWorkflows);
       setStats(stats);
 
-      console.log('Dashboard - State set with workflows:', transformedWorkflows.length);
-      console.log('Dashboard - State set with stats:', !!stats);
+      // Ensure rendering logic handles missing or partial data
+      if (transformedWorkflows.length === 0) {
+        console.warn('Dashboard - No workflows available to display.');
+      } else {
+        console.log('Dashboard - Workflows ready for display:', transformedWorkflows);
+      }
 
       // Check if user has workflows
       const hasWorkflows = transformedWorkflows && transformedWorkflows.length > 0;
