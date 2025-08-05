@@ -532,8 +532,13 @@ class ApiService {
           id: 'dev-user-123',
           email: 'dev@workflowguard.pro',
           name: 'Development User',
+          jobTitle: 'Software Developer',
+          timezone: 'Pacific Time (PT) UTC-7',
+          language: 'English (US)',
           role: 'user',
           hubspotPortalId: '123456789',
+          hubspotConnectedAt: new Date().toISOString(),
+          hubspotRole: 'Admin',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           preferences: {

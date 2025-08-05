@@ -51,8 +51,20 @@ const ProfileTab = () => {
       setError(null);
       const response = await ApiService.getUserProfile();
       console.log('🔍 ProfileTab - API response:', response);
-      setProfile(response.data);
-      console.log('🔍 ProfileTab - Profile set:', response.data);
+      
+      // Handle case where response.data might be undefined
+      if (response && response.data) {
+        setProfile(response.data);
+        console.log('🔍 ProfileTab - Profile set:', response.data);
+      } else {
+        console.error('🔍 ProfileTab - No data in response:', response);
+        setError('No profile data received from server');
+        toast({
+          title: "Error",
+          description: "No profile data received. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (err: any) {
       console.error('🔍 ProfileTab - Failed to fetch user profile:', err);
       setError(err.response?.data?.message || 'Failed to load user profile. Please try again.');
