@@ -162,15 +162,15 @@ const Dashboard = () => {
       }
 
       // Validate and transform workflows data
-      // Add logs to inspect raw workflows
-      console.log('Dashboard - Raw workflows:', workflows);
-
-      // Fix transformation logic to address type mismatches
-      // Remove references to properties not in ProtectedWorkflow
+      console.log('Dashboard - Inspecting raw workflows response:', workflowsResponse);
       const transformedWorkflows = workflows.map((workflow, index) => {
-        console.log(`Dashboard - Transforming workflow at index ${index}:`, workflow);
+        console.log(`Dashboard - Inspecting workflow at index ${index}:`, workflow);
+        if (!workflow || typeof workflow !== 'object') {
+          console.warn(`Dashboard - Skipping invalid workflow at index ${index}:`, workflow);
+          return null;
+        }
         return {
-          id: workflow.id,
+          id: workflow.id || `unknown-${index}`,
           name: workflow.name || 'Unnamed Workflow',
           versions: workflow.versions || 0,
           lastModifiedBy: workflow.lastModifiedBy || {
@@ -182,15 +182,8 @@ const Dashboard = () => {
           protectionStatus: (workflow.protectionStatus || 'unprotected') as "protected" | "unprotected" | "error",
           lastModified: workflow.lastModified || new Date().toISOString(),
         };
-      }).filter((workflow, index) => {
-        const isValid = Boolean(workflow);
-        if (!isValid) {
-          console.warn(`Dashboard - Filtering out invalid workflow at index ${index}:`, workflow);
-        }
-        return isValid;
-      });
+      }).filter(Boolean); // Remove null values
 
-      // Add detailed logs for debugging
       console.log('Dashboard - Transformed workflows:', transformedWorkflows);
       console.log('Dashboard - Stats:', stats);
 
