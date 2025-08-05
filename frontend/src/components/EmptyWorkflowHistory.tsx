@@ -36,15 +36,6 @@ const EmptyWorkflowHistory = () => {
       <Button
         variant="outline"
         size="sm"
-        onClick={handleGoToDashboard}
-        className="text-gray-600"
-      >
-        <ArrowRight className="w-4 h-4 mr-2" />
-        Back to Dashboard
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
         onClick={handleGoToHubSpot}
         className="text-blue-600"
       >
