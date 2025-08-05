@@ -88,43 +88,56 @@ export class WorkflowService {
     const protectedWorkflows = [];
 
     for (const workflowId of workflowIds) {
-      // Find the workflow object from selectedWorkflowObjects
-      const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
-      const hubspotId = workflowObj?.hubspotId || workflowId;
+      try {
+        // Find the workflow object from selectedWorkflowObjects
+        const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
+        const hubspotId = workflowObj?.hubspotId || workflowId;
 
-      // Try to find the workflow by hubspotId and ownerId
-      const existingWorkflow = await this.prisma.workflow.findFirst({
-        where: {
-          hubspotId: hubspotId,
-          ownerId: finalUserId
-        }
-      });
-
-      if (existingWorkflow) {
-        const updatedWorkflow = await this.prisma.workflow.update({
-          where: { id: existingWorkflow.id },
-          data: {
-            updatedAt: new Date(),
-          },
-          include: {
-            owner: true,
-            versions: true,
-          }
-        });
-        protectedWorkflows.push(updatedWorkflow);
-      } else {
-        const newWorkflow = await this.prisma.workflow.create({
-          data: {
+        // Try to find the workflow by hubspotId and ownerId
+        const existingWorkflow = await this.prisma.workflow.findFirst({
+          where: {
             hubspotId: hubspotId,
-            name: workflowObj?.name || 'Unnamed Workflow',
-            ownerId: finalUserId,
-          },
-          include: {
-            owner: true,
-            versions: true,
+            ownerId: finalUserId
           }
         });
-        protectedWorkflows.push(newWorkflow);
+
+        if (existingWorkflow) {
+          const updatedWorkflow = await this.prisma.workflow.update({
+            where: { id: existingWorkflow.id },
+            data: {
+              updatedAt: new Date(),
+            },
+            include: {
+              owner: true,
+              versions: true,
+            }
+          });
+          protectedWorkflows.push(updatedWorkflow);
+        } else {
+          const newWorkflow = await this.prisma.workflow.create({
+            data: {
+              hubspotId: hubspotId,
+              name: workflowObj?.name || 'Unnamed Workflow',
+              ownerId: finalUserId,
+            },
+            include: {
+              owner: true,
+              versions: true,
+            }
+          });
+          protectedWorkflows.push(newWorkflow);
+        }
+      } catch (err) {
+        console.error('Error protecting workflow:', {
+          workflowId,
+          error: err,
+          selectedWorkflowObjects,
+          userId: finalUserId
+        });
+        throw new HttpException(
+          `Failed to protect workflow ${workflowId}: ${err?.message || err}`,
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
       }
     }
 
