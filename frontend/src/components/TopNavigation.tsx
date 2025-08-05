@@ -134,7 +134,7 @@ const TopNavigation = () => {
         {/* Logo - Left side */}
         <div className="flex-shrink-0">
           <Link to="/dashboard">
-            <WorkflowGuardLogo size="md" />
+            <WorkflowGuardLogo size="sm" />
           </Link>
         </div>
 
