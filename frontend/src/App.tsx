@@ -68,45 +68,61 @@ const RootRoute = () => {
   return null;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<RootRoute />} />
-            <Route path="/workflow-selection" element={<ProtectedRoute><TrialAccessGuard><WorkflowSelection /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/workflow-history" element={<ProtectedRoute><TrialAccessGuard><WorkflowHistory /></TrialAccessGuard></ProtectedRoute>} />
-            <Route
-              path="/workflow-history/:workflowId"
-              element={<ProtectedRoute><TrialAccessGuard><WorkflowHistoryDetail /></TrialAccessGuard></ProtectedRoute>}
-            />
-            <Route path="/compare-versions" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
-            <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/restore-workflow" element={<ProtectedRoute><TrialAccessGuard><RestoreWorkflowGuide /></TrialAccessGuard></ProtectedRoute>} />
-    
-            <Route path="/help/user-manual" element={<ProtectedRoute><TrialAccessGuard><UserManual /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/feature-spotlights" element={<ProtectedRoute><TrialAccessGuard><FeatureSpotlights /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/advanced-use-cases" element={<ProtectedRoute><TrialAccessGuard><AdvancedUseCases /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/troubleshooting" element={<ProtectedRoute><TrialAccessGuard><Troubleshooting /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/api-docs" element={<ProtectedRoute><TrialAccessGuard><ApiDocs /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/setup-guide" element={<ProtectedRoute><TrialAccessGuard><SetupGuide /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/manage-subscription" element={<ProtectedRoute><ManageSubscription /></ProtectedRoute>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+
+import { useEffect } from "react";
+
+const App = () => {
+  // Store OAuth token from URL to localStorage on app load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+      localStorage.setItem('authToken', token);
+      // Optionally, clean up the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<RootRoute />} />
+              <Route path="/workflow-selection" element={<ProtectedRoute><TrialAccessGuard><WorkflowSelection /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/workflow-history" element={<ProtectedRoute><TrialAccessGuard><WorkflowHistory /></TrialAccessGuard></ProtectedRoute>} />
+              <Route
+                path="/workflow-history/:workflowId"
+                element={<ProtectedRoute><TrialAccessGuard><WorkflowHistoryDetail /></TrialAccessGuard></ProtectedRoute>}
+              />
+              <Route path="/compare-versions" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+              <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/help/restore-workflow" element={<ProtectedRoute><TrialAccessGuard><RestoreWorkflowGuide /></TrialAccessGuard></ProtectedRoute>} />
+      
+              <Route path="/help/user-manual" element={<ProtectedRoute><TrialAccessGuard><UserManual /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/help/feature-spotlights" element={<ProtectedRoute><TrialAccessGuard><FeatureSpotlights /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/help/advanced-use-cases" element={<ProtectedRoute><TrialAccessGuard><AdvancedUseCases /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/help/troubleshooting" element={<ProtectedRoute><TrialAccessGuard><Troubleshooting /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/help/api-docs" element={<ProtectedRoute><TrialAccessGuard><ApiDocs /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/setup-guide" element={<ProtectedRoute><TrialAccessGuard><SetupGuide /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/manage-subscription" element={<ProtectedRoute><ManageSubscription /></ProtectedRoute>} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
