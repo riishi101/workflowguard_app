@@ -75,32 +75,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const connectHubSpot = () => {
     // Real OAuth redirect logic
-    window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login';
+    window.location.href = '/api/auth/hubspot';
   };
 
   const testAuthentication = async () => {
-    console.log('AuthContext - Testing authentication manually (OAuth DISABLED)');
-    console.log('AuthContext - Using mock authentication');
-    
-    // Return mock user
-    const mockUser = {
-      id: 'dev-user-123',
-      email: 'dev@workflowguard.pro',
-      name: 'Development User',
-      role: 'user',
-      hubspotPortalId: '123456789',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setUser(mockUser);
-    console.log('AuthContext - Mock authentication successful');
+    // Remove mock authentication logic
+    // This function can be removed or left empty if not used elsewhere
+    return;
   };
 
   const logout = async () => {
     console.log('AuthContext - Logout called (OAuth DISABLED)');
     setUser(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     console.log('AuthContext - Mock logout completed');
   };
 
@@ -116,4 +103,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   console.log('AuthContext - Current state (OAuth DISABLED):', { user: !!user, loading, isAuthenticated: !!user, hasInitialized });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}; 
+};

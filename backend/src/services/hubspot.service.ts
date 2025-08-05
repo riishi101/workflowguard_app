@@ -7,7 +7,7 @@ export class HubSpotService {
 
   async getWorkflows(userId: string): Promise<any[]> {
     console.log('🔍 HubSpotService - getWorkflows called for userId:', userId);
-    
+
     try {
       // Get user with HubSpot tokens
       const user = await this.prisma.user.findUnique({
@@ -75,18 +75,18 @@ export class HubSpotService {
       console.log('🔍 HubSpotService - Fetched workflows from HubSpot:', workflows.length);
       return workflows;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔍 HubSpotService - Error fetching workflows:', error);
-      
+
       // Provide more specific error messages
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       if (error.message?.includes('HubSpot API error')) {
         throw new HttpException(`HubSpot API error: ${error.message}`, HttpStatus.BAD_REQUEST);
       }
-      
+
       throw new HttpException(
         `Failed to fetch HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -97,7 +97,7 @@ export class HubSpotService {
   private async fetchWorkflowsFromHubSpot(accessToken: string, portalId: string): Promise<any[]> {
     console.log('🔍 HubSpotService - fetchWorkflowsFromHubSpot called');
     console.log('🔍 HubSpotService - Using portalId:', portalId);
-    
+
     try {
       // Try multiple HubSpot API endpoints for workflows
       const endpoints = [
@@ -122,7 +122,7 @@ export class HubSpotService {
       for (const endpoint of endpoints) {
         try {
           console.log('🔍 HubSpotService - Trying endpoint:', endpoint);
-          
+
           const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
@@ -139,7 +139,7 @@ export class HubSpotService {
             console.log('🔍 HubSpotService - Raw API response from', endpoint, ':', JSON.stringify(data, null, 2));
 
             // Handle different response formats
-            let workflowList = [];
+            let workflowList: any[] = [];
             if (data.results) {
               workflowList = data.results;
             } else if (data.workflows) {
@@ -165,10 +165,10 @@ export class HubSpotService {
               workflows = workflowList.map((workflow: any) => ({
                 id: workflow.id || workflow.workflowId || workflow.objectId,
                 name: workflow.name || workflow.workflowName || workflow.label,
-                description: workflow.description || workflow.meta?.description || '',
+                description: workflow.description || (workflow.meta && workflow.meta.description) || '',
                 type: 'workflow',
-                status: workflow.enabled !== undefined ? (workflow.enabled ? 'active' : 'inactive') : 
-                       workflow.status || workflow.meta?.status || 'active',
+                status: workflow.enabled !== undefined ? (workflow.enabled ? 'active' : 'inactive') :
+                  workflow.status || (workflow.meta && workflow.meta.status) || 'active',
                 hubspotData: workflow, // Keep original data for reference
               }));
 
@@ -182,7 +182,7 @@ export class HubSpotService {
           } else {
             const errorText = await response.text();
             console.log('🔍 HubSpotService - Endpoint failed:', endpoint, 'Status:', response.status, 'Error:', errorText);
-            
+
             // Log specific error details
             if (response.status === 401) {
               console.log('🔍 HubSpotService - 401 Unauthorized - Token might be invalid or expired');
@@ -196,15 +196,13 @@ export class HubSpotService {
               console.log('🔍 HubSpotService - Other error status:', response.status);
             }
           }
-        } catch (endpointError) {
+        } catch (endpointError: any) {
           console.log('🔍 HubSpotService - Endpoint error:', endpoint, endpointError.message);
         }
       }
 
       if (workflows.length === 0) {
         console.log('🔍 HubSpotService - No workflows found from any endpoint');
-        console.log('🔍 HubSpotService - Providing fallback mock data for testing');
-        
         // Return mock data for testing purposes
         return [
           {
@@ -238,7 +236,7 @@ export class HubSpotService {
       console.log('🔍 HubSpotService - Successful endpoint:', successfulEndpoint);
       return workflows;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔍 HubSpotService - Error calling HubSpot API:', error);
       throw new Error(`Failed to fetch workflows from HubSpot: ${error.message}`);
     }
@@ -246,11 +244,11 @@ export class HubSpotService {
 
   private async refreshAccessToken(userId: string, refreshToken: string): Promise<void> {
     console.log('🔍 HubSpotService - refreshAccessToken called');
-    
+
     try {
       // HubSpot token refresh endpoint
       const url = 'https://api.hubapi.com/oauth/v1/token';
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -269,7 +267,7 @@ export class HubSpotService {
       }
 
       const data = await response.json();
-      
+
       // Update user with new tokens
       await this.prisma.user.update({
         where: { id: userId },
@@ -282,7 +280,7 @@ export class HubSpotService {
 
       console.log('🔍 HubSpotService - Access token refreshed successfully');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔍 HubSpotService - Error refreshing token:', error);
       throw new Error(`Failed to refresh access token: ${error.message}`);
     }
@@ -296,4 +294,4 @@ export class HubSpotService {
       return false;
     }
   }
-} 
+}

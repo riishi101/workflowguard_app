@@ -79,99 +79,6 @@ interface ProtectedWorkflow {
   };
 }
 
-// Mock workflow configuration data for demonstration
-const mockWorkflowConfig = {
-  v5: {
-    name: "Lead Nurturing Campaign - Version 5",
-    trigger: {
-      type: "Contact property updated",
-      property: "Lead Score",
-      condition: "is greater than 75",
-    },
-    steps: [
-      {
-        id: 1,
-        type: "delay",
-        name: "Wait 1 day",
-        icon: Clock,
-        config: { delay: "1 day" },
-      },
-      {
-        id: 2,
-        type: "email",
-        name: "Welcome Email",
-        icon: Mail,
-        config: {
-          template: "Welcome_Template_v2",
-          subject: "Welcome to our platform!",
-        },
-      },
-      {
-        id: 3,
-        type: "internal_email",
-        name: "Send Internal Email",
-        icon: Mail,
-        config: {
-          recipients: ["sales@company.com"],
-          subject: "New qualified lead",
-        },
-      },
-      {
-        id: 4,
-        type: "branch",
-        name: "Premium Customer Branch",
-        icon: Filter,
-        config: { condition: "Contact property 'Plan Type' is 'Premium'" },
-      },
-      {
-        id: 5,
-        type: "automation",
-        name: "Assign to Sales Rep",
-        icon: Users,
-        config: { action: "Create task for sales team" },
-      },
-    ],
-  },
-  v4: {
-    name: "Lead Nurturing Campaign - Version 4",
-    trigger: {
-      type: "Contact property updated",
-      property: "Lead Score",
-      condition: "is greater than 50",
-    },
-    steps: [
-      {
-        id: 1,
-        type: "delay",
-        name: "Wait 2 days",
-        icon: Clock,
-        config: { delay: "2 days" },
-      },
-      {
-        id: 2,
-        type: "email",
-        name: "Welcome Email",
-        icon: Mail,
-        config: { template: "Welcome_Template_v1", subject: "Welcome!" },
-      },
-      {
-        id: 3,
-        type: "branch",
-        name: "Premium Customer Branch",
-        icon: Filter,
-        config: { condition: "Contact property 'Plan Type' is 'Premium'" },
-      },
-      {
-        id: 4,
-        type: "automation",
-        name: "Assign to Sales Rep",
-        icon: Users,
-        config: { action: "Create task for sales team" },
-      },
-    ],
-  },
-};
-
 const getStatusIcon = (status: string) => {
   switch (status) {
     case "active":
@@ -590,21 +497,9 @@ const WorkflowHistory = () => {
     (wf) => wf.id === selectedWorkflow,
   );
 
-  const currentViewConfig = selectedVersionForView
-    ? mockWorkflowConfig[
-        selectedVersionForView as keyof typeof mockWorkflowConfig
-      ]
-    : null;
-  const olderVersionConfig = selectedVersionsForCompare?.older
-    ? mockWorkflowConfig[
-        selectedVersionsForCompare.older as keyof typeof mockWorkflowConfig
-      ]
-    : null;
-  const newerVersionConfig = selectedVersionsForCompare?.newer
-    ? mockWorkflowConfig[
-        selectedVersionsForCompare.newer as keyof typeof mockWorkflowConfig
-      ]
-    : null;
+  const currentViewConfig = null;
+  const olderVersionConfig = null;
+  const newerVersionConfig = null;
 
   if (loading) {
     return (
@@ -960,7 +855,7 @@ const WorkflowHistory = () => {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl font-semibold">
-                  {currentViewConfig?.name}
+                  View Workflow Version
                 </DialogTitle>
                 <DialogDescription>
                   Read-only view of the workflow configuration as it existed at
@@ -968,117 +863,7 @@ const WorkflowHistory = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              {currentViewConfig && (
-                <div className="space-y-6">
-                  {/* Trigger Configuration */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
-                      <Zap className="h-4 w-4 mr-2" />
-                      Workflow Trigger
-                    </h3>
-                    <div className="text-sm text-blue-800">
-                      <p>
-                        <strong>Type:</strong> {currentViewConfig.trigger.type}
-                      </p>
-                      <p>
-                        <strong>Property:</strong>{" "}
-                        {currentViewConfig.trigger.property}
-                      </p>
-                      <p>
-                        <strong>Condition:</strong>{" "}
-                        {currentViewConfig.trigger.condition}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Workflow Diagram */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-4">
-                      Workflow Steps
-                    </h3>
-                    <div className="space-y-4">
-                      {currentViewConfig.steps.map((step, index) => {
-                        const IconComponent = step.icon;
-                        return (
-                          <div
-                            key={step.id}
-                            className="flex items-start space-x-4"
-                          >
-                            {/* Step Number */}
-                            <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
-                              {index + 1}
-                            </div>
-
-                            {/* Step Content */}
-                            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <IconComponent className="h-5 w-5 text-gray-600" />
-                                <h4 className="font-medium text-gray-900">
-                                  {step.name}
-                                </h4>
-                                <Badge variant="outline" className="text-xs">
-                                  {step.type}
-                                </Badge>
-                              </div>
-
-                              {/* Step Configuration */}
-                              <div className="bg-white border border-gray-100 rounded p-3 text-sm">
-                                <h5 className="font-medium text-gray-700 mb-2">
-                                  Configuration:
-                                </h5>
-                                <div className="space-y-1 text-gray-600">
-                                  {Object.entries(step.config).map(
-                                    ([key, value]) => (
-                                      <div
-                                        key={key}
-                                        className="flex justify-between"
-                                      >
-                                        <span className="capitalize">{key}:</span>
-                                        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                          {Array.isArray(value)
-                                            ? value.join(", ")
-                                            : value.toString()}
-                                        </span>
-                                      </div>
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Connector Line */}
-                            {index < currentViewConfig.steps.length - 1 && (
-                              <div className="absolute left-4 mt-8 w-0.5 h-6 bg-gray-300 transform translate-x-3.5"></div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Workflow Metadata */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2">
-                      Version Metadata
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Total Steps:</p>
-                        <p className="font-medium">
-                          {currentViewConfig.steps.length}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Trigger Type:</p>
-                        <p className="font-medium">
-                          {currentViewConfig.trigger.type}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
+              {/* Remove the view version modal demo content */}
               <DialogFooter>
                 <Button
                   variant="outline"
@@ -1098,190 +883,11 @@ const WorkflowHistory = () => {
             <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4">
                 <DialogTitle className="text-lg font-medium text-gray-900">
-                  Comparing Version 4 vs. Version 5
+                  Comparing Versions
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="grid grid-cols-2 gap-8">
-                {/* Left Column - Version 4 */}
-                <div className="space-y-4">
-                  <div className="pb-2">
-                    <h3 className="font-semibold text-gray-900 text-base">
-                      Version 4
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      August 4, 2025 at 14:23 IST
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Initial Setup */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Initial Setup
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Configure project environment and dependencies
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Database Configuration */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Database Configuration
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Set up database connection and migrations
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* User Authentication */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            User Authentication
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Implement login and registration flows
-                          </p>
-                        </div>
-                        <div className="ml-3">
-                          <span className="text-xs text-orange-600 font-medium">
-                            Modified
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dashboard Layout */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Dashboard Layout
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Create main dashboard interface
-                          </p>
-                        </div>
-                        <div className="ml-3">
-                          <span className="text-xs text-red-600 font-medium">
-                            Deleted
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Version 5 */}
-                <div className="space-y-4">
-                  <div className="pb-2">
-                    <h3 className="font-semibold text-gray-900 text-base">
-                      Version 5
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      August 4, 2025 at 17:01 IST
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Initial Setup */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Initial Setup
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Configure project environment and dependencies
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Database Configuration */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Database Configuration
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Set up database connection and migrations
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* User Authentication */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            User Authentication
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Implement login, registration, and password recovery
-                            flows
-                          </p>
-                        </div>
-                        <div className="ml-3">
-                          <span className="text-xs text-orange-600 font-medium">
-                            Modified
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Analytics Dashboard */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            Analytics Dashboard
-                          </h4>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Create analytics dashboard with data visualization
-                          </p>
-                        </div>
-                        <div className="ml-3">
-                          <span className="text-xs text-green-600 font-medium">
-                            Added
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center space-x-6 text-xs">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-100 rounded border border-green-300"></div>
-                    <span className="text-green-600 font-medium">Added</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-100 rounded border border-red-300"></div>
-                    <span className="text-red-600 font-medium">Removed</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-orange-100 rounded border border-orange-300"></div>
-                    <span className="text-orange-600 font-medium">Modified</span>
-                  </div>
-                </div>
-              </div>
+              {/* Remove the compare versions modal demo content */}
 
               <DialogFooter className="mt-6">
                 <Button

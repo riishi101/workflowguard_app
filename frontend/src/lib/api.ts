@@ -123,11 +123,7 @@ class ApiService {
       const response = await apiClient.get('/workflow/protected', { headers });
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: []
-      };
+      throw error;
     }
   }
 
@@ -154,11 +150,7 @@ class ApiService {
       const response = await apiClient.post(`/workflow/${workflowId}/rollback${versionId ? `/${versionId}` : ''}`);
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'Workflow rolled back successfully' }
-      };
+      throw error;
     }
   }
 
@@ -167,11 +159,7 @@ class ApiService {
       const response = await apiClient.post(`/workflow/${workflowId}/restore/${versionId}`);
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'Workflow version restored successfully' }
-      };
+      throw error;
     }
   }
 
@@ -189,15 +177,7 @@ class ApiService {
       const response = await apiClient.get(`/workflow/${workflowId}/compare/${versionAId}/${versionBId}`);
       return response.data;
     } catch (error) {
-      // Return mock data for development
-      return {
-        success: true,
-        data: {
-          versionA: { id: versionAId, name: 'Version A', changes: [] },
-          versionB: { id: versionBId, name: 'Version B', changes: [] },
-          differences: []
-        }
-      };
+      throw error;
     }
   }
 
@@ -206,15 +186,7 @@ class ApiService {
       const response = await apiClient.get(`/workflow/${workflowId}/compare/${versionA}/${versionB}`);
       return response.data;
     } catch (error) {
-      // Return mock data for development
-      return {
-        success: true,
-        data: {
-          versionA: { id: versionA, name: 'Version A', changes: [] },
-          versionB: { id: versionB, name: 'Version B', changes: [] },
-          differences: []
-        }
-      };
+      throw error;
     }
   }
 
@@ -223,14 +195,7 @@ class ApiService {
       const response = await apiClient.get(`/workflow/${workflowId}/versions`);
       return response.data;
     } catch (error) {
-      // Return mock data for development
-      return {
-        success: true,
-        data: [
-          { id: 'v1', name: 'Version 1', timestamp: new Date().toISOString() },
-          { id: 'v2', name: 'Version 2', timestamp: new Date().toISOString() }
-        ]
-      };
+      throw error;
     }
   }
 
@@ -252,62 +217,7 @@ class ApiService {
       const response = await apiClient.get('/workflow/hubspot');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: [
-          {
-            id: 'workflow-1',
-            name: 'Lead Nurturing Campaign',
-            folder: 'Marketing',
-            status: 'ACTIVE',
-            lastModified: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            steps: 8,
-            contacts: 1250,
-            isProtected: false
-          },
-          {
-            id: 'workflow-2',
-            name: 'Welcome Series',
-            folder: 'Marketing',
-            status: 'ACTIVE',
-            lastModified: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            steps: 5,
-            contacts: 890,
-            isProtected: false
-          },
-          {
-            id: 'workflow-3',
-            name: 'Abandoned Cart Recovery',
-            folder: 'Sales',
-            status: 'ACTIVE',
-            lastModified: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            steps: 12,
-            contacts: 2100,
-            isProtected: false
-          },
-          {
-            id: 'workflow-4',
-            name: 'Customer Onboarding',
-            folder: 'Sales',
-            status: 'ACTIVE',
-            lastModified: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            steps: 6,
-            contacts: 450,
-            isProtected: false
-          },
-          {
-            id: 'workflow-5',
-            name: 'Re-engagement Campaign',
-            folder: 'Marketing',
-            status: 'ACTIVE',
-            lastModified: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            steps: 4,
-            contacts: 3200,
-            isProtected: false
-          }
-        ]
-      };
+      throw error;
     }
   }
 
@@ -515,18 +425,7 @@ class ApiService {
       const response = await apiClient.get('/dashboard/stats');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: {
-          totalWorkflows: 0,
-          protectedWorkflows: 0,
-          totalVersions: 0,
-          lastBackup: null,
-          recentActivity: [],
-          systemHealth: 'good'
-        }
-      };
+      throw error;
     }
   }
 
@@ -545,11 +444,7 @@ class ApiService {
       const response = await apiClient.put('/user/profile', userData);
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'Profile updated successfully' }
-      };
+      throw error;
     }
   }
 
@@ -558,11 +453,7 @@ class ApiService {
       const response = await apiClient.post('/user/disconnect-hubspot');
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'HubSpot disconnected successfully' }
-      };
+      throw error;
     }
   }
 
@@ -571,11 +462,7 @@ class ApiService {
       const response = await apiClient.delete('/user/account');
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'Account deleted successfully' }
-      };
+      throw error;
     }
   }
 
@@ -584,29 +471,7 @@ class ApiService {
       const response = await apiClient.get('/user/profile');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: {
-          id: 'dev-user-123',
-          email: 'dev@workflowguard.pro',
-          name: 'Development User',
-          jobTitle: 'Software Developer',
-          timezone: 'Pacific Time (PT) UTC-7',
-          language: 'English (US)',
-          role: 'user',
-          hubspotPortalId: '123456789',
-          hubspotConnectedAt: new Date().toISOString(),
-          hubspotRole: 'Admin',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          preferences: {
-            notifications: true,
-            emailUpdates: true,
-            theme: 'light'
-          }
-        }
-      };
+      throw error;
     }
   }
 
@@ -624,11 +489,7 @@ class ApiService {
       const response = await apiClient.put('/user/notification-settings', settings);
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'Notification settings updated successfully' }
-      };
+      throw error;
     }
   }
 
@@ -639,42 +500,7 @@ class ApiService {
       const response = await apiClient.get('/audit-logs', { params: filters });
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: [
-          {
-            id: '1',
-            action: 'workflow_created',
-            userId: 'dev-user-123',
-            userName: 'Development User',
-            timestamp: new Date().toISOString(),
-            details: 'Created new workflow "Test Workflow"',
-            ipAddress: '192.168.1.1',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          {
-            id: '2',
-            action: 'subscription_updated',
-            userId: 'dev-user-123',
-            userName: 'Development User',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            details: 'Upgraded to Professional plan',
-            ipAddress: '192.168.1.1',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          {
-            id: '3',
-            action: 'login',
-            userId: 'dev-user-123',
-            userName: 'Development User',
-            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            details: 'User logged in successfully',
-            ipAddress: '192.168.1.1',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        ]
-      };
+      throw error;
     }
   }
 
@@ -683,14 +509,7 @@ class ApiService {
       const response = await apiClient.get('/audit-logs/export', { params: filters });
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { 
-          downloadUrl: 'https://example.com/audit-logs-export.csv',
-          message: 'Audit logs exported successfully' 
-        }
-      };
+      throw error;
     }
   }
 
@@ -717,11 +536,7 @@ class ApiService {
       const response = await apiClient.delete(`/user/api-keys/${keyId}`);
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'API key deleted successfully' }
-      };
+      throw error;
     }
   }
 
@@ -733,12 +548,7 @@ class ApiService {
       const response = await apiClient.get('/subscription');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      // During trial, subscription should be null
-      return {
-        success: true,
-        data: null
-      };
+      throw error;
     }
   }
 
@@ -747,17 +557,7 @@ class ApiService {
       const response = await apiClient.get('/subscription/trial-status');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: {
-          isTrial: true,
-          trialDaysRemaining: 15,
-          trialEndDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-          isTrialActive: true,
-          isTrialExpired: false
-        }
-      };
+      throw error;
     }
   }
 
@@ -766,24 +566,7 @@ class ApiService {
       const response = await apiClient.get('/subscription/usage');
       return response.data;
     } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: {
-          workflows: {
-            used: 0,
-            limit: 5
-          },
-          storage: {
-            used: 0,
-            limit: 100
-          },
-          apiCalls: {
-            used: 0,
-            limit: 1000
-          }
-        }
-      };
+      throw error;
     }
   }
 
@@ -920,19 +703,7 @@ class ApiService {
       });
       return response.data;
     } catch (error) {
-      // Return mock data for development
-      return {
-        success: true,
-        data: {
-          totalWorkflows: 0,
-          protectedWorkflows: 0,
-          totalUsers: 1,
-          totalRevenue: 0,
-          monthlyGrowth: 0,
-          topWorkflows: [],
-          userActivity: []
-        }
-      };
+      throw error;
     }
   }
 
@@ -941,17 +712,10 @@ class ApiService {
       const response = await apiClient.get('/dashboard/export');
       return response.data;
     } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { 
-          downloadUrl: 'https://example.com/dashboard-export.csv',
-          message: 'Dashboard data exported successfully' 
-        }
-      };
+      throw error;
     }
   }
 }
 
 export { ApiService };
-export default ApiService; 
+export default ApiService;

@@ -616,8 +616,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={() => {
-                            // Real OAuth reconnect logic
-                            window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login';
+                            window.location.href = '/api/auth/hubspot';
                           }}
                         >
                           🔗 Reconnect HubSpot Account
@@ -625,97 +624,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         <span className="text-sm text-red-700">
                           This will take you to the main page to reconnect your HubSpot account
                         </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => {
-                            // Real OAuth force fresh logic
-                            window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login?force=true';
-                          }}
-                        >
-                          🔗 Force Fresh OAuth
-                        </Button>
-                                    <Button 
-              variant="destructive" 
-              size="sm"
-              className="mt-2"
-              onClick={() => {
-                // Nuclear option - complete reset
-                localStorage.clear();
-                sessionStorage.clear();
-                
-                // Clear all cookies
-                document.cookie.split(";").forEach(function(c) { 
-                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-                });
-                
-                // Force hard reload to main page
-                window.location.href = 'https://www.workflowguard.pro?reset=true';
-              }}
-            >
-              🚨 Nuclear Reset
-            </Button>
-            
-            {/* 
-              DEBUG BUTTONS - TO BE REMOVED AFTER WORKFLOW FETCHING IS FIXED
-              
-              These buttons are temporary debugging tools to help diagnose HubSpot connection issues.
-              Once workflow fetching is working reliably, these should be removed to clean up the UI.
-              
-              Buttons to remove:
-              - Stop Retrying
-              - Fix Portal ID  
-              - Test Connection
-              - Nuclear Reset
-              
-              Keep only:
-              - Reconnect HubSpot Account (if needed)
-              - Skip for now
-              - Start Protecting Workflows
-            */}
-            {process.env.NODE_ENV === 'development' && !workflowsFetched && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2 ml-2"
-                  onClick={() => {
-                    // Stop retrying
-                    setRetryCount(maxRetries);
-                    setError('Retry stopped by user. Please reconnect your HubSpot account.');
-                  }}
-                >
-                  ⏹️ Stop Retrying
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2 ml-2"
-                  onClick={async () => {
-                    // OAuth is disabled - show message instead
-                    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
-                    console.log('🔗 OAuth DISABLED - Fix Portal ID prevented');
-                  }}
-                >
-                  🔧 Fix Portal ID
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2 ml-2"
-                  onClick={async () => {
-                    // OAuth is disabled - show message instead
-                    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
-                    console.log('🔗 OAuth DISABLED - Test Connection prevented');
-                  }}
-                >
-                  🧪 Test Connection
-                </Button>
-              </>
-            )}
                       </>
                     ) : (
                       <>
