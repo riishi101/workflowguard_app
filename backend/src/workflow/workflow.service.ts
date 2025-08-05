@@ -91,7 +91,8 @@ export class WorkflowService {
       try {
         // Find the workflow object from selectedWorkflowObjects
         const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
-        const hubspotId = workflowObj?.hubspotId || workflowId;
+        // Always convert hubspotId to string for Prisma
+        const hubspotId = String(workflowObj?.hubspotId || workflowId);
 
         // Try to find the workflow by hubspotId and ownerId
         const existingWorkflow = await this.prisma.workflow.findFirst({
@@ -182,7 +183,7 @@ export class WorkflowService {
       for (const hubspotWorkflow of hubspotWorkflows) {
         const existingWorkflow = await this.prisma.workflow.findFirst({
           where: { 
-            hubspotId: hubspotWorkflow.id,
+            hubspotId: String(hubspotWorkflow.id),
             ownerId: userId 
           }
         });
@@ -203,7 +204,7 @@ export class WorkflowService {
         } else {
           const newWorkflow = await this.prisma.workflow.create({
             data: {
-              hubspotId: hubspotWorkflow.id,
+              hubspotId: String(hubspotWorkflow.id),
               name: hubspotWorkflow.name,
               ownerId: userId,
             },
