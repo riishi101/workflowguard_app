@@ -59,6 +59,9 @@ const Settings = () => {
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || PlanBillingTab;
+  
+  console.log('🔍 Settings - Active tab:', activeTab);
+  console.log('🔍 Settings - Active component:', ActiveComponent.name);
 
   return (
     <MainAppLayout 

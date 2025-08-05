@@ -37,18 +37,24 @@ const ProfileTab = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
+  console.log('🔍 ProfileTab - Component mounted');
+
   useEffect(() => {
+    console.log('🔍 ProfileTab - useEffect called, fetching user profile');
     fetchUserProfile();
   }, []);
 
   const fetchUserProfile = async () => {
     try {
+      console.log('🔍 ProfileTab - Starting fetchUserProfile');
       setLoading(true);
       setError(null);
       const response = await ApiService.getUserProfile();
+      console.log('🔍 ProfileTab - API response:', response);
       setProfile(response.data);
+      console.log('🔍 ProfileTab - Profile set:', response.data);
     } catch (err: any) {
-      console.error('Failed to fetch user profile:', err);
+      console.error('🔍 ProfileTab - Failed to fetch user profile:', err);
       setError(err.response?.data?.message || 'Failed to load user profile. Please try again.');
       toast({
         title: "Error",
@@ -57,6 +63,7 @@ const ProfileTab = () => {
       });
     } finally {
       setLoading(false);
+      console.log('🔍 ProfileTab - Loading finished');
     }
   };
 
