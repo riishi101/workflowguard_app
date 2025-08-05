@@ -1,5 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ApiService, User } from '@/lib/api';
+import { ApiService } from '@/lib/api';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  hubspotPortalId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -34,71 +44,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        console.log('AuthContext - Starting initialization');
+        console.log('AuthContext - Starting initialization (OAuth DISABLED)');
         
-        // Check if this is an OAuth success callback
-        const urlParams = new URLSearchParams(window.location.search);
-        const success = urlParams.get('success');
-        const token = urlParams.get('token');
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-
-        console.log('AuthContext - URL params:', { success, token: !!token, code: !!code, state: !!state });
-
-        if (success === 'true' && token) {
-          // OAuth was successful, store the token and get user
-          console.log('AuthContext - OAuth success detected, storing token');
-          console.log('AuthContext - Token received (first 50 chars):', token.substring(0, 50) + '...');
-          localStorage.setItem('token', token);
-          
-          try {
-            console.log('AuthContext - Fetching user after OAuth success');
-            const response = await ApiService.getCurrentUser();
-            console.log('AuthContext - User fetched successfully:', response);
-            // The backend returns user directly, not wrapped in ApiResponse
-            setUser(response);
-          } catch (error) {
-            console.error('AuthContext - Failed to get user after OAuth:', error);
-            console.error('AuthContext - Error details:', {
-              message: error.message,
-              status: error.response?.status,
-              data: error.response?.data
-            });
-            // Don't clear the token, let the user try again
-          }
-        } else if (code && state) {
-          // This is a HubSpot OAuth callback (not used in current flow)
-          console.log('AuthContext - HubSpot OAuth callback detected');
-          try {
-            const response = await ApiService.getCurrentUser();
-            console.log('AuthContext - User fetched from OAuth callback:', response);
-            setUser(response);
-          } catch (error) {
-            console.error('AuthContext - OAuth callback failed:', error);
-          }
-        } else {
-          // Check if user is already authenticated
-          console.log('AuthContext - Checking existing authentication');
-          
-          // Check if there's a token in localStorage
-          const existingToken = localStorage.getItem('token');
-          console.log('AuthContext - Existing token in localStorage:', !!existingToken);
-          
-          if (existingToken) {
-            try {
-              const response = await ApiService.getCurrentUser();
-              console.log('AuthContext - User already authenticated:', response);
-              setUser(response);
-            } catch (error) {
-              console.log('AuthContext - Token exists but user fetch failed:', error.message);
-              // Clear invalid token
-              localStorage.removeItem('token');
-            }
-          } else {
-            // User not authenticated, that's okay for HubSpot app
-            console.log('AuthContext - User not authenticated - HubSpot OAuth required');
-          }
-        }
+        // OAuth is disabled - skip all OAuth processing
+        console.log('AuthContext - OAuth flow disabled, skipping authentication');
+        
+        // Set a mock user for development purposes
+        const mockUser = {
+          id: 'dev-user-123',
+          email: 'dev@workflowguard.pro',
+          name: 'Development User',
+          role: 'user',
+          hubspotPortalId: '123456789',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        console.log('AuthContext - Setting mock user for development');
+        setUser(mockUser);
+        
       } catch (error) {
         console.error('AuthContext - Auth initialization error:', error);
       } finally {
@@ -112,42 +76,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = () => {
-    console.log('AuthContext - Initiating HubSpot OAuth');
-    // Direct redirect to the OAuth URL
-    const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
-    const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
-    const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+    console.log('AuthContext - OAuth DISABLED - connectHubSpot called');
+    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
     
-    const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
-    
-    console.log('AuthContext - Redirecting to:', authUrl);
-    // Redirect immediately
-    window.location.href = authUrl;
+    // Don't redirect - OAuth is disabled
+    console.log('AuthContext - OAuth redirect prevented');
   };
 
   const testAuthentication = async () => {
-    console.log('AuthContext - Testing authentication manually');
-    const token = localStorage.getItem('token');
-    console.log('AuthContext - Current token:', token ? token.substring(0, 50) + '...' : 'none');
+    console.log('AuthContext - Testing authentication manually (OAuth DISABLED)');
+    console.log('AuthContext - Using mock authentication');
     
-    try {
-      const response = await ApiService.getCurrentUser();
-      console.log('AuthContext - Manual auth test successful:', response);
-      setUser(response);
-    } catch (error) {
-      console.error('AuthContext - Manual auth test failed:', error);
-    }
+    // Return mock user
+    const mockUser = {
+      id: 'dev-user-123',
+      email: 'dev@workflowguard.pro',
+      name: 'Development User',
+      role: 'user',
+      hubspotPortalId: '123456789',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    setUser(mockUser);
+    console.log('AuthContext - Mock authentication successful');
   };
 
   const logout = async () => {
-    try {
-      await ApiService.logout();
-    } catch (error) {
-      // Ignore logout errors
-    } finally {
-      localStorage.removeItem('token');
-      setUser(null);
-    }
+    console.log('AuthContext - Logout called (OAuth DISABLED)');
+    setUser(null);
+    localStorage.removeItem('token');
+    console.log('AuthContext - Mock logout completed');
   };
 
   const value: AuthContextType = {
@@ -159,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     testAuthentication, // Add this for debugging
   };
 
-  console.log('AuthContext - Current state:', { user: !!user, loading, isAuthenticated: !!user, hasInitialized });
+  console.log('AuthContext - Current state (OAuth DISABLED):', { user: !!user, loading, isAuthenticated: !!user, hasInitialized });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }; 

@@ -63,57 +63,16 @@ const OnboardingFlow = () => {
   useEffect(() => {
     if (loading || isInitialized) return; // Don't process while loading or if already initialized
 
-    // Check if this is an OAuth success callback
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-    const token = urlParams.get('token');
-    const error = urlParams.get('error');
-    const forceConnect = urlParams.get('force_connect');
+    // OAuth is disabled - skip all OAuth processing
+    console.log('OnboardingFlow - OAuth DISABLED - skipping OAuth processing');
 
-    console.log('OnboardingFlow - Processing:', { success, token: !!token, error, isAuthenticated, hasProcessedOAuth, timeoutReached });
-
-    if (success === 'true' && token && !hasProcessedOAuth) {
-      // OAuth was successful, clear URL and go to workflow selection
-      console.log('OnboardingFlow - OAuth success, going to workflow selection');
-      window.history.replaceState({}, document.title, window.location.pathname);
-      setHasProcessedOAuth(true);
-      setCurrentStep('workflow-selection');
-      setIsInitialized(true);
-      return;
-    }
-
-    if (error && !hasProcessedOAuth) {
-      // OAuth failed, show error and stay on connect step
-      console.log('OnboardingFlow - OAuth error:', error);
-      toast({
-        title: "Connection Failed",
-        description: "Failed to connect to HubSpot. Please try again.",
-        variant: "destructive",
-      });
-      window.history.replaceState({}, document.title, window.location.pathname);
-      setHasProcessedOAuth(true);
-      setCurrentStep('connect');
-      setShowConnectModal(true);
-      setIsInitialized(true);
-      return;
-    }
-
-    // Check if user is already authenticated and hasn't processed OAuth
+    // Check if user is already authenticated (mock user)
     if (isAuthenticated && !loading && user && !hasProcessedOAuth) {
-      // If force_connect is requested, show connect modal instead
-      if (forceConnect === 'true') {
-        console.log('OnboardingFlow - Force connect requested, showing connect modal');
-        setCurrentStep('connect');
-        setShowConnectModal(true);
-        setIsInitialized(true);
-        return;
-      }
-      
-      // User is authenticated, go directly to workflow selection
-      console.log('OnboardingFlow - User already authenticated, going to workflow selection');
+      // User is authenticated (mock), go directly to workflow selection
+      console.log('OnboardingFlow - Mock user authenticated, going to workflow selection');
       setHasProcessedOAuth(true);
       
-      // Add a small delay to ensure HubSpot connection is fully established
+      // Add a small delay to ensure everything is ready
       setTimeout(() => {
         setCurrentStep('workflow-selection');
         setIsInitialized(true);
@@ -122,9 +81,9 @@ const OnboardingFlow = () => {
       return;
     }
 
-    // User is not authenticated and hasn't processed OAuth, show welcome modal
+    // User is not authenticated, show welcome modal
     if (!isAuthenticated && !loading && !hasProcessedOAuth) {
-      console.log('OnboardingFlow - User not authenticated, showing welcome modal');
+      console.log('OnboardingFlow - Mock user not authenticated, showing welcome modal');
       setCurrentStep('welcome');
       setShowWelcomeModal(true);
       setIsInitialized(true);

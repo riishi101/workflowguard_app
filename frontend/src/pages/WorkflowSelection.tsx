@@ -616,11 +616,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={() => {
-                            // Clear current authentication and force fresh OAuth
-                            localStorage.removeItem('authToken');
-                            localStorage.removeItem('user');
-                            // Force the connect step by adding a query parameter
-                            window.location.href = '/?force_connect=true';
+                            // OAuth is disabled - show message instead
+                            alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
+                            console.log('🔗 OAuth DISABLED - Reconnect HubSpot prevented');
                           }}
                         >
                           🔗 Reconnect HubSpot Account
@@ -633,17 +631,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="mt-2"
                           onClick={() => {
-                            // Force complete fresh start
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            
-                            // Direct OAuth redirect
-                            const clientId = '6be1632d-8007-45e4-aecb-6ec93e6ff528';
-                            const redirectUri = 'https://api.workflowguard.pro/api/auth/hubspot/callback';
-                            const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
-                            
-                            const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
-                            window.location.href = authUrl;
+                            // OAuth is disabled - show message instead
+                            alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
+                            console.log('🔗 OAuth DISABLED - Force fresh OAuth prevented');
                           }}
                         >
                           🔗 Force Fresh OAuth
@@ -706,24 +696,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   size="sm"
                   className="mt-2 ml-2"
                   onClick={async () => {
-                    try {
-                      console.log('WorkflowSelection - Manually updating portal ID');
-                      await ApiService.updateHubSpotPortalId();
-                      toast({
-                        title: "Portal ID Updated",
-                        description: "HubSpot portal ID has been updated. Please try fetching workflows again.",
-                      });
-                      // Retry fetching workflows
-                      setRetryCount(0);
-                      fetchWorkflows();
-                    } catch (error) {
-                      console.error('Failed to update portal ID:', error);
-                      toast({
-                        title: "Update Failed",
-                        description: "Failed to update portal ID. Please reconnect your HubSpot account.",
-                        variant: "destructive",
-                      });
-                    }
+                    // OAuth is disabled - show message instead
+                    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
+                    console.log('🔗 OAuth DISABLED - Fix Portal ID prevented');
                   }}
                 >
                   🔧 Fix Portal ID
@@ -734,25 +709,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                   size="sm"
                   className="mt-2 ml-2"
                   onClick={async () => {
-                    try {
-                      console.log('WorkflowSelection - Testing HubSpot connection');
-                      const result = await ApiService.testHubSpotConnection();
-                      console.log('WorkflowSelection - Connection test result:', result);
-                      toast({
-                        title: "Connection Test",
-                        description: result.data.success ? 
-                          `HubSpot connection working! Found ${result.data.workflowCount} workflows.` : 
-                          `Connection failed: ${result.data.error}`,
-                        variant: result.data.success ? "default" : "destructive",
-                      });
-                    } catch (error) {
-                      console.error('Failed to test connection:', error);
-                      toast({
-                        title: "Test Failed",
-                        description: "Failed to test HubSpot connection.",
-                        variant: "destructive",
-                      });
-                    }
+                    // OAuth is disabled - show message instead
+                    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
+                    console.log('🔗 OAuth DISABLED - Test Connection prevented');
                   }}
                 >
                   🧪 Test Connection
