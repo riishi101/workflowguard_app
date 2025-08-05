@@ -14,6 +14,8 @@ import { EmailModule } from './email/email.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { AppCacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     MetricsModule,
     SubscriptionModule,
     DashboardModule,
+    AnalyticsModule,
+    AppCacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],

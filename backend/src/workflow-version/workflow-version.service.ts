@@ -160,37 +160,34 @@ export class WorkflowVersionService {
 
   async createAutomatedBackup(workflowId: string, userId: string): Promise<WorkflowVersion> {
     try {
+      // Get the latest version to create a backup
       const latestVersion = await this.findLatestByWorkflowId(workflowId);
-      
       if (!latestVersion) {
-        throw new Error('No existing version found for workflow');
+        throw new HttpException('No workflow found to backup', HttpStatus.NOT_FOUND);
       }
 
+      // Create automated backup version
       const backupVersion = await this.prisma.workflowVersion.create({
         data: {
           workflowId: workflowId,
           versionNumber: latestVersion.versionNumber + 1,
           snapshotType: 'Auto Backup',
-          data: latestVersion.data as any,
-          createdBy: 'system',
-          createdAt: new Date(),
-        },
-        include: {
-          workflow: true,
+          createdBy: userId,
+          data: latestVersion.data,
         },
       });
 
-      // The auditLogService was removed from constructor, so this block is removed.
-      // if (this.auditLogService) {
-      //   await this.auditLogService.create({
-      //     userId: userId,
-      //     action: 'automated_backup',
-      //     entityType: 'workflow',
-      //     entityId: workflowId,
-      //     oldValue: latestVersion,
-      //     newValue: backupVersion,
-      //   });
-      // }
+      // Log the automated backup
+      await this.prisma.auditLog.create({
+        data: {
+          userId: userId,
+          action: 'automated_backup_created',
+          entityType: 'workflow',
+          entityId: workflowId,
+          oldValue: null,
+          newValue: { versionId: backupVersion.id, versionNumber: backupVersion.versionNumber },
+        },
+      });
 
       return backupVersion;
     } catch (error) {
@@ -203,17 +200,21 @@ export class WorkflowVersionService {
 
   async createChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
     try {
-      // The auditLogService was removed from constructor, so this block is removed.
-      // if (this.auditLogService) {
-      //   await this.auditLogService.create({
-      //     userId: userId,
-      //     action: 'workflow_changed',
-      //     entityType: 'workflow',
-      //     entityId: workflowId,
-      //     oldValue: null,
-      //     newValue: changes,
-      //   });
-      // }
+      // Create audit log for change notification
+      await this.prisma.auditLog.create({
+        data: {
+          userId: userId,
+          action: 'change_notification_sent',
+          entityType: 'workflow',
+          entityId: workflowId,
+          oldValue: null,
+          newValue: changes,
+        },
+      });
+
+      // In a real implementation, this would send email notifications
+      // For now, we'll just log the notification
+      console.log(`Change notification sent for workflow ${workflowId}:`, changes);
     } catch (error) {
       throw new HttpException(
         `Failed to create change notification: ${error.message}`,
@@ -224,13 +225,37 @@ export class WorkflowVersionService {
 
   async createApprovalWorkflow(workflowId: string, userId: string, requestedChanges: any): Promise<any> {
     try {
+      // Check if workflow exists
+      const workflow = await this.prisma.workflow.findUnique({
+        where: { id: workflowId },
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Create approval request
       const approvalRequest = await this.prisma.approvalRequest.create({
         data: {
           workflowId: workflowId,
           requestedBy: userId,
           requestedChanges: requestedChanges,
           status: 'pending',
-          createdAt: new Date(),
+        },
+      });
+
+      // Log the approval request
+      await this.prisma.auditLog.create({
+        data: {
+          userId: userId,
+          action: 'approval_request_created',
+          entityType: 'workflow',
+          entityId: workflowId,
+          oldValue: null,
+          newValue: { 
+            approvalRequestId: approvalRequest.id,
+            requestedChanges: requestedChanges 
+          },
         },
       });
 
@@ -245,6 +270,17 @@ export class WorkflowVersionService {
 
   async generateComplianceReport(workflowId: string, startDate: Date, endDate: Date): Promise<any> {
     try {
+      // Get workflow details
+      const workflow = await this.prisma.workflow.findUnique({
+        where: { id: workflowId },
+        include: { owner: true },
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Get versions in date range
       const versions = await this.prisma.workflowVersion.findMany({
         where: {
           workflowId: workflowId,
@@ -253,14 +289,12 @@ export class WorkflowVersionService {
             lte: endDate,
           },
         },
-        include: {
-          workflow: true,
-        },
         orderBy: {
           createdAt: 'asc',
         },
       });
 
+      // Get audit logs in date range
       const auditLogs = await this.prisma.auditLog.findMany({
         where: {
           entityId: workflowId,
@@ -278,18 +312,37 @@ export class WorkflowVersionService {
         },
       });
 
+      // Calculate compliance metrics
+      const totalVersions = versions.length;
+      const automatedBackups = versions.filter(v => v.snapshotType === 'Auto Backup').length;
+      const manualSaves = versions.filter(v => v.snapshotType === 'Manual Save').length;
+      const systemBackups = versions.filter(v => v.snapshotType === 'System Backup').length;
+      const totalChanges = auditLogs.length;
+      const uniqueUsers = new Set(auditLogs.map(log => log.userId)).size;
+
+      // Generate compliance score
+      const complianceScore = Math.min(100, Math.max(0, 
+        (automatedBackups * 20) + 
+        (manualSaves * 15) + 
+        (systemBackups * 10) + 
+        (totalChanges * 5)
+      ));
+
       const report = {
         workflowId: workflowId,
+        workflowName: workflow.name,
         reportPeriod: {
           startDate: startDate,
           endDate: endDate,
         },
         summary: {
-          totalVersions: versions.length,
-          totalChanges: auditLogs.length,
-          automatedBackups: versions.filter(v => v.snapshotType === 'Auto Backup').length,
-          manualSaves: versions.filter(v => v.snapshotType === 'Manual Save').length,
-          systemBackups: versions.filter(v => v.snapshotType === 'System Backup').length,
+          totalVersions,
+          totalChanges,
+          automatedBackups,
+          manualSaves,
+          systemBackups,
+          uniqueUsers,
+          complianceScore,
         },
         versions: versions.map(version => ({
           id: version.id,
@@ -303,16 +356,12 @@ export class WorkflowVersionService {
           id: log.id,
           action: log.action,
           userId: log.userId,
-          userEmail: log.user?.email,
+          userName: log.user?.name || 'Unknown',
           timestamp: log.timestamp,
-          details: log.oldValue || log.newValue,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
         })),
-        compliance: {
-          hasCompleteAuditTrail: auditLogs.length > 0,
-          hasVersionHistory: versions.length > 0,
-          hasUserAttribution: auditLogs.every(log => log.userId),
-          hasTimestampTracking: auditLogs.every(log => log.timestamp),
-        },
+        recommendations: this.generateComplianceRecommendations(versions, auditLogs),
       };
 
       return report;
@@ -365,5 +414,29 @@ export class WorkflowVersionService {
       return 'No changes detected';
     }
     return summaries.join(', ');
+  }
+
+  private generateComplianceRecommendations(versions: any[], auditLogs: any[]): string[] {
+    const recommendations = [];
+
+    // Check backup frequency
+    const automatedBackups = versions.filter(v => v.snapshotType === 'Auto Backup').length;
+    if (automatedBackups < 5) {
+      recommendations.push('Consider increasing automated backup frequency for better compliance');
+    }
+
+    // Check user activity
+    const uniqueUsers = new Set(auditLogs.map(log => log.userId)).size;
+    if (uniqueUsers < 2) {
+      recommendations.push('Consider implementing team review processes for workflow changes');
+    }
+
+    // Check change tracking
+    const changeLogs = auditLogs.filter(log => log.action.includes('change'));
+    if (changeLogs.length < auditLogs.length * 0.3) {
+      recommendations.push('Improve change tracking and documentation for compliance');
+    }
+
+    return recommendations;
   }
 }

@@ -608,7 +608,7 @@ const WorkflowHistory = () => {
 
   if (loading) {
     return (
-      <MainAppLayout>
+      <MainAppLayout title="Workflow History" description="View and manage workflow version history, compare versions, and restore previous states.">
         <ContentSection>
           <div className="space-y-4">
             <Skeleton className="h-8 w-64" />
@@ -626,7 +626,7 @@ const WorkflowHistory = () => {
 
   if (error) {
     return (
-      <MainAppLayout>
+      <MainAppLayout title="Workflow History" description="View and manage workflow version history, compare versions, and restore previous states.">
         <ContentSection>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -653,59 +653,59 @@ const WorkflowHistory = () => {
   }));
 
   return (
-    <MainAppLayout>
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
+    <MainAppLayout title="Workflow History" description="View and manage workflow version history, compare versions, and restore previous states.">
+      <ContentSection>
+        <div className="space-y-6">
+          {/* Header Actions */}
+          <div className="flex items-center justify-between">
+            <div>
               <h1 className="text-2xl font-semibold text-gray-900">
                 Workflow History
               </h1>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSyncHubSpot}
-                  disabled={loading}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Sync HubSpot
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAutomatedBackup}
-                  disabled={loading || !selectedWorkflow}
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Auto Backup
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleComplianceReport}
-                  disabled={loading || !selectedWorkflow}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Compliance Report
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchWorkflowData}
-                  disabled={loading}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
+              <p className="text-gray-600 text-sm">
+                View and manage workflow version history, compare versions, and restore previous states.
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSyncHubSpot}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Sync HubSpot
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAutomatedBackup}
+                disabled={loading || !selectedWorkflow}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Auto Backup
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleComplianceReport}
+                disabled={loading || !selectedWorkflow}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Compliance Report
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchWorkflowData}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Workflow Selector */}
           <Card className="mb-8">
             <CardHeader>
@@ -1294,7 +1294,7 @@ const WorkflowHistory = () => {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </ContentSection>
     </MainAppLayout>
   );
 };

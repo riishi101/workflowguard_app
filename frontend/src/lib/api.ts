@@ -521,6 +521,116 @@ class ApiService {
       throw error;
     }
   }
+
+  // Enterprise Analytics APIs
+  static async getUserAnalytics(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await apiClient.get(`/analytics/user?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getEnterpriseReport(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await apiClient.get(`/analytics/enterprise-report?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Webhook Management APIs
+  static async getUserWebhooks(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/webhooks');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async createWebhook(webhookData: any): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/webhooks', webhookData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updateWebhook(webhookId: string, webhookData: any): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put(`/webhooks/${webhookId}`, webhookData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async deleteWebhook(webhookId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.delete(`/webhooks/${webhookId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Advanced Enterprise Features
+  static async getWorkflowAnalytics(workflowId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get(`/workflow/${workflowId}/analytics`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getPerformanceMetrics(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/analytics/performance');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getComplianceMetrics(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/analytics/compliance');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getSystemHealth(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/system/health');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getCacheStats(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/system/cache-stats');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export { ApiService };

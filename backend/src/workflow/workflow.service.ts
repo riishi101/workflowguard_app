@@ -316,19 +316,42 @@ export class WorkflowService {
 
   async getWorkflowStats(userId: string): Promise<any> {
     try {
-      const workflows = await this.getProtectedWorkflows(userId);
-      const totalVersions = workflows.reduce((sum, workflow) => sum + workflow.versions.length, 0);
-      
-      return {
-        totalWorkflows: workflows.length,
-        activeWorkflows: workflows.filter(w => w.status === 'active').length,
-        protectedWorkflows: workflows.length,
-        totalVersions: totalVersions,
-        uptime: 99.9,
-        lastSnapshot: new Date().toISOString(),
-        planCapacity: 100,
-        planUsed: workflows.length
-      };
+      // Get workflows with version counts
+      const workflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        include: {
+          versions: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      // Calculate detailed stats
+      const stats = workflows.map(workflow => {
+        const versions = workflow.versions;
+        const latestVersion = versions[0];
+        const totalSteps = latestVersion ? this.calculateWorkflowSteps(latestVersion.data) : 0;
+        const totalContacts = latestVersion ? this.calculateWorkflowContacts(latestVersion.data) : 0;
+
+        return {
+          id: workflow.id,
+          name: workflow.name,
+          lastSnapshot: latestVersion?.createdAt.toISOString() || workflow.createdAt.toISOString(),
+          versions: versions.length,
+          lastModifiedBy: {
+            name: 'System', // Would be real user in production
+            initials: 'S',
+            email: 'system@workflowguard.com',
+          },
+          status: 'active',
+          protectionStatus: 'protected',
+          lastModified: latestVersion?.createdAt.toISOString() || workflow.updatedAt.toISOString(),
+          steps: totalSteps,
+          contacts: totalContacts,
+        };
+      });
+
+      return stats;
     } catch (error) {
       throw new HttpException(
         `Failed to get workflow stats: ${error.message}`,
@@ -339,24 +362,109 @@ export class WorkflowService {
 
   async getDashboardStats(userId: string): Promise<any> {
     try {
-      const workflows = await this.getProtectedWorkflows(userId);
-      const totalVersions = workflows.reduce((sum, workflow) => sum + workflow.versions.length, 0);
-      
+      // Get user with subscription for plan limits
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { subscription: true },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Get protected workflows with optimized query
+      const protectedWorkflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        include: {
+          versions: {
+            orderBy: { createdAt: 'desc' },
+            take: 1, // Only get latest version for count
+          },
+        },
+      });
+
+      // Calculate stats efficiently
+      const totalWorkflows = protectedWorkflows.length;
+      const activeWorkflows = protectedWorkflows.filter(w => w.versions.length > 0).length;
+      const totalVersions = protectedWorkflows.reduce((sum, w) => sum + w.versions.length, 0);
+
+      // Get recent activity (last 7 days)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentActivity = await this.prisma.auditLog.count({
+        where: {
+          userId: userId,
+          timestamp: { gte: sevenDaysAgo },
+        },
+      });
+
+      // Calculate plan usage
+      const planCapacity = user.subscription?.planId === 'professional' ? 25 : 
+                          user.subscription?.planId === 'enterprise' ? 999999 : 5;
+      const planUsed = totalWorkflows;
+
+      // Calculate uptime (mock for now, would be real in production)
+      const uptime = 99.9; // Mock uptime percentage
+
+      // Get last snapshot time
+      const lastSnapshot = protectedWorkflows.length > 0 ? 
+        Math.max(...protectedWorkflows.map(w => 
+          w.versions.length > 0 ? new Date(w.versions[0].createdAt).getTime() : 0
+        )) : Date.now();
+
       return {
-        totalWorkflows: workflows.length,
-        activeWorkflows: workflows.filter(w => w.status === 'active').length,
-        protectedWorkflows: workflows.length,
-        totalVersions: totalVersions,
-        uptime: 99.9,
-        lastSnapshot: new Date().toISOString(),
-        planCapacity: 100,
-        planUsed: workflows.length
+        totalWorkflows,
+        activeWorkflows,
+        protectedWorkflows: totalWorkflows,
+        totalVersions,
+        uptime,
+        lastSnapshot: new Date(lastSnapshot).toISOString(),
+        planCapacity,
+        planUsed,
+        recentActivity,
+        planId: user.subscription?.planId || 'starter',
+        planStatus: user.subscription?.status || 'active',
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get dashboard stats: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    }
+  }
+
+  private calculateWorkflowSteps(workflowData: any): number {
+    try {
+      if (typeof workflowData === 'string') {
+        workflowData = JSON.parse(workflowData);
+      }
+      
+      // Count steps in workflow data
+      if (workflowData.steps && Array.isArray(workflowData.steps)) {
+        return workflowData.steps.length;
+      }
+      
+      // Alternative counting method
+      if (workflowData.actions && Array.isArray(workflowData.actions)) {
+        return workflowData.actions.length;
+      }
+      
+      return 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  private calculateWorkflowContacts(workflowData: any): number {
+    try {
+      if (typeof workflowData === 'string') {
+        workflowData = JSON.parse(workflowData);
+      }
+      
+      // Mock contact count based on workflow complexity
+      const steps = this.calculateWorkflowSteps(workflowData);
+      return Math.floor(steps * 10); // Mock calculation
+    } catch (error) {
+      return 0;
     }
   }
 }
