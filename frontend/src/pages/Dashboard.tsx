@@ -146,15 +146,20 @@ const Dashboard = () => {
         ApiService.getDashboardStats()
       ]);
 
-      console.log('Dashboard - Workflows response:', workflowsResponse);
-      console.log('Dashboard - Stats response:', statsResponse);
-      console.log('Dashboard - Workflows data:', workflowsResponse.data);
-      console.log('Dashboard - Workflows array length:', workflowsResponse.data?.length || 0);
-      console.log('Dashboard - Workflows response type:', typeof workflowsResponse.data);
-      console.log('Dashboard - Is workflows array:', Array.isArray(workflowsResponse.data));
+      console.log('Dashboard - Raw workflows response:', workflowsResponse);
+      console.log('Dashboard - Raw stats response:', statsResponse);
 
-      const workflows = workflowsResponse.data || [];
-      const stats = statsResponse.data || null;
+      const workflows = workflowsResponse?.data || [];
+      const stats = statsResponse?.data || null;
+
+      if (!Array.isArray(workflows)) {
+        console.error('Dashboard - Workflows data is not an array:', workflows);
+        setError('Unexpected data format received for workflows.');
+        setWorkflows([]);
+        setStats(null);
+        setLoading(false);
+        return;
+      }
 
       // Validate and transform workflows data
       // Add logs to inspect raw workflows
