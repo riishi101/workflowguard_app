@@ -88,10 +88,14 @@ export class WorkflowService {
     const protectedWorkflows = [];
 
     for (const workflowId of workflowIds) {
-      // Try to find the workflow by ID
+      // Find the workflow object from selectedWorkflowObjects
+      const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
+      const hubspotId = workflowObj?.hubspotId || workflowId;
+
+      // Try to find the workflow by hubspotId and ownerId
       const existingWorkflow = await this.prisma.workflow.findFirst({
         where: {
-          id: workflowId,
+          hubspotId: hubspotId,
           ownerId: finalUserId
         }
       });
@@ -109,12 +113,9 @@ export class WorkflowService {
         });
         protectedWorkflows.push(updatedWorkflow);
       } else {
-        // Try to find the workflow object from selectedWorkflowObjects
-        const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
         const newWorkflow = await this.prisma.workflow.create({
           data: {
-            id: workflowId,
-            hubspotId: workflowObj?.hubspotId || workflowId,
+            hubspotId: hubspotId,
             name: workflowObj?.name || 'Unnamed Workflow',
             ownerId: finalUserId,
           },
