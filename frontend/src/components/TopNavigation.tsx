@@ -146,9 +146,16 @@ const TopNavigation = () => {
       <div className="flex items-center justify-between px-6 py-4">
         {/* Logo - Left side */}
         <div className="flex-shrink-0">
-          <Link to="/dashboard">
+          <div
+            onClick={() => navigate('/dashboard')}
+            style={{ cursor: 'pointer' }}
+            aria-label="Go to Dashboard"
+            tabIndex={0}
+            role="button"
+            onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') navigate('/dashboard'); }}
+          >
             <WorkflowGuardLogo size="sm" />
-          </Link>
+          </div>
         </div>
 
         {/* Navigation - Centered */}
