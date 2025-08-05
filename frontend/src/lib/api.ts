@@ -199,12 +199,10 @@ class ApiService {
     }
   }
 
-  static async startWorkflowProtection(workflowIds: string[], userId: string, selectedWorkflowObjects: any[]): Promise<ApiResponse<any>> {
+  static async startWorkflowProtection(selectedWorkflowObjects: any[]): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post('/workflow/start-protection', {
-        workflowIds,
-        userId,
-        selectedWorkflowObjects
+        workflows: selectedWorkflowObjects
       });
       return response.data;
     } catch (error) {
