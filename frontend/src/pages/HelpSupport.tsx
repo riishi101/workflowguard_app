@@ -187,35 +187,33 @@ const HelpSupport = () => {
       <ContentSection>
         <div className="max-w-7xl mx-auto space-y-8">
           {/* AI Support Assistant */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-600 p-3 rounded-lg">
+          <Card className="bg-white rounded-2xl shadow-md border border-gray-100">
+            <CardContent className="p-8">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-600 rounded-full flex items-center justify-center w-12 h-12">
                   <Brain className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-blue-900 mb-2">AI Support Assistant</h3>
-                  <p className="text-blue-700 mb-6">
-                    Our AI assistant can automatically diagnose and fix most common issues. 
-                    Describe your problem and get instant help!
-                  </p>
-                  <div className="space-y-4">
-                    <Textarea
-                      placeholder="Cannot rollback workflow to previous version"
-                      value={issueDescription}
-                      onChange={(e) => setIssueDescription(e.target.value)}
-                      className="min-h-[100px] resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <div className="flex justify-center">
-                      <Button 
-                        onClick={handleDiagnoseIssue}
-                        disabled={isDiagnosing}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium"
-                      >
-                        {isDiagnosing ? 'Diagnosing...' : 'Diagnose Issue'}
-                      </Button>
-                    </div>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">AI Support Assistant</h3>
+                  <p className="text-gray-600 text-sm">Our AI assistant can automatically diagnose and fix most common issues.</p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <input
+                  type="text"
+                  placeholder='Describe your problem and get instant help!\nExample: "Cannot rollback workflow to previous version"'
+                  value={issueDescription}
+                  onChange={e => setIssueDescription(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100 bg-gray-50 placeholder-gray-400"
+                />
+                <div className="mt-4 flex">
+                  <Button
+                    onClick={handleDiagnoseIssue}
+                    disabled={isDiagnosing}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-none"
+                  >
+                    {isDiagnosing ? 'Diagnosing...' : 'Diagnose Issue'}
+                  </Button>
                 </div>
               </div>
             </CardContent>
