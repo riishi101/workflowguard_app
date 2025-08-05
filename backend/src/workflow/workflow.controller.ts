@@ -309,8 +309,17 @@ export class WorkflowController {
       throw new HttpException('Invalid request: workflows array required', HttpStatus.BAD_REQUEST);
     }
 
+    // Validate each workflow object has id or hubspotId
+    const invalidWorkflows = body.workflows.filter((w: any) => !w.id && !w.hubspotId);
+    if (invalidWorkflows.length > 0) {
+      console.error('Invalid workflow objects received:', invalidWorkflows);
+      throw new HttpException('Each workflow must have an id or hubspotId', HttpStatus.BAD_REQUEST);
+    }
+
     try {
       const workflowIds = body.workflows.map((w: any) => w.id || w.hubspotId || w.workflowId);
+      console.log('start-protection: workflowIds:', workflowIds);
+      console.log('start-protection: workflows:', body.workflows);
       const result = await this.workflowService.startWorkflowProtection(
         workflowIds,
         userId,
@@ -321,6 +330,7 @@ export class WorkflowController {
         result: result
       };
     } catch (error) {
+      console.error('start-protection error:', error);
       throw new HttpException(
         `Failed to start workflow protection: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
