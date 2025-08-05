@@ -109,90 +109,51 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log(`WorkflowSelection - API call completed in ${apiEndTime - apiStartTime}ms`);
       console.log('WorkflowSelection - HubSpot API response:', response);
       console.log('WorkflowSelection - Response type:', typeof response);
-      console.log('WorkflowSelection - Is array:', Array.isArray(response));
-      if (Array.isArray(response) && response.length > 0) {
-        console.log('WorkflowSelection - First workflow:', response[0]);
-      }
+      console.log('WorkflowSelection - Response structure:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        isDataArray: Array.isArray(response.data),
+        dataLength: Array.isArray(response.data) ? response.data.length : 'N/A'
+      });
       
       // Validate the response structure
-      if (!response) {
-        throw new Error('Invalid response structure from HubSpot API');
+      if (!response || !response.success) {
+        throw new Error(response?.message || 'Invalid response structure from HubSpot API');
       }
       
-      // Check if we got actual workflow data - backend returns workflows directly
-      const workflows = Array.isArray(response) ? response : [];
-      console.log('WorkflowSelection - Parsed workflows:', workflows.length);
+      // Extract workflows from the response data
+      const workflows = response.data || [];
+      console.log('WorkflowSelection - Extracted workflows:', workflows.length);
       
-      // Handle new response format from backend
-      if (response && typeof response === 'object' && 'workflows' in response) {
-        // New format with message and isEmpty properties
-        const responseData = response as any;
-        const workflows = responseData.workflows || [];
-        const message = responseData.message;
-        const isEmpty = responseData.isEmpty;
+      if (workflows.length > 0) {
+        console.log('WorkflowSelection - Found workflows:', workflows.length);
+        console.log('WorkflowSelection - Sample workflow:', workflows[0]);
         
-        console.log('WorkflowSelection - New response format:', { workflows: workflows.length, message, isEmpty });
+        // Validate workflow structure
+        const validWorkflows = workflows.filter(workflow => 
+          workflow && workflow.id && workflow.name
+        );
         
-        if (workflows.length > 0) {
-          console.log('WorkflowSelection - Found workflows:', workflows.length);
-          console.log('WorkflowSelection - Sample workflow:', workflows[0]);
-          
-          // Validate workflow structure
-          const validWorkflows = workflows.filter(workflow => 
-            workflow && workflow.id && workflow.name
-          );
-          
-          if (validWorkflows.length === 0) {
-            throw new Error('No valid workflows found in response');
-          }
-          
-          setWorkflows(validWorkflows);
-          setWorkflowsFetched(true);
-          toast({
-            title: "Connected to HubSpot",
-            description: `Found ${validWorkflows.length} workflows in your account.`,
-          });
-        } else {
-          // No workflows found in HubSpot
-          console.log('WorkflowSelection - No workflows found in HubSpot');
-          setWorkflows([]);
-          toast({
-            title: "No Workflows Found",
-            description: message || "No active workflows found in your HubSpot account. Please create workflows in HubSpot and try again.",
-            variant: "destructive",
-          });
+        if (validWorkflows.length === 0) {
+          throw new Error('No valid workflows found in response');
         }
+        
+        setWorkflows(validWorkflows);
+        setWorkflowsFetched(true);
+        toast({
+          title: "Connected to HubSpot",
+          description: `Found ${validWorkflows.length} workflows in your account.`,
+        });
       } else {
-        // Legacy format - direct array
-        if (workflows.length > 0) {
-          console.log('WorkflowSelection - Found workflows (legacy format):', workflows.length);
-          console.log('WorkflowSelection - Sample workflow:', workflows[0]);
-          
-          // Validate workflow structure
-          const validWorkflows = workflows.filter(workflow => 
-            workflow && workflow.id && workflow.name
-          );
-          
-          if (validWorkflows.length === 0) {
-            throw new Error('No valid workflows found in response');
-          }
-          
-          setWorkflows(validWorkflows);
-          setWorkflowsFetched(true);
-          toast({
-            title: "Connected to HubSpot",
-            description: `Found ${validWorkflows.length} workflows in your account.`,
-          });
-        } else {
-          // No workflows found in HubSpot
-          console.log('WorkflowSelection - No workflows found in HubSpot');
-          setWorkflows([]);
-          toast({
-            title: "No Workflows Found",
-            description: "No active workflows found in your HubSpot account. Please create workflows in HubSpot and try again.",
-            variant: "destructive",
-          });
-        }
+        // No workflows found in HubSpot
+        console.log('WorkflowSelection - No workflows found in HubSpot');
+        setWorkflows([]);
+        toast({
+          title: "No Workflows Found",
+          description: response.message || "No active workflows found in your HubSpot account. Please create workflows in HubSpot and try again.",
+          variant: "destructive",
+        });
       }
     } catch (err) {
       console.error('WorkflowSelection - Failed to fetch workflows:', err);
