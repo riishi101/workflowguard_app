@@ -101,12 +101,19 @@ export class HubSpotService {
     try {
       // Try multiple HubSpot API endpoints for workflows
       const endpoints = [
-        `https://api.hubapi.com/automation/v3/workflows`,
+        // Current HubSpot API endpoints (v4 is preferred)
         `https://api.hubapi.com/automation/v4/workflows`,
-        `https://api.hubapi.com/marketing/v3/workflows`,
-        `https://api.hubapi.com/workflows/v1/workflows`,
+        `https://api.hubapi.com/automation/v4/workflows?limit=100`,
+        `https://api.hubapi.com/automation/v4/workflows?properties=id,name,description,enabled,createdAt,updatedAt`,
+        `https://api.hubapi.com/automation/v4/workflows?limit=50&properties=id,name,description,enabled`,
+        // Legacy endpoints as fallback
+        `https://api.hubapi.com/automation/v3/workflows`,
         `https://api.hubapi.com/automation/v3/workflows?limit=100`,
-        `https://api.hubapi.com/automation/v4/workflows?limit=100`
+        `https://api.hubapi.com/automation/v3/workflows?properties=id,name,description,enabled,createdAt,updatedAt`,
+        `https://api.hubapi.com/automation/v3/workflows?limit=50&properties=id,name,description,enabled`,
+        // Alternative endpoints
+        `https://api.hubapi.com/marketing/v3/workflows`,
+        `https://api.hubapi.com/workflows/v1/workflows`
       ];
 
       let workflows: any[] = [];
@@ -121,6 +128,7 @@ export class HubSpotService {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
+              'Accept': 'application/json',
             },
           });
 
@@ -142,6 +150,12 @@ export class HubSpotService {
               workflowList = data.data;
             } else if (data.objects) {
               workflowList = data.objects;
+            } else if (data.value) {
+              workflowList = data.value;
+            } else if (data.items) {
+              workflowList = data.items;
+            } else if (data.workflowList) {
+              workflowList = data.workflowList;
             }
 
             console.log('🔍 HubSpotService - Extracted workflow list from', endpoint, ':', workflowList.length);
@@ -169,9 +183,17 @@ export class HubSpotService {
             const errorText = await response.text();
             console.log('🔍 HubSpotService - Endpoint failed:', endpoint, 'Status:', response.status, 'Error:', errorText);
             
-            // If it's a 401 or 403, the token might be invalid
-            if (response.status === 401 || response.status === 403) {
-              console.log('🔍 HubSpotService - Authentication error, trying next endpoint');
+            // Log specific error details
+            if (response.status === 401) {
+              console.log('🔍 HubSpotService - 401 Unauthorized - Token might be invalid or expired');
+            } else if (response.status === 403) {
+              console.log('🔍 HubSpotService - 403 Forbidden - Token might not have required permissions');
+            } else if (response.status === 404) {
+              console.log('🔍 HubSpotService - 404 Not Found - Endpoint might not exist');
+            } else if (response.status === 429) {
+              console.log('🔍 HubSpotService - 429 Rate Limited - Too many requests');
+            } else {
+              console.log('🔍 HubSpotService - Other error status:', response.status);
             }
           }
         } catch (endpointError) {
