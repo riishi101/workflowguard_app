@@ -16,7 +16,7 @@ import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
 import ConnectHubSpotGuide from "./pages/help/ConnectHubSpotGuide";
 import RestoreWorkflowGuide from "./pages/help/RestoreWorkflowGuide";
-import UserPermissionsGuide from "./pages/help/UserPermissionsGuide";
+
 import UserManual from "./pages/help/UserManual";
 import FeatureSpotlights from "./pages/help/FeatureSpotlights";
 import AdvancedUseCases from "./pages/help/AdvancedUseCases";
@@ -89,7 +89,7 @@ const App = () => (
             <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
             <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />
             <Route path="/help/restore-workflow" element={<ProtectedRoute><TrialAccessGuard><RestoreWorkflowGuide /></TrialAccessGuard></ProtectedRoute>} />
-            <Route path="/help/user-permissions" element={<ProtectedRoute><TrialAccessGuard><UserPermissionsGuide /></TrialAccessGuard></ProtectedRoute>} />
+    
             <Route path="/help/user-manual" element={<ProtectedRoute><TrialAccessGuard><UserManual /></TrialAccessGuard></ProtectedRoute>} />
             <Route path="/help/feature-spotlights" element={<ProtectedRoute><TrialAccessGuard><FeatureSpotlights /></TrialAccessGuard></ProtectedRoute>} />
             <Route path="/help/advanced-use-cases" element={<ProtectedRoute><TrialAccessGuard><AdvancedUseCases /></TrialAccessGuard></ProtectedRoute>} />

@@ -23,7 +23,7 @@ const AdvancedUseCases = () => {
         "Audit trail management"
       ],
       steps: [
-        "Set up role-based access control",
+
         "Configure approval workflows",
         "Implement audit logging",
         "Establish compliance reporting"

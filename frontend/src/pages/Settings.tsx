@@ -3,14 +3,12 @@ import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import PlanBillingTab from "@/components/settings/PlanBillingTab";
 import NotificationsTab from "@/components/settings/NotificationsTab";
-import UserPermissionsTab from "@/components/settings/UserPermissionsTab";
 import AuditLogTab from "@/components/settings/AuditLogTab";
 import ApiAccessTab from "@/components/settings/ApiAccessTab";
 import ProfileTab from "@/components/settings/ProfileTab";
 import {
   CreditCard,
   Bell,
-  Users,
   FileText,
   Code,
   UserCircle,
@@ -31,12 +29,6 @@ const Settings = () => {
       label: "Notifications",
       icon: Bell,
       component: NotificationsTab,
-    },
-    {
-      id: "user-permissions",
-      label: "User Permissions",
-      icon: Users,
-      component: UserPermissionsTab,
     },
     {
       id: "audit-log",

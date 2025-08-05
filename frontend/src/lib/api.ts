@@ -573,30 +573,7 @@ class ApiService {
     }
   }
 
-  static async getUserPermissions(): Promise<ApiResponse<any>> {
-    try {
-      const response = await apiClient.get('/user/permissions');
-      return response.data;
-    } catch (error) {
-      // Return mock data for development when OAuth is disabled
-      return {
-        success: true,
-        data: {
-          role: 'admin',
-          permissions: ['read', 'write', 'delete', 'manage_users'],
-          teamMembers: [
-            {
-              id: '1',
-              name: 'Development User',
-              email: 'dev@workflowguard.pro',
-              role: 'admin',
-              status: 'active'
-            }
-          ]
-        }
-      };
-    }
-  }
+
 
   static async getAuditLogs(filters?: any): Promise<ApiResponse<any>> {
     try {
@@ -689,31 +666,7 @@ class ApiService {
     }
   }
 
-  static async updateUserRole(userId: string, newRole: string): Promise<ApiResponse<any>> {
-    try {
-      const response = await apiClient.put(`/user/${userId}/role`, { role: newRole });
-      return response.data;
-    } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'User role updated successfully' }
-      };
-    }
-  }
 
-  static async removeUser(userId: string): Promise<ApiResponse<any>> {
-    try {
-      const response = await apiClient.delete(`/user/${userId}`);
-      return response.data;
-    } catch (error) {
-      // Return mock success for development
-      return {
-        success: true,
-        data: { message: 'User removed successfully' }
-      };
-    }
-  }
 
   // Subscription and billing
   static async getSubscription(): Promise<ApiResponse<any>> {
