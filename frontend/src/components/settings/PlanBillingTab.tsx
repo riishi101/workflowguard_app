@@ -166,22 +166,6 @@ const PlanBillingTab = () => {
                   </AlertDescription>
                 </Alert>
               )}
-
-              <div className="flex gap-3">
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => handleUpgrade('professional')}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Upgrade to Professional
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => window.open('https://app.hubspot.com/billing', '_blank')}
-                >
-                  Manage Billing
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -251,7 +235,7 @@ const PlanBillingTab = () => {
                   </span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                {subscription?.planId === 'starter' && (
+                {(subscription?.planId === 'starter' || (trialStatus?.isTrial && !subscription?.planId)) && (
                   <p className="text-sm text-gray-600 mt-1">Current Plan</p>
                 )}
               </div>
@@ -293,10 +277,10 @@ const PlanBillingTab = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  disabled={subscription?.planId === 'starter'}
+                  disabled={subscription?.planId === 'starter' || trialStatus?.isTrial}
                   onClick={() => handleUpgrade('starter')}
                 >
-                  {subscription?.planId === 'starter' ? 'Current Plan' : 'Select Plan'}
+                  {(subscription?.planId === 'starter' || (trialStatus?.isTrial && !subscription?.planId)) ? 'Current Plan' : 'Select Plan'}
                 </Button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   30 days version history, Basic comparison only
@@ -323,7 +307,7 @@ const PlanBillingTab = () => {
                   </span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                {subscription?.planId === 'professional' && (
+                {(subscription?.planId === 'professional' || trialStatus?.isTrial) && (
                   <p className="text-sm text-gray-600 mt-1">Current Plan</p>
                 )}
               </div>
@@ -380,10 +364,10 @@ const PlanBillingTab = () => {
               <div className="mt-auto">
                 <Button 
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={subscription?.planId === 'professional'}
+                  disabled={subscription?.planId === 'professional' || trialStatus?.isTrial}
                   onClick={() => handleUpgrade('professional')}
                 >
-                  {subscription?.planId === 'professional' ? 'Current Plan' : 'Select Plan'}
+                  {(subscription?.planId === 'professional' || trialStatus?.isTrial) ? 'Current Plan' : 'Select Plan'}
                 </Button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   90 days version history, Up to 5 team members
