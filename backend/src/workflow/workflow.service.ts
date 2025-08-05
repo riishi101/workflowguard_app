@@ -64,9 +64,8 @@ export class WorkflowService {
     });
   }
 
-  async startWorkflowProtection(workflowNames: string[], userId: string, selectedWorkflowObjects: any[]): Promise<any[]> {
+  async startWorkflowProtection(workflowIds: string[], userId: string, selectedWorkflowObjects: any[]): Promise<any[]> {
     let finalUserId = userId;
-
     if (!finalUserId) {
       finalUserId = 'default-user-id';
     }
@@ -75,7 +74,6 @@ export class WorkflowService {
     let user = await this.prisma.user.findUnique({
       where: { id: finalUserId },
     });
-
     if (!user) {
       user = await this.prisma.user.create({
         data: {
@@ -89,11 +87,12 @@ export class WorkflowService {
 
     const protectedWorkflows = [];
 
-    for (const workflowName of workflowNames) {
+    for (const workflowId of workflowIds) {
+      // Try to find the workflow by ID
       const existingWorkflow = await this.prisma.workflow.findFirst({
-        where: { 
-          name: workflowName,
-          ownerId: finalUserId 
+        where: {
+          id: workflowId,
+          ownerId: finalUserId
         }
       });
 
@@ -110,10 +109,13 @@ export class WorkflowService {
         });
         protectedWorkflows.push(updatedWorkflow);
       } else {
+        // Try to find the workflow object from selectedWorkflowObjects
+        const workflowObj = selectedWorkflowObjects?.find((w: any) => w.id === workflowId);
         const newWorkflow = await this.prisma.workflow.create({
           data: {
-            hubspotId: workflowName, // Use workflow name as temporary ID
-            name: workflowName,
+            id: workflowId,
+            hubspotId: workflowObj?.hubspotId || workflowId,
+            name: workflowObj?.name || 'Unnamed Workflow',
             ownerId: finalUserId,
           },
           include: {
