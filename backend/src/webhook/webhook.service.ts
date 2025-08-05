@@ -15,7 +15,6 @@ export class WebhookService {
           endpointUrl: webhookData.endpointUrl,
           secret: this.generateWebhookSecret(),
           events: webhookData.events || ['workflow.changed', 'workflow.rolled_back'],
-          isActive: true,
         },
       });
 
@@ -58,7 +57,6 @@ export class WebhookService {
           name: webhookData.name,
           endpointUrl: webhookData.endpointUrl,
           events: webhookData.events,
-          isActive: webhookData.isActive,
         },
       });
 
@@ -95,15 +93,16 @@ export class WebhookService {
       const webhooks = await this.prisma.webhook.findMany({
         where: {
           userId: userId,
-          isActive: true,
-          events: {
-            has: event,
-          },
         },
       });
 
+      // Filter webhooks that have the required event
+      const filteredWebhooks = webhooks.filter(webhook => 
+        webhook.events && webhook.events.includes(event)
+      );
+
       // Send webhook notifications
-      const webhookPromises = webhooks.map(webhook => 
+      const webhookPromises = filteredWebhooks.map(webhook => 
         this.sendWebhookToEndpoint(webhook, event, data)
       );
 
@@ -121,7 +120,7 @@ export class WebhookService {
         data: data,
       };
 
-      const headers = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'User-Agent': 'WorkflowGuard-Webhook/1.0',
       };
@@ -137,11 +136,7 @@ export class WebhookService {
         timeout: 10000, // 10 second timeout
       });
 
-      // Update last used timestamp
-      await this.prisma.webhook.update({
-        where: { id: webhook.id },
-        data: { lastUsed: new Date() },
-      });
+      // Note: lastUsed field doesn't exist in the schema, so we skip updating it
     } catch (error) {
       console.error(`Failed to send webhook to ${webhook.endpointUrl}:`, error.message);
       
@@ -152,7 +147,7 @@ export class WebhookService {
           action: 'webhook_delivery_failed',
           entityType: 'webhook',
           entityId: webhook.id,
-          oldValue: null,
+          oldValue: undefined,
           newValue: {
             endpointUrl: webhook.endpointUrl,
             error: error.message,

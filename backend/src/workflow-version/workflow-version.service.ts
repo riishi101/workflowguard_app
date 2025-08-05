@@ -173,7 +173,7 @@ export class WorkflowVersionService {
           versionNumber: latestVersion.versionNumber + 1,
           snapshotType: 'Auto Backup',
           createdBy: userId,
-          data: latestVersion.data,
+          data: latestVersion.data || {},
         },
       });
 
@@ -184,7 +184,7 @@ export class WorkflowVersionService {
           action: 'automated_backup_created',
           entityType: 'workflow',
           entityId: workflowId,
-          oldValue: null,
+          oldValue: undefined,
           newValue: { versionId: backupVersion.id, versionNumber: backupVersion.versionNumber },
         },
       });
@@ -207,7 +207,7 @@ export class WorkflowVersionService {
           action: 'change_notification_sent',
           entityType: 'workflow',
           entityId: workflowId,
-          oldValue: null,
+          oldValue: undefined,
           newValue: changes,
         },
       });
@@ -251,7 +251,7 @@ export class WorkflowVersionService {
           action: 'approval_request_created',
           entityType: 'workflow',
           entityId: workflowId,
-          oldValue: null,
+          oldValue: undefined,
           newValue: { 
             approvalRequestId: approvalRequest.id,
             requestedChanges: requestedChanges 

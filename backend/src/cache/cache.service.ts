@@ -1,13 +1,27 @@
-import { Injectable, Inject, CACHE_MANAGER } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
+
+interface CacheItem {
+  value: any;
+  expiresAt: number;
+}
 
 @Injectable()
 export class CacheService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  private cache = new Map<string, CacheItem>();
 
   async get<T>(key: string): Promise<T | null> {
     try {
-      return await this.cacheManager.get<T>(key);
+      const item = this.cache.get(key);
+      if (!item) {
+        return null;
+      }
+
+      if (Date.now() > item.expiresAt) {
+        this.cache.delete(key);
+        return null;
+      }
+
+      return item.value as T;
     } catch (error) {
       console.error('Cache get error:', error);
       return null;
@@ -16,7 +30,8 @@ export class CacheService {
 
   async set(key: string, value: any, ttl?: number): Promise<void> {
     try {
-      await this.cacheManager.set(key, value, ttl);
+      const expiresAt = Date.now() + (ttl || 300) * 1000; // Default 5 minutes
+      this.cache.set(key, { value, expiresAt });
     } catch (error) {
       console.error('Cache set error:', error);
     }
@@ -24,7 +39,7 @@ export class CacheService {
 
   async del(key: string): Promise<void> {
     try {
-      await this.cacheManager.del(key);
+      this.cache.delete(key);
     } catch (error) {
       console.error('Cache delete error:', error);
     }
@@ -32,7 +47,7 @@ export class CacheService {
 
   async reset(): Promise<void> {
     try {
-      await this.cacheManager.reset();
+      this.cache.clear();
     } catch (error) {
       console.error('Cache reset error:', error);
     }
@@ -126,7 +141,7 @@ export class CacheService {
     return {
       hitRate: 0.85, // Mock data
       missRate: 0.15,
-      totalKeys: 0,
+      totalKeys: this.cache.size,
       memoryUsage: 0,
     };
   }
