@@ -10,6 +10,13 @@ import { Public } from './public.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService, private readonly prisma: PrismaService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req: Request) {
+    // Return the authenticated user's profile
+    return req.user;
+  }
+
   @Public()
   @Get('hubspot/url')
   async getHubSpotAuthUrl() {
