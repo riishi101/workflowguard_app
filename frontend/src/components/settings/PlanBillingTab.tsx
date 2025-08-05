@@ -235,7 +235,7 @@ const PlanBillingTab = () => {
                   </span>
                   <span className="text-gray-600">/month</span>
                 </div>
-                {(subscription?.planId === 'starter' || (trialStatus?.isTrial && !subscription?.planId)) && (
+                {subscription?.planId === 'starter' && (
                   <p className="text-sm text-gray-600 mt-1">Current Plan</p>
                 )}
               </div>
@@ -277,10 +277,10 @@ const PlanBillingTab = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  disabled={subscription?.planId === 'starter' || trialStatus?.isTrial}
+                  disabled={subscription?.planId === 'starter'}
                   onClick={() => handleUpgrade('starter')}
                 >
-                  {(subscription?.planId === 'starter' || (trialStatus?.isTrial && !subscription?.planId)) ? 'Current Plan' : 'Select Plan'}
+                  {subscription?.planId === 'starter' ? 'Current Plan' : 'Select Plan'}
                 </Button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   30 days version history, Basic comparison only
