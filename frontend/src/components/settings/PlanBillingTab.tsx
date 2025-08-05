@@ -112,15 +112,7 @@ const PlanBillingTab = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          App Settings
-        </h1>
-        <p className="text-gray-600">
-          Manage app-level configurations, subscriptions, and user access for
-          WorkflowGuard
-        </p>
-      </div>
+
 
       <div className="w-full">
         <div className="flex space-x-8 border-b border-gray-200 mb-8">
