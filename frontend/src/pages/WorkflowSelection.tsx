@@ -332,17 +332,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           hubspotId: workflow.id // Ensure hubspotId is present for backend
         }));
 
-      const requestBody = {
-        workflowIds: selectedWorkflows,
-        workflows: selectedWorkflowObjects, // Include full workflow objects with hubspotId
-        userId: user?.id // Include user ID if available
-      };
-
+      // Only send workflows array as required by backend
+      const requestBody = { workflows: selectedWorkflowObjects };
       console.log('WorkflowSelection - API request body:', requestBody);
-      console.log('WorkflowSelection - User ID being sent:', user?.id);
       console.log('WorkflowSelection - Selected workflows count:', selectedWorkflows.length);
-
-      const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id, selectedWorkflowObjects);
+      const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
       
       console.log('WorkflowSelection - Protection API response:', response);
       
