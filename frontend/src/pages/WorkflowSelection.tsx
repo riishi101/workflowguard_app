@@ -325,20 +325,23 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log('WorkflowSelection - Auth token exists:', !!token);
 
       // Call API to start protection
-      const selectedWorkflowObjects = workflows.filter(workflow => 
-        selectedWorkflows.includes(workflow.id)
-      );
-      
+      const selectedWorkflowObjects = workflows
+        .filter(workflow => selectedWorkflows.includes(workflow.id))
+        .map(workflow => ({
+          ...workflow,
+          hubspotId: workflow.id // Ensure hubspotId is present for backend
+        }));
+
       const requestBody = {
         workflowIds: selectedWorkflows,
-        workflows: selectedWorkflowObjects, // Include full workflow objects with names
+        workflows: selectedWorkflowObjects, // Include full workflow objects with hubspotId
         userId: user?.id // Include user ID if available
       };
-      
+
       console.log('WorkflowSelection - API request body:', requestBody);
       console.log('WorkflowSelection - User ID being sent:', user?.id);
       console.log('WorkflowSelection - Selected workflows count:', selectedWorkflows.length);
-      
+
       const response = await ApiService.startWorkflowProtection(selectedWorkflows, user?.id, selectedWorkflowObjects);
       
       console.log('WorkflowSelection - Protection API response:', response);
