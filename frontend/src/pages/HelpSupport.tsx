@@ -8,6 +8,7 @@ import {
   Bot,
   BookOpen,
   MessageCircle,
+  MessageSquare,
   Video,
   Mail,
   Phone,
@@ -159,8 +160,8 @@ const HelpSupport = () => {
       badge: 'Priority',
       badgeColor: 'bg-blue-500 text-white',
       features: [
-        { icon: MessageCircle, text: 'Live Chat (Business Hours)' },
-        { icon: Phone, text: 'Phone Support' },
+        { icon: MessageCircle, text: 'WhatsApp Chat (Business Hours)' },
+        { icon: MessageSquare, text: 'WhatsApp Support' },
         { icon: Clock, text: '4-8 hour response' },
         { icon: AlertTriangle, text: 'Emergency After-Hours' }
       ]
@@ -170,7 +171,7 @@ const HelpSupport = () => {
       badge: '24/7',
       badgeColor: 'bg-purple-500 text-white',
       features: [
-        { icon: Phone, text: '24/7 Phone Support' },
+        { icon: MessageSquare, text: '24/7 WhatsApp Support' },
         { icon: Star, text: 'Dedicated Support Manager' },
         { icon: Zap, text: '1-2 hour critical response' },
         { icon: GraduationCap, text: 'Custom Training Sessions' }
@@ -186,15 +187,15 @@ const HelpSupport = () => {
       <ContentSection>
         <div className="max-w-7xl mx-auto space-y-8">
           {/* AI Support Assistant */}
-          <Card className="bg-gray-50 border-2 border-gray-200 rounded-2xl shadow-lg">
-            <CardContent className="p-8">
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+            <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-blue-500 p-3 rounded-lg">
+                <div className="bg-blue-600 p-3 rounded-lg">
                   <Brain className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">AI Support Assistant</h3>
-                  <p className="text-gray-600 mb-6">
+                  <h3 className="text-xl font-bold text-blue-900 mb-2">AI Support Assistant</h3>
+                  <p className="text-blue-700 mb-6">
                     Our AI assistant can automatically diagnose and fix most common issues. 
                     Describe your problem and get instant help!
                   </p>
@@ -209,7 +210,7 @@ const HelpSupport = () => {
                       <Button 
                         onClick={handleDiagnoseIssue}
                         disabled={isDiagnosing}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-medium"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium"
                       >
                         {isDiagnosing ? 'Diagnosing...' : 'Diagnose Issue'}
                       </Button>
@@ -222,18 +223,18 @@ const HelpSupport = () => {
 
           {/* Common Issues & Solutions */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Common Issues & Solutions</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Issues & Solutions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {commonIssues.map((issue) => (
-                <Card key={issue.id} className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <Card key={issue.id} className="hover:shadow-md transition-all duration-200">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex gap-2">
-                        <Badge className={`${issue.severityColor} text-white text-xs`}>
+                        <Badge className={`${issue.severityColor} text-white text-xs font-medium`}>
                           {issue.severity}
                         </Badge>
                         {issue.canAutoFix && (
-                          <Badge className="bg-green-100 text-green-700 text-xs">
+                          <Badge className="bg-green-100 text-green-700 text-xs font-medium">
                             Auto-Fix
                           </Badge>
                         )}
@@ -258,14 +259,15 @@ const HelpSupport = () => {
 
           {/* Knowledge Base, Community Forum, Video Tutorials */}
           <div className="space-y-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Resources</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Knowledge Base */}
-              <Card className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-500 p-3 rounded-lg w-fit mb-4">
+                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
                     <BookOpen className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Knowledge Base</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Knowledge Base</h3>
                   <p className="text-gray-600 mb-4">
                     Comprehensive guides, tutorials, and troubleshooting articles.
                   </p>
@@ -290,12 +292,12 @@ const HelpSupport = () => {
               </Card>
 
               {/* Community Forum */}
-              <Card className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-500 p-3 rounded-lg w-fit mb-4">
+                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
                     <MessageCircle className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Community Forum</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Community Forum</h3>
                   <p className="text-gray-600 mb-4">
                     Connect with other users and share tips and solutions.
                   </p>
@@ -320,12 +322,12 @@ const HelpSupport = () => {
               </Card>
 
               {/* Video Tutorials */}
-              <Card className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-500 p-3 rounded-lg w-fit mb-4">
+                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
                     <Video className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Video Tutorials</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Video Tutorials</h3>
                   <p className="text-gray-600 mb-4">
                     Step-by-step video guides for all features.
                   </p>
@@ -353,17 +355,17 @@ const HelpSupport = () => {
 
           {/* Support Tiers */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Support Tiers</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Support Tiers</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {supportTiers.map((tier, index) => (
-                <Card key={index} className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow relative">
+                <Card key={index} className="hover:shadow-md transition-all duration-200 relative">
                   {tier.badge && (
                     <div className={`absolute -top-3 right-4 ${tier.badgeColor} px-3 py-1 rounded-full text-xs font-medium`}>
                       {tier.badge}
                     </div>
                   )}
                   <CardContent className="p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">{tier.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{tier.title}</h3>
                     <div className="space-y-3">
                       {tier.features.map((feature, featureIndex) => (
                         <div key={featureIndex} className="flex items-center gap-3">
@@ -380,27 +382,27 @@ const HelpSupport = () => {
 
           {/* Contact Information */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Email Support */}
-              <Card className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-500 p-3 rounded-lg w-fit mb-4">
+                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
                     <Mail className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Email Support</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Support</h3>
                   <p className="text-blue-600 font-medium mb-2">support@workflowguard.pro</p>
                   <p className="text-sm text-gray-600">Available 24/7 for all users</p>
                 </CardContent>
               </Card>
 
-              {/* Phone Support */}
-              <Card className="border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              {/* WhatsApp Support */}
+              <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-500 p-3 rounded-lg w-fit mb-4">
-                    <Phone className="w-6 h-6 text-white" />
+                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
+                    <MessageSquare className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Phone Support</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp Support</h3>
                   <p className="text-blue-600 font-medium mb-2">+1 (555) 123-4567</p>
                   <p className="text-sm text-gray-600">Professional & Enterprise plans only</p>
                 </CardContent>

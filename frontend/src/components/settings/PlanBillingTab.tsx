@@ -358,7 +358,7 @@ const PlanBillingTab = () => {
                 </li>
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Priority Support
+                  Priority WhatsApp Support
                 </li>
               </ul>
               <div className="mt-auto">
@@ -440,7 +440,7 @@ const PlanBillingTab = () => {
                 </li>
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Dedicated Support
+                  24/7 WhatsApp Support
                 </li>
               </ul>
               <div className="mt-auto">
