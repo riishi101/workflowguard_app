@@ -1,2 +1,6 @@
-# Temporarily disable Vercel deployment
-* 
+# Remove the wildcard to allow Vercel to see all files
+# Add specific files/folders to ignore below if needed
+# Example:
+# node_modules
+# .env.local
+# .env
