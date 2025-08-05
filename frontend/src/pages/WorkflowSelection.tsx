@@ -616,9 +616,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
                           onClick={() => {
-                            // OAuth is disabled - show message instead
-                            alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
-                            console.log('🔗 OAuth DISABLED - Reconnect HubSpot prevented');
+                            // Real OAuth reconnect logic
+                            window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login';
                           }}
                         >
                           🔗 Reconnect HubSpot Account
@@ -631,9 +630,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                           size="sm"
                           className="mt-2"
                           onClick={() => {
-                            // OAuth is disabled - show message instead
-                            alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
-                            console.log('🔗 OAuth DISABLED - Force fresh OAuth prevented');
+                            // Real OAuth force fresh logic
+                            window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login?force=true';
                           }}
                         >
                           🔗 Force Fresh OAuth

@@ -44,29 +44,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        console.log('AuthContext - Starting initialization (OAuth DISABLED)');
-        
-        // OAuth is disabled - skip all OAuth processing
-        console.log('AuthContext - OAuth flow disabled, skipping authentication');
-        
-        // Set a mock user for development purposes
-        const mockUser = {
-          id: 'dev-user-123',
-          email: 'dev@workflowguard.pro',
-          name: 'Development User',
-          role: 'user',
-          hubspotPortalId: '123456789',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        
-        console.log('AuthContext - Setting mock user for development');
-        setUser(mockUser);
-        
+        // Real OAuth initialization logic here
+        // Example: check for token in localStorage or URL, validate, fetch user profile, etc.
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          // Fetch user profile from backend using token
+          const response = await fetch('/api/auth/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('AuthContext - Auth initialization error:', error);
+        setUser(null);
       } finally {
-        console.log('AuthContext - Initialization complete, setting loading to false');
         setLoading(false);
         setHasInitialized(true);
       }
@@ -76,11 +74,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = () => {
-    console.log('AuthContext - OAuth DISABLED - connectHubSpot called');
-    alert('OAuth authentication is temporarily disabled for development. Please use the local development environment.');
-    
-    // Don't redirect - OAuth is disabled
-    console.log('AuthContext - OAuth redirect prevented');
+    // Real OAuth redirect logic
+    window.location.href = process.env.REACT_APP_OAUTH_URL || '/api/auth/login';
   };
 
   const testAuthentication = async () => {
