@@ -304,11 +304,17 @@ export class WorkflowController {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
+    // Accept 'workflows' array from frontend
+    if (!body || !Array.isArray(body.workflows)) {
+      throw new HttpException('Invalid request: workflows array required', HttpStatus.BAD_REQUEST);
+    }
+
     try {
+      const workflowIds = body.workflows.map((w: any) => w.id || w.hubspotId || w.workflowId);
       const result = await this.workflowService.startWorkflowProtection(
-        body.workflowIds,
+        workflowIds,
         userId,
-        body.selectedWorkflowObjects
+        body.workflows
       );
       return {
         message: 'Workflow protection started successfully',
