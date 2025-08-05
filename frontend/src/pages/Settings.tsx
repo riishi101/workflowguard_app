@@ -4,13 +4,11 @@ import ContentSection from "@/components/ContentSection";
 import PlanBillingTab from "@/components/settings/PlanBillingTab";
 import NotificationsTab from "@/components/settings/NotificationsTab";
 import AuditLogTab from "@/components/settings/AuditLogTab";
-import ApiAccessTab from "@/components/settings/ApiAccessTab";
 import ProfileTab from "@/components/settings/ProfileTab";
 import {
   CreditCard,
   Bell,
   FileText,
-  Code,
   UserCircle,
 } from "lucide-react";
 
@@ -35,12 +33,6 @@ const Settings = () => {
       label: "Audit Log",
       icon: FileText,
       component: AuditLogTab,
-    },
-    {
-      id: "api-access",
-      label: "API Access",
-      icon: Code,
-      component: ApiAccessTab,
     },
     {
       id: "profile",
