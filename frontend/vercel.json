@@ -1,5 +1,4 @@
 {
-  "buildCommand": "echo 'Deployment temporarily disabled' && exit 1",
   "rewrites": [
     {
       "source": "/api/(.*)",

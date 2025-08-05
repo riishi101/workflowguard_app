@@ -2,14 +2,12 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
-import PlanBillingTab from "@/components/settings/PlanBillingTab";
 import NotificationsTab from "@/components/settings/NotificationsTab";
 import UserPermissionsTab from "@/components/settings/UserPermissionsTab";
 import AuditLogTab from "@/components/settings/AuditLogTab";
 import ApiAccessTab from "@/components/settings/ApiAccessTab";
 import ProfileTab from "@/components/settings/ProfileTab";
 import {
-  CreditCard,
   Bell,
   Users,
   FileText,
@@ -18,7 +16,7 @@ import {
 } from "lucide-react";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("plan-billing");
+  const [activeTab, setActiveTab] = useState("notifications");
 
   return (
     <MainAppLayout 
@@ -29,15 +27,7 @@ const Settings = () => {
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Enhanced TabsList with improved design */}
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-2xl mb-8 gap-2 shadow-lg border border-gray-200">
-              <TabsTrigger
-                value="plan-billing"
-                className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
-              >
-                <CreditCard className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="hidden sm:inline">My Plan & Billing</span>
-                <span className="sm:hidden">Plan</span>
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-2xl mb-8 gap-2 shadow-lg border border-gray-200">
               <TabsTrigger
                 value="notifications"
                 className="flex items-center gap-2 text-xs md:text-sm px-4 py-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border-blue-200 rounded-xl transition-all duration-300 hover:bg-gray-50"
@@ -82,9 +72,6 @@ const Settings = () => {
 
             {/* Enhanced TabsContent with better spacing */}
             <div className="w-full space-y-8">
-              <TabsContent value="plan-billing" className="mt-0 space-y-8">
-                <PlanBillingTab />
-              </TabsContent>
               <TabsContent value="notifications" className="mt-0 space-y-8">
                 <NotificationsTab />
               </TabsContent>
