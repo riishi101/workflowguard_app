@@ -696,9 +696,11 @@ class ApiService {
       return {
         success: true,
         data: {
-          isTrial: false,
-          trialDaysRemaining: 0,
-          trialEndDate: null
+          isTrial: true,
+          trialDaysRemaining: 15,
+          trialEndDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          isTrialActive: true,
+          isTrialExpired: false
         }
       };
     }
