@@ -160,9 +160,6 @@ const Dashboard = () => {
   // Add effect to track workflows state changes
   useEffect(() => {
     console.log('Dashboard - Workflows state changed:', workflows.length);
-    console.log('Dashboard - Current workflows:', workflows);
-    console.log('Dashboard - Workflows state type:', typeof workflows);
-    console.log('Dashboard - Workflows is array:', Array.isArray(workflows));
   }, [workflows]);
 
   // Add effect to force re-render when workflows change
@@ -340,7 +337,6 @@ const Dashboard = () => {
   };
 
   const getProtectionStatusColor = (status: string) => {
-    console.log('🔍 DEBUG: getProtectionStatusColor called with status:', status);
     switch (status) {
       case "protected":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
@@ -349,7 +345,7 @@ const Dashboard = () => {
       case "error":
         return "bg-red-100 text-red-800 hover:bg-red-100";
       default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100"; // Fallback for unknown status
     }
   };
 

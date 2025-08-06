@@ -48,6 +48,10 @@ export const WorkflowState = {
   // Set selected workflows
   setSelectedWorkflows(workflows: DashboardWorkflow[]): void {
     console.log('🔍 DEBUG: Setting selected workflows in WorkflowState:', workflows);
+    console.log('🔍 DEBUG: WorkflowState - Storing workflows:', workflows);
+    workflows.forEach(workflow => {
+      console.log('🔍 DEBUG: Workflow details being stored:', workflow);
+    });
     localStorage.setItem("workflowGuard_selectedWorkflows", JSON.stringify(workflows));
   },
 

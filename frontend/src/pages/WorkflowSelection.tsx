@@ -336,7 +336,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             ...workflow,
             versions: 1, // Default value
             lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-            protectionStatus: workflow.isProtected === true ? "protected" : (workflow.isProtected === false ? "unprotected" : "unknown"), // Handle undefined/null
+            protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Default to "unprotected"
             status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status.toUpperCase())
               ? workflow.status.toLowerCase() as "active" | "inactive" | "draft"
               : "unknown", // Handle unexpected values gracefully
@@ -490,6 +490,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   useEffect(() => {
     console.log('WorkflowSelection - Initial workflows:', workflows);
     console.log('WorkflowSelection - Selected workflows:', selectedWorkflows);
+    workflows.forEach(workflow => {
+      console.log('🔍 DEBUG: Workflow isProtected value:', workflow.isProtected);
+    });
   }, [workflows, selectedWorkflows]);
 
   if (loading || authLoading) {
