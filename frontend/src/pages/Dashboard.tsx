@@ -88,8 +88,12 @@ const Dashboard = () => {
       setError(null);
 
       // Check if workflows are available in WorkflowState or passed via navigation
-      const workflowsFromState = WorkflowState.hasSelectedWorkflows() ? [] : []; // Update this logic to fetch workflows if applicable
+      const workflowsFromState = WorkflowState.getSelectedWorkflows();
       const workflowsFromLocation = location.state?.workflows || [];
+
+      // Add debug logs to confirm workflows are being retrieved
+      console.log("Dashboard - Checking workflows from WorkflowState:", WorkflowState);
+      console.log("Dashboard - Checking workflows from navigation state:", location.state?.workflows);
 
       if (workflowsFromState.length > 0) {
         console.log("Using workflows from WorkflowState:", workflowsFromState);

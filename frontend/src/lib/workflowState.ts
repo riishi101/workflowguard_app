@@ -26,6 +26,17 @@ export const WorkflowState = {
     localStorage.setItem("workflowGuard_selectedCount", count.toString());
   },
 
+  // Get selected workflows
+  getSelectedWorkflows(): any[] {
+    const workflows = localStorage.getItem("workflowGuard_selectedWorkflows");
+    return workflows ? JSON.parse(workflows) : [];
+  },
+
+  // Set selected workflows
+  setSelectedWorkflows(workflows: any[]): void {
+    localStorage.setItem("workflowGuard_selectedWorkflows", JSON.stringify(workflows));
+  },
+
   // Clear workflow state after successful navigation
   clearAfterNavigation(): void {
     // Only clear if we have workflows (indicating successful setup)

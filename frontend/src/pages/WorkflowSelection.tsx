@@ -345,6 +345,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       WorkflowState.setWorkflowSelection(true);
       WorkflowState.setSelectedCount(selectedWorkflows.length);
       
+      // Store selected workflows in WorkflowState
+      WorkflowState.setSelectedWorkflows(selectedWorkflows);
+      
       // Add a longer delay to ensure dashboard has time to load properly
       await new Promise(resolve => setTimeout(resolve, 2000)); // Increased from 500ms to 2000ms
       
