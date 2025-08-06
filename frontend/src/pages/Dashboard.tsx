@@ -207,10 +207,17 @@ const Dashboard = () => {
           protectionStatus: (protectionStatus || 'unprotected') as "protected" | "unprotected" | "error",
           lastModified: lastModified || new Date().toISOString(),
         };
-      }).filter(Boolean); // Remove null values
+      }).filter((workflow, index) => {
+        if (!workflow) {
+          console.warn(`Dashboard - Filtered out null workflow at index ${index}`);
+          return false;
+        }
+        console.log(`Dashboard - Workflow passed filtering at index ${index}:`, workflow);
+        return true;
+      });
 
       // Log Transformed Workflows
-      console.log('Dashboard - Transformed workflows after mapping:', JSON.stringify(transformedWorkflows, null, 2));
+      console.log('Dashboard - Transformed workflows after mapping and filtering:', JSON.stringify(transformedWorkflows, null, 2));
 
       console.log('Dashboard - Transformed workflows:', transformedWorkflows);
       console.log('Dashboard - Stats:', stats);
