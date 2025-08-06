@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,6 +22,7 @@ import EmptyDashboard from "@/components/EmptyDashboard";
 import RollbackConfirmModal from "@/components/RollbackConfirmModal";
 import { WorkflowState } from "@/lib/workflowState";
 import { ApiService } from "@/lib/api";
+import WorkflowService from "../services/WorkflowService";
 import {
   Search,
   Plus,
@@ -65,6 +66,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -85,203 +87,43 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Dashboard - Fetching dashboard data, retry count:', retryCount);
-      console.log('Dashboard - Current user:', user);
-      console.log('Dashboard - User ID being passed:', user?.id);
-      console.log('Dashboard - User object details:', {
-        id: user?.id,
-        email: user?.email,
-        name: user?.name,
-        hasId: !!user?.id
-      });
+      // Check if workflows are available in WorkflowState or passed via navigation
+      const workflowsFromState = WorkflowState.hasSelectedWorkflows() ? [] : []; // Update this logic to fetch workflows if applicable
+      const workflowsFromLocation = location.state?.workflows || [];
 
-      // Add a small delay to ensure backend is ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Get user ID from multiple sources
-      let userId = user?.id;
-      
-      // If no user ID from auth context, try to get from localStorage
-      if (!userId) {
-        try {
-          const userStr = localStorage.getItem('user');
-          if (userStr) {
-            const storedUser = JSON.parse(userStr);
-            userId = storedUser.id;
-            console.log('🔍 DEBUG: Got userId from localStorage:', userId);
-          }
-        } catch (error) {
-          console.log('🔍 DEBUG: Failed to get userId from localStorage:', error);
-        }
-      }
-      
-      // If still no user ID, try to get from JWT token
-      if (!userId) {
-        try {
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-            userId = payload.sub || payload.userId || payload.id;
-            console.log('🔍 DEBUG: Got userId from JWT token:', userId);
-          }
-        } catch (error) {
-          console.log('🔍 DEBUG: Failed to get userId from JWT token:', error);
-        }
-      }
-
-      // Check if user ID is available
-      if (!userId) {
-        console.log('🔍 DEBUG: No user ID available, skipping API calls');
-        setWorkflows([]);
-        setStats(null);
+      if (workflowsFromState.length > 0) {
+        console.log("Using workflows from WorkflowState:", workflowsFromState);
+        setWorkflows(workflowsFromState);
+        setLoading(false);
+        return;
+      } else if (workflowsFromLocation.length > 0) {
+        console.log("Using workflows from navigation state:", workflowsFromLocation);
+        setWorkflows(workflowsFromLocation);
         setLoading(false);
         return;
       }
 
-      // Log the userId to ensure it is correctly retrieved
-      console.log('Dashboard - User ID being used for API call:', userId);
+      console.log("No workflows in state or navigation, showing empty screen.");
 
-      // Fetch workflows and stats in parallel
-      const [workflowsResponse, statsResponse] = await Promise.all([
-        ApiService.getProtectedWorkflows(userId),
-        ApiService.getDashboardStats()
-      ]);
-
-      console.log('Dashboard - Raw workflows response:', workflowsResponse);
-      console.log('Dashboard - Raw stats response:', statsResponse);
-
-      // Inspect the Raw API Response
-      console.log('Dashboard - Raw workflows response structure:', JSON.stringify(workflowsResponse?.data, null, 2));
-      console.log('Dashboard - Raw stats response structure:', JSON.stringify(statsResponse?.data, null, 2));
-
-      const workflows = workflowsResponse?.data || [];
-      const stats = statsResponse?.data || null;
-
-      if (!Array.isArray(workflows)) {
-        console.error('Dashboard - Workflows data is not an array:', workflows);
-        setError('Unexpected data format received for workflows.');
-        setWorkflows([]);
-        setStats(null);
-        setLoading(false);
-        return;
-      }
-
-      // Validate and transform workflows data
-      console.log('Dashboard - Inspecting raw workflows response:', workflowsResponse);
-      // Add detailed logs to inspect raw workflow data
-      console.log('Dashboard - Raw workflows from API:', JSON.stringify(workflows, null, 2));
-      const transformedWorkflows = workflows.map((workflow, index) => {
-        // Add log for each workflow structure
-        console.log(`Dashboard - Workflow ${index} structure:`, JSON.stringify(workflow, null, 2));
-
-        if (!workflow || typeof workflow !== 'object') {
-          console.warn(`Dashboard - Skipping invalid workflow at index ${index}:`, workflow);
-          return null;
-        }
-
-        // Validate required fields
-        const { id, name, versions, lastModifiedBy, status, protectionStatus, lastModified } = workflow;
-
-        if (!id || !name) {
-          console.warn(`Dashboard - Workflow missing critical fields at index ${index}:`, { id, name });
-          return null;
-        }
-
-        // Log detailed information about the workflow transformation
-        console.log(`Dashboard - Transforming workflow at index ${index}:`, workflow);
-
-        return {
-          id: id || `unknown-${index}`,
-          name: name || 'Unnamed Workflow',
-          versions: versions || 0,
-          lastModifiedBy: lastModifiedBy || {
-            name: 'Unknown',
-            initials: 'U',
-            email: 'unknown@example.com',
-          },
-          status: (status || 'active') as "active" | "inactive" | "error",
-          protectionStatus: (protectionStatus || 'unprotected') as "protected" | "unprotected" | "error",
-          lastModified: lastModified || new Date().toISOString(),
-        };
-      }).filter((workflow, index) => {
-        if (!workflow) {
-          console.warn(`Dashboard - Filtered out null workflow at index ${index}`);
-          return false;
-        }
-
-        // Log workflow details before filtering
-        console.log(`Dashboard - Inspecting workflow at index ${index}:`, workflow);
-
-        // Add additional checks if needed
-        if (!workflow.id || !workflow.name) {
-          console.warn(`Dashboard - Workflow missing required properties at index ${index}:`, workflow);
-          return false;
-        }
-
-        console.log(`Dashboard - Workflow passed filtering at index ${index}:`, workflow);
-        return true;
-      });
-
-      // Log transformed workflows
-      console.log('Dashboard - Transformed workflows after mapping and filtering:', JSON.stringify(transformedWorkflows, null, 2));
-
-      console.log('Dashboard - Transformed workflows:', transformedWorkflows);
-      console.log('Dashboard - Stats:', stats);
-
-      // Update state with transformed data
-      setWorkflows(transformedWorkflows);
-      setStats(stats);
-
-      // Ensure rendering logic handles missing or partial data
-      if (transformedWorkflows.length === 0) {
-        console.warn('Dashboard - No workflows available to display.');
-      } else {
-        console.log('Dashboard - Workflows ready for display:', transformedWorkflows);
-      }
-
-      // Check if user has workflows
-      const hasWorkflows = transformedWorkflows && transformedWorkflows.length > 0;
-      WorkflowState.setWorkflowSelection(hasWorkflows);
-      WorkflowState.setSelectedCount(hasWorkflows ? transformedWorkflows.length : 0);
-
-      console.log('Dashboard - Set workflow state:', { hasWorkflows, count: transformedWorkflows.length });
-
-      // If workflows are found and user had selected workflows, clear the selection state
-      if (hasWorkflows && WorkflowState.hasSelectedWorkflows()) {
-        console.log('Dashboard - Workflows found, clearing selection state');
-        WorkflowState.clearAfterNavigation();
-      }
-
-      // If no workflows found but user has selected workflows, retry after a delay
-      if (transformedWorkflows.length === 0 && WorkflowState.hasSelectedWorkflows() && retryCount < 3) {
-        console.log('Dashboard - No workflows found but user has selected workflows, retrying...');
-        setTimeout(() => {
-          fetchDashboardData(retryCount + 1);
-        }, 2000 * (retryCount + 1)); // Exponential backoff: 2s, 4s, 6s
-        return;
-      }
-
-      // Add a small delay to ensure state is properly updated
-      setTimeout(() => {
-        console.log('Dashboard - State update delay completed');
-        console.log('Dashboard - Current workflows state after delay:', transformedWorkflows.length);
-      }, 100);
-
+      // If no workflows are found, set empty state
+      setWorkflows([]);
+      setStats(null);
+      WorkflowState.setWorkflowSelection(false);
+      WorkflowState.setSelectedCount(0);
     } catch (err) {
       console.error('Dashboard - Failed to fetch dashboard data:', err);
-      
-      // If this is a retry and we still have workflow selection state, don't show error
+
       if (retryCount > 0 && WorkflowState.hasSelectedWorkflows()) {
         console.log('Dashboard - Retry failed but user has selected workflows, showing empty state');
         setWorkflows([]);
         setStats(null);
         setError(null);
       } else {
-      setError('Failed to load dashboard data. Please try again.');
-      setWorkflows([]);
-      setStats(null);
-      WorkflowState.setWorkflowSelection(false);
-      WorkflowState.setSelectedCount(0);
+        setError('Failed to load dashboard data. Please try again.');
+        setWorkflows([]);
+        setStats(null);
+        WorkflowState.setWorkflowSelection(false);
+        WorkflowState.setSelectedCount(0);
       }
     } finally {
       setLoading(false);
