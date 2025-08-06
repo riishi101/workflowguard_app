@@ -326,21 +326,21 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       console.log('WorkflowSelection - Auth token exists:', !!token);
 
       // Call API to start protection
+      console.log('🔍 DEBUG: Raw workflow data before transformation:', workflows);
+
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
         .map(workflow => {
-          // Add fallback logic for status and protectionStatus during transformation
           const transformedWorkflow = {
             ...workflow,
             versions: 1, // Default value
             lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-            protectionStatus: workflow.isProtected ? "protected" : "unprotected", // Handle undefined or false explicitly
-            status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status)
+            protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Explicitly check for true
+            status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status.toUpperCase())
               ? workflow.status.toLowerCase() as "active" | "inactive" | "draft"
               : "unknown", // Handle unexpected values gracefully
           };
 
-          // Debugging log for transformed workflow
           console.log('🔍 DEBUG: Transformed Workflow:', transformedWorkflow);
 
           return transformedWorkflow;
