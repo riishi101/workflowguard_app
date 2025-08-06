@@ -196,8 +196,9 @@ const Dashboard = () => {
     workflows.forEach(workflow => {
       console.log('Dashboard - Workflow details:', {
         id: workflow.id,
+        name: workflow.name,
         status: workflow.status,
-        protectionStatus: workflow.protectionStatus
+        protectionStatus: workflow.protectionStatus,
       });
     });
   }, [workflows]);
