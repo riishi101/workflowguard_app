@@ -338,7 +338,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               ? workflow.status.toLowerCase() as "active" | "inactive"
               : "error", // Handle unexpected values gracefully
           };
+
+          // Debugging log for transformed workflow
           console.log('🔍 DEBUG: Transformed Workflow:', transformedWorkflow);
+
           return transformedWorkflow;
         });
 

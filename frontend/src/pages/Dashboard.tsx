@@ -203,6 +203,14 @@ const Dashboard = () => {
     });
   }, [workflows]);
 
+  // Debugging logs to trace how status and protectionStatus are interpreted
+  useEffect(() => {
+    console.log('🔍 DEBUG: Dashboard - Workflows from WorkflowState:', workflows);
+    workflows.forEach(workflow => {
+      console.log('🔍 DEBUG: Workflow details in Dashboard:', workflow);
+    });
+  }, [workflows]);
+
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     console.log('🔍 Dashboard - handleViewHistory called with:', {
       workflowId,

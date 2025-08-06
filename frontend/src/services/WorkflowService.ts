@@ -16,7 +16,7 @@ class WorkflowService {
       return null;
     }
 
-    return {
+    const transformedWorkflow = {
       id: id || `unknown-${index}`,
       name: name || "Unnamed Workflow",
       versions: versions || 0,
@@ -29,6 +29,9 @@ class WorkflowService {
       protectionStatus: (protectionStatus || "unprotected") as "protected" | "unprotected" | "error",
       lastModified: lastModified || new Date().toISOString(),
     };
+
+    console.log('🔍 DEBUG: Transformed Workflow in WorkflowService:', transformedWorkflow);
+    return transformedWorkflow;
   }
 
   static filterWorkflows(workflow: DashboardWorkflow | null): boolean {
