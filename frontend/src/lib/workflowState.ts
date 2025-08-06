@@ -31,7 +31,18 @@ export const WorkflowState = {
   // Get selected workflows
   getSelectedWorkflows(): DashboardWorkflow[] {
     const workflows = localStorage.getItem("workflowGuard_selectedWorkflows");
-    return workflows ? (JSON.parse(workflows) as DashboardWorkflow[]) : [];
+    if (!workflows) return [];
+
+    try {
+      const parsedWorkflows = JSON.parse(workflows);
+      if (Array.isArray(parsedWorkflows)) {
+        return parsedWorkflows.filter(workflow => workflow && workflow.id && workflow.name);
+      }
+    } catch (error) {
+      console.error('WorkflowState - Failed to parse selected workflows:', error);
+    }
+
+    return [];
   },
 
   // Set selected workflows

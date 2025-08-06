@@ -333,7 +333,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           versions: 1, // Default value
           lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
           protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Handle undefined or false explicitly
-          status: ["ACTIVE", "INACTIVE"].includes(workflow.status)
+          status: workflow.status && ["ACTIVE", "INACTIVE"].includes(workflow.status)
             ? workflow.status.toLowerCase() as "active" | "inactive"
             : "error", // Handle unexpected values gracefully
         }));
