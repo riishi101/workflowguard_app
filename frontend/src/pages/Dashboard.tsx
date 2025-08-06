@@ -294,8 +294,9 @@ const Dashboard = () => {
   // Filter workflows
   const filteredWorkflows = workflows.filter((workflow) => {
     const matchesSearch =
-      workflow.name?.toLowerCase().includes(searchTerm?.toLowerCase() || "");
-    const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
+      workflow.name?.toLowerCase().includes(searchTerm?.toLowerCase() || "") ?? true;
+    const matchesStatus =
+      statusFilter === "all" || workflow.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
