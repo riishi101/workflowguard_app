@@ -138,7 +138,8 @@ const Dashboard = () => {
         return;
       }
 
-      console.log('🔍 DEBUG: Final userId being used:', userId);
+      // Log the userId to ensure it is correctly retrieved
+      console.log('Dashboard - User ID being used for API call:', userId);
 
       // Fetch workflows and stats in parallel
       const [workflowsResponse, statsResponse] = await Promise.all([
@@ -212,6 +213,16 @@ const Dashboard = () => {
           console.warn(`Dashboard - Filtered out null workflow at index ${index}`);
           return false;
         }
+
+        // Log workflow details before filtering
+        console.log(`Dashboard - Inspecting workflow at index ${index}:`, workflow);
+
+        // Add additional checks if needed
+        if (!workflow.id || !workflow.name) {
+          console.warn(`Dashboard - Workflow missing required properties at index ${index}:`, workflow);
+          return false;
+        }
+
         console.log(`Dashboard - Workflow passed filtering at index ${index}:`, workflow);
         return true;
       });
@@ -445,6 +456,9 @@ const Dashboard = () => {
     const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Log the filtered workflows to confirm they contain data
+  console.log('Dashboard - Filtered workflows:', filteredWorkflows);
 
   // Get filtered stats
   const filteredStats = {
