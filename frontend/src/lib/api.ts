@@ -129,19 +129,45 @@ class ApiService {
 
   static async getWorkflowHistory(workflowId: string): Promise<ApiResponse<WorkflowHistoryVersion[]>> {
     try {
-      const response = await apiClient.get(`/workflow-version/${workflowId}/history`);
+      // First try with HubSpot ID endpoint (for workflows from WorkflowSelection)
+      const response = await apiClient.get(`/workflow-version/by-hubspot-id/${workflowId}/history`);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
+      try {
+        const fallbackResponse = await apiClient.get(`/workflow-version/${workflowId}/history`);
+        return fallbackResponse.data;
+      } catch (fallbackError: any) {
+        // If both fail, throw the original error with more context
+        console.error('Failed to fetch workflow history with both HubSpot ID and internal ID:', {
+          workflowId,
+          hubspotError: error.response?.data || error.message,
+          internalError: fallbackError.response?.data || fallbackError.message
+        });
+        throw new Error(`Workflow history not found: Unable to locate workflow history for ID ${workflowId}`);
+      }
     }
   }
 
   static async getWorkflowDetails(workflowId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}`);
+      // First try with HubSpot ID endpoint (for workflows from WorkflowSelection)
+      const response = await apiClient.get(`/workflow/by-hubspot-id/${workflowId}`);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
+      try {
+        const fallbackResponse = await apiClient.get(`/workflow/${workflowId}`);
+        return fallbackResponse.data;
+      } catch (fallbackError: any) {
+        // If both fail, throw the original error with more context
+        console.error('Failed to fetch workflow details with both HubSpot ID and internal ID:', {
+          workflowId,
+          hubspotError: error.response?.data || error.message,
+          internalError: fallbackError.response?.data || fallbackError.message
+        });
+        throw new Error(`Workflow not found: Unable to locate workflow with ID ${workflowId}`);
+      }
     }
   }
 

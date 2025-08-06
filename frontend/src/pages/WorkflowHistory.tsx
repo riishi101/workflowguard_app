@@ -176,6 +176,39 @@ const WorkflowHistory = () => {
       setLoading(true);
       setError(null);
       
+      // First try to get workflows from WorkflowState (from WorkflowSelection)
+      const workflowsFromState = WorkflowState.getSelectedWorkflows();
+      
+      if (workflowsFromState.length > 0) {
+        console.log('WorkflowHistory - Using workflows from WorkflowState:', workflowsFromState);
+        
+        // Transform WorkflowState data to match ProtectedWorkflow interface
+        const safeWorkflows: ProtectedWorkflow[] = workflowsFromState.map((workflow: any) => ({
+          id: workflow.id || 'unknown',
+          name: workflow.name || 'Unknown Workflow',
+          status: workflow.status || 'unknown',
+          protectionStatus: workflow.protectionStatus || 'protected', // Default to protected since they were activated
+          lastModified: workflow.lastModified || 'Unknown',
+          versions: typeof workflow.versions === 'number' ? workflow.versions : 0,
+          lastModifiedBy: workflow.lastModifiedBy || {
+            name: 'Unknown User',
+            initials: 'UU',
+            email: 'unknown@example.com'
+          }
+        }));
+
+        setProtectedWorkflows(safeWorkflows);
+        setHasWorkflows(safeWorkflows.length > 0);
+        
+        if (safeWorkflows.length > 0 && !selectedWorkflow) {
+          setSelectedWorkflow(safeWorkflows[0].id);
+        }
+        setLoading(false);
+        return;
+      }
+      
+      // Fallback to API call if no workflows in state
+      console.log('WorkflowHistory - No workflows in state, trying API call');
       const response = await ApiService.getProtectedWorkflows(user?.id);
       
       // Add safety checks for response
