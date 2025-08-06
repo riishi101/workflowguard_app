@@ -336,6 +336,11 @@ const Dashboard = () => {
     }
   }, [workflows.length]);
 
+  // Log the fetched workflows
+  useEffect(() => {
+    console.log('Dashboard - Fetched workflows:', workflows);
+  }, [workflows]);
+
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     console.log('🔍 Dashboard - handleViewHistory called with:', {
       workflowId,

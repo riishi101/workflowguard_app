@@ -69,6 +69,8 @@ export class WorkflowController {
 
     try {
       const workflows = await this.workflowService.getProtectedWorkflows(userId);
+      console.log('getProtectedWorkflows - userId:', userId);
+      console.log('getProtectedWorkflows - fetched workflows:', workflows);
       return workflows;
     } catch (error) {
       return [];

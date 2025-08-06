@@ -471,6 +471,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
   };
 
+  useEffect(() => {
+    console.log('WorkflowSelection - Initial workflows:', workflows);
+    console.log('WorkflowSelection - Selected workflows:', selectedWorkflows);
+  }, [workflows, selectedWorkflows]);
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
