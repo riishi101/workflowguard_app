@@ -149,6 +149,10 @@ const Dashboard = () => {
       console.log('Dashboard - Raw workflows response:', workflowsResponse);
       console.log('Dashboard - Raw stats response:', statsResponse);
 
+      // Inspect the Raw API Response
+      console.log('Dashboard - Raw workflows response structure:', JSON.stringify(workflowsResponse?.data, null, 2));
+      console.log('Dashboard - Raw stats response structure:', JSON.stringify(statsResponse?.data, null, 2));
+
       const workflows = workflowsResponse?.data || [];
       const stats = statsResponse?.data || null;
 
@@ -204,6 +208,9 @@ const Dashboard = () => {
           lastModified: lastModified || new Date().toISOString(),
         };
       }).filter(Boolean); // Remove null values
+
+      // Log Transformed Workflows
+      console.log('Dashboard - Transformed workflows after mapping:', JSON.stringify(transformedWorkflows, null, 2));
 
       console.log('Dashboard - Transformed workflows:', transformedWorkflows);
       console.log('Dashboard - Stats:', stats);
