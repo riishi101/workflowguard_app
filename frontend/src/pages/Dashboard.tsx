@@ -329,7 +329,14 @@ const Dashboard = () => {
     error: filteredWorkflows.filter(w => w.status === 'error').length,
   };
 
+  console.log('🔍 DEBUG: Filtered workflows:', filteredWorkflows);
+  filteredWorkflows.forEach(workflow => {
+    console.log('🔍 DEBUG: Workflow status:', workflow.status);
+    console.log('🔍 DEBUG: Workflow protectionStatus:', workflow.protectionStatus);
+  });
+
   const getStatusColor = (status: string) => {
+    console.log('🔍 DEBUG: getStatusColor called with status:', status);
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800 hover:bg-green-100";
@@ -343,6 +350,7 @@ const Dashboard = () => {
   };
 
   const getProtectionStatusColor = (status: string) => {
+    console.log('🔍 DEBUG: getProtectionStatusColor called with status:', status);
     switch (status) {
       case "protected":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
