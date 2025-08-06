@@ -168,8 +168,11 @@ const Dashboard = () => {
 
       // Validate and transform workflows data
       console.log('Dashboard - Inspecting raw workflows response:', workflowsResponse);
+      // Add detailed logs to inspect raw workflow data
+      console.log('Dashboard - Raw workflows from API:', JSON.stringify(workflows, null, 2));
       const transformedWorkflows = workflows.map((workflow, index) => {
-        console.log(`Dashboard - Inspecting workflow at index ${index}:`, workflow);
+        // Add log for each workflow structure
+        console.log(`Dashboard - Workflow ${index} structure:`, JSON.stringify(workflow, null, 2));
 
         if (!workflow || typeof workflow !== 'object') {
           console.warn(`Dashboard - Skipping invalid workflow at index ${index}:`, workflow);
@@ -184,16 +187,8 @@ const Dashboard = () => {
           return null;
         }
 
-        // Log detailed information about the workflow
-        console.log(`Dashboard - Valid workflow at index ${index}:`, {
-          id,
-          name,
-          versions,
-          lastModifiedBy,
-          status,
-          protectionStatus,
-          lastModified,
-        });
+        // Log detailed information about the workflow transformation
+        console.log(`Dashboard - Transforming workflow at index ${index}:`, workflow);
 
         return {
           id: id || `unknown-${index}`,
@@ -227,7 +222,7 @@ const Dashboard = () => {
         return true;
       });
 
-      // Log Transformed Workflows
+      // Log transformed workflows
       console.log('Dashboard - Transformed workflows after mapping and filtering:', JSON.stringify(transformedWorkflows, null, 2));
 
       console.log('Dashboard - Transformed workflows:', transformedWorkflows);

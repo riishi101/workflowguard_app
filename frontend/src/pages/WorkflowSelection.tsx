@@ -131,9 +131,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         console.log('WorkflowSelection - Sample workflow:', workflows[0]);
         
         // Validate workflow structure
-        const validWorkflows = workflows.filter(workflow => 
-          workflow && workflow.id && workflow.name
-        );
+        const validWorkflows = workflows.map(workflow => {
+          console.log('Workflow before filtering:', workflow);
+          return workflow;
+        });
         
         if (validWorkflows.length === 0) {
           throw new Error('No valid workflows found in response');
