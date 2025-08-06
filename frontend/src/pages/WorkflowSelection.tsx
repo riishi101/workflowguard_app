@@ -133,7 +133,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         // Validate workflow structure
         const validWorkflows = workflows.map(workflow => {
           console.log('Workflow before filtering:', workflow);
-          return workflow;
+          return {
+            ...workflow,
+            isProtected: workflow.isProtected ?? false, // Default to false if undefined
+          };
         });
         
         if (validWorkflows.length === 0) {
@@ -236,15 +239,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     if (!authLoading) {
       setRetryCount(0); // Reset retry count on new auth state
       fetchWorkflows();
-      
-      // Fallback: if workflows don't load within 10 seconds, show the screen anyway
+
+      // Fallback: if workflows don't load within 5 seconds, show the screen anyway
       const fallbackTimer = setTimeout(() => {
         if (!workflowsFetched) {
-          console.log('WorkflowSelection - Fallback: showing screen after 10 seconds');
+          console.log('WorkflowSelection - Fallback: showing screen after 5 seconds');
           setWorkflowsFetched(true);
         }
-      }, 10000);
-      
+      }, 5000);
+
       return () => clearTimeout(fallbackTimer);
     }
   }, [isAuthenticated, authLoading]);

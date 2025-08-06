@@ -411,24 +411,11 @@ const Dashboard = () => {
     );
   }
 
-  // Show empty state if no workflows
+  // Refactor empty state handling to improve UI consistency
   if (!loading && workflows.length === 0) {
-    // Check if user has just completed workflow selection
     const hasSelectedWorkflows = WorkflowState.hasSelectedWorkflows();
     const selectedCount = WorkflowState.getSelectedCount();
-    
-    console.log('Dashboard - Showing empty state, workflow state:', { hasSelectedWorkflows, selectedCount });
-    console.log('Dashboard - Workflows length:', workflows.length);
-    console.log('Dashboard - Stats:', stats);
-    console.log('Dashboard - Loading state:', loading);
-    console.log('Dashboard - Workflows state:', workflows);
-    console.log('Dashboard - Condition check: !loading && workflows.length === 0');
-    console.log('Dashboard - Condition result:', !loading && workflows.length === 0);
-    console.log('Dashboard - Workflows array type:', typeof workflows);
-    console.log('Dashboard - Workflows is array:', Array.isArray(workflows));
-    console.log('Dashboard - Workflows content:', JSON.stringify(workflows, null, 2));
-    
-    // If user has selected workflows but none are showing yet, show processing message
+
     if (hasSelectedWorkflows && selectedCount > 0) {
       return (
         <MainAppLayout title="Dashboard Overview">
@@ -445,7 +432,7 @@ const Dashboard = () => {
               </div>
             </div>
           </ContentSection>
-          
+
           <ContentSection>
             <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -474,8 +461,30 @@ const Dashboard = () => {
         </MainAppLayout>
       );
     }
-    
-    return <EmptyDashboard />;
+
+    return (
+      <MainAppLayout title="Dashboard Overview">
+        <ContentSection>
+          <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <Shield className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No Workflows Found
+            </h3>
+            <p className="text-gray-600 text-base mb-6 max-w-lg">
+              It looks like you haven’t added any workflows yet. Start by adding your first workflow to get started with WorkflowGuard.
+            </p>
+            <Button
+              onClick={handleAddWorkflow}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 text-lg font-semibold rounded-lg shadow"
+            >
+              + Add Workflow
+            </Button>
+          </div>
+        </ContentSection>
+      </MainAppLayout>
+    );
   }
 
   // Calculate active and protected workflows count for stats cards

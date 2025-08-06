@@ -44,11 +44,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
-        // Real OAuth initialization logic here
-        // Example: check for token in localStorage or URL, validate, fetch user profile, etc.
         const token = localStorage.getItem('authToken');
         if (token) {
-          // Fetch user profile from backend using token
           const response = await fetch('/api/auth/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -74,13 +71,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = () => {
-    // Real OAuth redirect logic
     window.location.href = '/api/auth/hubspot';
   };
 
   const testAuthentication = async () => {
-    // Remove mock authentication logic
-    // This function can be removed or left empty if not used elsewhere
     return;
   };
 
