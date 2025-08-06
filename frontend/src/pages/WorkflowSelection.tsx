@@ -328,15 +328,19 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       // Call API to start protection
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
-        .map(workflow => ({
-          ...workflow,
-          versions: 1, // Default value
-          lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-          protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Handle undefined or false explicitly
-          status: workflow.status && ["ACTIVE", "INACTIVE"].includes(workflow.status)
-            ? workflow.status.toLowerCase() as "active" | "inactive"
-            : "error", // Handle unexpected values gracefully
-        }));
+        .map(workflow => {
+          const transformedWorkflow = {
+            ...workflow,
+            versions: 1, // Default value
+            lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
+            protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Handle undefined or false explicitly
+            status: workflow.status && ["ACTIVE", "INACTIVE"].includes(workflow.status)
+              ? workflow.status.toLowerCase() as "active" | "inactive"
+              : "error", // Handle unexpected values gracefully
+          };
+          console.log('🔍 DEBUG: Transformed Workflow:', transformedWorkflow);
+          return transformedWorkflow;
+        });
 
       // Store selected workflows in WorkflowState
       WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => {
