@@ -165,22 +165,43 @@ const Dashboard = () => {
       console.log('Dashboard - Inspecting raw workflows response:', workflowsResponse);
       const transformedWorkflows = workflows.map((workflow, index) => {
         console.log(`Dashboard - Inspecting workflow at index ${index}:`, workflow);
+
         if (!workflow || typeof workflow !== 'object') {
           console.warn(`Dashboard - Skipping invalid workflow at index ${index}:`, workflow);
           return null;
         }
+
+        // Validate required fields
+        const { id, name, versions, lastModifiedBy, status, protectionStatus, lastModified } = workflow;
+
+        if (!id || !name) {
+          console.warn(`Dashboard - Workflow missing critical fields at index ${index}:`, { id, name });
+          return null;
+        }
+
+        // Log detailed information about the workflow
+        console.log(`Dashboard - Valid workflow at index ${index}:`, {
+          id,
+          name,
+          versions,
+          lastModifiedBy,
+          status,
+          protectionStatus,
+          lastModified,
+        });
+
         return {
-          id: workflow.id || `unknown-${index}`,
-          name: workflow.name || 'Unnamed Workflow',
-          versions: workflow.versions || 0,
-          lastModifiedBy: workflow.lastModifiedBy || {
+          id: id || `unknown-${index}`,
+          name: name || 'Unnamed Workflow',
+          versions: versions || 0,
+          lastModifiedBy: lastModifiedBy || {
             name: 'Unknown',
             initials: 'U',
             email: 'unknown@example.com',
           },
-          status: (workflow.status || 'active') as "active" | "inactive" | "error",
-          protectionStatus: (workflow.protectionStatus || 'unprotected') as "protected" | "unprotected" | "error",
-          lastModified: workflow.lastModified || new Date().toISOString(),
+          status: (status || 'active') as "active" | "inactive" | "error",
+          protectionStatus: (protectionStatus || 'unprotected') as "protected" | "unprotected" | "error",
+          lastModified: lastModified || new Date().toISOString(),
         };
       }).filter(Boolean); // Remove null values
 
