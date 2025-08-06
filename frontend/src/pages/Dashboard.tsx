@@ -492,6 +492,10 @@ const Dashboard = () => {
     return <EmptyDashboard />;
   }
 
+  // Calculate active and protected workflows count for stats cards
+  const activeWorkflowsCount = filteredWorkflows.filter(w => w.status === 'active').length;
+  const protectedWorkflowsCount = filteredWorkflows.filter(w => w.protectionStatus === 'protected').length;
+
   return (
     <MainAppLayout title="Dashboard Overview">
       {/* Error Alert */}
@@ -561,11 +565,11 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stats?.activeWorkflows || 0}
+                {activeWorkflowsCount}
               </div>
               <div className="text-sm text-gray-600">Active Workflows</div>
               <div className="text-xs text-gray-500 mt-1">
-                {stats?.protectedWorkflows || 0} protected
+                {protectedWorkflowsCount} protected
               </div>
             </CardContent>
           </Card>
