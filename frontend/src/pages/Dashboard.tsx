@@ -293,7 +293,8 @@ const Dashboard = () => {
 
   // Filter workflows
   const filteredWorkflows = workflows.filter((workflow) => {
-    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      workflow.name?.toLowerCase().includes(searchTerm?.toLowerCase() || "");
     const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
