@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,17 +148,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    console.log('🔍 DEBUG: Dashboard useEffect called');
-    console.log('🔍 DEBUG: User from useAuth:', user);
-    console.log('🔍 DEBUG: User ID:', user?.id);
-    console.log('🔍 DEBUG: User email:', user?.email);
-    
-    // Remove any existing debug element
-    const existingDebugElement = document.getElementById('debug-deployment-test');
-    if (existingDebugElement) {
-      existingDebugElement.remove();
-    }
-    
     console.log('Dashboard - Component mounted, fetching dashboard data');
     console.log('Dashboard - Current workflow state:', {
       hasSelected: WorkflowState.hasSelectedWorkflows(),
@@ -283,9 +272,15 @@ const Dashboard = () => {
   const handleExportData = async () => {
     try {
       const response = await ApiService.exportDashboardData();
-      
+
+      // Sanitize sensitive data before export
+      const sanitizedData = response.data.map((workflow) => {
+        const { id, name, status, protectionStatus, lastModified, versions } = workflow;
+        return { id, name, status, protectionStatus, lastModified, versions };
+      });
+
       // Create and download the export file
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(sanitizedData, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -310,30 +305,25 @@ const Dashboard = () => {
   };
 
   // Filter workflows
-  const filteredWorkflows = workflows.filter((workflow) => {
-    const matchesSearch =
-      workflow.name?.toLowerCase().includes(searchTerm?.toLowerCase() || "") ?? true;
-    const matchesStatus =
-      statusFilter === "all" || workflow.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Log the filtered workflows to confirm they contain data
-  console.log('Dashboard - Filtered workflows:', filteredWorkflows);
+  const filteredWorkflows = useMemo(() => {
+    return workflows.filter((workflow) => {
+      const matchesSearch =
+        workflow.name?.toLowerCase().includes(searchTerm?.toLowerCase() || "") ?? true;
+      const matchesStatus =
+        statusFilter === "all" || workflow.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [workflows, searchTerm, statusFilter]);
 
   // Get filtered stats
-  const filteredStats = {
-    total: filteredWorkflows.length,
-    active: filteredWorkflows.filter(w => w.status === 'active').length,
-    inactive: filteredWorkflows.filter(w => w.status === 'inactive').length,
-    error: filteredWorkflows.filter(w => w.status === 'error').length,
-  };
-
-  console.log('🔍 DEBUG: Filtered workflows:', filteredWorkflows);
-  filteredWorkflows.forEach(workflow => {
-    console.log('🔍 DEBUG: Workflow status:', workflow.status);
-    console.log('🔍 DEBUG: Workflow protectionStatus:', workflow.protectionStatus);
-  });
+  const filteredStats = useMemo(() => {
+    return {
+      total: filteredWorkflows.length,
+      active: filteredWorkflows.filter(w => w.status === 'active').length,
+      inactive: filteredWorkflows.filter(w => w.status === 'inactive').length,
+      error: filteredWorkflows.filter(w => w.status === 'error').length,
+    };
+  }, [filteredWorkflows]);
 
   const getStatusColor = (status: string) => {
     console.log('🔍 DEBUG: getStatusColor called with status:', status);
@@ -540,6 +530,7 @@ const Dashboard = () => {
               size="sm"
               onClick={refreshDashboard}
               disabled={refreshing}
+              aria-label="Refresh Dashboard"
             >
               {refreshing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

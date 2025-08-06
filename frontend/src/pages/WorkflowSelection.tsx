@@ -331,11 +331,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
         .map(workflow => {
+          console.log('🔍 DEBUG: Workflow isProtected value:', workflow.isProtected);
           const transformedWorkflow = {
             ...workflow,
             versions: 1, // Default value
             lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-            protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Explicitly check for true
+            protectionStatus: workflow.isProtected === true ? "protected" : (workflow.isProtected === false ? "unprotected" : "unknown"), // Handle undefined/null
             status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status.toUpperCase())
               ? workflow.status.toLowerCase() as "active" | "inactive" | "draft"
               : "unknown", // Handle unexpected values gracefully
