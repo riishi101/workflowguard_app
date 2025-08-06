@@ -332,16 +332,18 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           ...workflow,
           versions: 1, // Default value
           lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-          protectionStatus: workflow.isProtected ? "protected" as "protected" : "unprotected" as "unprotected", // Use allowed string literal
-          status: workflow.status === "ACTIVE"
-            ? "active"
-            : workflow.status === "INACTIVE"
-            ? "inactive"
-            : "error" as "active" | "inactive" | "error", // Explicitly type as DashboardWorkflow status
+          protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Handle undefined or false explicitly
+          status: ["ACTIVE", "INACTIVE"].includes(workflow.status)
+            ? workflow.status.toLowerCase() as "active" | "inactive"
+            : "error", // Handle unexpected values gracefully
         }));
 
       // Store selected workflows in WorkflowState
-      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects);
+      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => ({
+        ...workflow,
+        status: workflow.status as "active" | "inactive" | "error",
+        protectionStatus: workflow.protectionStatus as "protected" | "unprotected",
+      })));
 
       // Declare and assign response variable
       const response = { data: { message: "Workflows are now being monitored." } };
