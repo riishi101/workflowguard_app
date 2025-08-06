@@ -339,11 +339,14 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         }));
 
       // Store selected workflows in WorkflowState
-      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => ({
-        ...workflow,
-        status: workflow.status as "active" | "inactive" | "error",
-        protectionStatus: workflow.protectionStatus as "protected" | "unprotected",
-      })));
+      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => {
+        console.log('Transformed Workflow:', workflow);
+        return {
+          ...workflow,
+          status: workflow.status as "active" | "inactive" | "error",
+          protectionStatus: workflow.protectionStatus as "protected" | "unprotected",
+        };
+      }));
 
       // Declare and assign response variable
       const response = { data: { message: "Workflows are now being monitored." } };

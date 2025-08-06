@@ -190,6 +190,18 @@ const Dashboard = () => {
     console.log('Dashboard - Fetched workflows:', workflows);
   }, [workflows]);
 
+  // Log workflows details for debugging
+  useEffect(() => {
+    console.log('Dashboard - Workflows state:', workflows);
+    workflows.forEach(workflow => {
+      console.log('Dashboard - Workflow details:', {
+        id: workflow.id,
+        status: workflow.status,
+        protectionStatus: workflow.protectionStatus
+      });
+    });
+  }, [workflows]);
+
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     console.log('🔍 Dashboard - handleViewHistory called with:', {
       workflowId,
