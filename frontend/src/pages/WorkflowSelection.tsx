@@ -339,7 +339,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
             ...workflow,
             versions: 1, // Default value
             lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-            protectionStatus: workflow.isProtected === true ? "protected" : "unprotected", // Default to "unprotected"
+            protectionStatus: "protected", // Set to protected since we're activating protection
             status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status.toUpperCase())
               ? workflow.status.toLowerCase() as "active" | "inactive" | "draft"
               : "unknown", // Handle unexpected values gracefully
@@ -356,7 +356,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         return {
           ...workflow,
           status: workflow.status as "active" | "inactive" | "error",
-          protectionStatus: workflow.protectionStatus as "protected" | "unprotected",
+          protectionStatus: "protected" as "protected" | "unprotected",
         };
       }));
 
