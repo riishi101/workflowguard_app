@@ -332,8 +332,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           ...workflow,
           versions: 1, // Default value
           lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-          protectionStatus: "Unprotected", // Default value
-          status: workflow.status.toLowerCase() === "active" ? "active" : workflow.status.toLowerCase() === "inactive" ? "inactive" : "error", // Ensure lowercase mapping
+          protectionStatus: workflow.isProtected ? "protected" as "protected" : "unprotected" as "unprotected", // Use allowed string literal
+          status: workflow.status === "ACTIVE"
+            ? "active"
+            : workflow.status === "INACTIVE"
+            ? "inactive"
+            : "error" as "active" | "inactive" | "error", // Explicitly type as DashboardWorkflow status
         }));
 
       // Store selected workflows in WorkflowState
