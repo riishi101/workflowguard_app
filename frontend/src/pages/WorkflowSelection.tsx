@@ -329,6 +329,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
         .map(workflow => {
+          // Add fallback logic for status and protectionStatus during transformation
           const transformedWorkflow = {
             ...workflow,
             versions: 1, // Default value
@@ -462,14 +463,14 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "ACTIVE":
+      case "active":
         return "bg-green-100 text-green-800 hover:bg-green-100";
-      case "INACTIVE":
+      case "inactive":
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
-      case "DRAFT":
+      case "draft":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+        return "bg-red-100 text-red-800 hover:bg-red-100"; // Error or unknown
     }
   };
 
