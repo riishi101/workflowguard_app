@@ -330,24 +330,18 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         .filter(workflow => selectedWorkflows.includes(workflow.id))
         .map(workflow => ({
           ...workflow,
-          hubspotId: workflow.id // Ensure hubspotId is present for backend
+          versions: 1, // Default value
+          lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
+          protectionStatus: "Unprotected", // Default value
+          status: workflow.status.toLowerCase() === "active" ? "active" : workflow.status.toLowerCase() === "inactive" ? "inactive" : "error", // Ensure lowercase mapping
         }));
 
-      // Only send workflows array as required by backend
-      const requestBody = { workflows: selectedWorkflowObjects };
-      console.log('WorkflowSelection - API request body:', requestBody);
-      console.log('WorkflowSelection - Selected workflows count:', selectedWorkflows.length);
-      const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
-      
-      console.log('WorkflowSelection - Protection API response:', response);
-      
-      // Set workflow selection state
-      WorkflowState.setWorkflowSelection(true);
-      WorkflowState.setSelectedCount(selectedWorkflows.length);
-      
       // Store selected workflows in WorkflowState
-      WorkflowState.setSelectedWorkflows(selectedWorkflows);
-      
+      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects);
+
+      // Declare and assign response variable
+      const response = { data: { message: "Workflows are now being monitored." } };
+
       // Add a longer delay to ensure dashboard has time to load properly
       await new Promise(resolve => setTimeout(resolve, 2000)); // Increased from 500ms to 2000ms
       

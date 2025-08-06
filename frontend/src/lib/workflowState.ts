@@ -1,3 +1,5 @@
+import { DashboardWorkflow } from "../types";
+
 // Utility to manage workflow selection state
 export const WorkflowState = {
   // Check if user has selected workflows
@@ -27,13 +29,13 @@ export const WorkflowState = {
   },
 
   // Get selected workflows
-  getSelectedWorkflows(): any[] {
+  getSelectedWorkflows(): DashboardWorkflow[] {
     const workflows = localStorage.getItem("workflowGuard_selectedWorkflows");
-    return workflows ? JSON.parse(workflows) : [];
+    return workflows ? (JSON.parse(workflows) as DashboardWorkflow[]) : [];
   },
 
   // Set selected workflows
-  setSelectedWorkflows(workflows: any[]): void {
+  setSelectedWorkflows(workflows: DashboardWorkflow[]): void {
     localStorage.setItem("workflowGuard_selectedWorkflows", JSON.stringify(workflows));
   },
 

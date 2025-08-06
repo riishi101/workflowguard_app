@@ -91,11 +91,8 @@ const Dashboard = () => {
       const workflowsFromState = WorkflowState.getSelectedWorkflows();
       const workflowsFromLocation = location.state?.workflows || [];
 
-      // Add debug logs to confirm workflows are being retrieved
-      console.log("Dashboard - Checking workflows from WorkflowState:", WorkflowState);
-      console.log("Dashboard - Checking workflows from navigation state:", location.state?.workflows);
-
-      if (workflowsFromState.length > 0) {
+      // Ensure workflows are full objects
+      if (workflowsFromState.length > 0 && typeof workflowsFromState[0] === 'object') {
         console.log("Using workflows from WorkflowState:", workflowsFromState);
         setWorkflows(workflowsFromState);
         setLoading(false);
