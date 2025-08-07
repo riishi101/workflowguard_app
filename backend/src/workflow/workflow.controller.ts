@@ -20,8 +20,37 @@ export class WorkflowController {
     return this.workflowService.findAll();
   }
 
+  @Get('by-hubspot-id/:hubspotId')
+  @UseGuards(JwtAuthGuard)
+  async findByHubspotId(@Param('hubspotId') hubspotId: string, @Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      return {
+        success: true,
+        data: workflow,
+        message: 'Workflow found successfully'
+      };
+    } catch (error) {
+      console.error('Failed to find workflow by HubSpot ID:', error);
+      throw new HttpException(
+        'Workflow not found or access denied',
+        HttpStatus.NOT_FOUND
+      );
+    }
+  }
+
   @Get('hubspot/:hubspotId')
-  async findByHubspotId(@Param('hubspotId') hubspotId: string) {
+  async findByHubspotIdLegacy(@Param('hubspotId') hubspotId: string) {
     return { message: 'HubSpot workflow lookup not implemented in simplified version' };
   }
 

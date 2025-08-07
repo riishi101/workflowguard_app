@@ -51,6 +51,59 @@ export class WorkflowService {
     });
   }
 
+  async findByHubspotId(hubspotId: string, userId: string) {
+    try {
+      // First try to find in database
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          hubspotId: hubspotId,
+          ownerId: userId,
+        },
+        include: {
+          owner: true,
+          versions: {
+            orderBy: {
+              createdAt: 'desc'
+            }
+          },
+        },
+      });
+
+      if (workflow) {
+        return workflow;
+      }
+
+      // If not found in database, try to get from HubSpot and create/sync
+      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+      const hubspotWorkflow = hubspotWorkflows.find(w => w.id === hubspotId);
+      
+      if (!hubspotWorkflow) {
+        throw new HttpException('Workflow not found in HubSpot', HttpStatus.NOT_FOUND);
+      }
+
+      // Create workflow in database if it doesn't exist
+      const newWorkflow = await this.prisma.workflow.create({
+        data: {
+          hubspotId: hubspotId,
+          name: hubspotWorkflow.name || `Workflow ${hubspotId}`,
+          ownerId: userId,
+        },
+        include: {
+          owner: true,
+          versions: true,
+        },
+      });
+
+      return newWorkflow;
+    } catch (error) {
+      console.error('Error finding workflow by HubSpot ID:', error);
+      throw new HttpException(
+        `Failed to find workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   async update(id: string, updateWorkflowDto: any) {
     return this.prisma.workflow.update({
       where: { id },

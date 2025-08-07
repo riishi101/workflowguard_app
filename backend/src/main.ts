@@ -22,17 +22,42 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  // Rate limiting
+  // Rate limiting - More permissive for development
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased limit for development
     message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
   });
   app.use(limiter);
 
-  // CORS configuration - More permissive for development
+  // CORS configuration - Allow frontend origins
+  const allowedOrigins = [
+    'http://localhost:5173', // Vite dev server
+    'http://localhost:3000', // Alternative dev port
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    process.env.FRONTEND_URL, // Production frontend URL
+  ].filter(Boolean);
+
   app.enableCors({
-    origin: true, // Allow all origins for now
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // For development, allow localhost with any port
+      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -41,7 +66,8 @@ async function bootstrap() {
       'x-user-id',
       'Accept',
       'Origin',
-      'X-Requested-With'
+      'X-Requested-With',
+      'Access-Control-Allow-Origin'
     ],
     exposedHeaders: ['Content-Length', 'X-Requested-With'],
     preflightContinue: false,

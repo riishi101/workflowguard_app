@@ -32,6 +32,35 @@ export class WorkflowVersionController {
     return this.workflowVersionService.remove(id);
   }
 
+  @Get('by-hubspot-id/:hubspotId/history')
+  @UseGuards(JwtAuthGuard)
+  async getWorkflowHistoryByHubspotId(@Param('hubspotId') hubspotId: string, @Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const history = await this.workflowVersionService.findByHubspotIdWithHistory(hubspotId, userId);
+      return {
+        success: true,
+        data: history,
+        message: 'Workflow history retrieved successfully'
+      };
+    } catch (error) {
+      console.error('Failed to get workflow history by HubSpot ID:', error);
+      throw new HttpException(
+        'Workflow history not found or access denied',
+        HttpStatus.NOT_FOUND
+      );
+    }
+  }
+
   @Get(':workflowId/history')
   @UseGuards(JwtAuthGuard)
   async getWorkflowHistory(@Param('workflowId') workflowId: string, @Req() req: any) {
