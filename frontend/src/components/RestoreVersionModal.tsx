@@ -41,11 +41,11 @@ const RestoreVersionModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" aria-describedby="restore-modal-desc">
         <VisuallyHidden>
           <DialogTitle>Confirm Workflow Rollback</DialogTitle>
         </VisuallyHidden>
-        <div className="mb-6">
+        <div className="mb-6" id="restore-modal-desc">
           <h2 className="text-xl font-semibold text-gray-900">
             WARNING: Confirm Workflow Rollback
           </h2>

@@ -35,12 +35,12 @@ const ViewDetailsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-0" aria-describedby="view-details-modal-desc">
         <VisuallyHidden>
           <DialogTitle>Customer Onboarding Version Details</DialogTitle>
         </VisuallyHidden>
 
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4" id="view-details-modal-desc">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Customer Onboarding

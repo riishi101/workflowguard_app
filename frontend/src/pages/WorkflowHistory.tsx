@@ -261,16 +261,7 @@ const WorkflowHistory = () => {
               <h2 className="text-lg font-semibold text-gray-900">
                 Workflow History ({filteredWorkflows.length})
               </h2>
-              <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate("/dashboard")}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </div>
+              {/* Removed Back to Dashboard button as per request */}
             </div>
           </div>
 

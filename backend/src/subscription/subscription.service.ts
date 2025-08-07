@@ -11,6 +11,7 @@ export class SubscriptionService {
         where: { id: userId },
         include: {
           subscription: true,
+          workflows: true,
         },
       });
 
@@ -18,26 +19,72 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
+      // Map planId to planName, limits, and price
+      const planId = user.subscription?.planId || 'starter';
+      let planName = 'Starter Plan';
+      let price = 19;
+      let limits = { workflows: 5, versionHistory: 30, teamMembers: 1 };
+      let features = [
+        'workflow_selection',
+        'dashboard_overview',
+        'basic_version_history',
+        'manual_backups',
+        'basic_rollback',
+      ];
+      if (planId === 'professional') {
+        planName = 'Professional Plan';
+        price = 49;
+        limits = { workflows: 25, versionHistory: 90, teamMembers: 5 };
+        features = [
+          'workflow_selection',
+          'dashboard_overview',
+          'complete_version_history',
+          'automated_backups',
+          'change_notifications',
+          'advanced_rollback',
+          'side_by_side_comparisons',
+          'compliance_reporting',
+          'audit_trails',
+          'priority_whatsapp_support',
+        ];
+      } else if (planId === 'enterprise') {
+        planName = 'Enterprise Plan';
+        price = 99;
+        limits = { workflows: 9999, versionHistory: 365, teamMembers: 9999 };
+        features = [
+          'unlimited_workflows',
+          'real_time_change_notifications',
+          'approval_workflows',
+          'advanced_compliance_reporting',
+          'complete_audit_trails',
+          'custom_retention_policies',
+          'advanced_security_features',
+          'advanced_analytics',
+          'unlimited_team_members',
+          'white_label_options',
+          '24_7_whatsapp_support',
+        ];
+      }
+
+      // Calculate usage
+      const workflowsUsed = user.workflows ? user.workflows.length : 0;
       // Return real subscription data from database
       return {
         id: user.subscription?.id || 'mock-subscription-id',
-        planId: user.subscription?.planId || 'starter',
-        planName: 'Starter Plan',
+        planId,
+        planName,
+        price,
         status: user.subscription?.status || 'active',
         currentPeriodStart: user.subscription?.createdAt || new Date().toISOString(),
         currentPeriodEnd: user.subscription?.trialEndDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         trialEndDate: user.subscription?.trialEndDate,
         nextBillingDate: user.subscription?.nextBillingDate,
-        features: ['workflow_selection', 'dashboard_overview', 'basic_version_history', 'manual_backups', 'basic_rollback'],
-        limits: {
-          workflows: 5,
-          versionHistory: 30,
-          teamMembers: 1,
-        },
+        features,
+        limits,
         usage: {
-          workflows: 0,
-          versionHistory: 0,
-          teamMembers: 1,
+          workflows: workflowsUsed,
+          versionHistory: 0, // update if you track this
+          teamMembers: 1,    // update if you track this
         }
       };
     } catch (error) {

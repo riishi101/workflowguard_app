@@ -23,7 +23,7 @@ const RollbackConfirmModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg p-0">
+      <DialogContent className="max-w-lg p-0" aria-describedby="rollback-modal-desc">
         <VisuallyHidden>
           <DialogTitle>Confirm Rollback to Latest Snapshot</DialogTitle>
         </VisuallyHidden>
@@ -36,7 +36,7 @@ const RollbackConfirmModal = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6" id="rollback-modal-desc">
           {/* Warning Icon */}
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">

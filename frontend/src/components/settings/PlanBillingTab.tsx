@@ -291,9 +291,15 @@ const PlanBillingTab = () => {
 
           {/* Professional Plan */}
           <Card className="relative border-blue-500 shadow-md">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-blue-600 text-white px-3 py-1 text-xs">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1">
+              <Badge className="bg-blue-600 text-white px-3 py-1 text-xs mb-1">
                 Popular
+              </Badge>
+              <Badge className="bg-green-600 text-white px-3 py-1 text-xs flex items-center gap-1">
+                21-day free trial
+                <span title="After your free trial, you'll be billed $49/month unless you cancel or change your plan.">
+                  <svg xmlns='http://www.w3.org/2000/svg' className='inline w-3 h-3 ml-1' fill='none' viewBox='0 0 24 24' stroke='currentColor'><circle cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='2'/><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M12 16v-4m0-4h.01'/></svg>
+                </span>
               </Badge>
             </div>
             <CardContent className="p-6 flex flex-col h-full">
@@ -306,9 +312,6 @@ const PlanBillingTab = () => {
                     $49
                   </span>
                   <span className="text-gray-600">/month</span>
-                </div>
-                <div className="text-xs text-blue-700 mt-1 text-center font-medium">
-                  Includes a <strong>21-day free trial</strong> for new users
                 </div>
                 {(subscription?.planId === 'professional' || trialStatus?.isTrial) && (
                   <p className="text-sm text-gray-600 mt-1">Current Plan</p>
