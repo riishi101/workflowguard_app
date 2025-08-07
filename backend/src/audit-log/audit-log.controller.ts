@@ -31,13 +31,26 @@ export class AuditLogController {
     @Query('entityId') entityId?: string,
   ) {
     try {
-      const userIdFromJwt = (req.user as any)?.sub;
+      // Extract user ID from JWT with multiple fallbacks
+      const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+      
+      if (!userIdFromJwt) {
+        console.error('User ID not found in JWT token:', req.user);
+        throw new HttpException('User authentication failed - no user ID found', HttpStatus.UNAUTHORIZED);
+      }
+
+      // Only check subscription if we have a valid user ID
       const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
       const planId = user?.subscription?.planId || 'starter';
       const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
       if (!plan?.features?.includes('audit_logs')) {
         throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
+      
       if (userId) {
         return await this.auditLogService.findByUser(userId);
       }
@@ -57,8 +70,17 @@ export class AuditLogController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   async findOne(@Req() req: Request, @Param('id') id: string) {
-    const userIdFromJwt = (req.user as any)?.sub;
+    const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userIdFromJwt) {
+      throw new HttpException('User authentication failed - no user ID found', HttpStatus.UNAUTHORIZED);
+    }
+
     const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     const planId = user?.subscription?.planId || 'starter';
     const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
     if (!plan?.features?.includes('audit_logs')) {
@@ -101,8 +123,17 @@ export class AuditLogController {
   @Get('entity/:entityType/:entityId')
   @UseGuards(JwtAuthGuard)
   async findByEntity(@Req() req: Request, @Param('entityType') entityType: string, @Param('entityId') entityId: string) {
-    const userIdFromJwt = (req.user as any)?.sub;
+    const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userIdFromJwt) {
+      throw new HttpException('User authentication failed - no user ID found', HttpStatus.UNAUTHORIZED);
+    }
+
     const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     const planId = user?.subscription?.planId || 'starter';
     const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
     if (!plan?.features?.includes('audit_logs')) {
@@ -158,8 +189,17 @@ export class AuditLogController {
       action?: string;
     }
   ) {
-    const userIdFromJwt = (req.user as any)?.sub;
+    const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    
+    if (!userIdFromJwt) {
+      throw new HttpException('User authentication failed - no user ID found', HttpStatus.UNAUTHORIZED);
+    }
+
     const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     const planId = user?.subscription?.planId || 'starter';
     const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
     if (!plan?.features?.includes('audit_logs')) {
