@@ -120,7 +120,7 @@ export class WorkflowVersionService {
     try {
       const latestVersion = await this.findLatestByWorkflowId(workflowId);
       if (!latestVersion) {
-        throw new Error('No versions found for workflow');
+        throw new HttpException('No versions found for workflow', HttpStatus.NOT_FOUND);
       }
 
       // Get the previous version
@@ -133,7 +133,11 @@ export class WorkflowVersionService {
       });
 
       if (!previousVersion) {
-        throw new Error('No previous version to rollback to');
+        // No previous version to rollback to, treat as no-op
+        return {
+          message: 'No previous version to rollback to. The workflow is already at its earliest version.',
+          rollbackVersion: null,
+        };
       }
 
       // Create rollback version
