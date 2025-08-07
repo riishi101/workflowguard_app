@@ -7,13 +7,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const status = exception instanceof HttpException ? exception.getStatus() : 500;
+    const request = ctx.getRequest();
+
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+      this.logger.error('HttpException', exceptionResponse);
+      response.status(status).json(
+        typeof exceptionResponse === 'string'
+          ? { message: exceptionResponse }
+          : exceptionResponse,
+      );
+      return;
+    }
 
     this.logger.error('Unhandled exception', exception as any);
-
-    response.status(status).json({
-      statusCode: status,
-      message: status === 500 ? 'Internal server error' : (exception as any).message,
+    response.status(500).json({
+      statusCode: 500,
+      timestamp: new Date().toISOString(),
+      path: request?.url,
+      message: 'Internal server error',
     });
   }
 } 
