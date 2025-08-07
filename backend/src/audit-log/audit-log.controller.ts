@@ -30,20 +30,28 @@ export class AuditLogController {
     @Query('entityType') entityType?: string,
     @Query('entityId') entityId?: string,
   ) {
-    const userIdFromJwt = (req.user as any)?.sub;
-    const user = await this.userService.findOneWithSubscription(userIdFromJwt);
-    const planId = user?.subscription?.planId || 'starter';
-    const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
-    if (!plan?.features?.includes('audit_logs')) {
-      throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
+    try {
+      const userIdFromJwt = (req.user as any)?.sub;
+      const user = await this.userService.findOneWithSubscription(userIdFromJwt);
+      const planId = user?.subscription?.planId || 'starter';
+      const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      if (!plan?.features?.includes('audit_logs')) {
+        throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
+      }
+      if (userId) {
+        return await this.auditLogService.findByUser(userId);
+      }
+      if (entityType && entityId) {
+        return await this.auditLogService.findByEntity(entityType, entityId);
+      }
+      return await this.auditLogService.findAll();
+    } catch (error) {
+      console.error('Error in findAll audit logs:', error);
+      throw new HttpException(
+        `Failed to fetch audit logs: ${error?.message || error}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
-    if (userId) {
-      return await this.auditLogService.findByUser(userId);
-    }
-    if (entityType && entityId) {
-      return await this.auditLogService.findByEntity(entityType, entityId);
-    }
-    return await this.auditLogService.findAll();
   }
 
   @Get(':id')
