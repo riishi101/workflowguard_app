@@ -56,7 +56,7 @@ const AuditLogTab = () => {
         user: userFilter !== "all" ? userFilter : undefined,
         action: actionFilter !== "all" ? actionFilter : undefined,
       });
-      
+
       // Add null check for response.data
       if (response && response.data && Array.isArray(response.data)) {
         setAuditLogs(response.data);
@@ -66,11 +66,24 @@ const AuditLogTab = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch audit logs:', err);
-      setError(err.response?.data?.message || 'Failed to load audit logs. Please try again.');
-      
+      const errMsg = err.response?.data?.message || 'Failed to load audit logs. Please try again.';
+      setError(errMsg);
+
       // Set empty array on error
       setAuditLogs([]);
-      
+
+      // Suppress toast for plan restriction/403 errors
+      if (
+        err.response?.status === 403 ||
+        (typeof errMsg === 'string' && (
+          errMsg.toLowerCase().includes('not available on your plan') ||
+          errMsg.toLowerCase().includes('forbidden') ||
+          errMsg.includes('403')
+        ))
+      ) {
+        // Do not show error toast for plan restriction
+        return;
+      }
       toast({
         title: "Error",
         description: "Failed to load audit logs. Please try again.",
