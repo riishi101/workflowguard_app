@@ -33,7 +33,7 @@ export class AuditLogController {
     try {
       // Extract user ID from JWT with multiple fallbacks
       const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
-      
+
       if (!userIdFromJwt) {
         console.error('User ID not found in JWT token:', req.user);
         throw new HttpException('User authentication failed - no user ID found', HttpStatus.UNAUTHORIZED);
@@ -42,24 +42,41 @@ export class AuditLogController {
       // Only check subscription if we have a valid user ID
       const user = await this.userService.findOneWithSubscription(userIdFromJwt);
       if (!user) {
+        console.error('User not found for ID:', userIdFromJwt);
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       const planId = user?.subscription?.planId || 'starter';
       const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
       if (!plan?.features?.includes('audit_logs')) {
+        console.error('Plan does not include audit_logs feature:', planId, plan?.features);
         throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
       }
-      
+
       if (userId) {
-        return await this.auditLogService.findByUser(userId);
+        try {
+          return await this.auditLogService.findByUser(userId);
+        } catch (err) {
+          console.error('Error in findByUser:', err);
+          throw err;
+        }
       }
       if (entityType && entityId) {
-        return await this.auditLogService.findByEntity(entityType, entityId);
+        try {
+          return await this.auditLogService.findByEntity(entityType, entityId);
+        } catch (err) {
+          console.error('Error in findByEntity:', err);
+          throw err;
+        }
       }
-      return await this.auditLogService.findAll();
+      try {
+        return await this.auditLogService.findAll();
+      } catch (err) {
+        console.error('Error in findAll (service):', err);
+        throw err;
+      }
     } catch (error) {
-      console.error('Error in findAll audit logs:', error);
+      console.error('Error in findAll audit logs (controller):', error, error?.stack);
       throw new HttpException(
         `Failed to fetch audit logs: ${error?.message || error}`,
         HttpStatus.INTERNAL_SERVER_ERROR
