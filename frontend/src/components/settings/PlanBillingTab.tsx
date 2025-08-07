@@ -307,6 +307,9 @@ const PlanBillingTab = () => {
                   </span>
                   <span className="text-gray-600">/month</span>
                 </div>
+                <div className="text-xs text-blue-700 mt-1 text-center font-medium">
+                  Includes a <strong>21-day free trial</strong> for new users
+                </div>
                 {(subscription?.planId === 'professional' || trialStatus?.isTrial) && (
                   <p className="text-sm text-gray-600 mt-1">Current Plan</p>
                 )}

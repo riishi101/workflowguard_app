@@ -120,7 +120,7 @@ export class WorkflowVersionService {
     try {
       const latestVersion = await this.findLatestByWorkflowId(workflowId);
       if (!latestVersion) {
-        throw new HttpException('No versions found for workflow', HttpStatus.NOT_FOUND);
+        throw new HttpException('No previous snapshot exists for this workflow. Rollback is not possible.', HttpStatus.BAD_REQUEST);
       }
 
       // Get the previous version
