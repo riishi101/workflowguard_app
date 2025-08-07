@@ -16,6 +16,9 @@ import {
   Filter,
   Users,
   Zap,
+  Settings,
+  FileText,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -489,336 +492,236 @@ const WorkflowHistory = () => {
   return (
     <MainAppLayout title="Workflow History">
       <ContentSection>
-        {/* Workflow Selector */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">
-              Current Workflow
-            </CardTitle>
-            <CardDescription>
-              Select a workflow to view its complete version history and audit
-              trail
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 max-w-md">
-                <Select
-                  value={selectedWorkflow}
-                  onValueChange={setSelectedWorkflow}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a workflow" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockWorkflows.map((workflow) => (
-                      <SelectItem key={workflow.id} value={workflow.id}>
-                        <div className="flex items-center space-x-3">
-                          {getStatusIcon(workflow.status)}
-                          <span>{workflow.name}</span>
-                          <Badge className={getStatusColor(workflow.status)}>
-                            {workflow.status}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-semibold text-gray-900">Current Workflow</h1>
+                <div className="flex items-center gap-2">
+                  <Select value={selectedWorkflow} onValueChange={handleWorkflowChange}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Select a workflow" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {workflows.map((workflow) => (
+                        <SelectItem key={workflow.id} value={workflow.id}>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(workflow.status)}
+                            <span>{workflow.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              {currentWorkflow && (
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(currentWorkflow.status)}
-                  <span className="text-sm text-gray-600">Status:</span>
-                  <Badge className={getStatusColor(currentWorkflow.status)}>
-                    {currentWorkflow.status}
-                  </Badge>
+              
+              <p className="text-gray-600 mb-6">
+                Select a workflow to view its complete version history and audit trail
+              </p>
+              
+              {workflowDetails && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{workflowDetails.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        Status: <span className="capitalize">{workflowDetails.status}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-600">Status</p>
+                    <Badge className={`${getStatusColor(workflowDetails.status)} capitalize`}>
+                      {workflowDetails.status}
+                    </Badge>
+                  </div>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Version History Table */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-xl font-semibold text-gray-900">
-              Version History
-            </CardTitle>
-            <CardDescription className="text-base text-gray-600">
-              Complete audit trail of all changes made to the{" "}
-              {currentWorkflow?.name} workflow
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-gray-200">
-                  <TableHead className="text-left font-semibold text-gray-900 px-6 py-4">
-                    Version
-                  </TableHead>
-                  <TableHead className="text-left font-semibold text-gray-900 px-6 py-4">
-                    Date & Time
-                  </TableHead>
-                  <TableHead className="text-left font-semibold text-gray-900 px-6 py-4">
-                    Last Modified By
-                  </TableHead>
-                  <TableHead className="text-left font-semibold text-gray-900 px-6 py-4">
-                    Change Summary
-                  </TableHead>
-                  <TableHead className="text-left font-semibold text-gray-900 px-6 py-4">
-                    Change Type
-                  </TableHead>
-                  <TableHead className="text-right font-semibold text-gray-900 px-6 py-4">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          {/* Version History Section */}
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <History className="h-5 w-5 text-gray-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Version History</h2>
+              </div>
+              <p className="text-gray-600">
+                Complete audit trail of all changes made to the {workflowDetails?.name || 'selected'} workflow
+              </p>
+            </div>
+
+            {error && (
+              <div className="p-6 border-b border-gray-200">
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">{error}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {loading ? (
+              <div className="p-6">
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-1/4" />
+                        <Skeleton className="h-3 w-3/4" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-8 w-8 rounded" />
+                        <Skeleton className="h-8 w-8 rounded" />
+                        <Skeleton className="h-8 w-8 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : versions.length > 0 ? (
+              <div className="divide-y divide-gray-200">
                 {versions.map((version, index) => (
-                  <TableRow
-                    key={version.id}
-                    className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                      version.isCurrent ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-semibold text-blue-700">
-                            {version.version.replace("Version ", "V")}
-                          </span>
+                  <div key={version.id} className="p-6">
+                    <div className="flex items-start gap-4">
+                      {/* Version indicator */}
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+                          <span className="text-sm font-medium text-blue-600">v{index + 1}</span>
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {version.version}
+                        {index < versions.length - 1 && (
+                          <div className="w-px h-16 bg-gray-200 mt-4"></div>
+                        )}
+                      </div>
+                      
+                      {/* Version content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-medium text-gray-900">
+                              Version {version.version}
+                              {version.isCurrent && (
+                                <Badge variant="secondary" className="ml-2">Current</Badge>
+                              )}
+                            </h3>
+                            {getChangeTypeBadge(version.changeType)}
                           </div>
-                          {version.isCurrent && (
-                            <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">
-                              Current
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {version.dateTime}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-600">
-                            {version.lastModifiedBy
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-900">
-                          {version.lastModifiedBy}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 max-w-md">
-                      <p className="text-sm text-gray-700 line-clamp-2">
-                        {version.changeSummary}
-                      </p>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      {getChangeTypeBadge(version.changeType)}
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
+                          <div className="flex items-center gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewVersion(version.id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Version {version.version} Details</DialogTitle>
+                                  <DialogDescription>
+                                    Detailed view of workflow configuration for this version
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Date & Time</label>
+                                      <p className="text-sm text-gray-900">
+                                        {new Date(version.dateTime).toLocaleString()}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700">Modified By</label>
+                                      <p className="text-sm text-gray-900">{version.lastModifiedBy}</p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-700">Change Summary</label>
+                                    <p className="text-sm text-gray-900 mt-1">{version.changeSummary}</p>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleViewVersion(version.id)}
+                              onClick={() => handleDownload(version.id)}
+                              disabled={isDownloading === version.id}
+                              className="h-8 w-8 p-0"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Download className="h-4 w-4" />
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>
-                                View {version.version} Configuration
-                              </DialogTitle>
-                              <DialogDescription>
-                                Read-only view of the workflow configuration as it existed at
-                                this version. This represents the exact state of your workflow
-                                at the time this version was created.
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedVersionConfig && (
-                              <div className="space-y-6">
-                                {/* Workflow Trigger */}
-                                <div>
-                                  <h3 className="text-lg font-semibold mb-3">
-                                    Workflow Trigger
-                                  </h3>
-                                  <Card>
-                                    <CardContent className="pt-6">
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Trigger Type
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.trigger.type}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Property
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.trigger.property}
-                                          </p>
-                                        </div>
-                                        <div className="col-span-2">
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Condition
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.trigger.condition}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                </div>
-
-                                {/* Workflow Steps */}
-                                <div>
-                                  <h3 className="text-lg font-semibold mb-3">
-                                    Workflow Steps
-                                  </h3>
-                                  <div className="space-y-4">
-                                    {selectedVersionConfig.steps.map((step, stepIndex) => (
-                                      <Card key={step.id}>
-                                        <CardContent className="pt-6">
-                                          <div className="flex items-start space-x-4">
-                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                              <span className="text-sm font-semibold text-blue-700">
-                                                {stepIndex + 1}
-                                              </span>
-                                            </div>
-                                            <div className="flex-1">
-                                              <div className="flex items-center space-x-2 mb-2">
-                                                <h4 className="font-medium text-gray-900">
-                                                  {step.name}
-                                                </h4>
-                                                <Badge variant="outline">{step.type}</Badge>
-                                              </div>
-                                              <div className="text-sm text-gray-600">
-                                                {Object.entries(step.config).map(([key, value]) => (
-                                                  <div key={key} className="mb-1">
-                                                    <span className="font-medium capitalize">
-                                                      {key.replace(/([A-Z])/g, " $1").toLowerCase()}:
-                                                    </span>{" "}
-                                                    {String(value)}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                {/* Workflow Metadata */}
-                                <div>
-                                  <h3 className="text-lg font-semibold mb-3">
-                                    Workflow Metadata
-                                  </h3>
-                                  <Card>
-                                    <CardContent className="pt-6">
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Created
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.metadata.created}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Last Modified
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.metadata.lastModified}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Enrolled Contacts
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.metadata.enrolledContacts.toLocaleString()}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-700">
-                                            Completed Contacts
-                                          </label>
-                                          <p className="text-sm text-gray-900">
-                                            {selectedVersionConfig.metadata.completedContacts.toLocaleString()}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                </div>
-                              </div>
+                            
+                            {!version.isCurrent && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRollback(version.id)}
+                                disabled={isRollingBack === version.id}
+                                className="h-8 w-8 p-0"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
                             )}
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(version.id)}
-                          disabled={isDownloading === version.id}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-
-                        {!version.isCurrent && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRollback(version.id)}
-                            disabled={isRollingBack === version.id}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
-                        )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600 mb-3">
+                          {new Date(version.dateTime).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })} IST
+                        </div>
+                        
+                        <p className="text-gray-900 mb-3">{version.changeSummary}</p>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            <span>Modified by</span>
+                            <span className="font-medium text-gray-900">{version.lastModifiedBy}</span>
+                          </div>
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {versions.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Version History
-            </h3>
-            <p className="text-gray-600">
-              Version history will appear here once changes are made to the
-              workflow.
-            </p>
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Version History
+                </h3>
+                <p className="text-gray-600">
+                  Version history will appear here once changes are made to the workflow.
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </ContentSection>
     </MainAppLayout>
   );

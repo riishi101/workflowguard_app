@@ -38,7 +38,9 @@ async function bootstrap() {
     'http://localhost:3000', // Alternative dev port
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
-    process.env.FRONTEND_URL, // Production frontend URL
+    'https://www.workflowguard.pro', // Production frontend
+    'https://workflowguard.pro', // Production frontend (without www)
+    process.env.FRONTEND_URL, // Environment-specific frontend URL
   ].filter(Boolean);
 
   app.enableCors({
@@ -56,6 +58,12 @@ async function bootstrap() {
         return callback(null, true);
       }
       
+      // For production, allow workflowguard.pro domains
+      if (origin.match(/^https:\/\/(www\.)?workflowguard\.pro$/)) {
+        return callback(null, true);
+      }
+      
+      console.warn(`CORS blocked origin: ${origin}`);
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -89,7 +97,19 @@ async function bootstrap() {
 
   // Add request logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    const timestamp = new Date().toISOString();
+    const origin = req.headers.origin || 'no-origin';
+    console.log(`${timestamp} - ${req.method} ${req.url} - Origin: ${origin}`);
+    
+    // Add CORS headers for preflight requests
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-user-id,Accept,Origin,X-Requested-With');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      return res.status(204).end();
+    }
+    
     next();
   });
 
