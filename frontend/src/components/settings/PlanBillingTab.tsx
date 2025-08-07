@@ -348,14 +348,7 @@ const PlanBillingTab = () => {
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Audit Trails
                 </li>
-                <li className="flex items-center text-sm">
-                  <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Team Management
-                </li>
-                <li className="flex items-center text-sm">
-                  <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  API Access
-                </li>
+                {/* Team Management and API Access removed as not available */}
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Priority WhatsApp Support
@@ -414,10 +407,7 @@ const PlanBillingTab = () => {
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Complete Audit Trails
                 </li>
-                <li className="flex items-center text-sm">
-                  <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Team Collaboration Features
-                </li>
+                {/* Team Collaboration Features removed as not available */}
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Custom Retention Policies
