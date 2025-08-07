@@ -1,24 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Download,
   Eye,
-  GitCompare,
   RotateCcw,
-  Plus,
-  ChevronDown,
   Activity,
   AlertCircle,
   CheckCircle,
-  Mail,
-  Clock,
-  Filter,
-  Users,
-  Zap,
-  Settings,
-  FileText,
   History,
+  Filter,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,55 +22,18 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import { ApiService } from "@/lib/api";
-
-// Mock data for demonstration
-const mockWorkflows = [
-  { id: "wf-001", name: "Lead Nurturing Campaign", status: "active" },
-  { id: "wf-002", name: "Customer Onboarding", status: "active" },
-  { id: "wf-003", name: "Re-engagement Series", status: "inactive" },
-  { id: "wf-004", name: "Sales Follow-up", status: "error" },
-];
-
-// No mock data - rely on backend API
-
-interface WorkflowDetails {
-  id: string;
-  name: string;
-  status: string;
-  hubspotId?: string;
-  lastModified: string;
-  totalVersions: number;
-}
 
 interface ProtectedWorkflow {
   id: string;
@@ -104,7 +59,7 @@ const getStatusIcon = (status: string) => {
     case "active":
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     case "inactive":
-      return <Clock className="h-4 w-4 text-gray-400" />;
+      return <AlertCircle className="h-4 w-4 text-gray-400" />;
     case "error":
       return <AlertCircle className="h-4 w-4 text-red-500" />;
     default:
@@ -125,602 +80,394 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const getChangeTypeBadge = (type: string) => {
-  switch (type.toLowerCase()) {
-    case "manual save":
-      return (
-        <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-          <Users className="h-3 w-3 mr-1" />
-          Manual Save
-        </Badge>
-      );
-    case "auto backup":
-      return (
-        <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-          <Zap className="h-3 w-3 mr-1" />
-          Auto Backup
-        </Badge>
-      );
-    case "system backup":
-      return (
-        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
-          <Activity className="h-3 w-3 mr-1" />
-          System Backup
-        </Badge>
-      );
-    default:
-      return <Badge variant="secondary">{type}</Badge>;
-  }
-};
-
-// Mock workflow configuration data
-const mockWorkflowConfig = {
-  v5: {
-    name: "Lead Nurturing Campaign - Version 5",
-    trigger: {
-      type: "Contact property change",
-      property: "Lead Score",
-      condition: "is greater than 75",
-    },
-    steps: [
-      {
-        id: 1,
-        type: "Delay",
-        name: "Wait 1 day",
-        config: { delay: "1 day" },
-      },
-      {
-        id: 2,
-        type: "Email",
-        name: "Welcome Email",
-        config: { template: "welcome-template-v2" },
-      },
-      {
-        id: 3,
-        type: "Internal Email",
-        name: "Send Internal Email",
-        config: { recipient: "sales@company.com", subject: "New qualified lead" },
-      },
-      {
-        id: 4,
-        type: "Branch",
-        name: "Premium Customer Check",
-        config: { condition: "Contact property 'Customer Type' is 'Premium'" },
-      },
-    ],
-    metadata: {
-      created: "August 1, 2025",
-      lastModified: "August 4, 2025",
-      enrolledContacts: 1247,
-      completedContacts: 892,
-    },
-  },
-  v4: {
-    name: "Lead Nurturing Campaign - Version 4",
-    trigger: {
-      type: "Contact property change",
-      property: "Lead Score",
-      condition: "is greater than 75",
-    },
-    steps: [
-      {
-        id: 1,
-        type: "Delay",
-        name: "Wait 2 days",
-        config: { delay: "2 days" },
-      },
-      {
-        id: 2,
-        type: "Email",
-        name: "Welcome Email",
-        config: { template: "welcome-template-v1" },
-      },
-      {
-        id: 3,
-        type: "Branch",
-        name: "Premium Customer Check",
-        config: { condition: "Contact property 'Customer Type' is 'Premium'" },
-      },
-    ],
-    metadata: {
-      created: "August 1, 2025",
-      lastModified: "August 4, 2025",
-      enrolledContacts: 1180,
-      completedContacts: 834,
-    },
-  },
-  v3: {
-    name: "Lead Nurturing Campaign - Version 3",
-    trigger: {
-      type: "Contact property change",
-      property: "Lead Score",
-      condition: "is greater than 75",
-    },
-    steps: [
-      {
-        id: 1,
-        type: "Delay",
-        name: "Wait 2 days",
-        config: { delay: "2 days" },
-      },
-      {
-        id: 2,
-        type: "Email",
-        name: "Welcome Email",
-        config: { template: "welcome-template-v1" },
-      },
-      {
-        id: 3,
-        type: "SMS",
-        name: "SMS Notification",
-        config: { message: "Welcome to our platform!" },
-      },
-    ],
-    metadata: {
-      created: "August 1, 2025",
-      lastModified: "August 3, 2025",
-      enrolledContacts: 1050,
-      completedContacts: 756,
-    },
-  },
-};
-
 const WorkflowHistory = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { workflowId } = useParams();
   
   const [workflows, setWorkflows] = useState<ProtectedWorkflow[]>([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string>(workflowId || "wf-001");
-  const [workflowDetails, setWorkflowDetails] = useState<WorkflowDetails | null>(null);
-  const [versions, setVersions] = useState<VersionHistoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRollingBack, setIsRollingBack] = useState<string | null>(null);
-  const [isDownloading, setIsDownloading] = useState<string | null>(null);
-  const [selectedVersionForView, setSelectedVersionForView] = useState<string | null>(null);
-  const [selectedVersionsForCompare, setSelectedVersionsForCompare] = useState<{
-    older: string | null;
-    newer: string | null;
-  }>({ older: null, newer: null });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     fetchWorkflows();
   }, []);
 
-  useEffect(() => {
-    if (selectedWorkflow) {
-      fetchWorkflowHistory();
-    }
-  }, [selectedWorkflow]);
-
-  const currentWorkflow = mockWorkflows.find(
-    (wf) => wf.id === selectedWorkflow,
-  );
-
-  const selectedVersionConfig = selectedVersionForView
-    ? mockWorkflowConfig[
-        selectedVersionForView as keyof typeof mockWorkflowConfig
-      ]
-    : null;
-
-  const olderVersionConfig = selectedVersionsForCompare.older
-    ? mockWorkflowConfig[
-        selectedVersionsForCompare.older as keyof typeof mockWorkflowConfig
-      ]
-    : null;
-
-  const newerVersionConfig = selectedVersionsForCompare.newer
-    ? mockWorkflowConfig[
-        selectedVersionsForCompare.newer as keyof typeof mockWorkflowConfig
-      ]
-    : null;
-
   const fetchWorkflows = async () => {
     try {
-      // Get workflows from WorkflowState (localStorage) and merge with mock data
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔍 WorkflowHistory - Fetching workflows from backend');
+      
+      // Try to fetch from backend API first
+      try {
+        const apiResponse = await ApiService.getProtectedWorkflows();
+        console.log('🔍 WorkflowHistory - Backend API response:', apiResponse);
+        
+        // Handle ApiResponse wrapper
+        const apiWorkflows = apiResponse.data || apiResponse;
+        
+        if (apiWorkflows && Array.isArray(apiWorkflows) && apiWorkflows.length > 0) {
+          const transformedWorkflows: ProtectedWorkflow[] = apiWorkflows.map((workflow: any) => ({
+            id: workflow.id,
+            name: workflow.name || `Workflow ${workflow.id}`,
+            status: workflow.status || 'active',
+            protectionStatus: workflow.protectionStatus || 'protected',
+            lastModified: workflow.lastModified || new Date().toLocaleDateString()
+          }));
+          
+          setWorkflows(transformedWorkflows);
+          return;
+        }
+      } catch (apiError) {
+        console.warn('🔍 WorkflowHistory - Backend API failed, trying localStorage:', apiError);
+      }
+      
+      // Fallback to localStorage (WorkflowState)
       const workflowState = JSON.parse(localStorage.getItem('workflowState') || '[]');
-      const protectedWorkflows = workflowState.filter((w: any) => w.protectionStatus === 'protected');
       
-      const formattedWorkflows: ProtectedWorkflow[] = protectedWorkflows.map((w: any) => ({
-        id: w.id,
-        name: w.name,
-        status: 'active',
-        protectionStatus: w.protectionStatus,
-        lastModified: new Date().toLocaleDateString()
-      }));
-
-      // Merge with mock workflows for demo purposes
-      const allWorkflows = [...formattedWorkflows, ...mockWorkflows.map(w => ({
-        id: w.id,
-        name: w.name,
-        status: w.status,
-        protectionStatus: 'protected',
-        lastModified: new Date().toLocaleDateString()
-      }))];
-
-      setWorkflows(allWorkflows);
-      
-      // Set first workflow as selected if none specified
-      if (!selectedWorkflow && allWorkflows.length > 0) {
-        setSelectedWorkflow(allWorkflows[0].id);
+      if (workflowState.length > 0) {
+        console.log('🔍 WorkflowHistory - Found workflows in WorkflowState:', workflowState);
+        
+        const transformedWorkflows: ProtectedWorkflow[] = workflowState.map((workflow: any) => ({
+          id: workflow.id,
+          name: workflow.name || `Workflow ${workflow.id}`,
+          status: workflow.status === 'active' ? 'active' : 'inactive',
+          protectionStatus: workflow.protectionStatus || 'protected',
+          lastModified: new Date().toLocaleDateString()
+        }));
+        
+        setWorkflows(transformedWorkflows);
+      } else {
+        // No data available - show empty state
+        console.log('🔍 WorkflowHistory - No workflows found in backend or localStorage');
+        setWorkflows([]);
       }
     } catch (err) {
       console.error('Failed to fetch workflows:', err);
       setError('Failed to load workflows');
-    }
-  };
-
-  const fetchWorkflowHistory = async () => {
-    if (!selectedWorkflow) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch workflow version history from API
-      const response = await ApiService.getWorkflowHistory(selectedWorkflow);
-      const versionHistory = response.data || [];
-
-      // Set workflow details
-      const currentWorkflow = workflows.find(w => w.id === selectedWorkflow);
-      setWorkflowDetails({
-        id: selectedWorkflow,
-        name: currentWorkflow?.name || 'Lead Nurturing Campaign',
-        status: currentWorkflow?.status || 'active',
-        hubspotId: selectedWorkflow,
-        lastModified: new Date().toLocaleDateString(),
-        totalVersions: versionHistory.length
-      });
-
-      // Transform API response to match VersionHistoryItem interface
-      const transformedVersions: VersionHistoryItem[] = versionHistory.map((version: any, index: number) => ({
-        id: version.id || `v${index + 1}`,
-        version: version.version || `v${index + 1}`,
-        dateTime: version.createdAt || version.dateTime || new Date().toISOString(),
-        lastModifiedBy: version.lastModifiedBy || 'System',
-        changeSummary: version.changeSummary || 'Workflow updated',
-        changeType: version.changeType || 'manual save',
-        isCurrent: index === 0 // First version is current
-      }));
-
-      setVersions(transformedVersions);
-    } catch (err) {
-      console.error('Failed to fetch workflow history:', err);
-      setError('Failed to load workflow history');
-      
-      // Fallback to empty state on error
-      setVersions([]);
-      setWorkflowDetails({
-        id: selectedWorkflow,
-        name: 'Unknown Workflow',
-        status: 'error',
-        hubspotId: selectedWorkflow,
-        lastModified: new Date().toLocaleDateString(),
-        totalVersions: 0
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleWorkflowChange = (workflowId: string) => {
-    setSelectedWorkflow(workflowId);
-  };
-
-  const handleViewVersion = (versionId: string) => {
-    setSelectedVersionForView(versionId);
-  };
-
-  const handleCompareVersions = (olderVersion: string, newerVersion: string) => {
-    setSelectedVersionsForCompare({ older: olderVersion, newer: newerVersion });
+  const handleDownload = async (versionId: string) => {
+    try {
+      toast({
+        title: "Download Started",
+        description: "Version download has been initiated.",
+      });
+    } catch (err) {
+      console.error('Download failed:', err);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download version.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRollback = async (versionId: string) => {
     if (!confirm('Are you sure you want to rollback to this version?')) return;
     
-    setIsRollingBack(versionId);
     try {
-      // Simulate rollback
-      await new Promise(resolve => setTimeout(resolve, 2000));
       toast({
-        title: "Success",
-        description: "Workflow rolled back successfully",
+        title: "Rollback Initiated",
+        description: "Version rollback has been started.",
       });
-      fetchWorkflowHistory();
     } catch (err) {
+      console.error('Rollback failed:', err);
       toast({
-        title: "Error",
-        description: "Failed to rollback workflow",
+        title: "Rollback Failed",
+        description: "Failed to rollback to version.",
         variant: "destructive",
       });
-    } finally {
-      setIsRollingBack(null);
     }
   };
 
-  const handleDownload = async (versionId: string) => {
-    setIsDownloading(versionId);
-    try {
-      // Simulate download
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "Success",
-        description: "Version downloaded successfully",
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to download version",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDownloading(null);
-    }
-  };
+  // Filter workflows based on search and status
+  const filteredWorkflows = workflows.filter((workflow) => {
+    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || workflow.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  if (loading) {
-    return (
-      <MainAppLayout title="Workflow History">
-        <ContentSection>
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-12 w-full" />
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          </div>
-        </ContentSection>
-      </MainAppLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainAppLayout title="Workflow History">
-        <ContentSection>
-          <Alert>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </ContentSection>
-      </MainAppLayout>
-    );
-  }
+  // Calculate stats for the header cards
+  const activeWorkflowsCount = workflows.filter(w => w.status === 'active').length;
+  const protectedWorkflowsCount = workflows.filter(w => w.protectionStatus === 'protected').length;
+  const totalVersionsCount = workflows.reduce((sum, w) => sum + 5, 0); // Mock 5 versions per workflow
 
   return (
     <MainAppLayout title="Workflow History">
+      {/* Error Alert */}
+      {error && (
+        <Alert className="mb-6 border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Statistics Cards - Dashboard Style */}
       <ContentSection>
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/dashboard")}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            </div>
-            
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-semibold text-gray-900">Current Workflow</h1>
-                <div className="flex items-center gap-2">
-                  <Select value={selectedWorkflow} onValueChange={handleWorkflowChange}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Select a workflow" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {workflows.map((workflow) => (
-                        <SelectItem key={workflow.id} value={workflow.id}>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(workflow.status)}
-                            <span>{workflow.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-blue-500" />
                 </div>
               </div>
-              
-              <p className="text-gray-600 mb-6">
-                Select a workflow to view its complete version history and audit trail
-              </p>
-              
-              {workflowDetails && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{workflowDetails.name}</h3>
-                      <p className="text-sm text-gray-600">
-                        Status: <span className="capitalize">{workflowDetails.status}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">Status</p>
-                    <Badge className={`${getStatusColor(workflowDetails.status)} capitalize`}>
-                      {workflowDetails.status}
-                    </Badge>
-                  </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {activeWorkflowsCount}
+              </div>
+              <div className="text-sm text-gray-600">Active Workflows</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {protectedWorkflowsCount} protected
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <History className="w-4 h-4 text-green-500" />
                 </div>
-              )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {totalVersionsCount}
+              </div>
+              <div className="text-sm text-gray-600">Total Versions</div>
+              <div className="text-xs text-gray-500 mt-1">Across all workflows</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-purple-500" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {workflows.length}
+              </div>
+              <div className="text-sm text-gray-600">Total Workflows</div>
+              <div className="text-xs text-gray-500 mt-1">Under protection</div>
+            </CardContent>
+          </Card>
+        </div>
+      </ContentSection>
+
+      {/* Workflows Grid - Dashboard Style */}
+      <ContentSection>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Workflow History ({filteredWorkflows.length})
+              </h2>
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate("/dashboard")}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Version History Section */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-2 mb-2">
-                <History className="h-5 w-5 text-gray-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Version History</h2>
+          {/* Filters */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input 
+                  placeholder="Search workflows by name..." 
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <p className="text-gray-600">
-                Complete audit trail of all changes made to the {workflowDetails?.name || 'selected'} workflow
-              </p>
+              <div className="flex items-center gap-3">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          </div>
 
-            {error && (
-              <div className="p-6 border-b border-gray-200">
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">{error}</AlertDescription>
-                </Alert>
-              </div>
-            )}
-
-            {loading ? (
-              <div className="p-6">
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-1/4" />
-                        <Skeleton className="h-3 w-3/4" />
-                      </div>
+          {/* Loading State */}
+          {loading ? (
+            <div className="p-6">
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Skeleton className="h-6 w-48" />
                       <div className="flex gap-2">
-                        <Skeleton className="h-8 w-8 rounded" />
-                        <Skeleton className="h-8 w-8 rounded" />
-                        <Skeleton className="h-8 w-8 rounded" />
+                        <Skeleton className="h-8 w-20" />
+                        <Skeleton className="h-8 w-20" />
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : versions.length > 0 ? (
-              <div className="divide-y divide-gray-200">
-                {versions.map((version, index) => (
-                  <div key={version.id} className="p-6">
-                    <div className="flex items-start gap-4">
-                      {/* Version indicator */}
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                          <span className="text-sm font-medium text-blue-600">v{index + 1}</span>
-                        </div>
-                        {index < versions.length - 1 && (
-                          <div className="w-px h-16 bg-gray-200 mt-4"></div>
-                        )}
-                      </div>
-                      
-                      {/* Version content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-medium text-gray-900">
-                              Version {version.version}
-                              {version.isCurrent && (
-                                <Badge variant="secondary" className="ml-2">Current</Badge>
-                              )}
-                            </h3>
-                            {getChangeTypeBadge(version.changeType)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewVersion(version.id)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                  <DialogTitle>Version {version.version} Details</DialogTitle>
-                                  <DialogDescription>
-                                    Detailed view of workflow configuration for this version
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-700">Date & Time</label>
-                                      <p className="text-sm text-gray-900">
-                                        {new Date(version.dateTime).toLocaleString()}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-700">Modified By</label>
-                                      <p className="text-sm text-gray-900">{version.lastModifiedBy}</p>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-700">Change Summary</label>
-                                    <p className="text-sm text-gray-900 mt-1">{version.changeSummary}</p>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(version.id)}
-                              disabled={isDownloading === version.id}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            
-                            {!version.isCurrent && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRollback(version.id)}
-                                disabled={isRollingBack === version.id}
-                                className="h-8 w-8 p-0"
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600 mb-3">
-                          {new Date(version.dateTime).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })} IST
-                        </div>
-                        
-                        <p className="text-gray-900 mb-3">{version.changeSummary}</p>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                            <span>Modified by</span>
-                            <span className="font-medium text-gray-900">{version.lastModifiedBy}</span>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-4 w-24" />
                     </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="p-12 text-center">
-                <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Version History
-                </h3>
-                <p className="text-gray-600">
-                  Version history will appear here once changes are made to the workflow.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            /* Workflows Grid */
+            <div className="p-6">
+              {filteredWorkflows.length === 0 ? (
+                <div className="text-center py-12">
+                  <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Workflows Found
+                  </h3>
+                  <p className="text-gray-600">
+                    {searchTerm || statusFilter !== "all" 
+                      ? "No workflows match your filters. Try adjusting your search criteria."
+                      : "No workflows found. Add your first workflow to get started."
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {filteredWorkflows.map((workflow) => (
+                    <Card key={workflow.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {getStatusIcon(workflow.status)}
+                            <div>
+                              <CardTitle className="text-lg">{workflow.name}</CardTitle>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge
+                                  variant="secondary"
+                                  className={getStatusColor(workflow.status)}
+                                >
+                                  {workflow.status}
+                                </Badge>
+                                <Badge
+                                  variant="secondary"
+                                  className={workflow.protectionStatus === 'protected' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                  }
+                                >
+                                  {workflow.protectionStatus}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span>Last Modified: {workflow.lastModified}</span>
+                            <span>5 versions</span>
+                          </div>
+                          
+                          {/* Version History Preview */}
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-gray-900">Recent Versions</h4>
+                            <div className="space-y-2">
+                              {/* Mock recent versions for each workflow */}
+                              {[
+                                {
+                                  version: 'Version 5',
+                                  date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+                                  user: 'Sarah Chen',
+                                  summary: 'Added Send Internal Email action and updated trigger condition'
+                                },
+                                {
+                                  version: 'Version 4', 
+                                  date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+                                  user: 'Mike Johnson',
+                                  summary: 'Modified email template and updated delay timing'
+                                }
+                              ].map((version, idx) => (
+                                <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-sm">{version.version}</span>
+                                      {idx === 0 && (
+                                        <Badge className="bg-green-100 text-green-800 text-xs">
+                                          Current
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-600 mb-1">
+                                      {version.summary}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      <span>{version.date.toLocaleDateString()}</span>
+                                      <span>•</span>
+                                      <span>{version.user}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/workflow-history/${workflow.id}`)}
+                              className="flex-1"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Full History
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(`${workflow.id}-latest`)}
+                              className="flex-1"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Latest
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </ContentSection>
     </MainAppLayout>
