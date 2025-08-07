@@ -182,13 +182,13 @@ const PlanBillingTab = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Current Plan</p>
                 <p className="font-semibold text-gray-900">
-                  {trialStatus?.isTrial ? 'Professional Trial' : (subscription?.planName || 'Starter Plan')}
+                  {trialStatus?.isTrial ? (subscription?.planName ? `${subscription.planName} (Trial)` : 'Professional Trial') : (subscription?.planName || 'Starter Plan')}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Price</p>
                 <p className="font-semibold text-gray-900">
-                  {trialStatus?.isTrial ? 'Free' : `$${subscription?.planId === 'professional' ? '49' : subscription?.planId === 'enterprise' ? '99' : '19'}/month`}
+                  {trialStatus?.isTrial ? (subscription?.price !== undefined ? 'Free (Trial)' : 'Free') : (subscription?.price !== undefined ? `$${subscription.price}/month` : `$19/month`)}
                 </p>
               </div>
               <div>
@@ -196,7 +196,7 @@ const PlanBillingTab = () => {
                   Workflows Monitored
                 </p>
                 <p className="font-semibold text-gray-900">
-                  {usageStats?.workflows?.used || 0}/{usageStats?.workflows?.limit || 5}
+                  {usageStats?.workflows?.used ?? subscription?.usage?.workflows ?? 0}/{usageStats?.workflows?.limit ?? subscription?.limits?.workflows ?? 5}
                 </p>
               </div>
               <div>
@@ -204,7 +204,7 @@ const PlanBillingTab = () => {
                   Version History
                 </p>
                 <p className="font-semibold text-gray-900">
-                  {trialStatus?.isTrial ? '90' : (subscription?.planId === 'professional' ? '90' : subscription?.planId === 'enterprise' ? 'Unlimited' : '30')} days
+                  {subscription?.limits?.versionHistory ? `${subscription.limits.versionHistory} days` : (trialStatus?.isTrial ? '90 days' : (subscription?.planId === 'professional' ? '90 days' : subscription?.planId === 'enterprise' ? 'Unlimited' : '30 days'))}
                 </p>
               </div>
             </div>
@@ -422,10 +422,7 @@ const PlanBillingTab = () => {
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Advanced Security Features
                 </li>
-                <li className="flex items-center text-sm">
-                  <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Advanced Analytics
-                </li>
+                {/* Advanced Analytics removed as not available */}
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                   Unlimited Team Members

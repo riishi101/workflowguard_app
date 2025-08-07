@@ -66,14 +66,28 @@ export class AuditLogController {
   @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
   async findByUser(@Req() req: Request, @Param('userId') userId: string) {
-    const userIdFromJwt = (req.user as any)?.sub;
-    const user = await this.userService.findOneWithSubscription(userIdFromJwt);
-    const planId = user?.subscription?.planId || 'starter';
+    let safeUserId = userId;
+    if (!safeUserId) {
+      safeUserId = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
+    }
+    if (!safeUserId) {
+      const headerId = req.headers['x-user-id'];
+      if (Array.isArray(headerId)) {
+        safeUserId = headerId[0];
+      } else if (typeof headerId === 'string') {
+        safeUserId = headerId;
+      }
+    }
+    if (!safeUserId || typeof safeUserId !== 'string') {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+    const user = await this.userService.findOneWithSubscription(safeUserId);
+    const planId = user && user.subscription ? user.subscription.planId : 'starter';
     const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
     if (!plan?.features?.includes('audit_logs')) {
       throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);
     }
-    return await this.auditLogService.findByUser(userId);
+    return await this.auditLogService.findByUser(safeUserId);
   }
 
   @Get('entity/:entityType/:entityId')

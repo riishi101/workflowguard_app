@@ -1,3 +1,4 @@
+
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus, Put } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,6 +9,32 @@ import { randomUUID } from 'crypto';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+    const user = await this.userService.findOneWithSubscription(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        subscription: user.subscription
+      }
+    };
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {

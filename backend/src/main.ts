@@ -17,6 +17,14 @@ if (!global.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
+  const httpAdapter = app.getHttpAdapter();
+  if (httpAdapter.getType && httpAdapter.getType() === 'express') {
+    const instance = httpAdapter.getInstance();
+    if (instance && typeof instance.set === 'function') {
+      instance.set('trust proxy', 1);
+    }
+  }
   
   // Security middleware
   app.use(helmet());
