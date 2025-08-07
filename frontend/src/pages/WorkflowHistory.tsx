@@ -270,7 +270,7 @@ const WorkflowHistory = () => {
   const [workflows, setWorkflows] = useState<ProtectedWorkflow[]>([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>(workflowId || "wf-001");
   const [workflowDetails, setWorkflowDetails] = useState<WorkflowDetails | null>(null);
-  const [versions, setVersions] = useState<VersionHistoryItem[]>(mockVersionHistory);
+  const [versions, setVersions] = useState<VersionHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRollingBack, setIsRollingBack] = useState<string | null>(null);
@@ -355,20 +355,47 @@ const WorkflowHistory = () => {
       setLoading(true);
       setError(null);
 
-      // Use mock data for consistent demo experience
+      // Fetch workflow version history from API
+      const response = await ApiService.getWorkflowHistory(selectedWorkflow);
+      const versionHistory = response.data || [];
+
+      // Set workflow details
+      const currentWorkflow = workflows.find(w => w.id === selectedWorkflow);
       setWorkflowDetails({
         id: selectedWorkflow,
         name: currentWorkflow?.name || 'Lead Nurturing Campaign',
         status: currentWorkflow?.status || 'active',
         hubspotId: selectedWorkflow,
         lastModified: new Date().toLocaleDateString(),
-        totalVersions: mockVersionHistory.length
+        totalVersions: versionHistory.length
       });
 
-      setVersions(mockVersionHistory);
+      // Transform API response to match VersionHistoryItem interface
+      const transformedVersions: VersionHistoryItem[] = versionHistory.map((version: any, index: number) => ({
+        id: version.id || `v${index + 1}`,
+        version: version.version || `v${index + 1}`,
+        dateTime: version.createdAt || version.dateTime || new Date().toISOString(),
+        lastModifiedBy: version.lastModifiedBy || 'System',
+        changeSummary: version.changeSummary || 'Workflow updated',
+        changeType: version.changeType || 'manual save',
+        isCurrent: index === 0 // First version is current
+      }));
+
+      setVersions(transformedVersions);
     } catch (err) {
       console.error('Failed to fetch workflow history:', err);
       setError('Failed to load workflow history');
+      
+      // Fallback to empty state on error
+      setVersions([]);
+      setWorkflowDetails({
+        id: selectedWorkflow,
+        name: 'Unknown Workflow',
+        status: 'error',
+        hubspotId: selectedWorkflow,
+        lastModified: new Date().toLocaleDateString(),
+        totalVersions: 0
+      });
     } finally {
       setLoading(false);
     }
