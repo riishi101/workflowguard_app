@@ -77,6 +77,9 @@ export class AuditLogController {
       }
     } catch (error) {
       console.error('Error in findAll audit logs (controller):', error, error?.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
         `Failed to fetch audit logs: ${error?.message || error}`,
         HttpStatus.INTERNAL_SERVER_ERROR
