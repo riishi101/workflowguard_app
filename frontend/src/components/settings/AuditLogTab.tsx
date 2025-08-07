@@ -154,13 +154,71 @@ const AuditLogTab = () => {
     );
   }
 
+  // If forbidden, show locked screen with overlay
+  if (error && (error.includes('not available on your plan') || error.includes('forbidden') || error.includes('403'))) {
+    return (
+      <div className="relative">
+        {/* Render the normal Audit Log tab UI, but locked out */}
+        <div className="opacity-60 pointer-events-none select-none">
+          {/* ...existing code for the tab UI... */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-10 w-32" />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-40" />
+                ))}
+              </div>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-gray-50 p-4">
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-4 border-b border-gray-200">
+                    <div className="grid grid-cols-7 gap-4">
+                      {[...Array(7)].map((_, j) => (
+                        <Skeleton key={j} className="h-4 w-full" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Overlay lock message, clickable and visible */}
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white bg-opacity-80 pointer-events-auto select-auto">
+          <AlertTriangle className="w-12 h-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Audit Log Access Restricted</h3>
+          <p className="text-gray-600 mb-4 max-w-md text-center">
+            Your current plan does not include access to audit logs.<br />
+            Please upgrade your subscription to unlock this feature.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // For other errors, show a more user-friendly message
   if (error) {
     return (
       <div className="space-y-6">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {error}
+            {error === 'Failed to load audit logs. Please try again.' || error === 'Internal server error' ? (
+              <>
+                We couldn&apos;t load the audit logs at this time. Please check your connection or try again later.
+              </>
+            ) : (
+              error
+            )}
             <Button 
               variant="outline" 
               size="sm" 
