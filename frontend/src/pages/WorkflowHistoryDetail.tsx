@@ -82,69 +82,34 @@ const WorkflowHistoryDetail = () => {
       
       console.log('🔍 WorkflowHistoryDetail - Fetching history for workflowId:', workflowId);
       
-      // First try to get data from WorkflowState (localStorage)
-      const workflowState = JSON.parse(localStorage.getItem('workflowState') || '[]');
-      const localWorkflow = workflowState.find((w: any) => w.id === workflowId);
-      
-      if (localWorkflow) {
-        console.log('🔍 WorkflowHistoryDetail - Found workflow in WorkflowState:', localWorkflow);
-        
-        // Use WorkflowState data as primary source with rich details
-        const fallbackDetails = {
-          id: localWorkflow.id,
-          name: localWorkflow.name || `Workflow ${workflowId}`,
-          status: localWorkflow.protectionStatus === 'protected' ? 'active' : 'inactive',
-          lastModified: new Date().toLocaleDateString(),
-          totalVersions: 5, // Rich version count
-          hubspotUrl: `https://app.hubspot.com/workflows/${workflowId}`
-        };
-        
-        setWorkflowDetails(fallbackDetails);
-        
-        // Try to fetch version history from backend API
-        try {
-          const versionHistory = await ApiService.getWorkflowHistory(workflowId);
-          console.log('🔍 WorkflowHistoryDetail - Backend version history response:', versionHistory);
-          
-          // Handle ApiResponse wrapper
-          const apiVersions = versionHistory.data || versionHistory;
-          
-          if (apiVersions && Array.isArray(apiVersions) && apiVersions.length > 0) {
-            const transformedVersions: WorkflowVersion[] = apiVersions.map((version: any, index: number) => ({
-              id: version.id || `${workflowId}-v${index + 1}`,
-              versionNumber: version.versionNumber || `${index + 1}`,
-              dateTime: version.createdAt || version.dateTime || new Date().toISOString(),
-              modifiedBy: {
-                name: version.user?.name || version.createdBy || 'Unknown User',
-                initials: version.user?.name ? version.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU'
-              },
-              changeSummary: version.changeSummary || 'Workflow updated',
-              type: version.snapshotType || 'Manual Save',
-              status: index === 0 ? 'current' : 'archived'
-            }));
-            
-            setVersions(transformedVersions);
-          } else {
-            console.log('🔍 WorkflowHistoryDetail - No version history found in backend');
-            setVersions([]);
-          }
-        } catch (versionError) {
-          console.warn('🔍 WorkflowHistoryDetail - Failed to fetch version history from backend:', versionError);
-          setVersions([]);
-        }
-      } else {
-        // Fallback for when no workflow found in localStorage
-        const fallbackDetails = {
-          id: workflowId || 'unknown',
-          name: `Workflow ${workflowId}`,
+      // Only fetch from backend API
+      const versionHistory = await ApiService.getWorkflowHistory(workflowId);
+      const apiVersions = versionHistory.data || versionHistory;
+      if (apiVersions && Array.isArray(apiVersions) && apiVersions.length > 0) {
+        const transformedVersions: WorkflowVersion[] = apiVersions.map((version: any, index: number) => ({
+          id: version.id,
+          versionNumber: version.versionNumber,
+          dateTime: version.createdAt || version.dateTime,
+          modifiedBy: {
+            name: version.user?.name || version.createdBy || 'Unknown User',
+            initials: version.user?.name ? version.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU'
+          },
+          changeSummary: version.changeSummary || 'Workflow updated',
+          type: version.snapshotType || 'Manual Save',
+          status: index === 0 ? 'current' : 'archived'
+        }));
+        setVersions(transformedVersions);
+        setWorkflowDetails({
+          id: apiVersions[0].workflowId,
+          name: workflowDetails?.name || `Workflow ${apiVersions[0].workflowId}`,
           status: 'active',
-          lastModified: new Date().toLocaleDateString(),
-          totalVersions: 5,
-          hubspotUrl: `https://app.hubspot.com/workflows/${workflowId}`
-        };
-        
-        setWorkflowDetails(fallbackDetails);
+          lastModified: workflowDetails?.lastModified || '',
+          totalVersions: apiVersions.length,
+          hubspotUrl: workflowDetails?.hubspotUrl || ''
+        });
+      } else {
         setVersions([]);
+        setWorkflowDetails(null);
       }
     } catch (err) {
       console.error('Failed to fetch workflow history:', err);
@@ -164,17 +129,13 @@ const WorkflowHistoryDetail = () => {
     if (!confirm('Are you sure you want to rollback to this version? This action cannot be undone.')) {
       return;
     }
-
     setRestoring(versionId);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      
+      await ApiService.restoreWorkflowVersion(workflowDetails?.id, versionId);
       toast({
         title: "Version Restored",
         description: "The workflow has been successfully rolled back to the selected version.",
       });
-      
-      // Refresh the data
       fetchWorkflowHistory();
     } catch (err) {
       console.error('Rollback failed:', err);
@@ -191,8 +152,16 @@ const WorkflowHistoryDetail = () => {
   const handleDownloadVersion = async (versionId: string) => {
     setDownloading(versionId);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate download
-      
+      const version = await ApiService.downloadWorkflowVersion(workflowDetails?.id, versionId);
+      const blob = new Blob([JSON.stringify(version, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workflow-version-${versionId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       toast({
         title: "Download Complete",
         description: "Version has been downloaded successfully.",

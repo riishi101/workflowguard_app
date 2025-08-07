@@ -66,7 +66,6 @@ export class WorkflowVersionService {
       });
 
       if (versions.length === 0) {
-        // Return empty array instead of creating mock data
         return [];
       }
 
@@ -393,14 +392,12 @@ export class WorkflowVersionService {
   }
 
   private calculateChanges(data: any): any {
-    // Simple change calculation based on data structure
-    const steps = data.steps || [];
-    const triggers = data.triggers || [];
-    
+    // Real change calculation should be implemented here based on actual diff logic
+    // For now, return empty changes (or implement a real diff if available)
     return {
-      added: Math.floor(Math.random() * 5) + 1,
-      modified: Math.floor(Math.random() * 3),
-      removed: Math.floor(Math.random() * 2)
+      added: 0,
+      modified: 0,
+      removed: 0
     };
   }
 
@@ -471,21 +468,9 @@ export class WorkflowVersionService {
         createdAt: version.createdAt,
         data: version.data,
         workflowId: version.workflowId,
-        // Add mock data for UI compatibility
-        user: {
-          name: `User ${version.createdBy}`,
-          email: `user${version.createdBy}@example.com`
-        },
-        changes: {
-          added: Math.floor(Math.random() * 5) + 1,
-          modified: Math.floor(Math.random() * 3),
-          removed: Math.floor(Math.random() * 2)
-        },
-        changeSummary: this.generateChangeSummary({
-          added: Math.floor(Math.random() * 5) + 1,
-          modified: Math.floor(Math.random() * 3),
-          removed: Math.floor(Math.random() * 2)
-        }, version.data)
+        // user: version.user || null, // Removed: not present in model
+        changes: this.calculateChanges(version.data),
+        changeSummary: this.generateChangeSummary(this.calculateChanges(version.data), version.data)
       }));
     } catch (error) {
       console.error('Error finding workflow history by HubSpot ID:', error);

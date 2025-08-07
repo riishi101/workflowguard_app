@@ -408,11 +408,7 @@ export class WorkflowService {
           name: workflow.name,
           lastSnapshot: latestVersion?.createdAt.toISOString() || workflow.createdAt.toISOString(),
           versions: versions.length,
-          lastModifiedBy: {
-            name: 'System', // Would be real user in production
-            initials: 'S',
-            email: 'system@workflowguard.com',
-          },
+          lastModifiedBy: latestVersion?.createdBy || '',
           status: 'active',
           protectionStatus: 'protected',
           lastModified: latestVersion?.createdAt.toISOString() || workflow.updatedAt.toISOString(),
@@ -472,8 +468,8 @@ export class WorkflowService {
                           user.subscription?.planId === 'enterprise' ? 999999 : 5;
       const planUsed = totalWorkflows;
 
-      // Calculate uptime (mock for now, would be real in production)
-      const uptime = 99.9; // Mock uptime percentage
+      // Uptime calculation should be implemented if available, else omit or set to null
+      const uptime = null;
 
       // Get last snapshot time
       const lastSnapshot = protectedWorkflows.length > 0 ? 
@@ -530,9 +526,8 @@ export class WorkflowService {
         workflowData = JSON.parse(workflowData);
       }
       
-      // Mock contact count based on workflow complexity
-      const steps = this.calculateWorkflowSteps(workflowData);
-      return Math.floor(steps * 10); // Mock calculation
+      // Contact count calculation should be implemented if available, else return 0
+      return 0;
     } catch (error) {
       return 0;
     }

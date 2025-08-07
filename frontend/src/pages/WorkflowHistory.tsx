@@ -125,26 +125,8 @@ const WorkflowHistory = () => {
         console.warn('🔍 WorkflowHistory - Backend API failed, trying localStorage:', apiError);
       }
       
-      // Fallback to localStorage (WorkflowState)
-      const workflowState = JSON.parse(localStorage.getItem('workflowState') || '[]');
-      
-      if (workflowState.length > 0) {
-        console.log('🔍 WorkflowHistory - Found workflows in WorkflowState:', workflowState);
-        
-        const transformedWorkflows: ProtectedWorkflow[] = workflowState.map((workflow: any) => ({
-          id: workflow.id,
-          name: workflow.name || `Workflow ${workflow.id}`,
-          status: workflow.status === 'active' ? 'active' : 'inactive',
-          protectionStatus: workflow.protectionStatus || 'protected',
-          lastModified: new Date().toLocaleDateString()
-        }));
-        
-        setWorkflows(transformedWorkflows);
-      } else {
-        // No data available - show empty state
-        console.log('🔍 WorkflowHistory - No workflows found in backend or localStorage');
-        setWorkflows([]);
-      }
+      // No fallback to localStorage or mock data. Only use real API data.
+      setWorkflows([]);
     } catch (err) {
       console.error('Failed to fetch workflows:', err);
       setError('Failed to load workflows');
@@ -197,7 +179,8 @@ const WorkflowHistory = () => {
   // Calculate stats for the header cards
   const activeWorkflowsCount = workflows.filter(w => w.status === 'active').length;
   const protectedWorkflowsCount = workflows.filter(w => w.protectionStatus === 'protected').length;
-  const totalVersionsCount = workflows.reduce((sum, w) => sum + 5, 0); // Mock 5 versions per workflow
+  // Version count not available in ProtectedWorkflow, so omit or set to 0
+  const totalVersionsCount = 0;
 
   return (
     <MainAppLayout title="Workflow History">
@@ -392,51 +375,6 @@ const WorkflowHistory = () => {
                         <div className="space-y-4">
                           <div className="flex items-center justify-between text-sm text-gray-600">
                             <span>Last Modified: {workflow.lastModified}</span>
-                            <span>5 versions</span>
-                          </div>
-                          
-                          {/* Version History Preview */}
-                          <div className="space-y-3">
-                            <h4 className="font-medium text-gray-900">Recent Versions</h4>
-                            <div className="space-y-2">
-                              {/* Mock recent versions for each workflow */}
-                              {[
-                                {
-                                  version: 'Version 5',
-                                  date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-                                  user: 'Sarah Chen',
-                                  summary: 'Added Send Internal Email action and updated trigger condition'
-                                },
-                                {
-                                  version: 'Version 4', 
-                                  date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-                                  user: 'Mike Johnson',
-                                  summary: 'Modified email template and updated delay timing'
-                                }
-                              ].map((version, idx) => (
-                                <div key={idx} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium text-sm">{version.version}</span>
-                                      {idx === 0 && (
-                                        <Badge className="bg-green-100 text-green-800 text-xs">
-                                          Current
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-gray-600 mb-1">
-                                      {version.summary}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                      <span>{version.date.toLocaleDateString()}</span>
-                                      <span>•</span>
-                                      <span>{version.user}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
                           </div>
                           
                           {/* Action Buttons */}
