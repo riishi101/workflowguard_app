@@ -237,8 +237,8 @@ export class UserService {
     const trialSubscription = await this.prisma.subscription.create({
       data: {
         userId,
-        planId: 'trial',
-        status: 'active',
+        planId: 'professional', // Use professional plan for trial
+        status: 'trial',
         trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days trial
       },
     });
@@ -249,8 +249,8 @@ export class UserService {
     const subscription = await this.prisma.subscription.findFirst({
       where: { 
         userId,
-        status: 'active',
-        planId: 'trial'
+        status: 'trial',
+        planId: 'professional'
       },
     });
     
@@ -274,8 +274,8 @@ export class UserService {
     await this.prisma.subscription.updateMany({
       where: { 
         userId,
-        planId: 'trial',
-        status: 'active'
+        planId: 'professional',
+        status: 'trial'
       },
       data: { status: 'cancelled' },
     });

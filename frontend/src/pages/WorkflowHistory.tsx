@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
+import RollbackConfirmModal from "@/components/RollbackConfirmModal";
 import { ApiService } from "@/lib/api";
 
 interface ProtectedWorkflow {
@@ -41,6 +42,12 @@ interface ProtectedWorkflow {
   status: string;
   protectionStatus: string;
   lastModified: string;
+  versions: number;
+  lastModifiedBy: {
+    name: string;
+    initials: string;
+    email: string;
+  };
 }
 
 interface VersionHistoryItem {
@@ -89,6 +96,12 @@ const WorkflowHistory = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [rollbacking, setRollbacking] = useState<string | null>(null);
+  const [rollbackModal, setRollbackModal] = useState<{open: boolean, workflow: any}>({
+    open: false,
+    workflow: null
+  });
 
   useEffect(() => {
     fetchWorkflows();
@@ -115,7 +128,13 @@ const WorkflowHistory = () => {
             name: workflow.name || `Workflow ${workflow.id}`,
             status: workflow.status || 'active',
             protectionStatus: workflow.protectionStatus || 'protected',
-            lastModified: workflow.lastModified || new Date().toLocaleDateString()
+            lastModified: workflow.lastModified || workflow.updatedAt || new Date().toLocaleDateString(),
+            versions: workflow.versions?.length || 0,
+            lastModifiedBy: {
+              name: workflow.owner?.name || 'Unknown User',
+              initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
+              email: workflow.owner?.email || ''
+            }
           }));
           
           setWorkflows(transformedWorkflows);
@@ -127,45 +146,76 @@ const WorkflowHistory = () => {
       
       // No fallback to localStorage or mock data. Only use real API data.
       setWorkflows([]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch workflows:', err);
-      setError('Failed to load workflows');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load workflows';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDownload = async (versionId: string) => {
+  const handleDownload = async (workflowId: string) => {
+    setDownloading(workflowId);
     try {
+      // Get the latest version of the workflow
+      const version = await ApiService.downloadWorkflowVersion(workflowId, 'latest');
+      
+      // Create and download the file
+      const blob = new Blob([JSON.stringify(version, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workflow-${workflowId}-latest.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       toast({
-        title: "Download Started",
-        description: "Version download has been initiated.",
+        title: "Download Complete",
+        description: "Workflow version has been downloaded successfully.",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download failed:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to download workflow version';
       toast({
         title: "Download Failed",
-        description: "Failed to download version.",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setDownloading(null);
     }
   };
 
-  const handleRollback = async (versionId: string) => {
-    if (!confirm('Are you sure you want to rollback to this version?')) return;
+  const handleRollbackClick = (workflow: ProtectedWorkflow) => {
+    setRollbackModal({ open: true, workflow });
+  };
+
+  const handleRollback = async () => {
+    if (!rollbackModal.workflow) return;
     
+    setRollbacking(rollbackModal.workflow.id);
     try {
+      await ApiService.rollbackWorkflow(rollbackModal.workflow.id);
       toast({
-        title: "Rollback Initiated",
-        description: "Version rollback has been started.",
+        title: "Rollback Complete",
+        description: "Workflow has been rolled back successfully.",
       });
-    } catch (err) {
+      // Refresh workflows list
+      fetchWorkflows();
+    } catch (err: any) {
       console.error('Rollback failed:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to rollback workflow';
       toast({
         title: "Rollback Failed",
-        description: "Failed to rollback to version.",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setRollbacking(null);
+      setRollbackModal({ open: false, workflow: null });
     }
   };
 
@@ -179,8 +229,9 @@ const WorkflowHistory = () => {
   // Calculate stats for the header cards
   const activeWorkflowsCount = workflows.filter(w => w.status === 'active').length;
   const protectedWorkflowsCount = workflows.filter(w => w.protectionStatus === 'protected').length;
-  // Version count not available in ProtectedWorkflow, so omit or set to 0
-  const totalVersionsCount = 0;
+  const totalVersionsCount = workflows.reduce((total, workflow) => {
+    return total + (workflow.versions || 0);
+  }, 0);
 
   return (
     <MainAppLayout title="Workflow History">
@@ -366,6 +417,7 @@ const WorkflowHistory = () => {
                         <div className="space-y-4">
                           <div className="flex items-center justify-between text-sm text-gray-600">
                             <span>Last Modified: {workflow.lastModified}</span>
+                            <span>{workflow.versions} versions</span>
                           </div>
                           
                           {/* Action Buttons */}
@@ -382,11 +434,40 @@ const WorkflowHistory = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDownload(`${workflow.id}-latest`)}
+                              onClick={() => handleDownload(workflow.id)}
+                              disabled={downloading === workflow.id}
                               className="flex-1"
                             >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download Latest
+                              {downloading === workflow.id ? (
+                                <>
+                                  <div className="w-4 h-4 mr-2 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                                  Downloading...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Latest
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRollbackClick(workflow)}
+                              disabled={rollbacking === workflow.id}
+                              className="flex-1"
+                            >
+                              {rollbacking === workflow.id ? (
+                                <>
+                                  <div className="w-4 h-4 mr-2 border-2 border-gray-300 border-t-orange-600 rounded-full animate-spin" />
+                                  Rolling Back...
+                                </>
+                              ) : (
+                                <>
+                                  <RotateCcw className="w-4 h-4 mr-2" />
+                                  Rollback
+                                </>
+                              )}
                             </Button>
                           </div>
                         </div>
@@ -399,6 +480,15 @@ const WorkflowHistory = () => {
           )}
         </div>
       </ContentSection>
+
+      {/* Rollback Confirmation Modal */}
+      <RollbackConfirmModal
+        open={rollbackModal.open}
+        onClose={() => setRollbackModal({ open: false, workflow: null })}
+        onConfirm={handleRollback}
+        workflow={rollbackModal.workflow}
+        loading={rollbacking === rollbackModal.workflow?.id}
+      />
     </MainAppLayout>
   );
 };

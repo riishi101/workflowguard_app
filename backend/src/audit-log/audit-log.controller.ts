@@ -5,6 +5,7 @@ import { CreateAuditLogDto } from './dto';
 
 import { UserService } from '../user/user.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { TrialGuard } from '../guards/trial.guard';
 
 @Controller('audit-logs')
 export class AuditLogController {
@@ -23,7 +24,7 @@ export class AuditLogController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async findAll(
     @Req() req: Request,
     @Query('userId') userId?: string,
@@ -100,7 +101,7 @@ export class AuditLogController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async findOne(@Req() req: Request, @Param('id') id: string) {
     const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
     
@@ -126,7 +127,7 @@ export class AuditLogController {
   }
 
   @Get('user/:userId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async findByUser(@Req() req: Request, @Param('userId') userId: string) {
     let safeUserId = userId;
     if (!safeUserId) {
@@ -153,7 +154,7 @@ export class AuditLogController {
   }
 
   @Get('entity/:entityType/:entityId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async findByEntity(@Req() req: Request, @Param('entityType') entityType: string, @Param('entityId') entityId: string) {
     const userIdFromJwt = (req.user as any)?.sub || (req.user as any)?.id || (req.user as any)?.userId;
     
@@ -174,8 +175,8 @@ export class AuditLogController {
     return await this.auditLogService.findByEntity(entityType, entityId);
   }
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @Get('my/logs')
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async getMyAuditLogs(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -211,7 +212,7 @@ export class AuditLogController {
   }
 
   @Post('export')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async exportAuditLogs(
     @Req() req: Request,
     @Body() filters: {

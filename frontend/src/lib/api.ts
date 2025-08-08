@@ -41,6 +41,31 @@ apiClient.interceptors.response.use(
       }
       // Don't clear token for non-auth endpoints to avoid infinite loops
     }
+    
+    // Handle trial expiration
+    if (error.response?.status === 403 && error.response?.data?.message?.includes('Trial expired')) {
+      // Redirect to settings for trial expired users
+      window.location.href = '/settings';
+    }
+
+    // Handle subscription cancellation
+    if (error.response?.status === 403 && error.response?.data?.message?.includes('Subscription cancelled')) {
+      // Redirect to settings for cancelled subscription users
+      window.location.href = '/settings';
+    }
+
+    // Handle subscription expiration
+    if (error.response?.status === 403 && error.response?.data?.message?.includes('Subscription expired')) {
+      // Redirect to settings for expired subscription users
+      window.location.href = '/settings';
+    }
+
+    // Handle payment failure
+    if (error.response?.status === 403 && error.response?.data?.message?.includes('Payment failed')) {
+      // Redirect to settings for payment failed users
+      window.location.href = '/settings';
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -504,6 +529,46 @@ class ApiService {
     }
   }
 
+  static async getUsers(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/users');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async verifyEmail(email: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/user/verify-email', { email });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async uploadAvatar(formData: FormData): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/user/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async removeAvatar(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.delete('/user/avatar');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getNotificationSettings(): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.get('/user/notification-settings');
@@ -585,6 +650,24 @@ class ApiService {
   static async getTrialStatus(): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.get('/subscription/trial-status');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getExpirationStatus(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/subscription/expiration-status');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getNextPaymentInfo(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/subscription/next-payment');
       return response.data;
     } catch (error) {
       throw error;

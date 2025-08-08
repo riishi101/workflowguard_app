@@ -41,14 +41,45 @@ export class WorkflowService {
     }
   }
 
-  async findOne(id: string) {
-    return this.prisma.workflow.findUnique({
-      where: { id },
-      include: {
-        owner: true,
-        versions: true,
-      },
-    });
+  async findOne(id: string, userId: string) {
+    try {
+      const workflow = await this.prisma.workflow.findFirst({
+        where: { 
+          id,
+          ownerId: userId 
+        },
+        include: {
+          owner: true,
+          versions: {
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 1 // Get latest version for lastModified
+          },
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Add computed fields
+      const lastVersion = workflow.versions[0];
+      return {
+        ...workflow,
+        lastModified: lastVersion?.createdAt || workflow.updatedAt,
+        totalVersions: workflow.versions.length,
+        hubspotUrl: workflow.hubspotId ? `https://app.hubspot.com/workflows/${workflow.hubspotId}` : null
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        `Failed to find workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   async findByHubspotId(hubspotId: string, userId: string) {

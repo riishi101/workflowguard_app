@@ -177,4 +177,100 @@ export class SubscriptionService {
       );
     }
   }
+
+  /**
+   * Check if subscription is expired and update status if needed
+   */
+  async checkSubscriptionExpiration(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user?.subscription) {
+        return { isExpired: false, message: 'No subscription found' };
+      }
+
+      const now = new Date();
+      const subscription = user.subscription;
+
+      // Check if subscription has expired
+      if (subscription.nextBillingDate && now > subscription.nextBillingDate) {
+        // Update subscription status to expired
+        await this.prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { status: 'expired' },
+        });
+
+        return { 
+          isExpired: true, 
+          message: 'Subscription has expired',
+          expiredDate: subscription.nextBillingDate
+        };
+      }
+
+      return { isExpired: false };
+    } catch (error) {
+      console.error('Error checking subscription expiration:', error);
+      return { isExpired: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get next payment information
+   */
+  async getNextPaymentInfo(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user?.subscription) {
+        return { hasSubscription: false };
+      }
+
+      const subscription = user.subscription;
+      const now = new Date();
+
+      if (!subscription.nextBillingDate) {
+        return { hasSubscription: true, nextPayment: null };
+      }
+
+      const daysUntilPayment = Math.ceil(
+        (subscription.nextBillingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      return {
+        hasSubscription: true,
+        nextPayment: {
+          date: subscription.nextBillingDate,
+          daysUntil: daysUntilPayment,
+          isOverdue: daysUntilPayment < 0,
+          amount: this.getPlanPrice(subscription.planId),
+          currency: 'USD'
+        }
+      };
+    } catch (error) {
+      console.error('Error getting next payment info:', error);
+      return { hasSubscription: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get plan price based on plan ID
+   */
+  private getPlanPrice(planId: string): number {
+    const prices: Record<string, number> = {
+      'starter': 19,
+      'professional': 49,
+      'enterprise': 99
+    };
+    return prices[planId] || 0;
+  }
 } 

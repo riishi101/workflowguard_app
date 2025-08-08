@@ -7,6 +7,7 @@ import { rateLimit } from 'express-rate-limit';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { MarketplaceExceptionFilter } from './guards/marketplace-error.guard';
 
 // Polyfill for crypto.randomUUID if not available
 if (!global.crypto) {
@@ -40,7 +41,7 @@ async function bootstrap() {
   });
   app.use(limiter);
 
-  // CORS configuration - Allow frontend origins
+  // CORS configuration - Allow frontend origins and HubSpot marketplace
   const allowedOrigins = [
     'http://localhost:5173', // Vite dev server
     'http://localhost:3000', // Alternative dev port
@@ -48,6 +49,9 @@ async function bootstrap() {
     'http://127.0.0.1:3000',
     'https://www.workflowguard.pro', // Production frontend
     'https://workflowguard.pro', // Production frontend (without www)
+    'https://app.hubspot.com', // HubSpot app interface
+    'https://developers.hubspot.com', // HubSpot developer portal
+    'https://marketplace.hubspot.com', // HubSpot marketplace
     process.env.FRONTEND_URL, // Environment-specific frontend URL
   ].filter(Boolean);
 
@@ -70,6 +74,11 @@ async function bootstrap() {
       if (origin.match(/^https:\/\/(www\.)?workflowguard\.pro$/)) {
         return callback(null, true);
       }
+
+      // Allow HubSpot domains
+      if (origin.match(/^https:\/\/(app|developers|marketplace)\.hubspot\.com$/)) {
+        return callback(null, true);
+      }
       
       console.warn(`CORS blocked origin: ${origin}`);
       return callback(new Error('Not allowed by CORS'));
@@ -80,12 +89,15 @@ async function bootstrap() {
       'Content-Type', 
       'Authorization', 
       'x-user-id',
+      'x-hubspot-signature',
+      'x-hubspot-request-timestamp',
+      'x-hubspot-portal-id',
       'Accept',
       'Origin',
       'X-Requested-With',
       'Access-Control-Allow-Origin'
     ],
-    exposedHeaders: ['Content-Length', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Requested-With', 'X-Marketplace-App', 'X-Marketplace-Version'],
     preflightContinue: false,
     optionsSuccessStatus: 204
   });
@@ -100,20 +112,24 @@ async function bootstrap() {
     transform: true,
   }));
 
-  // Register global exception filter
+  // Register global exception filter with marketplace support
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Add request logging middleware
+  // Add request logging middleware with marketplace support
   app.use((req: Request, res: Response, next: NextFunction) => {
     const timestamp = new Date().toISOString();
     const origin = req.headers.origin || 'no-origin';
-    console.log(`${timestamp} - ${req.method} ${req.url} - Origin: ${origin}`);
+    const isMarketplaceRequest = req.url.includes('/hubspot-marketplace') || 
+                                req.headers['x-hubspot-signature'] ||
+                                req.headers['x-hubspot-portal-id'];
+    
+    console.log(`${timestamp} - ${req.method} ${req.url} - Origin: ${origin}${isMarketplaceRequest ? ' [MARKETPLACE]' : ''}`);
     
     // Add CORS headers for preflight requests
     if (req.method === 'OPTIONS') {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-user-id,Accept,Origin,X-Requested-With');
+      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-user-id,x-hubspot-signature,x-hubspot-request-timestamp,x-hubspot-portal-id,Accept,Origin,X-Requested-With');
       res.header('Access-Control-Allow-Credentials', 'true');
       return res.status(204).end();
     }
@@ -125,6 +141,7 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📊 Health check: http://localhost:${port}/api`);
+  console.log(`🏪 HubSpot Marketplace endpoints: http://localhost:${port}/api/hubspot-marketplace`);
 }
 
 bootstrap();

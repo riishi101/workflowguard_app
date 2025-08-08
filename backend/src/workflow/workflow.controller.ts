@@ -3,6 +3,7 @@ import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { TrialGuard } from '../guards/trial.guard';
 import { Public } from '../auth/public.decorator';
 import { StartWorkflowProtectionDto } from './dto/start-workflow-protection.dto';
 
@@ -21,7 +22,7 @@ export class WorkflowController {
   }
 
   @Get('by-hubspot-id/:hubspotId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async findByHubspotId(@Param('hubspotId') hubspotId: string, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     
@@ -55,7 +56,7 @@ export class WorkflowController {
   }
 
   @Get('hubspot')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async getHubSpotWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     
@@ -84,7 +85,7 @@ export class WorkflowController {
   }
 
   @Get('protected')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async getProtectedWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     
@@ -98,16 +99,22 @@ export class WorkflowController {
 
     try {
       const workflows = await this.workflowService.getProtectedWorkflows(userId);
-      console.log('getProtectedWorkflows - userId:', userId);
-      console.log('getProtectedWorkflows - fetched workflows:', workflows);
-      return workflows;
+      return {
+        success: true,
+        data: workflows,
+        message: `Successfully fetched ${workflows.length} protected workflows`
+      };
     } catch (error) {
-      return [];
+      console.error('Failed to fetch protected workflows:', error);
+      throw new HttpException(
+        `Failed to fetch protected workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
   @Post('sync-hubspot')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async syncHubSpotWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     
@@ -120,13 +127,14 @@ export class WorkflowController {
     }
 
     try {
-      const syncedWorkflows = await this.workflowService.syncHubSpotWorkflows(userId);
-      
+      const workflows = await this.workflowService.syncHubSpotWorkflows(userId);
       return {
-        message: `Successfully synced ${syncedWorkflows.length} workflows from HubSpot`,
-        workflows: syncedWorkflows
+        success: true,
+        data: workflows,
+        message: `Successfully synced ${workflows.length} workflows from HubSpot`
       };
     } catch (error) {
+      console.error('Failed to sync HubSpot workflows:', error);
       throw new HttpException(
         `Failed to sync HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -135,7 +143,7 @@ export class WorkflowController {
   }
 
   @Post(':id/automated-backup')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async createAutomatedBackup(@Param('id') workflowId: string, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -161,7 +169,7 @@ export class WorkflowController {
   }
 
   @Post(':id/change-notification')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async createChangeNotification(@Param('id') workflowId: string, @Body() changes: any, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -186,7 +194,7 @@ export class WorkflowController {
   }
 
   @Post(':id/approval-request')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async createApprovalRequest(@Param('id') workflowId: string, @Body() requestedChanges: any, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -212,7 +220,7 @@ export class WorkflowController {
   }
 
   @Get(':id/compliance-report')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async generateComplianceReport(
     @Param('id') workflowId: string,
     @Query('startDate') startDate: string,
@@ -243,8 +251,32 @@ export class WorkflowController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.workflowService.findOne(id);
+  @UseGuards(JwtAuthGuard, TrialGuard)
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+    
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const workflow = await this.workflowService.findOne(id, userId);
+      return {
+        success: true,
+        data: workflow,
+        message: 'Workflow found successfully'
+      };
+    } catch (error) {
+      console.error('Failed to find workflow:', error);
+      throw new HttpException(
+        'Workflow not found or access denied',
+        HttpStatus.NOT_FOUND
+      );
+    }
   }
 
   @Patch(':id')
@@ -258,7 +290,7 @@ export class WorkflowController {
   }
 
   @Post(':id/rollback/:versionId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async restoreWorkflowVersion(@Param('id') workflowId: string, @Param('versionId') versionId: string, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -284,7 +316,7 @@ export class WorkflowController {
   }
 
   @Post(':id/rollback')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async rollbackWorkflow(@Param('id') workflowId: string, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -310,7 +342,7 @@ export class WorkflowController {
   }
 
   @Get(':id/version/:versionId/download')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async downloadWorkflowVersion(@Param('id') workflowId: string, @Param('versionId') versionId: string) {
     try {
       const versionData = await this.workflowService.downloadWorkflowVersion(workflowId, versionId);
@@ -324,7 +356,7 @@ export class WorkflowController {
   }
 
   @Post('start-protection')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -370,7 +402,7 @@ export class WorkflowController {
   }
 
   @Get('stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   async getWorkflowStats(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {

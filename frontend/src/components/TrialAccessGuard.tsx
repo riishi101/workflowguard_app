@@ -63,6 +63,17 @@ const TrialAccessGuard = ({ children }: TrialAccessGuardProps) => {
       } catch (error: any) {
         console.error('Trial access check failed:', error);
         
+        // Handle trial expiration from backend
+        if (error.response?.status === 403 && error.response?.data?.message?.includes('Trial expired')) {
+          toast({
+            title: "Trial Expired",
+            description: "Your trial has expired. Please upgrade to continue using WorkflowGuard.",
+            variant: "destructive",
+          });
+          navigate('/settings');
+          return;
+        }
+        
         if (error.response?.status === 402) {
           // Payment required - trial expired
           toast({

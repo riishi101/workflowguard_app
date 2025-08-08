@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
-import { Download, Calendar, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Download, Calendar, AlertTriangle, Loader2, RefreshCw, ChevronLeft, ChevronRight, Users } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -33,19 +33,58 @@ interface AuditLog {
   ipAddress: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 const AuditLogTab = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [dateRange, setDateRange] = useState("all");
   const [userFilter, setUserFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
+    fetchUsers();
     fetchAuditLogs();
-  }, [dateRange, userFilter, actionFilter]);
+  }, [dateRange, userFilter, actionFilter, currentPage, pageSize]);
+
+  const fetchUsers = async () => {
+    try {
+      // Fetch users from the system for the filter dropdown
+      const response = await ApiService.getUsers();
+      if (response && response.data && Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else {
+        // Fallback to common users if API fails
+        setUsers([
+          { id: 'current-user', name: 'Current User', email: 'user@example.com' },
+          { id: 'admin', name: 'Admin User', email: 'admin@workflowguard.pro' },
+          { id: 'support', name: 'Support Team', email: 'contact@workflowguard.pro' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      // Set fallback users
+      setUsers([
+        { id: 'current-user', name: 'Current User', email: 'user@example.com' },
+        { id: 'admin', name: 'Admin User', email: 'admin@workflowguard.pro' },
+        { id: 'support', name: 'Support Team', email: 'contact@workflowguard.pro' }
+      ]);
+    }
+  };
 
   const fetchAuditLogs = async () => {
     try {
@@ -55,22 +94,38 @@ const AuditLogTab = () => {
         dateRange,
         user: userFilter !== "all" ? userFilter : undefined,
         action: actionFilter !== "all" ? actionFilter : undefined,
+        page: currentPage,
+        pageSize,
       });
 
       // Add null check for response.data
-      if (response && response.data && Array.isArray(response.data)) {
-        setAuditLogs(response.data);
+      if (response && response.data) {
+        if (Array.isArray(response.data)) {
+          setAuditLogs(response.data);
+          setTotalRecords(response.data.length);
+          setTotalPages(Math.ceil(response.data.length / pageSize));
+        } else if (response.data.logs && Array.isArray(response.data.logs)) {
+          setAuditLogs(response.data.logs);
+          setTotalRecords(response.data.total || response.data.logs.length);
+          setTotalPages(response.data.totalPages || Math.ceil((response.data.total || response.data.logs.length) / pageSize));
+        } else {
+          setAuditLogs([]);
+          setTotalRecords(0);
+          setTotalPages(1);
+        }
       } else {
-        // Set empty array if no data received
         setAuditLogs([]);
+        setTotalRecords(0);
+        setTotalPages(1);
       }
     } catch (err: any) {
       console.error('Failed to fetch audit logs:', err);
       const errMsg = err.response?.data?.message || 'Failed to load audit logs. Please try again.';
       setError(errMsg);
 
-      // Set empty array on error
       setAuditLogs([]);
+      setTotalRecords(0);
+      setTotalPages(1);
 
       // Suppress toast for plan restriction/403 errors
       if (
@@ -81,7 +136,6 @@ const AuditLogTab = () => {
           errMsg.includes('403')
         ))
       ) {
-        // Do not show error toast for plan restriction
         return;
       }
       toast({
@@ -130,6 +184,31 @@ const AuditLogTab = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  const getActionColor = (action: string) => {
+    if (action.toLowerCase().includes('delete')) return "bg-red-100 text-red-800";
+    if (action.toLowerCase().includes('create')) return "bg-green-100 text-green-800";
+    if (action.toLowerCase().includes('update')) return "bg-blue-100 text-blue-800";
+    if (action.toLowerCase().includes('rollback')) return "bg-orange-100 text-orange-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      return new Date(timestamp).toLocaleString();
+    } catch {
+      return timestamp;
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -143,7 +222,7 @@ const AuditLogTab = () => {
         
         <div className="space-y-4">
           <div className="flex items-center gap-4">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-10 w-40" />
             ))}
           </div>
@@ -206,7 +285,11 @@ const AuditLogTab = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Users</SelectItem>
-                    {/* Dynamic user list would be populated from API */}
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -219,6 +302,9 @@ const AuditLogTab = () => {
                     <SelectItem value="created">Created</SelectItem>
                     <SelectItem value="updated">Updated</SelectItem>
                     <SelectItem value="deleted">Deleted</SelectItem>
+                    <SelectItem value="rolled_back">Rolled Back</SelectItem>
+                    <SelectItem value="protected">Protected</SelectItem>
+                    <SelectItem value="exported">Exported</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -367,15 +453,22 @@ const AuditLogTab = () => {
             </Select>
           </div>
 
-          <Select value={userFilter} onValueChange={setUserFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              {/* Dynamic user list would be populated from API */}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-500" />
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All Users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <Select value={actionFilter} onValueChange={setActionFilter}>
             <SelectTrigger className="w-40">
@@ -386,6 +479,9 @@ const AuditLogTab = () => {
               <SelectItem value="created">Created</SelectItem>
               <SelectItem value="updated">Updated</SelectItem>
               <SelectItem value="deleted">Deleted</SelectItem>
+              <SelectItem value="rolled_back">Rolled Back</SelectItem>
+              <SelectItem value="protected">Protected</SelectItem>
+              <SelectItem value="exported">Exported</SelectItem>
             </SelectContent>
           </Select>
 
@@ -422,55 +518,115 @@ const AuditLogTab = () => {
         {/* Audit Log Table */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {auditLogs.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead>TIMESTAMP</TableHead>
-                  <TableHead>USER</TableHead>
-                  <TableHead>ACTION</TableHead>
-                  <TableHead>WORKFLOW NAME</TableHead>
-                  <TableHead>OLD VALUE</TableHead>
-                  <TableHead>NEW VALUE</TableHead>
-                  <TableHead>IP ADDRESS</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {auditLogs.map((log) => (
-                  <TableRow key={log.id} className="hover:bg-gray-50">
-                    <TableCell className="font-mono text-sm text-gray-600">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="font-medium">{log.user}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          log.action.includes("Delete")
-                            ? "bg-red-100 text-red-800"
-                            : log.action.includes("Create")
-                              ? "bg-green-100 text-green-800"
-                              : "bg-blue-100 text-blue-800"
-                        }
-                      >
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="link" className="p-0 text-blue-600">
-                        {log.workflowName}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-gray-600">
-                      {log.oldValue}
-                    </TableCell>
-                    <TableCell className="font-medium">{log.newValue}</TableCell>
-                    <TableCell className="font-mono text-sm text-gray-600">
-                      {log.ipAddress}
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>TIMESTAMP</TableHead>
+                    <TableHead>USER</TableHead>
+                    <TableHead>ACTION</TableHead>
+                    <TableHead>WORKFLOW NAME</TableHead>
+                    <TableHead>OLD VALUE</TableHead>
+                    <TableHead>NEW VALUE</TableHead>
+                    <TableHead>IP ADDRESS</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {auditLogs.map((log) => (
+                    <TableRow key={log.id} className="hover:bg-gray-50">
+                      <TableCell className="font-mono text-sm text-gray-600">
+                        {formatTimestamp(log.timestamp)}
+                      </TableCell>
+                      <TableCell className="font-medium">{log.user}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={getActionColor(log.action)}
+                        >
+                          {log.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="link" className="p-0 text-blue-600">
+                          {log.workflowName}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {log.oldValue}
+                      </TableCell>
+                      <TableCell className="font-medium">{log.newValue}</TableCell>
+                      <TableCell className="font-mono text-sm text-gray-600">
+                        {log.ipAddress}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>
+                      Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} records
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Select value={pageSize.toString()} onValueChange={(value) => handlePageSizeChange(parseInt(value))}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <span className="text-sm text-gray-600">per page</span>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const page = i + 1;
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(page)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-12">
               <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />

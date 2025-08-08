@@ -2,12 +2,13 @@ import { Controller, Get, Req, HttpException, HttpStatus, UseGuards } from '@nes
 import { Request } from 'express';
 import { WorkflowService } from '../workflow/workflow.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { TrialGuard } from '../guards/trial.guard';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly workflowService: WorkflowService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard)
   @Get('stats')
   async getDashboardStats(@Req() req: Request) {
     try {

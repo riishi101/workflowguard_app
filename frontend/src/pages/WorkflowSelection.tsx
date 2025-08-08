@@ -68,6 +68,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [retryCount, setRetryCount] = useState(0);
   const [workflowsFetched, setWorkflowsFetched] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [planLimit, setPlanLimit] = useState(500); // Default to 500, will be updated from subscription
   const maxRetries = 10; // Increased from 3 to 10
 
   // Fetch workflows from HubSpot
@@ -234,11 +235,29 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     }
   };
 
+  // Fetch subscription to get plan limits
+  const fetchSubscription = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const subscription = await ApiService.getSubscription();
+      if (subscription.success && subscription.data) {
+        const limit = subscription.data.planCapacity || 500;
+        setPlanLimit(limit);
+        console.log('WorkflowSelection - Plan limit updated:', limit);
+      }
+    } catch (error) {
+      console.error('WorkflowSelection - Failed to fetch subscription:', error);
+      // Keep default limit of 500
+    }
+  };
+
   useEffect(() => {
     // Only fetch workflows if user is authenticated and auth loading is complete
     if (!authLoading) {
       setRetryCount(0); // Reset retry count on new auth state
       fetchWorkflows();
+      fetchSubscription(); // Fetch subscription for plan limits
 
       // Fallback: if workflows don't load within 5 seconds, show the screen anyway
       const fallbackTimer = setTimeout(() => {
@@ -268,11 +287,22 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   }, [error, retryCount, loading]);
 
   const handleWorkflowToggle = (workflowId: string) => {
-    setSelectedWorkflows((prev) =>
-      prev.includes(workflowId)
-        ? prev.filter((id) => id !== workflowId)
-        : [...prev, workflowId],
-    );
+    setSelectedWorkflows((prev) => {
+      if (prev.includes(workflowId)) {
+        return prev.filter((id) => id !== workflowId);
+      } else {
+        // Check if adding this workflow would exceed plan limit
+        if (prev.length >= planLimit) {
+          toast({
+            title: "Plan Limit Reached",
+            description: `You can only select up to ${planLimit} workflows with your current plan.`,
+            variant: "destructive",
+          });
+          return prev;
+        }
+        return [...prev, workflowId];
+      }
+    });
   };
 
   const handleSelectAll = () => {
@@ -283,7 +313,19 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const activeWorkflowIds = filteredWorkflows
         .filter(w => w.status === "ACTIVE" && !w.isProtected)
         .map(w => w.id);
-      setSelectedWorkflows(activeWorkflowIds);
+      
+      // Limit to plan capacity
+      const limitedWorkflowIds = activeWorkflowIds.slice(0, planLimit);
+      
+      if (activeWorkflowIds.length > planLimit) {
+        toast({
+          title: "Plan Limit Applied",
+          description: `Only ${planLimit} workflows selected due to your plan limit.`,
+          variant: "default",
+        });
+      }
+      
+      setSelectedWorkflows(limitedWorkflowIds);
       setSelectAll(true);
     }
   };
@@ -314,67 +356,54 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
       console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
       console.log('WorkflowSelection - Authentication state:', { isAuthenticated, user });
-      console.log('🔍 DEBUG: WorkflowSelection handleStartProtecting called');
-      console.log('🔍 DEBUG: User object:', user);
-      console.log('🔍 DEBUG: User ID:', user?.id);
-      console.log('WorkflowSelection - User object details:', {
-        id: user?.id,
-        email: user?.email,
-        name: user?.name,
-        hasId: !!user?.id
-      });
 
-      // Check if we have a valid token
-      const token = localStorage.getItem('authToken');
-      console.log('WorkflowSelection - Auth token exists:', !!token);
-
-      // Call API to start protection
-      console.log('🔍 DEBUG: Raw workflow data before transformation:', workflows);
-
+      // Transform selected workflows for API
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
-        .map(workflow => {
-          console.log('🔍 DEBUG: Workflow isProtected value:', workflow.isProtected);
-          const transformedWorkflow = {
-            ...workflow,
-            versions: 1, // Default value
-            lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" }, // Default object
-            protectionStatus: "protected", // Set to protected since we're activating protection
-            status: workflow.status && ["ACTIVE", "INACTIVE", "DRAFT"].includes(workflow.status.toUpperCase())
-              ? workflow.status.toLowerCase() as "active" | "inactive" | "draft"
-              : "unknown", // Handle unexpected values gracefully
-          };
+        .map(workflow => ({
+          id: workflow.id,
+          hubspotId: workflow.id, // Use workflow.id as hubspotId
+          name: workflow.name,
+          status: workflow.status,
+          folder: workflow.folder,
+          lastModified: workflow.lastModified,
+          steps: workflow.steps,
+          contacts: workflow.contacts,
+          isProtected: workflow.isProtected || false
+        }));
 
-          console.log('🔍 DEBUG: Transformed Workflow:', transformedWorkflow);
+      console.log('WorkflowSelection - Selected workflow objects:', selectedWorkflowObjects);
 
-          return transformedWorkflow;
-        });
+      // Call real API to start protection
+      const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
+      
+      console.log('WorkflowSelection - Protection API response:', response);
 
-      // Store selected workflows in WorkflowState
-      WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => {
-        console.log('Transformed Workflow:', workflow);
-        return {
+      if (response.success) {
+        // Store selected workflows in WorkflowState for backward compatibility
+        WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => ({
           ...workflow,
-          status: workflow.status as "active" | "inactive" | "error",
-          protectionStatus: "protected" as "protected" | "unprotected",
-        };
-      }));
+          versions: 1,
+          lastModifiedBy: { name: "Unknown", initials: "U", email: "unknown@example.com" },
+          protectionStatus: "protected",
+          status: (workflow.status === "DRAFT" ? "inactive" : workflow.status.toLowerCase()) as "active" | "inactive" | "error"
+        })));
 
-      // Declare and assign response variable
-      const response = { data: { message: "Workflows are now being monitored." } };
-
-      // Add a longer delay to ensure dashboard has time to load properly
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Increased from 500ms to 2000ms
-      
-      // Always navigate directly to dashboard instead of calling onComplete
-      console.log('WorkflowSelection - Navigating directly to dashboard after 2 second delay');
-      navigate("/dashboard");
-      
-      // Show success toast after navigation
-      toast({
-        title: "Protection Activated!",
-        description: response.data?.message || `${selectedWorkflows.length} workflows are now being monitored.`,
-      });
+        // Add a delay to ensure dashboard has time to load properly
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Navigate to dashboard
+        console.log('WorkflowSelection - Navigating to dashboard after successful protection');
+        navigate("/dashboard");
+        
+        // Show success toast
+        toast({
+          title: "Protection Activated!",
+          description: response.message || `${selectedWorkflows.length} workflows are now being monitored.`,
+        });
+      } else {
+        throw new Error(response.message || 'Failed to start protection');
+      }
       
     } catch (error: any) {
       console.error('WorkflowSelection - Failed to start protection:', error);
@@ -602,7 +631,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               <p className="text-2xl font-bold text-purple-600">
                 Professional
               </p>
-              <p className="text-xs text-gray-600">up to 500 workflows</p>
+              <p className="text-xs text-gray-600">up to {planLimit} workflows</p>
             </CardContent>
           </Card>
         </div>
@@ -617,7 +646,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               </p>
               <p className="text-sm text-blue-800">
                 Your trial includes Professional Plan features, allowing you to
-                monitor up to 500 workflows and retain 90 days of history. Get
+                monitor up to {planLimit} workflows and retain 90 days of history. Get
                 started by selecting your critical workflows below.
               </p>
             </div>
@@ -781,7 +810,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 <Checkbox
                   checked={selectAll}
                   onCheckedChange={handleSelectAll}
-                  disabled={filteredWorkflows.filter(w => w.status === "ACTIVE" && !w.isProtected).length === 0 || !isAuthenticated}
+                  disabled={
+                    filteredWorkflows.filter(w => w.status === "ACTIVE" && !w.isProtected).length === 0 || 
+                    !isAuthenticated ||
+                    planLimit === 0
+                  }
                 />
                 <span className="text-sm text-gray-600">
                   Select all active workflows
@@ -856,7 +889,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                         <Checkbox
                           checked={selectedWorkflows.includes(workflow.id)}
                           onCheckedChange={() => handleWorkflowToggle(workflow.id)}
-                          disabled={workflow.status === "DRAFT" || workflow.isProtected || !isAuthenticated}
+                          disabled={
+                            workflow.status === "DRAFT" || 
+                            workflow.isProtected || 
+                            !isAuthenticated ||
+                            (selectedWorkflows.length >= planLimit && !selectedWorkflows.includes(workflow.id))
+                          }
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -908,7 +946,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                 Selected {selectedWorkflows.length} of {filteredWorkflows.length} workflows
               </p>
               <p className="text-sm text-gray-500">
-                • {500 - selectedWorkflows.length} remaining in your trial
+                • {planLimit - selectedWorkflows.length} remaining in your plan
               </p>
             </div>
             <div className="flex items-center gap-3">

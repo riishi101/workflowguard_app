@@ -1,74 +1,122 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { AlertTriangle, RotateCcw, Loader2 } from "lucide-react";
 
 interface RollbackConfirmModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  workflowName?: string;
+  workflow: any;
+  loading?: boolean;
 }
 
 const RollbackConfirmModal = ({
   open,
   onClose,
   onConfirm,
-  workflowName = "Customer Onboarding",
+  workflow,
+  loading = false
 }: RollbackConfirmModalProps) => {
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
-  };
+  if (!workflow) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg p-0" aria-describedby="rollback-modal-desc">
-        <VisuallyHidden>
-          <DialogTitle>Confirm Rollback to Latest Snapshot</DialogTitle>
-        </VisuallyHidden>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold text-gray-900">
+                Confirm Rollback
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                This action cannot be undone.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Confirm Rollback to Latest Snapshot
-          </h2>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6" id="rollback-modal-desc">
-          {/* Warning Icon */}
-          <div className="flex justify-center">
-            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-yellow-600" />
+        <div className="py-4">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-orange-800 mb-1">
+                  Warning: This will permanently change your workflow
+                </p>
+                <p className="text-orange-700">
+                  Rolling back workflow "{workflow.name}" will revert it to its latest saved version. 
+                  This action cannot be undone.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Warning Message */}
-          <div className="text-center space-y-4">
-            <p className="text-lg text-gray-900">
-              Are you sure you want to revert the workflow '{workflowName}' to
-              its latest saved snapshot?
-            </p>
-            <p className="text-gray-600">
-              This will overwrite the current live version in HubSpot. This
-              action cannot be undone.
-            </p>
+          <div className="space-y-3">
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Workflow Details</h4>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Name:</span>
+                  <span className="font-medium">{workflow.name}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Status:</span>
+                  <span className="font-medium">{workflow.status}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Versions:</span>
+                  <span className="font-medium">{workflow.versions || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Last Modified:</span>
+                  <span className="font-medium">{workflow.lastModified}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">What will happen</h4>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm text-gray-600">
+                <p>• The workflow will be reverted to its latest saved version</p>
+                <p>• Any unsaved changes will be lost</p>
+                <p>• The rollback will be logged in the audit trail</p>
+                <p>• You can view the rollback history in the workflow details</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="flex-1"
+          >
             Cancel
           </Button>
           <Button
-            onClick={handleConfirm}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1"
           >
-            Confirm Rollback
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Rolling Back...
+              </>
+            ) : (
+              <>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Rollback Workflow
+              </>
+            )}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

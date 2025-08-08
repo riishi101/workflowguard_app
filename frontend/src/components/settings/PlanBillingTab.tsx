@@ -196,7 +196,7 @@ const PlanBillingTab = () => {
                   Workflows Monitored
                 </p>
                 <p className="font-semibold text-gray-900">
-                  {usageStats?.workflows?.used ?? subscription?.usage?.workflows ?? 0}/{usageStats?.workflows?.limit ?? subscription?.limits?.workflows ?? 5}
+                  {usageStats?.workflows?.used ?? subscription?.usage?.workflows ?? 0}/{usageStats?.workflows?.limit ?? subscription?.limits?.workflows ?? (trialStatus?.isTrial ? 35 : 10)}
                 </p>
               </div>
               <div>
@@ -242,7 +242,7 @@ const PlanBillingTab = () => {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Up to 5 workflows
+                  Up to 10 workflows
                 </li>
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
@@ -320,7 +320,7 @@ const PlanBillingTab = () => {
               <ul className="space-y-3 mb-6">
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                  Up to 25 workflows
+                  Up to 35 workflows
                 </li>
                 <li className="flex items-center text-sm">
                   <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />

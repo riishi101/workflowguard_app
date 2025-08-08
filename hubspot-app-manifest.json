@@ -1,0 +1,154 @@
+{
+  "name": "WorkflowGuard",
+  "description": "Protect and manage your HubSpot workflows with version control, rollback capabilities, and automated backups. Never lose important workflow changes again.",
+  "public": false,
+  "auth": {
+    "type": "oauth2",
+    "scopes": [
+      "automation",
+      "crm.objects.contacts.read",
+      "crm.objects.companies.read", 
+      "crm.objects.deals.read",
+      "crm.schemas.contacts.read",
+      "crm.schemas.companies.read",
+      "crm.schemas.deals.read",
+      "oauth"
+    ]
+  },
+  "ui": {
+    "cards": [
+      {
+        "name": "workflow-dashboard",
+        "label": "Workflow Protection",
+        "url": "https://www.workflowguard.pro/dashboard",
+        "description": "View and manage your protected workflows"
+      },
+      {
+        "name": "workflow-history",
+        "label": "Version History", 
+        "url": "https://www.workflowguard.pro/workflow-history",
+        "description": "View workflow version history and rollback changes"
+      }
+    ]
+  },
+  "webhooks": [
+    {
+      "subscriptionType": "contact.propertyChange",
+      "propertyName": "workflow_status"
+    },
+    {
+      "subscriptionType": "deal.propertyChange", 
+      "propertyName": "workflow_modified"
+    }
+  ],
+  "settings": {
+    "installedAppId": "workflowguard",
+    "name": "WorkflowGuard Settings",
+    "url": "https://www.workflowguard.pro/settings"
+  },
+  "functions": {
+    "actions": [
+      {
+        "name": "protect_workflow",
+        "label": "Protect Workflow",
+        "description": "Start protecting a HubSpot workflow",
+        "inputFields": [
+          {
+            "name": "workflow_id",
+            "label": "Workflow ID",
+            "type": "string",
+            "required": true
+          }
+        ]
+      },
+      {
+        "name": "rollback_workflow",
+        "label": "Rollback Workflow",
+        "description": "Rollback workflow to previous version",
+        "inputFields": [
+          {
+            "name": "workflow_id",
+            "label": "Workflow ID", 
+            "type": "string",
+            "required": true
+          },
+          {
+            "name": "version_id",
+            "label": "Version ID",
+            "type": "string",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  "pricing": {
+    "plans": [
+      {
+        "id": "starter",
+        "name": "Starter",
+        "price": 19,
+        "interval": "month",
+        "description": "Perfect for small teams",
+        "features": [
+          "Up to 10 workflows",
+          "Workflow Selection",
+          "Dashboard Overview",
+          "Basic Version History",
+          "Manual Backups",
+          "Basic Rollback",
+          "Simple Comparison",
+          "Email Support"
+        ]
+      },
+      {
+        "id": "professional",
+        "name": "Professional",
+        "price": 49,
+        "interval": "month",
+        "description": "Ideal for growing businesses",
+        "features": [
+          "Up to 35 workflows",
+          "Enhanced Dashboard",
+          "Complete Version History",
+          "Automated Backups",
+          "Change Notifications",
+          "Advanced Rollback",
+          "Side-by-side Comparisons",
+          "Compliance Reporting",
+          "Audit Trails",
+          "Priority WhatsApp Support"
+        ]
+      },
+      {
+        "id": "enterprise",
+        "name": "Enterprise",
+        "price": 99,
+        "interval": "month",
+        "description": "For large organizations",
+        "features": [
+          "Unlimited workflows",
+          "Real-time Change Notifications",
+          "Approval Workflows",
+          "Advanced Compliance Reporting",
+          "Complete Audit Trails",
+          "Custom Retention Policies",
+          "Advanced Security Features",
+          "Unlimited Team Members",
+          "White-label Options",
+          "24/7 WhatsApp Support"
+        ]
+      }
+    ]
+  },
+  "support": {
+    "url": "https://www.workflowguard.pro/help-support",
+    "email": "support@workflowguard.pro",
+    "documentation": "https://docs.workflowguard.pro"
+  },
+  "developer": {
+    "name": "WorkflowGuard Team",
+    "email": "dev@workflowguard.pro",
+    "website": "https://www.workflowguard.pro"
+  }
+} 

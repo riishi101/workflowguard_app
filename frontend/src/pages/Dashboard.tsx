@@ -79,53 +79,60 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(0); // State to force re-render
+  const [rollbacking, setRollbacking] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  // Fetch dashboard data
-  const fetchDashboardData = async (retryCount = 0) => {
+  // Fetch dashboard data from backend
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Check if workflows are available in WorkflowState or passed via navigation
-      const workflowsFromState = WorkflowState.getSelectedWorkflows();
-      const workflowsFromLocation = location.state?.workflows || [];
+      console.log('🔍 Dashboard - Fetching data from backend');
 
-      // Ensure workflows are full objects
-      if (workflowsFromState.length > 0 && typeof workflowsFromState[0] === 'object') {
-        console.log("Using workflows from WorkflowState:", workflowsFromState);
-        setWorkflows(workflowsFromState);
-        setLoading(false);
-        return;
-      } else if (workflowsFromLocation.length > 0) {
-        console.log("Using workflows from navigation state:", workflowsFromLocation);
-        setWorkflows(workflowsFromLocation);
-        setLoading(false);
-        return;
-      }
+      // Fetch workflows from backend
+      const workflowsResponse = await ApiService.getProtectedWorkflows();
+      const apiWorkflows = workflowsResponse.data || [];
+      
+      console.log('🔍 Dashboard - Workflows from backend:', apiWorkflows);
 
-      console.log("No workflows in state or navigation, showing empty screen.");
+      // Transform workflows to match DashboardWorkflow interface
+      const transformedWorkflows: DashboardWorkflow[] = apiWorkflows.map((workflow: any) => ({
+        id: workflow.id,
+        name: workflow.name || `Workflow ${workflow.id}`,
+        status: workflow.status || 'active',
+        protectionStatus: workflow.protectionStatus || 'protected',
+        lastModified: workflow.lastModified || workflow.updatedAt || new Date().toLocaleDateString(),
+        versions: workflow.versions?.length || 0,
+        lastModifiedBy: {
+          name: workflow.owner?.name || 'Unknown User',
+          initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
+          email: workflow.owner?.email || ''
+        }
+      }));
 
-      // If no workflows are found, set empty state
+      setWorkflows(transformedWorkflows);
+
+      // Calculate stats from workflows data
+      const calculatedStats: DashboardStats = {
+        totalWorkflows: transformedWorkflows.length,
+        activeWorkflows: transformedWorkflows.filter(w => w.status === 'active').length,
+        protectedWorkflows: transformedWorkflows.filter(w => w.protectionStatus === 'protected').length,
+        totalVersions: transformedWorkflows.reduce((total, w) => total + (w.versions || 0), 0),
+        uptime: 99.9, // Default uptime - could be fetched from backend
+        lastSnapshot: transformedWorkflows.length > 0 ? new Date().toISOString() : '',
+        planCapacity: 100, // Default - could be fetched from subscription
+        planUsed: transformedWorkflows.length
+      };
+
+      setStats(calculatedStats);
+
+    } catch (err: any) {
+      console.error('Dashboard - Failed to fetch dashboard data:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load dashboard data';
+      setError(errorMessage);
       setWorkflows([]);
       setStats(null);
-      WorkflowState.setWorkflowSelection(false);
-      WorkflowState.setSelectedCount(0);
-    } catch (err) {
-      console.error('Dashboard - Failed to fetch dashboard data:', err);
-
-      if (retryCount > 0 && WorkflowState.hasSelectedWorkflows()) {
-        console.log('Dashboard - Retry failed but user has selected workflows, showing empty state');
-        setWorkflows([]);
-        setStats(null);
-        setError(null);
-      } else {
-        setError('Failed to load dashboard data. Please try again.');
-        setWorkflows([]);
-        setStats(null);
-        WorkflowState.setWorkflowSelection(false);
-        WorkflowState.setSelectedCount(0);
-      }
     } finally {
       setLoading(false);
     }
@@ -133,9 +140,9 @@ const Dashboard = () => {
 
   const refreshDashboard = async () => {
     try {
-    setRefreshing(true);
+      setRefreshing(true);
       setError(null);
-    await fetchDashboardData();
+      await fetchDashboardData();
       toast({
         title: "Dashboard Refreshed",
         description: "Dashboard data has been updated successfully.",
@@ -143,58 +150,18 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to refresh dashboard:', error);
     } finally {
-    setRefreshing(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     console.log('Dashboard - Component mounted, fetching dashboard data');
-    console.log('Dashboard - Current workflow state:', {
-      hasSelected: WorkflowState.hasSelectedWorkflows(),
-      count: WorkflowState.getSelectedCount()
-    });
-    
     fetchDashboardData();
   }, []);
 
   // Add effect to track workflows state changes
   useEffect(() => {
     console.log('Dashboard - Workflows state changed:', workflows.length);
-  }, [workflows]);
-
-  // Add effect to force re-render when workflows change
-  useEffect(() => {
-    if (workflows.length > 0) {
-      console.log('Dashboard - Workflows detected, forcing re-render');
-      // Force a re-render by updating a state variable
-      setForceUpdate(prev => prev + 1);
-    }
-  }, [workflows.length]);
-
-  // Log the fetched workflows
-  useEffect(() => {
-    console.log('Dashboard - Fetched workflows:', workflows);
-  }, [workflows]);
-
-  // Log workflows details for debugging
-  useEffect(() => {
-    console.log('Dashboard - Workflows state:', workflows);
-    workflows.forEach(workflow => {
-      console.log('Dashboard - Workflow details:', {
-        id: workflow.id,
-        name: workflow.name,
-        status: workflow.status,
-        protectionStatus: workflow.protectionStatus,
-      });
-    });
-  }, [workflows]);
-
-  // Debugging logs to trace how status and protectionStatus are interpreted
-  useEffect(() => {
-    console.log('🔍 DEBUG: Dashboard - Workflows from WorkflowState:', workflows);
-    workflows.forEach(workflow => {
-      console.log('🔍 DEBUG: Workflow details in Dashboard:', workflow);
-    });
   }, [workflows]);
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
@@ -229,6 +196,7 @@ const Dashboard = () => {
   const handleConfirmRollback = async () => {
     if (!selectedWorkflow) return;
 
+    setRollbacking(selectedWorkflow.id);
     try {
       const response = await ApiService.rollbackWorkflow(selectedWorkflow.id);
       
@@ -241,47 +209,60 @@ const Dashboard = () => {
       await fetchDashboardData();
     } catch (error: any) {
       console.error('Failed to rollback workflow:', error);
+      const errorMessage = error.response?.data?.message || "Failed to rollback workflow. Please try again.";
       toast({
         title: "Rollback Failed",
-        description: error.response?.data?.message || "Failed to rollback workflow. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
+      setRollbacking(null);
       setShowRollbackModal(false);
       setSelectedWorkflow(null);
     }
   };
 
-  const handleAddWorkflow = () => {
-    // Check if user has reached plan limits
-    if (stats && stats.planUsed >= stats.planCapacity) {
-      toast({
-        title: "Plan Limit Reached",
-        description: "You've reached your plan limit. Please upgrade to add more workflows.",
-        variant: "destructive",
-      });
-      return;
+  const handleAddWorkflow = async () => {
+    try {
+      // Fetch current subscription status
+      const subscriptionResponse = await ApiService.getSubscription();
+      const subscription = subscriptionResponse.data;
+      
+      if (subscription && subscription.planUsed >= subscription.planCapacity) {
+        toast({
+          title: "Plan Limit Reached",
+          description: "You've reached your plan limit. Please upgrade to add more workflows.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      navigate("/workflow-selection");
+    } catch (error) {
+      console.error('Failed to check plan limits:', error);
+      // Proceed anyway if check fails
+      navigate("/workflow-selection");
     }
-    
-    navigate("/workflow-selection");
   };
 
   const handleExportData = async () => {
+    setExporting(true);
     try {
-      const response = await ApiService.exportDashboardData();
+      // Export current workflows data
+      const exportData = {
+        workflows: workflows,
+        stats: stats,
+        exportDate: new Date().toISOString(),
+        totalWorkflows: workflows.length,
+        activeWorkflows: workflows.filter(w => w.status === 'active').length,
+        protectedWorkflows: workflows.filter(w => w.protectionStatus === 'protected').length
+      };
 
-      // Sanitize sensitive data before export
-      const sanitizedData = response.data.map((workflow) => {
-        const { id, name, status, protectionStatus, lastModified, versions } = workflow;
-        return { id, name, status, protectionStatus, lastModified, versions };
-      });
-
-      // Create and download the export file
-      const blob = new Blob([JSON.stringify(sanitizedData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `workflowguard-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `workflowguard-dashboard-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -295,9 +276,11 @@ const Dashboard = () => {
       console.error('Failed to export data:', error);
       toast({
         title: "Export Failed",
-        description: error.response?.data?.message || "Failed to export data. Please try again.",
+        description: "Failed to export data. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -413,55 +396,6 @@ const Dashboard = () => {
 
   // Refactor empty state handling to improve UI consistency
   if (!loading && workflows.length === 0) {
-    const hasSelectedWorkflows = WorkflowState.hasSelectedWorkflows();
-    const selectedCount = WorkflowState.getSelectedCount();
-
-    if (hasSelectedWorkflows && selectedCount > 0) {
-      return (
-        <MainAppLayout title="Dashboard Overview">
-          <ContentSection>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-              <div>
-                <p className="text-sm font-semibold text-blue-900">
-                  Processing Your Workflows
-                </p>
-                <p className="text-xs text-blue-800">
-                  Your {selectedCount} workflow{selectedCount > 1 ? 's' : ''} are being set up for protection. This may take a moment...
-                </p>
-              </div>
-            </div>
-          </ContentSection>
-
-          <ContentSection>
-            <div className="bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Setting Up Protection
-              </h3>
-              <p className="text-gray-600 text-base mb-6 max-w-lg">
-                WorkflowGuard is configuring protection for your {selectedCount} selected workflow{selectedCount > 1 ? 's' : ''}. 
-                This process usually takes 1-2 minutes.
-              </p>
-              <div className="flex flex-col items-center gap-4 w-full">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 text-lg font-semibold rounded-lg shadow"
-                >
-                  ↻ Refresh Dashboard
-                </button>
-                <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-                  <span>Your workflows will appear here once processing is complete.</span>
-                </div>
-              </div>
-            </div>
-          </ContentSection>
-        </MainAppLayout>
-      );
-    }
-
     return (
       <MainAppLayout title="Dashboard Overview">
         <ContentSection>
@@ -473,7 +407,7 @@ const Dashboard = () => {
               No Workflows Found
             </h3>
             <p className="text-gray-600 text-base mb-6 max-w-lg">
-              It looks like you haven’t added any workflows yet. Start by adding your first workflow to get started with WorkflowGuard.
+              It looks like you haven't added any workflows yet. Start by adding your first workflow to get started with WorkflowGuard.
             </p>
             <Button
               onClick={handleAddWorkflow}
@@ -623,9 +557,23 @@ const Dashboard = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Workflow
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleExportData}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleExportData}
+                  disabled={exporting}
+                >
+                  {exporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -768,10 +716,20 @@ const Dashboard = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleRollbackLatest(workflow)}
+                            disabled={rollbacking === workflow.id}
                             className="text-orange-600"
                           >
-                            <RotateCcw className="w-4 h-4 mr-1" />
-                            Rollback
+                            {rollbacking === workflow.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Rolling Back...
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                Rollback
+                              </>
+                            )}
                           </Button>
                         </div>
                       </td>
@@ -789,7 +747,8 @@ const Dashboard = () => {
         open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
         onConfirm={handleConfirmRollback}
-        workflowName={selectedWorkflow?.name}
+        workflow={selectedWorkflow}
+        loading={rollbacking === selectedWorkflow?.id}
       />
     </MainAppLayout>
   );

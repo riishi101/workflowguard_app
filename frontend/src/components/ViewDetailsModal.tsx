@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Mail, Clock, Zap } from "lucide-react";
+import { ChevronDown, ChevronRight, Mail, Clock, Zap, User, FileText, Calendar } from "lucide-react";
 import { useState } from "react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -19,9 +19,9 @@ const ViewDetailsModal = ({
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
-    email: true,
-    delay: false,
-    branch: true,
+    overview: true,
+    changes: true,
+    metadata: false,
   });
 
   const toggleSection = (section: string) => {
@@ -37,16 +37,22 @@ const ViewDetailsModal = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-0" aria-describedby="view-details-modal-desc">
         <VisuallyHidden>
-          <DialogTitle>Customer Onboarding Version Details</DialogTitle>
+          <DialogTitle>Workflow Version Details</DialogTitle>
         </VisuallyHidden>
 
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4" id="view-details-modal-desc">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Customer Onboarding
+              Version {version.versionNumber} Details
             </h2>
             <p className="text-sm text-gray-600">
-              Version Snapshot from June 20, 2025, 10:00 AM IST by John Doe
+              {new Date(version.dateTime).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })} by {version.modifiedBy?.name || 'Unknown User'}
             </p>
           </div>
         </div>
@@ -54,239 +60,155 @@ const ViewDetailsModal = ({
         <div className="px-6 py-6 space-y-6">
           {/* Overview Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Overview
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Status
-                  </label>
-                  <p className="text-sm text-gray-900 font-medium">Active</p>
+            <button
+              onClick={() => toggleSection('overview')}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900">
+                Overview
+              </h3>
+              {expandedSections.overview ? (
+                <ChevronDown className="w-5 h-5 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              )}
+            </button>
+            
+            {expandedSections.overview && (
+              <div className="mt-4 grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Version Number
+                    </label>
+                    <p className="text-sm text-gray-900 font-medium">{version.versionNumber}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      Type
+                    </label>
+                    <Badge className="mt-1">
+                      {version.type}
+                    </Badge>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Modified By
+                    </label>
+                    <p className="text-sm text-gray-900">{version.modifiedBy?.name || 'Unknown User'}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Description
-                  </label>
-                  <p className="text-sm text-gray-900">
-                    Nurtures new customers post-purchase.
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Created By
-                  </label>
-                  <p className="text-sm text-gray-900">John Doe</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Created Date
+                    </label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(version.dateTime).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Status
+                    </label>
+                    <Badge className={`mt-1 ${
+                      version.status === 'current' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {version.status === 'current' ? 'Current' : 'Archived'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Workflow ID
-                  </label>
-                  <p className="text-sm text-gray-900 font-mono">123456789</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Last Modified
-                  </label>
-                  <p className="text-sm text-gray-900">
-                    June 20, 2025, 10:00 AM IST
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Goal
-                  </label>
-                  <p className="text-sm text-gray-900">
-                    Contact reaches 'Customer' life cycle stage
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Workflow Steps & Actions */}
+          {/* Changes Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Workflow Steps & Actions
-            </h3>
-            <div className="space-y-3">
-              {/* Send Welcome Email */}
-              <div className="border border-gray-200 rounded-lg">
-                <button
-                  onClick={() => toggleSection("email")}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-blue-500" />
-                    <span className="font-medium text-gray-900">
-                      Send Welcome Email
-                    </span>
-                  </div>
-                  {expandedSections.email ? (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.email && (
-                  <div className="px-4 pb-4 border-t border-gray-100">
-                    <div className="grid grid-cols-2 gap-4 mt-3">
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">
-                          Email Name
-                        </label>
-                        <p className="text-sm text-gray-900">
-                          Welcome to Our Service
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">
-                          Sender
-                        </label>
-                        <p className="text-sm text-gray-900">
-                          support@example.com
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            <button
+              onClick={() => toggleSection('changes')}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900">
+                Changes Summary
+              </h3>
+              {expandedSections.changes ? (
+                <ChevronDown className="w-5 h-5 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              )}
+            </button>
+            
+            {expandedSections.changes && (
+              <div className="mt-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-900 leading-relaxed">
+                    {version.changeSummary || 'No change details available for this version.'}
+                  </p>
+                </div>
               </div>
-
-              {/* Delay */}
-              <div className="border border-gray-200 rounded-lg">
-                <button
-                  onClick={() => toggleSection("delay")}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-orange-500" />
-                    <span className="font-medium text-gray-900">
-                      Delay for 1 Day
-                    </span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-
-              {/* If/Then Branch */}
-              <div className="border border-gray-200 rounded-lg">
-                <button
-                  onClick={() => toggleSection("branch")}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-green-500" />
-                    <span className="font-medium text-gray-900">
-                      If/Then Branch: High Value Leads
-                    </span>
-                  </div>
-                  {expandedSections.branch ? (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-500" />
-                  )}
-                </button>
-                {expandedSections.branch && (
-                  <div className="px-4 pb-4 border-t border-gray-100">
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">
-                          Condition
-                        </label>
-                        <p className="text-sm text-gray-900">
-                          If Contact Property 'Industry' is 'Tech'
-                        </p>
-                      </div>
-                      <div className="ml-4 space-y-2">
-                        <div className="text-xs font-medium text-gray-600">
-                          If True
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-900">
-                            Send Premium Features Email
-                          </span>
-                        </div>
-                        <div className="text-xs font-medium text-gray-600 mt-2">
-                          If False
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm text-gray-900">
-                            Send Basic Features Email
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Workflow Settings & Properties */}
+          {/* Metadata Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Workflow Settings & Properties
-            </h3>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Timezone
-                  </label>
-                  <p className="text-sm text-gray-900">
-                    Eastern Time (US & Canada)
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Auto-archive
-                  </label>
-                  <p className="text-sm text-gray-900">Yes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Skip Inactive Contacts
-                  </label>
-                  <p className="text-sm text-gray-900">Yes</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Owner
-                  </label>
-                  <p className="text-sm text-gray-900">Marketing Team</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Allow Re-enrollment
-                  </label>
-                  <p className="text-sm text-gray-900">Yes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Unenrollment Triggers
-                  </label>
-                  <p className="text-sm text-gray-900">
-                    Contact unsubscribes from all emails
-                  </p>
+            <button
+              onClick={() => toggleSection('metadata')}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <h3 className="text-lg font-semibold text-gray-900">
+                Technical Details
+              </h3>
+              {expandedSections.metadata ? (
+                <ChevronDown className="w-5 h-5 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-gray-500" />
+              )}
+            </button>
+            
+            {expandedSections.metadata && (
+              <div className="mt-4">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Version ID:</span>
+                    <span className="font-mono text-gray-900">{version.id}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Created:</span>
+                    <span className="text-gray-900">
+                      {new Date(version.dateTime).toISOString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Type:</span>
+                    <span className="text-gray-900">{version.type}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Status:</span>
+                    <span className="text-gray-900">{version.status}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
           <Button variant="outline" onClick={onClose}>
-            Back to History
-          </Button>
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-            Restore this Version
+            Close
           </Button>
         </div>
       </DialogContent>

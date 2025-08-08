@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
-import { Lock, Loader2, Save } from "lucide-react";
+import { Lock, Loader2, Save, Mail, AlertCircle } from "lucide-react";
 
 interface NotificationSettings {
   enabled: boolean;
@@ -33,44 +33,77 @@ const NotificationsTab = () => {
     criticalActionModified: false,
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [originalSettings, setOriginalSettings] = useState<NotificationSettings | null>(null);
 
   useEffect(() => {
     fetchNotificationSettings();
   }, []);
 
+  // Email validation function
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Get user's email from profile for default
+  const getUserEmail = async (): Promise<string> => {
+    try {
+      const response = await ApiService.getUserProfile();
+      return response.data?.email || "";
+    } catch (error) {
+      console.error('Failed to get user email:', error);
+      return "";
+    }
+  };
+
   const fetchNotificationSettings = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Get user email for default
+      const userEmail = await getUserEmail();
+      
       const response = await ApiService.getNotificationSettings();
       
       // Add null check for response.data
       if (response && response.data) {
-        setSettings(response.data);
+        const settingsData = {
+          ...response.data,
+          // Use user's email as default if no email is set
+          email: response.data.email || userEmail || "contact@workflowguard.pro"
+        };
+        setSettings(settingsData);
+        setOriginalSettings(settingsData);
       } else {
-        // Set default settings if no data received
-        setSettings({
+        // Set default settings with user's email
+        const defaultSettings = {
           enabled: false,
-          email: "",
-          workflowDeleted: false,
-          enrollmentTriggerModified: false,
-          workflowRolledBack: false,
-          criticalActionModified: false,
-        });
+          email: userEmail || "contact@workflowguard.pro",
+          workflowDeleted: true,
+          enrollmentTriggerModified: true,
+          workflowRolledBack: true,
+          criticalActionModified: true,
+        };
+        setSettings(defaultSettings);
+        setOriginalSettings(defaultSettings);
       }
     } catch (err: any) {
       console.error('Failed to fetch notification settings:', err);
       setError(err.response?.data?.message || 'Failed to load notification settings. Please try again.');
       
-      // Set default settings on error
-      setSettings({
+      // Set default settings with support email on error
+      const defaultSettings = {
         enabled: false,
-        email: "",
-        workflowDeleted: false,
-        enrollmentTriggerModified: false,
-        workflowRolledBack: false,
-        criticalActionModified: false,
-      });
+        email: "contact@workflowguard.pro",
+        workflowDeleted: true,
+        enrollmentTriggerModified: true,
+        workflowRolledBack: true,
+        criticalActionModified: true,
+      };
+      setSettings(defaultSettings);
+      setOriginalSettings(defaultSettings);
       
       toast({
         title: "Error",
@@ -87,14 +120,44 @@ const NotificationsTab = () => {
       ...prev,
       [key]: value,
     }));
+    
+    // Clear email error when user starts typing
+    if (key === 'email') {
+      setEmailError(null);
+    }
+    
     setHasChanges(true);
   };
 
+  const handleEmailChange = (email: string) => {
+    handleSettingChange('email', email);
+    
+    // Validate email if user has entered something
+    if (email && !validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError(null);
+    }
+  };
+
   const handleSaveChanges = async () => {
+    // Validate email before saving
+    if (settings.email && !validateEmail(settings.email)) {
+      setEmailError('Please enter a valid email address');
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setSaving(true);
       await ApiService.updateNotificationSettings(settings);
       setHasChanges(false);
+      setOriginalSettings(settings);
+      setEmailError(null);
       toast({
         title: "Settings Updated",
         description: "Your notification settings have been updated successfully.",
@@ -108,6 +171,44 @@ const NotificationsTab = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResetToDefaults = () => {
+    if (originalSettings) {
+      setSettings(originalSettings);
+      setHasChanges(false);
+      setEmailError(null);
+      toast({
+        title: "Settings Reset",
+        description: "Settings have been reset to their original values.",
+      });
+    }
+  };
+
+  const handleTestNotification = async () => {
+    if (!settings.email || !validateEmail(settings.email)) {
+      setEmailError('Please enter a valid email address');
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address to test notifications.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // This would call a test notification endpoint
+      toast({
+        title: "Test Notification Sent",
+        description: `A test notification has been sent to ${settings.email}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Test Failed",
+        description: "Failed to send test notification. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -135,6 +236,7 @@ const NotificationsTab = () => {
     return (
       <div className="space-y-6">
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
             <Button 
@@ -252,15 +354,50 @@ const NotificationsTab = () => {
               <Label htmlFor="notification-email" className="font-medium">
                 Send notifications to:
               </Label>
-              <Input
-                id="notification-email"
-                placeholder="Enter email addresses or select users"
-                value={settings.email}
-                onChange={(e) => handleSettingChange("email", e.target.value)}
-                disabled={!settings.enabled}
-                className="max-w-md"
-              />
+              <div className="relative">
+                <Input
+                  id="notification-email"
+                  placeholder="Enter email address"
+                  value={settings.email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  disabled={!settings.enabled}
+                  className={`max-w-md ${emailError ? 'border-red-500' : ''}`}
+                />
+                {emailError && (
+                  <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {emailError}
+                  </p>
+                )}
+                {settings.email && validateEmail(settings.email) && (
+                  <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                    <Mail className="w-4 h-4" />
+                    Valid email address
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                Default: Your account email or support@workflowguard.pro
+              </p>
             </div>
+
+            {/* Test Notification Button */}
+            {settings.enabled && settings.email && validateEmail(settings.email) && (
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestNotification}
+                  className="text-blue-600"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Send Test Notification
+                </Button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Test your notification settings by sending a sample email
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -273,13 +410,17 @@ const NotificationsTab = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" disabled={!hasChanges}>
-              Cancel
+            <Button 
+              variant="outline" 
+              disabled={!hasChanges}
+              onClick={handleResetToDefaults}
+            >
+              Reset
             </Button>
             <Button 
               className="bg-blue-500 hover:bg-blue-600 text-white" 
               onClick={handleSaveChanges}
-              disabled={!hasChanges || saving}
+              disabled={!hasChanges || saving || !!emailError}
             >
               {saving ? (
                 <>

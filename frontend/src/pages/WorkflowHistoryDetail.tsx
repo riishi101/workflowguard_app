@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -17,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
+import ViewDetailsModal from "@/components/ViewDetailsModal";
+import RollbackConfirmModal from "@/components/RollbackConfirmModal";
 import {
   Search,
   ExternalLink,
@@ -32,6 +35,7 @@ import {
   FileText,
   Eye,
   Clock,
+  GitCompare,
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -68,12 +72,46 @@ const WorkflowHistoryDetail = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [restoring, setRestoring] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  
+  // Compare functionality states
+  const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
+  
+  // Modal states
+  const [viewDetailsModal, setViewDetailsModal] = useState<{open: boolean, version: any}>({
+    open: false,
+    version: null
+  });
+  const [rollbackModal, setRollbackModal] = useState<{open: boolean, version: any}>({
+    open: false,
+    version: null
+  });
 
   useEffect(() => {
     if (workflowId) {
       fetchWorkflowHistory();
+      fetchWorkflowDetails();
     }
   }, [workflowId]);
+
+  const fetchWorkflowDetails = async () => {
+    try {
+      const details = await ApiService.getWorkflowDetails(workflowId);
+      if (details.data) {
+        setWorkflowDetails({
+          id: details.data.id || workflowId,
+          name: details.data.name || `Workflow ${workflowId}`,
+          status: details.data.status || 'active',
+          lastModified: details.data.lastModified || details.data.updatedAt || '',
+          totalVersions: details.data.totalVersions || 0,
+          hubspotUrl: details.data.hubspotUrl || details.data.url || ''
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch workflow details:', error);
+      // Don't set error here as it's not critical
+    }
+  };
 
   const fetchWorkflowHistory = async () => {
     try {
@@ -99,21 +137,26 @@ const WorkflowHistoryDetail = () => {
           status: index === 0 ? 'current' : 'archived'
         }));
         setVersions(transformedVersions);
-        setWorkflowDetails({
-          id: apiVersions[0].workflowId,
-          name: workflowDetails?.name || `Workflow ${apiVersions[0].workflowId}`,
-          status: 'active',
-          lastModified: workflowDetails?.lastModified || '',
-          totalVersions: apiVersions.length,
-          hubspotUrl: workflowDetails?.hubspotUrl || ''
-        });
+        
+        // Update workflow details if not already set
+        if (!workflowDetails) {
+          setWorkflowDetails({
+            id: apiVersions[0].workflowId,
+            name: workflowDetails?.name || `Workflow ${apiVersions[0].workflowId}`,
+            status: 'active',
+            lastModified: workflowDetails?.lastModified || '',
+            totalVersions: apiVersions.length,
+            hubspotUrl: workflowDetails?.hubspotUrl || ''
+          });
+        }
       } else {
         setVersions([]);
         setWorkflowDetails(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch workflow history:', err);
-      setError('Failed to load workflow history');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to load workflow history';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -125,10 +168,15 @@ const WorkflowHistoryDetail = () => {
     }
   };
 
+  const handleViewDetails = (version: WorkflowVersion) => {
+    setViewDetailsModal({ open: true, version });
+  };
+
+  const handleRollbackClick = (version: WorkflowVersion) => {
+    setRollbackModal({ open: true, version });
+  };
+
   const handleRollbackVersion = async (versionId: string) => {
-    if (!confirm('Are you sure you want to rollback to this version? This action cannot be undone.')) {
-      return;
-    }
     setRestoring(versionId);
     try {
       await ApiService.restoreWorkflowVersion(workflowDetails?.id, versionId);
@@ -137,15 +185,17 @@ const WorkflowHistoryDetail = () => {
         description: "The workflow has been successfully rolled back to the selected version.",
       });
       fetchWorkflowHistory();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Rollback failed:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to rollback to the selected version';
       toast({
         title: "Rollback Failed",
-        description: "Failed to rollback to the selected version.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setRestoring(null);
+      setRollbackModal({ open: false, version: null });
     }
   };
 
@@ -166,15 +216,51 @@ const WorkflowHistoryDetail = () => {
         title: "Download Complete",
         description: "Version has been downloaded successfully.",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download failed:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to download the version';
       toast({
         title: "Download Failed",
-        description: "Failed to download the version.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setDownloading(null);
+    }
+  };
+
+  // Compare functionality handlers
+  const handleVersionSelection = (versionId: string, checked: boolean) => {
+    if (checked) {
+      if (selectedVersions.length < 2) {
+        setSelectedVersions([...selectedVersions, versionId]);
+      }
+    } else {
+      setSelectedVersions(selectedVersions.filter(id => id !== versionId));
+    }
+  };
+
+  const handleCompareSelected = () => {
+    if (selectedVersions.length === 2) {
+      navigate(`/compare-versions?workflowId=${workflowId}&versionA=${selectedVersions[0]}&versionB=${selectedVersions[1]}`);
+    }
+  };
+
+  const handleCompareWithVersion = (versionId: string) => {
+    // If only one version is selected, use it as the second version
+    if (selectedVersions.length === 1) {
+      const otherVersion = selectedVersions[0];
+      navigate(`/compare-versions?workflowId=${workflowId}&versionA=${otherVersion}&versionB=${versionId}`);
+    } else {
+      // If no versions are selected, select this one
+      setSelectedVersions([versionId]);
+    }
+  };
+
+  const toggleCompareMode = () => {
+    setCompareMode(!compareMode);
+    if (compareMode) {
+      setSelectedVersions([]);
     }
   };
 
@@ -377,6 +463,31 @@ const WorkflowHistoryDetail = () => {
                 Version History ({filteredVersions.length})
               </h2>
               <div className="flex items-center gap-3">
+                {compareMode && selectedVersions.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>{selectedVersions.length}/2 versions selected</span>
+                    {selectedVersions.length === 2 && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleCompareSelected}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <GitCompare className="w-4 h-4 mr-1" />
+                        Compare Selected
+                      </Button>
+                    )}
+                  </div>
+                )}
+                <Button
+                  variant={compareMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleCompareMode}
+                  className={compareMode ? "bg-blue-600 hover:bg-blue-700" : ""}
+                >
+                  <GitCompare className="w-4 h-4 mr-2" />
+                  {compareMode ? "Exit Compare" : "Compare Mode"}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -470,10 +581,18 @@ const WorkflowHistoryDetail = () => {
                         
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2 ml-4">
+                          {compareMode && (
+                            <Checkbox
+                              checked={selectedVersions.includes(version.id)}
+                              onCheckedChange={(checked) => handleVersionSelection(version.id, checked as boolean)}
+                              disabled={selectedVersions.length >= 2 && !selectedVersions.includes(version.id)}
+                            />
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-blue-600 hover:text-blue-700"
+                            onClick={() => handleViewDetails(version)}
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             View Details
@@ -492,12 +611,22 @@ const WorkflowHistoryDetail = () => {
                             )}
                             Download
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-purple-600 hover:text-purple-700"
+                            onClick={() => handleCompareWithVersion(version.id)}
+                            disabled={compareMode && selectedVersions.length >= 2 && !selectedVersions.includes(version.id)}
+                          >
+                            <GitCompare className="w-4 h-4 mr-1" />
+                            Compare
+                          </Button>
                           {version.status !== 'current' && (
                             <Button
                               variant="outline"
                               size="sm"
                               className="text-orange-600 hover:text-orange-700"
-                              onClick={() => handleRollbackVersion(version.id)}
+                              onClick={() => handleRollbackClick(version)}
                               disabled={restoring === version.id}
                             >
                               {restoring === version.id ? (
@@ -540,6 +669,21 @@ const WorkflowHistoryDetail = () => {
           )}
         </div>
       </ContentSection>
+
+      {/* Modals */}
+      <ViewDetailsModal
+        open={viewDetailsModal.open}
+        onClose={() => setViewDetailsModal({ open: false, version: null })}
+        version={viewDetailsModal.version}
+      />
+      
+      <RollbackConfirmModal
+        open={rollbackModal.open}
+        onClose={() => setRollbackModal({ open: false, version: null })}
+        onConfirm={() => handleRollbackVersion(rollbackModal.version?.id)}
+        version={rollbackModal.version}
+        loading={restoring === rollbackModal.version?.id}
+      />
     </MainAppLayout>
   );
 };

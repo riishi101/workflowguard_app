@@ -19,15 +19,20 @@ export class AuthController {
 
   @Public()
   @Get('hubspot/url')
-  async getHubSpotAuthUrl() {
+  async getHubSpotAuthUrl(@Query('marketplace') marketplace?: string) {
     try {
       const clientId = process.env.HUBSPOT_CLIENT_ID;
       const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
-      const scopes = 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+      
+      // Use marketplace-specific scopes if coming from marketplace
+      const scopes = marketplace === 'true' 
+        ? 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read marketplace'
+        : 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
       
       // Debug logging
       console.log('HUBSPOT_CLIENT_ID:', clientId);
       console.log('HUBSPOT_REDIRECT_URI:', redirectUri);
+      console.log('Marketplace installation:', marketplace);
       
       let authUrl;
       
@@ -72,6 +77,20 @@ export class AuthController {
         return res.redirect('https://www.workflowguard.pro?error=no_code');
       }
 
+      // Parse state to check if this is a marketplace installation
+      let isMarketplaceInstall = false;
+      let marketplaceUserId = null;
+      
+      if (state) {
+        try {
+          const stateData = JSON.parse(decodeURIComponent(state));
+          isMarketplaceInstall = stateData.marketplaceInstall || false;
+          marketplaceUserId = stateData.userId || null;
+        } catch (e) {
+          console.log('Could not parse state, treating as regular OAuth');
+        }
+      }
+
       // Full OAuth flow with proper environment variables
       const clientId = process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528';
       const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
@@ -80,6 +99,7 @@ export class AuthController {
       console.log('Using clientId:', clientId);
       console.log('Using redirectUri:', redirectUri);
       console.log('Client secret available:', !!clientSecret);
+      console.log('Marketplace installation:', isMarketplaceInstall);
 
       if (!clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
@@ -157,11 +177,20 @@ export class AuthController {
       console.log('JWT token generated for user:', user.id);
       console.log('Generated token (first 50 chars):', token.substring(0, 50) + '...');
 
-      // 5. Redirect to frontend with success and token
-      console.log('OAuth callback completed successfully');
-      const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}`;
-      console.log('Redirecting to:', redirectUrl);
-      return res.redirect(redirectUrl);
+      // 5. Redirect based on installation type
+      if (isMarketplaceInstall) {
+        // For marketplace installations, redirect to dashboard with success
+        console.log('Marketplace installation completed successfully');
+        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}&marketplace=true`;
+        console.log('Redirecting to marketplace success:', redirectUrl);
+        return res.redirect(redirectUrl);
+      } else {
+        // For regular OAuth, redirect to frontend with success and token
+        console.log('OAuth callback completed successfully');
+        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}`;
+        console.log('Redirecting to:', redirectUrl);
+        return res.redirect(redirectUrl);
+      }
       
     } catch (error) {
       console.error('OAuth callback error:', error);

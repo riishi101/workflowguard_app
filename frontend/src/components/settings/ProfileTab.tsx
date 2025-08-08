@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
-import { AlertTriangle, CheckCircle, Loader2, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle, Loader2, Save, Mail, Camera, Upload, X } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -26,6 +26,8 @@ interface UserProfile {
   language?: string;
   hubspotPortalId?: string;
   hubspotConnectedAt?: string;
+  avatarUrl?: string;
+  emailVerified?: boolean;
 }
 
 const ProfileTab = () => {
@@ -35,6 +37,10 @@ const ProfileTab = () => {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [emailVerifying, setEmailVerifying] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   console.log('🔍 ProfileTab - Component mounted');
 
@@ -115,6 +121,132 @@ const ProfileTab = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEmailVerification = async () => {
+    if (!profile?.email) {
+      toast({
+        title: "No Email",
+        description: "Please enter an email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setEmailVerifying(true);
+      await ApiService.verifyEmail(profile.email);
+      toast({
+        title: "Verification Email Sent",
+        description: "A verification email has been sent to your email address. Please check your inbox.",
+      });
+    } catch (err: any) {
+      console.error('Failed to send verification email:', err);
+      toast({
+        title: "Verification Failed",
+        description: err.response?.data?.message || "Failed to send verification email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setEmailVerifying(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File",
+          description: "Please select an image file (JPEG, PNG, GIF).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select an image file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setUploadingAvatar(true);
+      const formData = new FormData();
+      formData.append('avatar', selectedFile);
+
+      const response = await ApiService.uploadAvatar(formData);
+      
+      if (response && response.data && response.data.avatarUrl) {
+        setProfile((prev) => ({
+          ...prev!,
+          avatarUrl: response.data.avatarUrl,
+        }));
+        
+        // Clean up
+        setSelectedFile(null);
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+        
+        toast({
+          title: "Avatar Updated",
+          description: "Your profile picture has been updated successfully.",
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to upload avatar:', err);
+      toast({
+        title: "Upload Failed",
+        description: err.response?.data?.message || "Failed to upload avatar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await ApiService.removeAvatar();
+      setProfile((prev) => ({
+        ...prev!,
+        avatarUrl: undefined,
+      }));
+      toast({
+        title: "Avatar Removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (err: any) {
+      console.error('Failed to remove avatar:', err);
+      toast({
+        title: "Remove Failed",
+        description: err.response?.data?.message || "Failed to remove avatar. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -229,17 +361,92 @@ const ProfileTab = () => {
     <div className="space-y-6">
       {/* Profile Header */}
       <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src="/placeholder-avatar.jpg" alt={profile.name} />
-          <AvatarFallback className="text-lg">
-            {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={previewUrl || profile.avatarUrl || "/placeholder-avatar.jpg"} alt={profile.name} />
+            <AvatarFallback className="text-lg">
+              {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          
+          {/* Avatar Upload Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black bg-opacity-50 rounded-full">
+            <label htmlFor="avatar-upload" className="cursor-pointer">
+              <Camera className="w-6 h-6 text-white" />
+            </label>
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+        </div>
+        
         <div>
           <h2 className="text-xl font-semibold text-gray-900">{profile.name}</h2>
           <p className="text-gray-600">{profile.email}</p>
+          {profile.emailVerified && (
+            <div className="flex items-center gap-1 mt-1">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <span className="text-sm text-green-600">Email verified</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Avatar Upload Section */}
+      {selectedFile && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={previewUrl || ""} alt="Preview" />
+                <AvatarFallback className="text-sm">Preview</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                <p className="text-xs text-gray-600">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleAvatarUpload}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (previewUrl) {
+                      URL.revokeObjectURL(previewUrl);
+                      setPreviewUrl(null);
+                    }
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Personal Details */}
       <Card>
@@ -269,10 +476,36 @@ const ProfileTab = () => {
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className="flex-1"
               />
-              <Button variant="outline" size="sm" disabled>
-                Verify Email
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleEmailVerification}
+                disabled={emailVerifying || profile.emailVerified}
+              >
+                {emailVerifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : profile.emailVerified ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Verified
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Verify Email
+                  </>
+                )}
               </Button>
             </div>
+            {profile.emailVerified && (
+              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                <CheckCircle className="w-4 h-4" />
+                Your email address is verified
+              </p>
+            )}
           </div>
 
           <div>
@@ -326,7 +559,6 @@ const ProfileTab = () => {
                       {profile.email}
                     </span>
                   </div>
-
                 </div>
 
                 <div className="pt-2">
