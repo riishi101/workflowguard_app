@@ -33,7 +33,7 @@ async function main() {
     create: {
       id: 'starter',
       name: 'Starter',
-      price: 29,
+      price: 19,
       interval: 'month',
       description: 'Perfect for small teams',
       features: JSON.stringify([
@@ -53,13 +53,13 @@ async function main() {
     create: {
       id: 'professional',
       name: 'Professional',
-      price: 99,
+      price: 49,
       interval: 'month',
       description: 'Ideal for growing businesses',
       features: JSON.stringify([
         'Advanced workflow protection',
         'Priority support',
-        'Unlimited workflows',
+        '25 workflows',
         'Complete version history',
         'Automated backups',
         'Change notifications',
@@ -77,7 +77,7 @@ async function main() {
     create: {
       id: 'enterprise',
       name: 'Enterprise',
-      price: 299,
+      price: 99,
       interval: 'month',
       description: 'For large organizations',
       features: JSON.stringify([
