@@ -73,7 +73,7 @@ export class HubSpotMarketplaceController {
       const token = this.authService.generateToken(user);
 
       // Redirect to OAuth flow to get HubSpot access tokens
-      const oauthUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${process.env.HUBSPOT_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.HUBSPOT_REDIRECT_URI)}&scope=${encodeURIComponent('automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read crm.schemas.companies.read crm.schemas.contacts.read crm.schemas.deals.read')}&state=${encodeURIComponent(JSON.stringify({ marketplaceInstall: true, userId: user.id }))}`;
+      const oauthUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${process.env.HUBSPOT_CLIENT_ID || ''}&redirect_uri=${encodeURIComponent(process.env.HUBSPOT_REDIRECT_URI || '')}&scope=${encodeURIComponent('automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read crm.schemas.companies.read crm.schemas.contacts.read crm.schemas.deals.read')}&state=${encodeURIComponent(JSON.stringify({ marketplaceInstall: true, userId: user.id }))}`;
 
       console.log('HubSpot Marketplace - Redirecting to OAuth flow');
       return res.redirect(oauthUrl);
@@ -295,7 +295,7 @@ export class HubSpotMarketplaceController {
           );
 
         case 'app.uninstalled':
-          return await this.handleAppUninstallation(body);
+          return await this.handleAppUninstallation(body, req);
 
         case 'subscription.updated':
           return await this.handleSubscriptionUpdate(body);

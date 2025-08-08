@@ -212,7 +212,7 @@ export class MarketplaceLoggingInterceptor {
 
   private static isMarketplaceRequest(request: Request): boolean {
     return request.url.includes('/hubspot-marketplace') ||
-           request.headers['x-hubspot-signature'] ||
-           request.headers['x-hubspot-portal-id'];
+           !!request.headers['x-hubspot-signature'] ||
+           !!request.headers['x-hubspot-portal-id'];
   }
 } 
