@@ -20,7 +20,8 @@ async function main() {
         'Version history',
         'Manual backups',
         'Basic rollback',
-        '21-day trial period'
+        '21-day trial period',
+        'Audit trails'
       ]),
     },
   });

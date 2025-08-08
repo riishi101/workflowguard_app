@@ -48,6 +48,17 @@ export class AuditLogController {
 
       const planId = user?.subscription?.planId || 'starter';
       const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      
+      console.log('🔍 AUDIT LOG DEBUG:', {
+        userId: userIdFromJwt,
+        userEmail: user?.email,
+        subscriptionPlanId: user?.subscription?.planId,
+        fallbackPlanId: planId,
+        planFeatures: plan?.features,
+        hasAuditLogs: plan?.features?.includes('audit_logs'),
+        planId: plan?.id,
+        planName: plan?.name
+      });
 
       if (!plan?.features?.includes('audit_logs')) {
         console.error('Plan does not include audit_logs feature:', planId, plan?.features);
