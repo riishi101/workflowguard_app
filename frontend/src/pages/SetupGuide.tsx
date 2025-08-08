@@ -308,7 +308,7 @@ const SetupGuide = () => {
                       <div className="text-sm text-gray-600 space-y-1">
                         <div>Portal ID: 243112608</div>
                         <div>Connected as: john.smith@example.com</div>
-                        <div>Role: Admin</div>
+    
                       </div>
                       <button className="text-sm text-red-600 hover:text-red-700 mt-2">
                         Disconnect HubSpot

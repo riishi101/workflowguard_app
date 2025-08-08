@@ -26,7 +26,6 @@ interface UserProfile {
   language?: string;
   hubspotPortalId?: string;
   hubspotConnectedAt?: string;
-  hubspotRole?: string;
 }
 
 const ProfileTab = () => {
@@ -327,12 +326,7 @@ const ProfileTab = () => {
                       {profile.email}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 font-medium">
-                      Role:
-                    </span>
-                    <span className="text-sm text-gray-900">{profile.hubspotRole || 'Unknown'}</span>
-                  </div>
+
                 </div>
 
                 <div className="pt-2">

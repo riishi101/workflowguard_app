@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, HttpException, HttpStatus, 
 import { Request } from 'express';
 import { AuditLogService } from './audit-log.service';
 import { CreateAuditLogDto } from './dto';
-import { Roles } from '../auth/roles.decorator';
+
 import { UserService } from '../user/user.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -198,7 +198,6 @@ export class AuditLogController {
   }
 
   @Delete(':id')
-  @Roles('admin', 'restorer')
   async remove(@Param('id') id: string) {
     try {
       const auditLog = await this.auditLogService.remove(id);

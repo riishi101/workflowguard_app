@@ -133,7 +133,7 @@ export class WorkflowService {
           id: finalUserId,
           email: 'default@example.com',
           name: 'Default User',
-          role: 'user',
+  
         },
       });
     }

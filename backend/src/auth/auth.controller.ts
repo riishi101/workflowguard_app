@@ -236,7 +236,7 @@ export class AuthController {
           id: true,
           email: true,
           name: true,
-          role: true,
+
           hubspotPortalId: true,
           createdAt: true,
         },

@@ -171,36 +171,129 @@ const AuditLogTab = () => {
   if (error && (error.includes('not available on your plan') || error.includes('forbidden') || error.includes('403'))) {
     return (
       <div className="relative">
-        {/* Render the normal Audit Log tab UI, but locked out */}
+        {/* Render the actual Audit Log tab UI, but locked out */}
         <div className="opacity-60 pointer-events-none select-none">
-          {/* ...existing code for the tab UI... */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <Skeleton className="h-10 w-32" />
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-40" />
-                ))}
-              </div>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 p-4">
-                  <Skeleton className="h-4 w-full" />
+            {/* Audit Log Content */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Comprehensive App Activity Log
+              </h3>
+              <p className="text-gray-600 text-sm mb-6">
+                Track all changes and actions performed in your workflows
+              </p>
+
+              {/* Filters */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500" />
+                  <Select value={dateRange} onValueChange={setDateRange}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Date Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Last 7 days</SelectItem>
+                      <SelectItem value="month">Last 30 days</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="p-4 border-b border-gray-200">
-                    <div className="grid grid-cols-7 gap-4">
-                      {[...Array(7)].map((_, j) => (
-                        <Skeleton key={j} className="h-4 w-full" />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+
+                <Select value={userFilter} onValueChange={setUserFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All Users" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    {/* Dynamic user list would be populated from API */}
+                  </SelectContent>
+                </Select>
+
+                <Select value={actionFilter} onValueChange={setActionFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All Actions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Actions</SelectItem>
+                    <SelectItem value="created">Created</SelectItem>
+                    <SelectItem value="updated">Updated</SelectItem>
+                    <SelectItem value="deleted">Deleted</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button 
+                  variant="outline" 
+                  className="text-blue-600"
+                  onClick={handleExportLogs}
+                  disabled={exporting}
+                >
+                  {exporting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export Log
+                    </>
+                  )}
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={fetchAuditLogs}
+                  disabled={loading}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+
+              {/* Audit Log Table */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>TIMESTAMP</TableHead>
+                      <TableHead>USER</TableHead>
+                      <TableHead>ACTION</TableHead>
+                      <TableHead>WORKFLOW NAME</TableHead>
+                      <TableHead>OLD VALUE</TableHead>
+                      <TableHead>NEW VALUE</TableHead>
+                      <TableHead>IP ADDRESS</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[...Array(3)].map((_, i) => (
+                      <TableRow key={i} className="hover:bg-gray-50">
+                        <TableCell className="font-mono text-sm text-gray-600">
+                          {new Date().toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-medium">Sample User</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            Created
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="link" className="p-0 text-blue-600">
+                            Sample Workflow
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          Previous value
+                        </TableCell>
+                        <TableCell className="font-medium">New value</TableCell>
+                        <TableCell className="font-mono text-sm text-gray-600">
+                          192.168.1.1
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>

@@ -30,7 +30,7 @@ export class UserController {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+
         subscription: user.subscription
       }
     };
@@ -89,7 +89,7 @@ export class UserController {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role
+
           },
           permissions: ['read_workflows', 'write_workflows', 'view_dashboard'],
           plan: plan?.name || 'Starter'

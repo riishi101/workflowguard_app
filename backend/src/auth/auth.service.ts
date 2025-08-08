@@ -30,7 +30,6 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
       },
     };
   }
@@ -39,13 +38,12 @@ export class AuthService {
     const { password, ...userData } = createUserDto;
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await this.prisma.user.create({
-      data: {
-        ...userData,
-        password: hashedPassword,
-        role: 'user', // All users get 'user' role - no admin roles
-      },
-    });
+    const       user = await this.prisma.user.create({
+        data: {
+          ...userData,
+          password: hashedPassword,
+        },
+      });
 
     // Automatically create trial subscription for new users
     await this.userService.createTrialSubscription(user.id);
@@ -64,7 +62,6 @@ export class AuthService {
         data: {
           email: hubspotUser.email,
           name: hubspotUser.name || hubspotUser.email,
-          role: 'user', // All users get 'user' role
           hubspotPortalId: hubspotUser.portalId,
           hubspotAccessToken: hubspotUser.accessToken,
           hubspotRefreshToken: hubspotUser.refreshToken,
@@ -91,7 +88,7 @@ export class AuthService {
     return result;
   }
 
-  async validateJwtPayload(payload: { sub: string; email: string; role: string }) {
+  async validateJwtPayload(payload: { sub: string; email: string }) {
     console.log('AuthService - validateJwtPayload called with payload:', payload);
     
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
@@ -105,7 +102,7 @@ export class AuthService {
       console.log('AuthService - Verifying token:', token.substring(0, 20) + '...');
       
       const payload = this.jwtService.verify(token);
-      console.log('AuthService - JWT payload verified:', { sub: payload.sub, email: payload.email, role: payload.role });
+      console.log('AuthService - JWT payload verified:', { sub: payload.sub, email: payload.email });
       
       const user = await this.validateJwtPayload(payload);
       console.log('AuthService - User found from payload:', user ? { id: user.id, email: user.email } : null);
@@ -128,8 +125,7 @@ export class AuthService {
   generateToken(user: any) {
     return this.jwtService.sign({ 
       sub: user.id, 
-      email: user.email, 
-      role: user.role 
+      email: user.email
     });
   }
 
