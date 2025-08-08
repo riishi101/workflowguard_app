@@ -48,6 +48,7 @@ export class AuditLogController {
 
       const planId = user?.subscription?.planId || 'starter';
       const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+
       if (!plan?.features?.includes('audit_logs')) {
         console.error('Plan does not include audit_logs feature:', planId, plan?.features);
         throw new HttpException('Audit log access is not available on your plan.', HttpStatus.FORBIDDEN);

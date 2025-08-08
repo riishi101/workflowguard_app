@@ -535,7 +535,8 @@ class ApiService {
 
   static async exportAuditLogs(filters?: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/audit-logs/export', { params: filters });
+      // Backend expects POST /audit-logs/export with filters in body
+      const response = await apiClient.post('/audit-logs/export', filters || {});
       return response.data;
     } catch (error) {
       throw error;

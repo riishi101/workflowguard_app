@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { randomUUID } from 'crypto';
+import { PLAN_CONFIG, PlanId } from '../plan-config';
 
 @Injectable()
 export class UserService {
@@ -66,9 +67,69 @@ export class UserService {
   }
 
   async getPlanById(planId: string) {
-    return this.prisma.plan.findUnique({
+    const plan = await this.prisma.plan.findUnique({
       where: { id: planId },
     });
+
+    // If plan doesn't exist in DB, fallback to in-app PLAN_CONFIG
+    if (!plan) {
+      const fallback = (PLAN_CONFIG as any)[planId as PlanId];
+      if (fallback) {
+        // Normalize feature slugs from PLAN_CONFIG (already slugs)
+        return {
+          id: planId,
+          name: planId,
+          price: 0,
+          interval: 'month',
+          features: [...fallback.features],
+        } as any;
+      }
+      return null as any;
+    }
+
+    // Normalize DB features to consistent slug array
+    let featuresNormalized: string[] = [];
+    const rawFeatures = plan.features;
+
+    if (typeof rawFeatures === 'string' && rawFeatures.length > 0) {
+      try {
+        const parsed = JSON.parse(rawFeatures);
+        if (Array.isArray(parsed)) {
+          featuresNormalized = parsed.map((f) => String(f));
+        } else {
+          // Fallback: treat as comma-separated list
+          featuresNormalized = rawFeatures.split(',');
+        }
+      } catch {
+        // Not JSON, treat as comma-separated
+        featuresNormalized = rawFeatures.split(',');
+      }
+    }
+
+    // Lowercase and trim
+    featuresNormalized = featuresNormalized
+      .map((f) => f.toLowerCase().trim())
+      .filter((f) => f.length > 0);
+
+    // Add semantic aliases to align with feature gates used in controllers
+    // If any feature mentions audit trail(s), expose 'audit_logs' gate
+    if (featuresNormalized.some((f) => f.includes('audit trail'))) {
+      featuresNormalized.push('audit_logs');
+    }
+
+    // If any feature mentions api access, expose 'api_access' slug
+    if (featuresNormalized.some((f) => f.includes('api access'))) {
+      featuresNormalized.push('api_access');
+    }
+
+    // Deduplicate
+    const uniqueFeatures = Array.from(new Set(featuresNormalized));
+
+    return {
+      ...plan,
+      // Overwrite features with normalized slugs array so `includes('audit_logs')` works reliably
+      features: uniqueFeatures,
+    } as any;
   }
 
   async getOverageStats(userId: string) {
