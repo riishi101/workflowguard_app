@@ -389,8 +389,9 @@ export class WorkflowController {
         body.workflows
       );
       return {
+        success: true,
         message: 'Workflow protection started successfully',
-        result: result
+        data: result
       };
     } catch (error) {
       console.error('start-protection error:', error);
