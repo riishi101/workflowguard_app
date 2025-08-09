@@ -43,12 +43,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       try {
+        // Check for token in URL after OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const successParam = urlParams.get('success');
+        const tokenParam = urlParams.get('token');
+
+        if (successParam === 'true' && tokenParam) {
+          localStorage.setItem('authToken', tokenParam);
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         const token = localStorage.getItem('authToken');
         if (token) {
           const response = await ApiService.getCurrentUser();
           if (response.success && response.data) {
             setUser(response.data);
+            // If we just got the token from OAuth and we're authenticated,
+            // redirect to workflow selection
+            if (successParam === 'true' && tokenParam) {
+              window.location.href = '/workflow-selection';
+              return;
+            }
           } else {
+            localStorage.removeItem('authToken');
             setUser(null);
           }
         } else {
@@ -56,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('AuthContext - Auth initialization error:', error);
+        localStorage.removeItem('authToken');
         setUser(null);
       } finally {
         setLoading(false);

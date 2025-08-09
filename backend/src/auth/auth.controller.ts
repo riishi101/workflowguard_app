@@ -69,6 +69,9 @@ export class AuthController {
   @Public()
   @Get('hubspot/callback')
   async handleHubSpotCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    // Set CORS headers for the OAuth callback
+    res.header('Access-Control-Allow-Origin', 'https://www.workflowguard.pro');
+    res.header('Access-Control-Allow-Credentials', 'true');
     try {
       console.log('HubSpot callback received with code:', code);
 
@@ -187,7 +190,7 @@ export class AuthController {
       } else {
         // For regular OAuth, redirect to frontend with success and token
         console.log('OAuth callback completed successfully');
-        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}`;
+        const redirectUrl = `https://www.workflowguard.pro/workflow-selection?success=true&token=${encodeURIComponent(token)}`;
         console.log('Redirecting to:', redirectUrl);
         return res.redirect(redirectUrl);
       }

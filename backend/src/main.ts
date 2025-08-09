@@ -82,9 +82,15 @@ async function bootstrap() {
     'https://marketplace.hubspot.com', // HubSpot marketplace
   ].concat(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []);
 
+  // Enhanced CORS configuration
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || allowedOrigins,
-    credentials: process.env.ALLOW_CREDENTIALS === 'true',
+    origin: [
+      'https://www.workflowguard.pro',
+      'https://workflowguard.pro',
+      'http://localhost:5173',
+      'http://localhost:3000'
+    ],
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type', 
