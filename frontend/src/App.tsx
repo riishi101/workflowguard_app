@@ -40,31 +40,28 @@ const RootRoute = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const isOAuthCallback = urlParams.get('success') === 'true' && urlParams.get('token');
   
-  console.log('RootRoute - Debug:', {
-    pathname: location.pathname,
-    isAuthenticated,
-    loading,
-    isOAuthCallback,
-    success: urlParams.get('success'),
-    hasToken: !!urlParams.get('token')
-  });
+  // Handle OAuth callback and workflow selection
+  if (isOAuthCallback) {
+    const token = urlParams.get('token');
+    if (token) {
+      localStorage.setItem('authToken', token);
+      // Clean up URL and redirect to workflow selection
+      window.history.replaceState({}, document.title, '/workflow-selection');
+      return <Navigate to="/workflow-selection" replace />;
+    }
+  }
   
-  // Show OnboardingFlow on root route if:
-  // 1. User is not authenticated, OR
-  // 2. User is authenticated but this is an OAuth callback (needs workflow selection)
-  if (location.pathname === '/' && !loading && (!isAuthenticated || isOAuthCallback)) {
-    console.log('RootRoute - Showing OnboardingFlow');
+  // Show OnboardingFlow on root route if not authenticated
+  if (location.pathname === '/' && !loading && !isAuthenticated) {
     return <OnboardingFlow />;
   }
   
-  // If user is authenticated and on root route (but not OAuth callback), redirect to dashboard
-  if (location.pathname === '/' && !loading && isAuthenticated && !isOAuthCallback) {
-    console.log('RootRoute - Redirecting to dashboard');
+  // If user is authenticated and on root route, redirect to dashboard
+  if (location.pathname === '/' && !loading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
   
   // For all other routes, return null (let other routes handle rendering)
-  console.log('RootRoute - Returning null for other routes');
   return null;
 };
 

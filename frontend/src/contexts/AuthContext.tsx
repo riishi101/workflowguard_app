@@ -109,7 +109,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     testAuthentication, // Add this for debugging
   };
 
-  console.log('AuthContext - Current state (OAuth DISABLED):', { user: !!user, loading, isAuthenticated: !!user, hasInitialized });
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

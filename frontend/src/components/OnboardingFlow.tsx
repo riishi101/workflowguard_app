@@ -61,34 +61,33 @@ const OnboardingFlow = () => {
   }, [timeoutReached, isAuthenticated, currentStep]);
 
   useEffect(() => {
-    if (loading || isInitialized) return; // Don't process while loading or if already initialized
+    if (loading || isInitialized) return;
 
-    // OAuth is disabled - skip all OAuth processing
-    console.log('OnboardingFlow - OAuth DISABLED - skipping OAuth processing');
+    // Check URL parameters for OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const isOAuthCallback = urlParams.get('success') === 'true' && urlParams.get('token');
 
-    // Check if user is already authenticated (mock user)
-    if (isAuthenticated && !loading && user && !hasProcessedOAuth) {
-      // User is authenticated (mock), go directly to workflow selection
-      console.log('OnboardingFlow - Mock user authenticated, going to workflow selection');
+    if (isOAuthCallback) {
       setHasProcessedOAuth(true);
-      
-      // Add a small delay to ensure everything is ready
-      setTimeout(() => {
-        setCurrentStep('workflow-selection');
-        setIsInitialized(true);
-      }, 1000); // 1 second delay
-      
+      setCurrentStep('workflow-selection');
+      setIsInitialized(true);
       return;
     }
 
-    // User is not authenticated, show welcome modal
-    if (!isAuthenticated && !loading && !hasProcessedOAuth) {
-      console.log('OnboardingFlow - Mock user not authenticated, showing welcome modal');
+    // Normal flow
+    if (isAuthenticated && !hasProcessedOAuth) {
+      setHasProcessedOAuth(true);
+      setCurrentStep('workflow-selection');
+      setIsInitialized(true);
+      return;
+    }
+
+    if (!isAuthenticated && !hasProcessedOAuth) {
       setCurrentStep('welcome');
       setShowWelcomeModal(true);
       setIsInitialized(true);
     }
-  }, [isAuthenticated, loading, user, hasProcessedOAuth, isInitialized, timeoutReached, toast]);
+  }, [isAuthenticated, loading, hasProcessedOAuth, isInitialized]);
 
   const handleWelcomeComplete = () => {
     console.log('OnboardingFlow - Welcome complete, showing connect modal');
