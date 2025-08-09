@@ -60,7 +60,8 @@ async function bootstrap() {
     skipSuccessfulRequests: false, // Count successful requests against the limit
     keyGenerator: (req) => {
       // Use X-Forwarded-For header if behind proxy, otherwise use IP
-      return req.headers['x-forwarded-for'] || req.ip;
+      const forwardedFor = req.headers['x-forwarded-for'];
+      return (typeof forwardedFor === 'string' ? forwardedFor : req.ip) || '0.0.0.0';
     },
   });
   app.use(limiter);
