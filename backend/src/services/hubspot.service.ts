@@ -1,11 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { HubSpotWorkflow, HubSpotApiResponse, WorkflowResponse, HubSpotTokenResponse } from '../types/hubspot.types';
 
 @Injectable()
 export class HubSpotService {
   constructor(private prisma: PrismaService) {}
 
-  async getWorkflows(userId: string): Promise<any[]> {
+  async getWorkflows(userId: string): Promise<WorkflowResponse[]> {
     console.log('🔍 HubSpotService - getWorkflows called for userId:', userId);
 
     try {
@@ -94,7 +95,7 @@ export class HubSpotService {
     }
   }
 
-  private async fetchWorkflowsFromHubSpot(accessToken: string, portalId: string): Promise<any[]> {
+  private async fetchWorkflowsFromHubSpot(accessToken: string, portalId: string): Promise<WorkflowResponse[]> {
     console.log('🔍 HubSpotService - fetchWorkflowsFromHubSpot called');
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
@@ -135,40 +136,35 @@ export class HubSpotService {
           console.log('🔍 HubSpotService - Response status:', response.status);
 
           if (response.ok) {
-            const data = await response.json();
+            const data = await response.json() as HubSpotApiResponse | HubSpotWorkflow[];
             console.log('🔍 HubSpotService - Raw API response from', endpoint, ':', JSON.stringify(data, null, 2));
 
             // Handle different response formats
-            let workflowList: any[] = [];
-            if (data.results) {
-              workflowList = data.results;
-            } else if (data.workflows) {
-              workflowList = data.workflows;
-            } else if (Array.isArray(data)) {
+            let workflowList: HubSpotWorkflow[] = [];
+            if (Array.isArray(data)) {
               workflowList = data;
-            } else if (data.data) {
-              workflowList = data.data;
-            } else if (data.objects) {
-              workflowList = data.objects;
-            } else if (data.value) {
-              workflowList = data.value;
-            } else if (data.items) {
-              workflowList = data.items;
-            } else if (data.workflowList) {
-              workflowList = data.workflowList;
+            } else {
+              workflowList = data.results || 
+                          data.workflows || 
+                          data.data || 
+                          data.objects || 
+                          data.value || 
+                          data.items || 
+                          data.workflowList ||
+                          [];
             }
 
             console.log('🔍 HubSpotService - Extracted workflow list from', endpoint, ':', workflowList.length);
 
             if (workflowList.length > 0) {
               // Transform HubSpot workflows to our format
-              workflows = workflowList.map((workflow: any) => ({
-                id: workflow.id || workflow.workflowId || workflow.objectId,
-                name: workflow.name || workflow.workflowName || workflow.label,
-                description: workflow.description || (workflow.meta && workflow.meta.description) || '',
+              workflows = workflowList.map((workflow: HubSpotWorkflow): WorkflowResponse => ({
+                id: workflow.id || workflow.workflowId || workflow.objectId || 'unknown',
+                name: workflow.name || workflow.workflowName || workflow.label || 'Unnamed Workflow',
+                description: workflow.description || (workflow.meta?.description) || '',
                 type: 'workflow',
                 status: workflow.enabled !== undefined ? (workflow.enabled ? 'active' : 'inactive') :
-                  workflow.status || (workflow.meta && workflow.meta.status) || 'active',
+                  workflow.status || workflow.meta?.status || 'active',
                 hubspotData: workflow, // Keep original data for reference
               }));
 
@@ -266,7 +262,7 @@ export class HubSpotService {
         throw new Error(`Token refresh failed: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as HubSpotTokenResponse;
 
       // Update user with new tokens
       await this.prisma.user.update({
