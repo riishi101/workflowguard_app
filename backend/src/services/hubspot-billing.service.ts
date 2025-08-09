@@ -1,5 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { HubSpotBillingResponse, SubscriptionStatus, HubSpotSubscriptionInfo } from '../types/hubspot-billing.types';
 
 export interface HubSpotBillingConfig {
   appId: string;
@@ -16,13 +17,7 @@ export interface BillingPlan {
   features: string[];
 }
 
-export interface SubscriptionStatus {
-  isActive: boolean;
-  planId: string;
-  currentPeriodEnd: Date;
-  nextBillingDate: Date;
-  status: 'active' | 'canceled' | 'past_due' | 'trialing';
-}
+// Using SubscriptionStatus from types/hubspot-billing.types.ts
 
 @Injectable()
 export class HubSpotBillingService {
@@ -52,7 +47,7 @@ export class HubSpotBillingService {
         throw new HttpException('Failed to fetch subscription status', HttpStatus.BAD_REQUEST);
       }
 
-      const data = await response.json();
+      const data = await response.json() as HubSpotBillingResponse;
       return {
         isActive: data.status === 'active',
         planId: data.plan_id,
@@ -95,7 +90,7 @@ export class HubSpotBillingService {
         throw new HttpException('Failed to create subscription', HttpStatus.BAD_REQUEST);
       }
 
-      const subscription = await response.json();
+      const subscription = await response.json() as HubSpotSubscriptionInfo;
       
       // Update local database
       await this.prisma.subscription.upsert({
