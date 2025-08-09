@@ -837,6 +837,16 @@ class ApiService {
       throw error;
     }
   }
+
+  static async exportWorkflow(workflowId?: string): Promise<ApiResponse<any>> {
+    try {
+      const endpoint = workflowId ? `/workflow/${workflowId}/export` : '/workflow/export-all';
+      const response = await apiClient.get(endpoint);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export { ApiService };

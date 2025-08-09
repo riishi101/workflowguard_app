@@ -1,7 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useWorkflows } from "@/hooks/use-workflows";
+import { useWorkflowStats } from "@/hooks/use-workflow-stats";
+import { useWorkflowActions } from "@/hooks/use-workflow-actions";
 import {
   Select,
   SelectContent,
@@ -65,104 +68,70 @@ interface DashboardStats {
   planUsed: number;
 }
 
-const Dashboard = () => {
+interface DashboardWorkflow {
+  id: string;
+  name: string;
+  versions: number;
+  lastModifiedBy: {
+    name: string;
+    initials: string;
+    email: string;
+  };
+  status: "active" | "inactive" | "error";
+  protectionStatus: "protected" | "unprotected" | "error";
+  lastModified: string;
+}
+
+interface DashboardStats {
+  totalWorkflows: number;
+  activeWorkflows: number;
+  protectedWorkflows: number;
+  totalVersions: number;
+  uptime: number;
+  lastSnapshot: string;
+  planCapacity: number;
+  planUsed: number;
+}
+
+const Dashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [workflows, setWorkflows] = useState<DashboardWorkflow[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
-  const [rollbacking, setRollbacking] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
 
-  // Fetch dashboard data from backend
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Use our custom hooks
+  const { 
+    workflows, 
+    loading, 
+    error: fetchError, 
+    refetch: refreshWorkflows,
+    loading: isRefreshing 
+  } = useWorkflows({
+    autoRefresh: true,
+    refreshInterval: 30000
+  } as const);
 
-      console.log('🔍 Dashboard - Fetching data from backend');
+  const stats = useWorkflowStats(workflows);
+  const { 
+    handleRollback,
+    handleExport,
+    loadingStates: rollbacking,
+    isLoading: checkLoading
+  } = useWorkflowActions();
 
-      // Fetch workflows from backend
-      const workflowsResponse = await ApiService.getProtectedWorkflows();
-      const apiWorkflows = workflowsResponse.data || [];
-      
-      console.log('🔍 Dashboard - Workflows from backend:', apiWorkflows);
-
-      // Transform workflows to match DashboardWorkflow interface
-      const transformedWorkflows: DashboardWorkflow[] = apiWorkflows.map((workflow: any) => ({
-        id: workflow.id,
-        name: workflow.name || `Workflow ${workflow.id}`,
-        status: workflow.status || 'active',
-        protectionStatus: workflow.protectionStatus || 'protected',
-        lastModified: workflow.lastModified || workflow.updatedAt || new Date().toLocaleDateString(),
-        versions: workflow.versions?.length || 0,
-        lastModifiedBy: {
-          name: workflow.owner?.name || 'Unknown User',
-          initials: workflow.owner?.name ? workflow.owner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'UU',
-          email: workflow.owner?.email || ''
-        }
-      }));
-
-      setWorkflows(transformedWorkflows);
-
-      // Calculate stats from workflows data
-      const calculatedStats: DashboardStats = {
-        totalWorkflows: transformedWorkflows.length,
-        activeWorkflows: transformedWorkflows.filter(w => w.status === 'active').length,
-        protectedWorkflows: transformedWorkflows.filter(w => w.protectionStatus === 'protected').length,
-        totalVersions: transformedWorkflows.reduce((total, w) => total + (w.versions || 0), 0),
-        uptime: 99.9, // Default uptime - could be fetched from backend
-        lastSnapshot: transformedWorkflows.length > 0 ? new Date().toISOString() : '',
-        planCapacity: 100, // Default - could be fetched from subscription
-        planUsed: transformedWorkflows.length
-      };
-
-      setStats(calculatedStats);
-
-    } catch (err: any) {
-      console.error('Dashboard - Failed to fetch dashboard data:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load dashboard data';
-      setError(errorMessage);
-      setWorkflows([]);
-      setStats(null);
-    } finally {
-      setLoading(false);
-    }
+  const refreshDashboard = () => {
+    refreshWorkflows();
+    toast({
+      title: "Dashboard Refreshed",
+      description: "Dashboard data has been updated successfully.",
+    });
   };
 
-  const refreshDashboard = async () => {
-    try {
-      setRefreshing(true);
-      setError(null);
-      await fetchDashboardData();
-      toast({
-        title: "Dashboard Refreshed",
-        description: "Dashboard data has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Failed to refresh dashboard:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    console.log('Dashboard - Component mounted, fetching dashboard data');
-    fetchDashboardData();
-  }, []);
-
-  // Add effect to track workflows state changes
-  useEffect(() => {
-    console.log('Dashboard - Workflows state changed:', workflows.length);
-  }, [workflows]);
+  // Removed useEffect as data fetching is handled by useWorkflows hook
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
     console.log('🔍 Dashboard - handleViewHistory called with:', {
@@ -195,31 +164,9 @@ const Dashboard = () => {
 
   const handleConfirmRollback = async () => {
     if (!selectedWorkflow) return;
-
-    setRollbacking(selectedWorkflow.id);
-    try {
-      const response = await ApiService.rollbackWorkflow(selectedWorkflow.id);
-      
-      toast({
-        title: "Rollback Successful",
-        description: response.data?.message || `${selectedWorkflow.name} has been rolled back to the latest version.`,
-      });
-
-      // Refresh dashboard data
-      await fetchDashboardData();
-    } catch (error: any) {
-      console.error('Failed to rollback workflow:', error);
-      const errorMessage = error.response?.data?.message || "Failed to rollback workflow. Please try again.";
-      toast({
-        title: "Rollback Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setRollbacking(null);
-      setShowRollbackModal(false);
-      setSelectedWorkflow(null);
-    }
+    await handleRollback(selectedWorkflow.id);
+    setShowRollbackModal(false);
+    setSelectedWorkflow(null);
   };
 
   const handleAddWorkflow = async () => {
@@ -245,44 +192,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleExportData = async () => {
-    setExporting(true);
-    try {
-      // Export current workflows data
-      const exportData = {
-        workflows: workflows,
-        stats: stats,
-        exportDate: new Date().toISOString(),
-        totalWorkflows: workflows.length,
-        activeWorkflows: workflows.filter(w => w.status === 'active').length,
-        protectedWorkflows: workflows.filter(w => w.protectionStatus === 'protected').length
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `workflowguard-dashboard-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: "Export Successful",
-        description: "Dashboard data has been exported successfully.",
-      });
-    } catch (error: any) {
-      console.error('Failed to export data:', error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
+  // Removed handleExportData as we use handleExport from useWorkflowActions hook
 
   // Filter workflows
   const filteredWorkflows = useMemo(() => {
@@ -428,11 +338,11 @@ const Dashboard = () => {
   return (
     <MainAppLayout title="Dashboard Overview">
       {/* Error Alert */}
-      {error && (
+      {fetchError && (
         <Alert className="mb-6 border-red-200 bg-red-50">
           <AlertTriangle className="h-4 w-4 text-red-600" />
           <AlertDescription className="text-red-800">
-            {error}
+            {fetchError}
             <Button 
               variant="link" 
               className="p-0 h-auto text-red-800 underline ml-2"
@@ -467,11 +377,11 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={refreshDashboard}
-              disabled={refreshing}
+              onClick={() => refreshWorkflows()}
+              disabled={isRefreshing}
               aria-label="Refresh Dashboard"
             >
-              {refreshing ? (
+              {isRefreshing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <RefreshCw className="w-4 h-4" />
@@ -514,7 +424,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-gray-900 mb-1">
-                {stats?.uptime || 0}%
+                {stats.uptime}%
               </div>
               <div className="text-sm text-gray-600">Total Uptime</div>
               <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
@@ -549,9 +459,12 @@ const Dashboard = () => {
           {/* Table Header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Protected Workflows ({filteredWorkflows.length})
-              </h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Protected Workflows ({filteredWorkflows.length})
+                </h2>
+                {loading && <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent" />}
+              </div>
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" onClick={handleAddWorkflow}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -560,10 +473,10 @@ const Dashboard = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={handleExportData}
-                  disabled={exporting}
+                  onClick={() => handleExport('all')}
+                  disabled={checkLoading('export')}
                 >
-                  {exporting ? (
+                  {checkLoading('export') ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Exporting...
@@ -716,10 +629,10 @@ const Dashboard = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleRollbackLatest(workflow)}
-                            disabled={rollbacking === workflow.id}
+                            disabled={rollbacking[workflow.id]}
                             className="text-orange-600"
                           >
-                            {rollbacking === workflow.id ? (
+                            {rollbacking[workflow.id] ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                 Rolling Back...
@@ -748,7 +661,7 @@ const Dashboard = () => {
         onClose={() => setShowRollbackModal(false)}
         onConfirm={handleConfirmRollback}
         workflow={selectedWorkflow}
-        loading={rollbacking === selectedWorkflow?.id}
+        loading={selectedWorkflow ? rollbacking[selectedWorkflow.id] : false}
       />
     </MainAppLayout>
   );
