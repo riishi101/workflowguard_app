@@ -43,25 +43,40 @@ export function useWorkflows(options: UseWorkflowsOptions = {}) {
 
   // Set up WebSocket connection
   useEffect(() => {
-    const socket = io(API_URL, {
-      path: '/socket.io',
-      transports: ['websocket'],
-    });
+    let socket: any;
+    try {
+      socket = io(API_URL, {
+        path: '/socket.io',
+        transports: ['websocket'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
 
-    socket.on('workflow:update', (updatedWorkflow) => {
-      setWorkflows(current => 
-        current.map(w => w.id === updatedWorkflow.id ? { ...w, ...updatedWorkflow } : w)
-      );
-    });
+      socket.on('connect_error', (error: any) => {
+        console.error('Socket connection error:', error);
+        // Don't show error toast for connection issues - gracefully degrade to polling
+      });
 
-    socket.on('workflow:version', ({ workflowId, version }) => {
-      setWorkflows(current => 
-        current.map(w => w.id === workflowId ? { ...w, versions: [...w.versions, version] } : w)
-      );
-    });
+      socket.on('workflow:update', (updatedWorkflow: any) => {
+        setWorkflows(current => 
+          current.map(w => w.id === updatedWorkflow.id ? { ...w, ...updatedWorkflow } : w)
+        );
+      });
+
+      socket.on('workflow:version', ({ workflowId, version }: any) => {
+        setWorkflows(current => 
+          current.map(w => w.id === workflowId ? { ...w, versions: [...(w.versions || []), version] } : w)
+        );
+      });
+    } catch (err) {
+      console.error('Failed to initialize WebSocket:', err);
+      // Don't show error toast - gracefully degrade to polling
+    }
 
     return () => {
-      socket.disconnect();
+      if (socket) {
+        socket.disconnect();
+      }
     };
   }, []);
 

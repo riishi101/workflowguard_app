@@ -1,5 +1,5 @@
 // API Configuration
-export const API_URL = process.env.VITE_API_URL || 'https://api.workflowguard.pro/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
 
 // WebSocket Configuration
 export const WS_CONFIG = {
