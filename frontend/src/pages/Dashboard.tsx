@@ -223,6 +223,22 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Helper function to safely convert any value to string for rendering
+  const safeToString = (value: any, fallback: string = 'Unknown'): string => {
+    if (value === null || value === undefined) {
+      return fallback;
+    }
+    if (typeof value === 'object') {
+      // If it's a Date object, format it
+      if (value instanceof Date) {
+        return value.toLocaleDateString();
+      }
+      // For other objects, return fallback to avoid rendering [object Object]
+      return fallback;
+    }
+    return String(value);
+  };
+
   if (loading) {
     return (
       <MainAppLayout title="Dashboard Overview">
@@ -557,7 +573,7 @@ const Dashboard: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-medium text-gray-900">
-                            {workflow.name}
+                            {safeToString(workflow.name, 'Unnamed Workflow')}
                           </span>
                         </div>
                       </td>
@@ -566,7 +582,7 @@ const Dashboard: React.FC = () => {
                           variant="secondary"
                           className={getStatusColor(workflow.status)}
                         >
-                          {workflow.status || 'Unknown'}
+                          {safeToString(workflow.status, 'Unknown')}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -574,24 +590,37 @@ const Dashboard: React.FC = () => {
                           variant="secondary"
                           className={getProtectionStatusColor(workflow.protectionStatus)}
                         >
-                          {workflow.protectionStatus || 'Unprotected'}
+                          {safeToString(workflow.protectionStatus, 'Unprotected')}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {workflow.lastModified}
+                        {safeToString(workflow.lastModified, 'Unknown')}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {workflow.versions} versions
+                        {safeToString(workflow.versions, '1')} versions
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
                             <AvatarFallback className="text-xs bg-gray-100 text-gray-600">
-                              {workflow.lastModifiedBy?.initials || (workflow.lastModifiedBy?.name || 'Unknown').split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                              {(() => {
+                                if (!workflow.lastModifiedBy || typeof workflow.lastModifiedBy !== 'object') {
+                                  return 'U';
+                                }
+                                const initials = safeToString(workflow.lastModifiedBy.initials, '');
+                                if (initials) return initials;
+                                const name = safeToString(workflow.lastModifiedBy.name, 'Unknown');
+                                return name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+                              })()}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-gray-600">
-                            {workflow.lastModifiedBy?.name || 'Unknown User'}
+                            {(() => {
+                              if (!workflow.lastModifiedBy || typeof workflow.lastModifiedBy !== 'object') {
+                                return 'Unknown User';
+                              }
+                              return safeToString(workflow.lastModifiedBy.name, 'Unknown User');
+                            })()}
                           </span>
                         </div>
                       </td>
