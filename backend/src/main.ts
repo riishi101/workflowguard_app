@@ -80,17 +80,10 @@ async function bootstrap() {
     'https://app.hubspot.com', // HubSpot app interface
     'https://developers.hubspot.com', // HubSpot developer portal
     'https://marketplace.hubspot.com', // HubSpot marketplace
-    process.env.FRONTEND_URL, // Environment-specific frontend URL
-  ].filter(Boolean);
+  ].concat(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []);
 
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    },
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [

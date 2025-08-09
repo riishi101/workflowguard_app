@@ -72,20 +72,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const [planLimit, setPlanLimit] = useState(500); // Default to 500, will be updated from subscription
   const maxRetries = 10; // Increased from 3 to 10
 
-  // Initialize WebSocket connection
-  const initializeSocket = async () => {
-    try {
-      await socketService.connect();
-      socketService.subscribe('workflow:update', (data) => {
-        console.log('Received workflow update:', data);
-        refreshWorkflows();
-      });
-    } catch (error) {
-      console.error('Failed to initialize WebSocket:', error);
-      // Continue with API-only mode
-    }
-  };
-
   // Fetch workflows from HubSpot
   const fetchWorkflows = async () => {
     // Check if user is authenticated before making API call
@@ -97,16 +83,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       return;
     }
 
-    // Initialize socket connection for real-time updates
-    await initializeSocket();
-
     // Debug authentication status
     console.log('WorkflowSelection - Authentication check:', {
       isAuthenticated,
       authLoading,
       user: user ? { id: user.id, email: user.email } : null,
-      token: localStorage.getItem('authToken') ? 'exists' : 'missing',
-      socketConnected: socketService.isConnected()
+      token: localStorage.getItem('authToken') ? 'exists' : 'missing'
     });
 
     // Ensure minimum loading time to prevent too quick completion
