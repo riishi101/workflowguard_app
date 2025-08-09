@@ -45,12 +45,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = localStorage.getItem('authToken');
         if (token) {
-          const response = await fetch('/api/auth/profile', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
+          const response = await ApiService.getCurrentUser();
+          if (response.success && response.data) {
+            setUser(response.data);
           } else {
             setUser(null);
           }

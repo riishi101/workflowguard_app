@@ -83,8 +83,8 @@ async function bootstrap() {
   ].concat(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []);
 
   app.enableCors({
-    origin: allowedOrigins,
-    credentials: true,
+    origin: process.env.CORS_ORIGIN || allowedOrigins,
+    credentials: process.env.ALLOW_CREDENTIALS === 'true',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type', 
