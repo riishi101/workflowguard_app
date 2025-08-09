@@ -605,6 +605,121 @@ export class WorkflowService {
     }
   }
 
+  async exportWorkflow(workflowId: string): Promise<any> {
+    try {
+      const workflow = await this.prisma.workflow.findFirst({
+        where: { id: workflowId },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          versions: {
+            orderBy: {
+              createdAt: 'desc'
+            },
+            select: {
+              id: true,
+              versionNumber: true,
+              createdAt: true,
+              data: true,
+            },
+          },
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Transform data for export
+      const exportData = {
+        id: workflow.id,
+        name: workflow.name,
+        hubspotId: workflow.hubspotId,
+        owner: workflow.owner,
+        versions: workflow.versions.map(version => ({
+          id: version.id,
+          versionNumber: version.versionNumber,
+          createdAt: version.createdAt,
+          data: version.data,
+        })),
+        createdAt: workflow.createdAt,
+        updatedAt: workflow.updatedAt,
+        exportedAt: new Date().toISOString(),
+      };
+
+      return exportData;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to export workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async exportAllWorkflows(userId: string): Promise<any> {
+    try {
+      const workflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          versions: {
+            orderBy: {
+              createdAt: 'desc'
+            },
+            select: {
+              id: true,
+              versionNumber: true,
+              createdAt: true,
+              data: true,
+            },
+          },
+        },
+      });
+
+      const exportData = {
+        exportInfo: {
+          userId,
+          exportedAt: new Date().toISOString(),
+          totalWorkflows: workflows.length,
+        },
+        workflows: workflows.map(workflow => ({
+          id: workflow.id,
+          name: workflow.name,
+          hubspotId: workflow.hubspotId,
+          owner: workflow.owner,
+          versions: workflow.versions.map(version => ({
+            id: version.id,
+            versionNumber: version.versionNumber,
+            createdAt: version.createdAt,
+            data: version.data,
+          })),
+          createdAt: workflow.createdAt,
+          updatedAt: workflow.updatedAt,
+        })),
+      };
+      
+      return exportData;
+
+      return exportData;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to export workflows: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   private calculateWorkflowSteps(workflowData: any): number {
     try {
       if (typeof workflowData === 'string') {
