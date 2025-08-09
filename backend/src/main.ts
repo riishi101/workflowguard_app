@@ -18,7 +18,7 @@ if (!global.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: true,
+    cors: false, // We'll configure CORS manually below
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
   // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
@@ -84,51 +84,31 @@ async function bootstrap() {
   });
   app.use('/api/auth/hubspot', oauthLimiter);
 
-  // CORS configuration - Allow frontend origins and HubSpot marketplace
-  const allowedOrigins = [
-    'http://localhost:5173', // Vite dev server
-    'http://localhost:3000', // Alternative dev port
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000',
-    'https://www.workflowguard.pro', // Production frontend
-    'https://workflowguard.pro', // Production frontend (without www)
-    'https://app.hubspot.com', // HubSpot app interface
-    'https://developers.hubspot.com', // HubSpot developer portal
-    'https://marketplace.hubspot.com', // HubSpot marketplace
-  ].concat(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []);
-
-  // Global middleware to handle CORS preflight
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    const origin = req.headers.origin;
-    if (origin === 'https://www.workflowguard.pro' || 
-        origin === 'https://workflowguard.pro' ||
-        origin === 'http://localhost:5173' ||
-        origin === 'http://localhost:3000') {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-id, x-hubspot-signature, x-hubspot-request-timestamp, x-hubspot-portal-id, Accept, Origin, X-Requested-With');
-      res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With, X-Marketplace-App, X-Marketplace-Version');
-    }
-    if (req.method === 'OPTIONS') {
-      return res.status(204).end();
-    }
-    next();
-  });
-
-  // Keep CORS middleware as backup
+  // Configure CORS properly to handle credentials
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = [
         'https://www.workflowguard.pro',
         'https://workflowguard.pro',
         'http://localhost:5173',
-        'http://localhost:3000'
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
+        'https://app.hubspot.com',
+        'https://developers.hubspot.com',
+        'https://marketplace.hubspot.com'
       ];
-      if (!origin || allowedOrigins.includes(origin)) {
+      
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.log(`CORS blocked origin: ${origin}`);
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
     credentials: true,
@@ -172,15 +152,6 @@ async function bootstrap() {
     const referrer = req.headers.referer || 'no-referrer';
     
     console.log(`${timestamp} - ${req.method} ${req.url} - Origin: ${origin} - Referrer: ${referrer}${isMarketplaceRequest ? ' [MARKETPLACE]' : ''}`);
-    
-    // Add CORS headers for preflight requests
-    if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Origin', origin);
-      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,x-user-id,x-hubspot-signature,x-hubspot-request-timestamp,x-hubspot-portal-id,Accept,Origin,X-Requested-With');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      return res.status(204).end();
-    }
     
     next();
   });

@@ -98,9 +98,9 @@ const WorkflowHistory = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [downloading, setDownloading] = useState<string | null>(null);
   const [rollbacking, setRollbacking] = useState<string | null>(null);
-  const [rollbackModal, setRollbackModal] = useState<{open: boolean, workflow: any}>({
+  const [rollbackModal, setRollbackModal] = useState<{open: boolean, version: any}>({
     open: false,
-    workflow: null
+    version: null
   });
 
   useEffect(() => {
@@ -190,15 +190,28 @@ const WorkflowHistory = () => {
   };
 
   const handleRollbackClick = (workflow: ProtectedWorkflow) => {
-    setRollbackModal({ open: true, workflow });
+    // Convert workflow data to version format expected by RollbackConfirmModal
+    const versionData = {
+      id: workflow.id,
+      versionNumber: 'latest',
+      dateTime: workflow.lastModified,
+      modifiedBy: {
+        name: workflow.lastModifiedBy.name,
+        initials: workflow.lastModifiedBy.initials
+      },
+      changeSummary: `Rollback workflow: ${workflow.name}`,
+      type: 'rollback',
+      status: workflow.status
+    };
+    setRollbackModal({ open: true, version: versionData });
   };
 
   const handleRollback = async () => {
-    if (!rollbackModal.workflow) return;
+    if (!rollbackModal.version) return;
     
-    setRollbacking(rollbackModal.workflow.id);
+    setRollbacking(rollbackModal.version.id);
     try {
-      await ApiService.rollbackWorkflow(rollbackModal.workflow.id);
+      await ApiService.rollbackWorkflow(rollbackModal.version.id);
       toast({
         title: "Rollback Complete",
         description: "Workflow has been rolled back successfully.",
@@ -215,7 +228,7 @@ const WorkflowHistory = () => {
       });
     } finally {
       setRollbacking(null);
-      setRollbackModal({ open: false, workflow: null });
+      setRollbackModal({ open: false, version: null });
     }
   };
 
@@ -484,10 +497,10 @@ const WorkflowHistory = () => {
       {/* Rollback Confirmation Modal */}
       <RollbackConfirmModal
         open={rollbackModal.open}
-        onClose={() => setRollbackModal({ open: false, workflow: null })}
+        onClose={() => setRollbackModal({ open: false, version: null })}
         onConfirm={handleRollback}
-        workflow={rollbackModal.workflow}
-        loading={rollbacking === rollbackModal.workflow?.id}
+        version={rollbackModal.version}
+        loading={rollbacking === rollbackModal.version?.id}
       />
     </MainAppLayout>
   );

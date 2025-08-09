@@ -89,11 +89,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               });
               setUser(response.data);
 
-              // Only redirect if this was a fresh OAuth success
+              // Don't redirect here - let the OnboardingFlow handle navigation
               if (successParam === 'true' && tokenParam) {
-                logAuth('Fresh OAuth success, redirecting to workflow selection');
-                window.location.href = '/workflow-selection';
-                return;
+                logAuth('Fresh OAuth success, user authenticated');
               }
             } else {
               logAuth('Token validation failed', { response });
@@ -118,12 +116,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('authToken');
         setUser(null);
       } finally {
-        logAuth('Auth initialization complete', { 
-          isAuthenticated: !!user,
-          hasToken: !!localStorage.getItem('authToken')
-        });
         setLoading(false);
         setHasInitialized(true);
+        // Log after state is set
+        setTimeout(() => {
+          logAuth('Auth initialization complete', { 
+            isAuthenticated: !!localStorage.getItem('authToken'),
+            hasToken: !!localStorage.getItem('authToken'),
+            userSet: !!user
+          });
+        }, 0);
       }
     };
 
