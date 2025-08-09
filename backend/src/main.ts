@@ -17,7 +17,10 @@ if (!global.crypto) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+    logger: ['error', 'warn', 'debug', 'log', 'verbose'],
+  });
   // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
   const httpAdapter = app.getHttpAdapter();
   if (httpAdapter.getType && httpAdapter.getType() === 'express') {
@@ -82,6 +85,12 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
+      // Add WebSocket specific handling
+      const isWebSocketRequest = origin && (
+        origin.startsWith('ws://') || 
+        origin.startsWith('wss://') ||
+        origin.includes('socket.io')
+      );
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
       
@@ -102,6 +111,11 @@ async function bootstrap() {
 
       // Allow HubSpot domains
       if (origin.match(/^https:\/\/(app|developers|marketplace)\.hubspot\.com$/)) {
+        return callback(null, true);
+      }
+
+      // Allow WebSocket connections
+      if (isWebSocketRequest) {
         return callback(null, true);
       }
       
