@@ -31,25 +31,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Component to conditionally render OnboardingFlow
+// Component to conditionally render OnboardingFlow or handle OAuth callback
 const RootRoute = () => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
-  
-  // Check if this is an OAuth callback (has success/token params)
-  const urlParams = new URLSearchParams(window.location.search);
-  const isOAuthCallback = urlParams.get('success') === 'true' && urlParams.get('token');
-  
-  // Handle OAuth callback and workflow selection
-  if (isOAuthCallback) {
-    const token = urlParams.get('token');
-    if (token) {
-      localStorage.setItem('authToken', token);
-      // Clean up URL and redirect to workflow selection
-      window.history.replaceState({}, document.title, '/workflow-selection');
-      return <Navigate to="/workflow-selection" replace />;
-    }
-  }
   
   // Show OnboardingFlow on root route if not authenticated
   if (location.pathname === '/' && !loading && !isAuthenticated) {
@@ -69,16 +54,7 @@ const RootRoute = () => {
 import { useEffect } from "react";
 
 const App = () => {
-  // Store OAuth token from URL to localStorage on app load
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    if (token) {
-      localStorage.setItem('authToken', token);
-      // Optionally, clean up the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
+  // No need for token handling here, it's all in AuthContext now
 
   return (
     <QueryClientProvider client={queryClient}>

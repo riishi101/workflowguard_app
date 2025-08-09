@@ -47,67 +47,131 @@ const OnboardingFlow = () => {
     };
   }, [isAuthenticated]);
 
-  // Handle timeout state changes
+  // Handle timeout state changes and recover from OAuth
   useEffect(() => {
+    // Check for stored pre-OAuth state
+    const storedState = sessionStorage.getItem('preOAuthState');
+    if (storedState) {
+      const parsedState = JSON.parse(storedState);
+      const timeSinceStore = Date.now() - parsedState.timestamp;
+      
+      console.log('🔄 OnboardingFlow - Found stored state:', {
+        storedState: parsedState,
+        timeSinceStore: `${Math.round(timeSinceStore / 1000)}s`,
+        currentAuth: { isAuthenticated, currentStep }
+      });
+
+      // Clear stored state to prevent reuse
+      sessionStorage.removeItem('preOAuthState');
+    }
+
     if (timeoutReached && !isAuthenticated && currentStep !== 'connect') {
-      console.log('OnboardingFlow - Timeout reached but user not authenticated, showing connect modal');
+      console.log('🔄 OnboardingFlow - Timeout reached, no auth', {
+        timeoutReached,
+        isAuthenticated,
+        currentStep
+      });
       setCurrentStep('connect');
       setShowConnectModal(true);
     }
     
     return () => {
-      // Cleanup function to prevent memory leaks
+      // Cleanup stored state on unmount
+      sessionStorage.removeItem('preOAuthState');
     };
   }, [timeoutReached, isAuthenticated, currentStep]);
 
   useEffect(() => {
-    if (loading || isInitialized) return;
+    if (loading || isInitialized) {
+      console.log('🔄 OnboardingFlow - Skipping initialization:', { loading, isInitialized });
+      return;
+    }
 
-    // Check URL parameters for OAuth callback
+    console.log('🔄 OnboardingFlow - Starting initialization', {
+      loading,
+      isInitialized,
+      isAuthenticated,
+      currentStep,
+      hasProcessedOAuth,
+      pathname: window.location.pathname,
+      search: window.location.search
+    });
+
+    // Check for OAuth callback success
     const urlParams = new URLSearchParams(window.location.search);
-    const isOAuthCallback = urlParams.get('success') === 'true' && urlParams.get('token');
+    const isOAuthSuccess = urlParams.get('success') === 'true';
+    const hasToken = urlParams.get('token');
+    
+    console.log('🔄 OnboardingFlow - OAuth check:', { isOAuthSuccess, hasToken });
 
-    if (isOAuthCallback) {
+    // Handle OAuth callback success
+    if (isOAuthSuccess && hasToken) {
+      console.log('🔄 OnboardingFlow - OAuth callback success, going to workflow selection');
       setHasProcessedOAuth(true);
       setCurrentStep('workflow-selection');
       setIsInitialized(true);
       return;
     }
 
-    // Normal flow
-    if (isAuthenticated && !hasProcessedOAuth) {
+    // Normal flow based on auth state
+    if (isAuthenticated) {
+      console.log('🔄 OnboardingFlow - User authenticated, going to workflow selection');
       setHasProcessedOAuth(true);
       setCurrentStep('workflow-selection');
       setIsInitialized(true);
       return;
     }
 
-    if (!isAuthenticated && !hasProcessedOAuth) {
-      setCurrentStep('welcome');
-      setShowWelcomeModal(true);
-      setIsInitialized(true);
-    }
+    // Show welcome if not authenticated
+    console.log('🔄 OnboardingFlow - User not authenticated, showing welcome');
+    setCurrentStep('welcome');
+    setShowWelcomeModal(true);
+    setIsInitialized(true);
   }, [isAuthenticated, loading, hasProcessedOAuth, isInitialized]);
 
   const handleWelcomeComplete = () => {
-    console.log('OnboardingFlow - Welcome complete, showing connect modal');
+    console.log('🔄 OnboardingFlow - Welcome complete', {
+      currentStep,
+      isAuthenticated,
+      hasProcessedOAuth
+    });
     setShowWelcomeModal(false);
     setShowConnectModal(true);
     setCurrentStep('connect');
   };
 
   const handleConnectHubSpot = () => {
-    console.log('OnboardingFlow - Initiating HubSpot connection');
+    console.log('🔄 OnboardingFlow - Initiating HubSpot connection', {
+      currentStep,
+      isAuthenticated,
+      hasProcessedOAuth,
+      currentUrl: window.location.href
+    });
+
+    // Store current state before redirect
+    sessionStorage.setItem('preOAuthState', JSON.stringify({
+      currentStep,
+      isAuthenticated,
+      hasProcessedOAuth,
+      timestamp: Date.now()
+    }));
+
     // Use the connectHubSpot function from AuthContext
     connectHubSpot();
   };
 
   const handleWorkflowSelectionComplete = () => {
-    console.log('OnboardingFlow - Workflow selection complete, going to dashboard');
+    console.log('🔄 OnboardingFlow - Workflow selection complete', {
+      currentStep,
+      isAuthenticated,
+      hasProcessedOAuth,
+      hasWorkflows: WorkflowState.hasSelectedWorkflows(),
+      workflowCount: WorkflowState.getSelectedCount()
+    });
     
     // Ensure workflow state is properly set
     if (!WorkflowState.hasSelectedWorkflows()) {
-      console.log('OnboardingFlow - Warning: No workflow selection state found');
+      console.log('🔄 OnboardingFlow - Warning: No workflow selection state found');
     }
     
     // Clear onboarding state completely
