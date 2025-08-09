@@ -190,9 +190,12 @@ const Dashboard: React.FC = () => {
     };
   }, [filteredWorkflows]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
     console.log('🔍 DEBUG: getStatusColor called with status:', status);
-    switch (status) {
+    if (!status) {
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    }
+    switch (status.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-800 hover:bg-green-100";
       case "inactive":
@@ -204,8 +207,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getProtectionStatusColor = (status: string) => {
-    switch (status) {
+  const getProtectionStatusColor = (status: string | undefined) => {
+    if (!status) {
+      return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+    }
+    switch (status.toLowerCase()) {
       case "protected":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "unprotected":
@@ -560,7 +566,7 @@ const Dashboard: React.FC = () => {
                           variant="secondary"
                           className={getStatusColor(workflow.status)}
                         >
-                          {workflow.status}
+                          {workflow.status || 'Unknown'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -568,7 +574,7 @@ const Dashboard: React.FC = () => {
                           variant="secondary"
                           className={getProtectionStatusColor(workflow.protectionStatus)}
                         >
-                          {workflow.protectionStatus}
+                          {workflow.protectionStatus || 'Unprotected'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
@@ -635,7 +641,18 @@ const Dashboard: React.FC = () => {
         open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
         onConfirm={handleConfirmRollback}
-        workflow={selectedWorkflow}
+        version={selectedWorkflow ? {
+          id: selectedWorkflow.id,
+          versionNumber: selectedWorkflow.versions || 1,
+          dateTime: selectedWorkflow.lastModified || new Date().toISOString(),
+          modifiedBy: {
+            name: selectedWorkflow.lastModifiedBy?.name || 'Unknown User',
+            initials: selectedWorkflow.lastModifiedBy?.initials || 'U'
+          },
+          changeSummary: `Rollback workflow: ${selectedWorkflow.name}`,
+          type: 'rollback',
+          status: selectedWorkflow.status || 'unknown'
+        } : null}
         loading={selectedWorkflow ? rollbacking[selectedWorkflow.id] : false}
       />
     </MainAppLayout>
