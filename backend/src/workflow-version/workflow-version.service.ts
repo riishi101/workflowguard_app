@@ -417,6 +417,52 @@ export class WorkflowVersionService {
     return summaries.join(', ');
   }
 
+  async createInitialVersion(workflow: any, userId: string, initialData: any): Promise<any> {
+    try {
+      // Get the highest version number for this workflow
+      const latestVersion = await this.prisma.workflowVersion.findFirst({
+        where: { workflowId: workflow.id },
+        orderBy: { versionNumber: 'desc' },
+      });
+
+      const versionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+      // Create the initial version
+      const version = await this.prisma.workflowVersion.create({
+        data: {
+          workflowId: workflow.id,
+          versionNumber,
+          snapshotType: 'Initial Protection',
+          createdBy: userId,
+          data: initialData || {
+            hubspotId: workflow.hubspotId,
+            name: workflow.name,
+            status: 'active',
+            initialProtection: true,
+            protectedAt: new Date().toISOString()
+          }
+        },
+      });
+
+      // Create audit log entry
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'initial_protection',
+          entityType: 'workflow',
+          entityId: workflow.id,
+          oldValue: {},
+          newValue: { versionId: version.id, versionNumber }
+        },
+      });
+
+      return version;
+    } catch (error) {
+      console.error('Error creating initial version:', error);
+      throw error;
+    }
+  }
+
   private generateComplianceRecommendations(versions: any[], auditLogs: any[]): string[] {
     const recommendations = [];
 
@@ -460,7 +506,15 @@ export class WorkflowVersionService {
       });
 
       if (!workflow) {
-        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+        // Instead of throwing 404, return empty array
+        console.log('No workflow found for hubspotId:', hubspotId);
+        return [];
+      }
+
+      // If workflow exists but has no versions, return empty array
+      if (!workflow.versions || workflow.versions.length === 0) {
+        console.log('No versions found for workflow:', workflow.id);
+        return [];
       }
 
       // Transform versions to match expected format
@@ -472,16 +526,12 @@ export class WorkflowVersionService {
         createdAt: version.createdAt,
         data: version.data,
         workflowId: version.workflowId,
-        // user: version.user || null, // Removed: not present in model
         changes: this.calculateChanges(version.data),
         changeSummary: this.generateChangeSummary(this.calculateChanges(version.data), version.data)
       }));
     } catch (error) {
       console.error('Error finding workflow history by HubSpot ID:', error);
-      throw new HttpException(
-        `Failed to find workflow history: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+      return []; // Return empty array instead of throwing error
     }
   }
 

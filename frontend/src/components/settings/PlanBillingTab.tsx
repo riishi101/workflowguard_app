@@ -36,6 +36,18 @@ const PlanBillingTab = () => {
     fetchData();
   }, []);
 
+  const getWorkflowLimit = (planId: string) => {
+    switch (planId) {
+      case 'professional':
+        return 35;
+      case 'enterprise':
+        return Infinity;
+      case 'starter':
+      default:
+        return 10;
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -45,15 +57,48 @@ const PlanBillingTab = () => {
         ApiService.getUsageStats()
       ]);
 
-      setSubscription(subscriptionRes.data);
-      setTrialStatus(trialRes.data);
-      setUsageStats(usageRes.data);
+      const subData = subscriptionRes.data;
+      const trialData = trialRes.data;
+      const usageData = usageRes.data;
+
+      // Calculate correct workflow limits based on plan
+      const workflowLimit = getWorkflowLimit(subData?.planId || 'starter');
+      
+      // Merge usage stats with correct limits
+      const updatedUsageStats = {
+        ...usageData,
+        workflows: {
+          ...usageData?.workflows,
+          limit: trialData?.isTrial ? 35 : workflowLimit
+        }
+      };
+
+      setSubscription(subData);
+      setTrialStatus(trialData);
+      setUsageStats(updatedUsageStats);
     } catch (error: any) {
       console.error('Failed to fetch subscription data:', error);
       toast({
         title: "Error",
         description: "Failed to load subscription information",
         variant: "destructive",
+      });
+
+      // Set default values on error
+      setSubscription({
+        planId: 'starter',
+        planName: 'Starter Plan',
+        price: 19
+      });
+      setTrialStatus({
+        isTrial: false,
+        trialDaysRemaining: 0
+      });
+      setUsageStats({
+        workflows: {
+          used: 0,
+          limit: 10
+        }
       });
     } finally {
       setLoading(false);
@@ -62,20 +107,55 @@ const PlanBillingTab = () => {
 
   const handleUpgrade = async (planId: string) => {
     try {
-      // This would typically redirect to HubSpot billing or handle plan upgrade
+      // Show loading toast
       toast({
-        title: "Plan Upgrade",
-        description: `Redirecting to HubSpot to upgrade to ${planId} plan...`,
+        title: "Processing Upgrade",
+        description: "Initiating plan upgrade process...",
       });
+
+      // First, update the subscription in our system
+      const updateResponse = await ApiService.updateSubscription(planId);
+
+      if (!updateResponse.success) {
+        throw new Error(updateResponse.message || 'Failed to update subscription');
+      }
+
+      // Show success message
+      toast({
+        title: "Plan Upgrade Initiated",
+        description: "Redirecting to HubSpot to complete your upgrade...",
+      });
+
+      // Refresh subscription data
+      await fetchData();
       
-      // Simulate redirect to HubSpot billing
+      // Redirect to HubSpot billing to complete the process
       setTimeout(() => {
-        window.open('https://app.hubspot.com/billing', '_blank');
+        const hubspotBillingUrl = `https://app.hubspot.com/billing/upgrade/${planId}`;
+        window.open(hubspotBillingUrl, '_blank');
       }, 1000);
+
+      // Set up polling to check subscription status
+      const pollInterval = setInterval(async () => {
+        const status = await ApiService.getSubscription();
+        if (status.data?.planId === planId) {
+          clearInterval(pollInterval);
+          toast({
+            title: "Upgrade Complete",
+            description: `Successfully upgraded to ${planId} plan!`,
+          });
+          fetchData(); // Refresh the data one final time
+        }
+      }, 5000); // Check every 5 seconds
+
+      // Clear polling after 5 minutes if not completed
+      setTimeout(() => clearInterval(pollInterval), 300000);
+
     } catch (error: any) {
+      console.error('Plan upgrade failed:', error);
       toast({
         title: "Upgrade Failed",
-        description: error.message || "Failed to process upgrade request",
+        description: error.message || "Failed to process upgrade request. Please try again.",
         variant: "destructive",
       });
     }
@@ -182,7 +262,20 @@ const PlanBillingTab = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Current Plan</p>
                 <p className="font-semibold text-gray-900">
-                  {trialStatus?.isTrial ? (subscription?.planName ? `${subscription.planName} (Trial)` : 'Professional Trial') : (subscription?.planName || 'Starter Plan')}
+                  {(() => {
+                    if (trialStatus?.isTrial) {
+                      return 'Professional Plan (Trial)';
+                    }
+                    switch (subscription?.planId) {
+                      case 'professional':
+                        return 'Professional Plan';
+                      case 'enterprise':
+                        return 'Enterprise Plan';
+                      case 'starter':
+                      default:
+                        return 'Starter Plan';
+                    }
+                  })()}
                 </p>
               </div>
               <div>

@@ -24,8 +24,6 @@ interface UserProfile {
   jobTitle?: string;
   timezone?: string;
   language?: string;
-  hubspotPortalId?: string;
-  hubspotConnectedAt?: string;
   avatarUrl?: string;
   emailVerified?: boolean;
 }
@@ -245,25 +243,6 @@ const ProfileTab = () => {
       toast({
         title: "Remove Failed",
         description: err.response?.data?.message || "Failed to remove avatar. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDisconnectHubSpot = async () => {
-    try {
-      await ApiService.disconnectHubSpot();
-      toast({
-        title: "HubSpot Disconnected",
-        description: "Your HubSpot account has been disconnected successfully.",
-      });
-      // Refresh profile to update connection status
-      fetchUserProfile();
-    } catch (err: any) {
-      console.error('Failed to disconnect HubSpot:', err);
-      toast({
-        title: "Disconnect Failed",
-        description: err.response?.data?.message || "Failed to disconnect HubSpot. Please try again.",
         variant: "destructive",
       });
     }
@@ -518,80 +497,6 @@ const ProfileTab = () => {
               placeholder="Enter your job title"
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* HubSpot Account Connection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>HubSpot Account Connection</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {profile.hubspotPortalId ? (
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-              </div>
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900">
-                    Connected
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    • Last connected: {profile.hubspotConnectedAt ? new Date(profile.hubspotConnectedAt).toLocaleString() : 'Unknown'}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 font-medium">
-                      Portal ID:
-                    </span>
-                    <span className="text-sm text-gray-900 font-mono">
-                      {profile.hubspotPortalId}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 font-medium">
-                      Connected as:
-                    </span>
-                    <span className="text-sm text-gray-900">
-                      {profile.email}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-                    onClick={handleDisconnectHubSpot}
-                  >
-                    Disconnect HubSpot
-                  </Button>
-                </div>
-
-                <p className="text-sm text-gray-500 pt-1">
-                  Disconnecting will disable all HubSpot-related features and
-                  monitoring.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Not Connected
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Connect your HubSpot account to enable workflow protection features.
-              </p>
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                Connect HubSpot
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 

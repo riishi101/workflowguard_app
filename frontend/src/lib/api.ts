@@ -683,6 +683,15 @@ class ApiService {
     }
   }
 
+  static async updateSubscription(planId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/subscription/update', { planId });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Support tickets
   static async createSupportTicket(ticketData: any): Promise<ApiResponse<any>> {
     try {
