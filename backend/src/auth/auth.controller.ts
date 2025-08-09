@@ -278,7 +278,10 @@ export class AuthController {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
       
-      return user;
+      return {
+        success: true,
+        data: user
+      };
     } catch (error) {
       throw new HttpException('Failed to get current user', HttpStatus.INTERNAL_SERVER_ERROR);
     }
