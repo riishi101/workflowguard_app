@@ -191,8 +191,7 @@ const Dashboard: React.FC = () => {
   }, [filteredWorkflows]);
 
   const getStatusColor = (status: string | undefined) => {
-    console.log('🔍 DEBUG: getStatusColor called with status:', status);
-    if (!status) {
+    if (!status || typeof status !== 'string') {
       return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
     switch (status.toLowerCase()) {
