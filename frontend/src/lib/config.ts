@@ -1,14 +1,6 @@
 // API Configuration
 export const API_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
 
-// WebSocket Configuration
-export const WS_CONFIG = {
-  path: '/socket.io',
-  transports: ['websocket'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-};
-
 // API Endpoints
 export const ENDPOINTS = {
   workflows: '/workflows',

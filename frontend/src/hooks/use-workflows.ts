@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ApiService } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { io } from 'socket.io-client';
-import { API_URL } from '@/lib/config';
 
 interface UseWorkflowsOptions {
   autoRefresh?: boolean;
@@ -40,45 +38,6 @@ export function useWorkflows(options: UseWorkflowsOptions = {}) {
       setLoading(false);
     }
   }, [toast]);
-
-  // Set up WebSocket connection
-  useEffect(() => {
-    let socket: any;
-    try {
-      socket = io(API_URL, {
-        path: '/socket.io',
-        transports: ['websocket'],
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-      });
-
-      socket.on('connect_error', (error: any) => {
-        console.error('Socket connection error:', error);
-        // Don't show error toast for connection issues - gracefully degrade to polling
-      });
-
-      socket.on('workflow:update', (updatedWorkflow: any) => {
-        setWorkflows(current => 
-          current.map(w => w.id === updatedWorkflow.id ? { ...w, ...updatedWorkflow } : w)
-        );
-      });
-
-      socket.on('workflow:version', ({ workflowId, version }: any) => {
-        setWorkflows(current => 
-          current.map(w => w.id === workflowId ? { ...w, versions: [...(w.versions || []), version] } : w)
-        );
-      });
-    } catch (err) {
-      console.error('Failed to initialize WebSocket:', err);
-      // Don't show error toast - gracefully degrade to polling
-    }
-
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, []);
 
   // Set up auto-refresh
   useEffect(() => {

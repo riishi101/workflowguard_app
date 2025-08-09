@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { socketService } from "@/lib/socket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -270,8 +269,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 
       return () => {
         clearTimeout(fallbackTimer);
-        // Clean up socket connection
-        socketService.disconnect();
       };
     }
   }, [isAuthenticated, authLoading]);

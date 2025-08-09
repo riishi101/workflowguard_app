@@ -6,7 +6,18 @@ interface RollbackConfirmModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  workflow: any;
+  version: {
+    id: string;
+    versionNumber: string | number;
+    dateTime: string;
+    modifiedBy: {
+      name: string;
+      initials: string;
+    };
+    changeSummary: string;
+    type: string;
+    status: string;
+  } | null;
   loading?: boolean;
 }
 
@@ -14,10 +25,10 @@ const RollbackConfirmModal = ({
   open,
   onClose,
   onConfirm,
-  workflow,
+  version,
   loading = false
 }: RollbackConfirmModalProps) => {
-  if (!workflow) return null;
+  if (!version) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -47,7 +58,7 @@ const RollbackConfirmModal = ({
                   Warning: This will permanently change your workflow
                 </p>
                 <p className="text-orange-700">
-                  Rolling back workflow "{workflow.name}" will revert it to its latest saved version. 
+                  Rolling back to version {version.versionNumber} will revert all changes made after this version. 
                   This action cannot be undone.
                 </p>
               </div>
@@ -56,23 +67,23 @@ const RollbackConfirmModal = ({
 
           <div className="space-y-3">
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Workflow Details</h4>
+              <h4 className="font-medium text-gray-900 mb-2">Version Details</h4>
               <div className="bg-gray-50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Name:</span>
-                  <span className="font-medium">{workflow.name}</span>
+                  <span className="text-gray-600">Version:</span>
+                  <span className="font-medium">{version.versionNumber}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Status:</span>
-                  <span className="font-medium">{workflow.status}</span>
+                  <span className="text-gray-600">Type:</span>
+                  <span className="font-medium">{version.type}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Versions:</span>
-                  <span className="font-medium">{workflow.versions || 0}</span>
+                  <span className="text-gray-600">Created By:</span>
+                  <span className="font-medium">{version.modifiedBy.name}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Last Modified:</span>
-                  <span className="font-medium">{workflow.lastModified}</span>
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">{new Date(version.dateTime).toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -301,7 +301,7 @@ const WorkflowHistoryDetail = () => {
     return (
       <MainAppLayout title="Workflow History Detail">
         <ContentSection>
-          <div className="space-y-6">
+          <div className="space-y-6" data-testid="loading-skeleton">
             <Skeleton className="h-12 w-full" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[...Array(3)].map((_, i) => (
@@ -468,6 +468,7 @@ const WorkflowHistoryDetail = () => {
                     <span>{selectedVersions.length}/2 versions selected</span>
                     {selectedVersions.length === 2 && (
                       <Button
+                        data-testid="compare-selected-button"
                         variant="default"
                         size="sm"
                         onClick={handleCompareSelected}
@@ -480,6 +481,7 @@ const WorkflowHistoryDetail = () => {
                   </div>
                 )}
                 <Button
+                  data-testid="compare-mode-toggle"
                   variant={compareMode ? "default" : "outline"}
                   size="sm"
                   onClick={toggleCompareMode}
@@ -505,6 +507,7 @@ const WorkflowHistoryDetail = () => {
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
+                data-testid="search-input"
                 placeholder="Search versions by changes, user, or version..."
                 className="pl-10"
                 value={searchTerm}
@@ -589,6 +592,7 @@ const WorkflowHistoryDetail = () => {
                             />
                           )}
                           <Button
+                            data-testid="view-details-button"
                             variant="outline"
                             size="sm"
                             className="text-blue-600 hover:text-blue-700"
