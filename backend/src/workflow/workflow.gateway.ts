@@ -4,20 +4,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: (origin) => {
-      if (!origin) return true;
-      const allowedOrigins = [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'https://www.workflowguard.pro',
-        'https://workflowguard.pro',
-        process.env.FRONTEND_URL,
-      ].filter(Boolean);
-      
-      return allowedOrigins.includes(origin) || 
-             origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/) ||
-             origin.match(/^https:\/\/(www\.)?workflowguard\.pro$/);
-    },
+    origin: ['https://www.workflowguard.pro', 'https://workflowguard.pro'],
     credentials: true,
   },
   path: '/socket.io/',

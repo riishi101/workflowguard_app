@@ -84,44 +84,7 @@ async function bootstrap() {
   ].filter(Boolean);
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // Add WebSocket specific handling
-      const isWebSocketRequest = origin && (
-        origin.startsWith('ws://') || 
-        origin.startsWith('wss://') ||
-        origin.includes('socket.io')
-      );
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-      
-      // Check if origin is in allowed list
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // For development, allow localhost with any port
-      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
-        return callback(null, true);
-      }
-      
-      // For production, allow workflowguard.pro domains
-      if (origin.match(/^https:\/\/(www\.)?workflowguard\.pro$/)) {
-        return callback(null, true);
-      }
-
-      // Allow HubSpot domains
-      if (origin.match(/^https:\/\/(app|developers|marketplace)\.hubspot\.com$/)) {
-        return callback(null, true);
-      }
-
-      // Allow WebSocket connections
-      if (isWebSocketRequest) {
-        return callback(null, true);
-      }
-      
-      console.warn(`CORS blocked origin: ${origin}`);
-      return callback(new Error('Not allowed by CORS'));
-    },
+    origin: ['https://www.workflowguard.pro', 'https://workflowguard.pro'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
