@@ -1,11 +1,44 @@
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+interface WorkflowUpdate {
+  id: string;
+  name: string;
+  status: string;
+  lastModified: string;
+  [key: string]: any;
+}
+
+interface WorkflowVersion {
+  id: string;
+  workflowId: string;
+  versionNumber: number;
+  snapshotType: string;
+  createdBy: string;
+  createdAt: string;
+  data: Record<string, any>;
+}
 
 @WebSocketGateway({
   cors: {
-    origin: ['https://www.workflowguard.pro', 'https://workflowguard.pro'],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'https://www.workflowguard.pro',
+        'https://workflowguard.pro',
+        'http://localhost:5173',
+        'http://localhost:3000'
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Authorization", "Content-Type"]
   },
   path: '/socket.io/',
   serveClient: false,
@@ -18,14 +51,30 @@ import { Logger } from '@nestjs/common';
     sameSite: 'strict',
   },
 })
-export class WorkflowGateway {
+export class WorkflowGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(WorkflowGateway.name);
+  private readonly connectedClients = new Map<string, Socket>();
 
-  handleConnection(client: any) {
+  constructor(private readonly jwtService: JwtService) {}
+
+  async handleConnection(client: Socket) {
     try {
+      // Validate token from handshake auth
+      const token = client.handshake?.auth?.token;
+      if (!token) {
+        throw new UnauthorizedException('No authentication token provided');
+      }
+
+      try {
+        await this.jwtService.verifyAsync(token);
+      } catch (error) {
+        throw new UnauthorizedException('Invalid authentication token');
+      }
+
+      this.connectedClients.set(client.id, client);
       this.logger.log(`Client connected: ${client.id}`);
       
       // Send initial connection status
@@ -58,8 +107,9 @@ export class WorkflowGateway {
     }
   }
 
-  handleDisconnect(client: any) {
+  handleDisconnect(client: Socket) {
     try {
+      this.connectedClients.delete(client.id);
       this.logger.log(`Client disconnected: ${client.id}`);
       
       // Notify client about disconnect
@@ -74,7 +124,7 @@ export class WorkflowGateway {
     }
   }
 
-  emitWorkflowUpdate(workflow: any) {
+  emitWorkflowUpdate(workflow: WorkflowUpdate) {
     try {
       this.logger.debug(`Emitting workflow update: ${workflow.id}`);
       this.server.emit('workflow:update', {
@@ -87,7 +137,7 @@ export class WorkflowGateway {
     }
   }
 
-  emitWorkflowVersion(workflowId: string, version: any) {
+  emitWorkflowVersion(workflowId: string, version: Partial<WorkflowVersion>) {
     try {
       this.logger.debug(`Emitting workflow version: ${workflowId}`);
       

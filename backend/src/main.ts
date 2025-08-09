@@ -84,7 +84,13 @@ async function bootstrap() {
   ].filter(Boolean);
 
   app.enableCors({
-    origin: ['https://www.workflowguard.pro', 'https://workflowguard.pro'],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -96,8 +102,7 @@ async function bootstrap() {
       'x-hubspot-portal-id',
       'Accept',
       'Origin',
-      'X-Requested-With',
-      'Access-Control-Allow-Origin'
+      'X-Requested-With'
     ],
     exposedHeaders: ['Content-Length', 'X-Requested-With', 'X-Marketplace-App', 'X-Marketplace-Version'],
     preflightContinue: false,
