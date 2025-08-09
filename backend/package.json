@@ -10,7 +10,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "./node_modules/.bin/nest build",
+    "build": "nest build",
     "prestart:prod": "npm run build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -57,7 +57,6 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/compression": "^1.8.1",
