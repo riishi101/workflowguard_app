@@ -27,17 +27,41 @@ async function bootstrap() {
     }
   }
   
-  // Security middleware
-  app.use(helmet());
+  // Enhanced security middleware
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://app.hubspot.com"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+          imgSrc: ["'self'", "data:", "https:", "http:"],
+          connectSrc: ["'self'", "https://api.workflowguard.pro", "https://app.hubspot.com"],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'none'"],
+          frameSrc: ["'self'", "https://app.hubspot.com"],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    })
+  );
   app.use(compression());
 
-  // Rate limiting - More permissive for development
+  // Production-grade rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // Increased limit for development
+    max: process.env.NODE_ENV === 'production' ? 300 : 1000, // Stricter limit for production
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: false, // Count successful requests against the limit
+    keyGenerator: (req) => {
+      // Use X-Forwarded-For header if behind proxy, otherwise use IP
+      return req.headers['x-forwarded-for'] || req.ip;
+    },
   });
   app.use(limiter);
 
