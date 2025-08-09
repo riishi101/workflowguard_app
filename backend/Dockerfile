@@ -10,6 +10,8 @@ COPY . .
 # Generate Prisma client and build
 RUN npx prisma generate
 RUN npm run build
+# Verify build output exists
+RUN ls -la dist/src/main.js || exit 1
 
 # Start a new stage for production
 FROM node:20-alpine

@@ -10,7 +10,7 @@
   },
   "scripts": {
     "prebuild": "rm -rf dist",
-    "build": "nest build",
+    "build": "nest build --path ./tsconfig.build.json",
     "prestart:prod": "",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
