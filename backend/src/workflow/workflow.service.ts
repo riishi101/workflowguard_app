@@ -320,7 +320,21 @@ export class WorkflowService {
         orderBy: { updatedAt: 'desc' },
       });
 
-      return workflows;
+      // Transform database records to match Dashboard expectations
+      return workflows.map(workflow => ({
+        id: workflow.hubspotId || workflow.id,
+        name: workflow.name,
+        status: workflow.isActive ? 'active' : 'inactive',
+        protectionStatus: 'protected', // All workflows in this endpoint are protected
+        lastModified: workflow.updatedAt ? new Date(workflow.updatedAt).toLocaleDateString() : 'Unknown',
+        versions: workflow.versions?.length || 1,
+        lastModifiedBy: {
+          name: workflow.owner?.name || 'Unknown User',
+          initials: workflow.owner?.name ? 
+            workflow.owner.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U',
+          email: workflow.owner?.email || 'unknown@example.com'
+        }
+      }));
     } catch (error) {
       return [];
     }
