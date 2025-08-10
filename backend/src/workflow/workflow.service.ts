@@ -324,7 +324,7 @@ export class WorkflowService {
       return workflows.map(workflow => ({
         id: workflow.hubspotId || workflow.id,
         name: workflow.name,
-        status: workflow.isActive ? 'active' : 'inactive',
+        status: workflow.versions && workflow.versions.length > 0 ? 'active' : 'inactive',
         protectionStatus: 'protected', // All workflows in this endpoint are protected
         lastModified: workflow.updatedAt ? new Date(workflow.updatedAt).toLocaleDateString() : 'Unknown',
         versions: workflow.versions?.length || 1,
