@@ -13,7 +13,7 @@ sudo chown $USER:$USER /opt/workflowguard
 
 # Clone repository (replace with your actual repo URL)
 cd /opt/workflowguard
-git clone https://github.com/YOUR_USERNAME/workflowguard_app.git .
+git clone https://github.com/riishi101/workflowguard_app.git .
 
 # Copy production environment
 cp .env.production .env
