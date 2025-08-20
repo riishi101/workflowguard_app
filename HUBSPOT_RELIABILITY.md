@@ -7,8 +7,8 @@ This document outlines the comprehensive HubSpot integration reliability feature
 ## 🔐 **OAuth Authentication**
 
 ### Requirements
-- **Client ID**: `6be1632d-8007-45e4-aecb-6ec93e6ff528`
-- **Client Secret**: `20c00afe-2875-44a8-a6f6-0ad30b55cc40`
+- **Client ID**: `<set-in-secrets>`
+- **Client Secret**: `<set-in-secrets>`
 - **Redirect URI**: `https://api.workflowguard.pro/api/auth/hubspot/callback`
 - **Scopes**: `crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read`
 
@@ -109,8 +109,8 @@ interface HubSpotHealthMetrics {
 ### Environment Variables
 ```bash
 # Required
-HUBSPOT_CLIENT_ID=6be1632d-8007-45e4-aecb-6ec93e6ff528
-HUBSPOT_CLIENT_SECRET=20c00afe-2875-44a8-a6f6-0ad30b55cc40
+HUBSPOT_CLIENT_ID=<set-in-secrets>
+HUBSPOT_CLIENT_SECRET=<set-in-secrets>
 HUBSPOT_REDIRECT_URI=https://api.workflowguard.pro/api/auth/hubspot/callback
 
 # Optional

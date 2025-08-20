@@ -20,8 +20,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: HUBSPOT_CLIENT_ID
-        value: 6be1632d-8007-45e4-aecb-6ec93e6ff528
+        value: ""
       - key: HUBSPOT_CLIENT_SECRET
-        value: 20c00afe-2875-44a8-a6f6-0ad30b55cc40
+        value: ""
       - key: HUBSPOT_REDIRECT_URI
-        value: https://api.workflowguard.pro/api/auth/hubspot/callback 
+        value: https://api.workflowguard.pro/api/auth/hubspot/callback

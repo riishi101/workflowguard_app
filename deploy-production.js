@@ -77,9 +77,9 @@ async function deployProduction() {
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: HUBSPOT_CLIENT_ID
-        value: 6be1632d-8007-45e4-aecb-6ec93e6ff528
+        value: ""
       - key: HUBSPOT_CLIENT_SECRET
-        value: 20c00afe-2875-44a8-a6f6-0ad30b55cc40
+        value: ""
       - key: HUBSPOT_REDIRECT_URI
         value: https://api.workflowguard.pro/api/auth/hubspot/callback
       - key: VITE_API_URL
@@ -233,8 +233,8 @@ Your application is now production-ready with:
    - JWT_SECRET: dDjMTsWdYi+VBy4J5+ocmBbazSM+NJgunjbgBggZPOu8HNzXoUijNXiRbvHZ7JWcFfkHDDEbdeYwzFb9HvqDMw==
    - JWT_EXPIRES_IN: 7d
    - NODE_ENV: production
-   - HUBSPOT_CLIENT_ID: 6be1632d-8007-45e4-aecb-6ec93e6ff528
-   - HUBSPOT_CLIENT_SECRET: 20c00afe-2875-44a8-a6f6-0ad30b55cc40
+   - HUBSPOT_CLIENT_ID: <set-in-render-secrets>
+   - HUBSPOT_CLIENT_SECRET: <set-in-render-secrets>
    - HUBSPOT_REDIRECT_URI: https://api.workflowguard.pro/api/auth/hubspot/callback
 
 ### 2. Frontend Deployment (Vercel)

@@ -34,15 +34,12 @@ export class AuthController {
       console.log('HUBSPOT_REDIRECT_URI:', redirectUri);
       console.log('Marketplace installation:', marketplace);
       
-      let authUrl;
-      
       if (!clientId) {
-        // Fallback to known working URL for testing
-        console.log('Using fallback OAuth URL');
-        authUrl = 'https://app-na2.hubspot.com/oauth/authorize?client_id=6be1632d-8007-45e4-aecb-6ec93e6ff528&redirect_uri=https://api.workflowguard.pro/api/auth/hubspot/callback&scope=crm.schemas.deals.read%20automation%20oauth%20crm.objects.companies.read%20crm.objects.deals.read%20crm.schemas.contacts.read%20crm.objects.contacts.read%20crm.schemas.companies.read';
-      } else {
-        authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+        console.error('HUBSPOT_CLIENT_ID is not set');
+        throw new HttpException('HubSpot is not configured', HttpStatus.SERVICE_UNAVAILABLE);
       }
+
+      const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
       
       console.log('Generated OAuth URL:', authUrl);
       
@@ -95,7 +92,7 @@ export class AuthController {
       }
 
       // Full OAuth flow with proper environment variables
-      const clientId = process.env.HUBSPOT_CLIENT_ID || '6be1632d-8007-45e4-aecb-6ec93e6ff528';
+      const clientId = process.env.HUBSPOT_CLIENT_ID;
       const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
       const redirectUri = process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback';
       
@@ -104,7 +101,7 @@ export class AuthController {
       console.log('Client secret available:', !!clientSecret);
       console.log('Marketplace installation:', isMarketplaceInstall);
 
-      if (!clientSecret) {
+      if (!clientId || !clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
         return res.redirect('https://www.workflowguard.pro?error=config_error');
     }

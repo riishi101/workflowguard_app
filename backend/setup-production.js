@@ -3,6 +3,7 @@ const path = require('path');
 
 // Production environment configuration
 const envContent = `# Database Configuration
+
 DATABASE_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 DIRECT_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
@@ -15,8 +16,8 @@ PORT=4000
 NODE_ENV=production
 
 # HubSpot Configuration
-HUBSPOT_CLIENT_ID="6be1632d-8007-45e4-aecb-6ec93e6ff528"
-HUBSPOT_CLIENT_SECRET="20c00afe-2875-44a8-a6f6-0ad30b55cc40"
+HUBSPOT_CLIENT_ID=""
+HUBSPOT_CLIENT_SECRET=""
 HUBSPOT_REDIRECT_URI="https://api.workflowguard.pro/api/auth/hubspot/callback"
 
 # Frontend URLs
