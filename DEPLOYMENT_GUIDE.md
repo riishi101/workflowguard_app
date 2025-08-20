@@ -1,9 +1,18 @@
 # 🚀 WorkflowGuard Deployment Guide
 
-## 📋 **Current Production Setup**
+## 📋 **Production Deployment Options**
 
-Your WorkflowGuard application is configured for production deployment with:
+Your WorkflowGuard application supports multiple deployment strategies:
 
+### **Option 1: Self-Hosted Server (Current Setup)**
+- **Server**: Ubuntu 22.04 at `72.60.64.89`
+- **Frontend**: Nginx + Docker (`workflowguard.pro`)
+- **Backend**: Docker (`api.workflowguard.pro`)
+- **Database**: Neon PostgreSQL
+- **Monitoring**: Netdata
+- **Security**: Fail2Ban + UFW Firewall
+
+### **Option 2: Cloud Services**
 - **Frontend**: Vercel (`www.workflowguard.pro`)
 - **Backend**: Render (`api.workflowguard.pro`)
 - **Database**: Neon PostgreSQL
