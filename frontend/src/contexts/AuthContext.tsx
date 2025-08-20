@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ApiService } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
@@ -142,7 +143,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!resp.ok) {
         // If backend not configured, show a clear message
         logAuth('HubSpot not configured or endpoint error', { status: resp.status });
-        alert('HubSpot is not configured on the server. Please set HUBSPOT_CLIENT_ID and HUBSPOT_CLIENT_SECRET on your VPS.');
+        toast({
+          title: 'HubSpot not configured',
+          description: 'Set HUBSPOT_CLIENT_ID and HUBSPOT_CLIENT_SECRET on your VPS, then try again.',
+        });
         return;
       }
       const data = await resp.json().catch(() => null as any);
@@ -150,11 +154,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         window.location.href = data.url as string;
       } else {
         logAuth('Unexpected response from /api/auth/hubspot/url', { data });
-        alert('Unable to start HubSpot OAuth. Please try again later.');
+        toast({
+          title: 'Unable to start HubSpot OAuth',
+          description: 'Please try again later.',
+        });
       }
     } catch (e) {
       logAuth('Error contacting /api/auth/hubspot/url', { e });
-      alert('Cannot reach the server to start HubSpot OAuth. Check your network or try again.');
+      toast({
+        title: 'Network error',
+        description: 'Cannot reach the server to start HubSpot OAuth. Check your network or try again.',
+      });
     }
   };
 
