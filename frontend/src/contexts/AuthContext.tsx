@@ -132,11 +132,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, [hasInitialized]);
 
-  const connectHubSpot = () => {
+  const connectHubSpot = async () => {
     logAuth('Initiating HubSpot connection');
     const currentUrl = window.location.href;
     logAuth('Connection context', { currentUrl });
-    window.location.href = '/api/auth/hubspot';
+
+    try {
+      const resp = await fetch('/api/auth/hubspot/url', { credentials: 'include' });
+      if (!resp.ok) {
+        // If backend not configured, show a clear message
+        logAuth('HubSpot not configured or endpoint error', { status: resp.status });
+        alert('HubSpot is not configured on the server. Please set HUBSPOT_CLIENT_ID and HUBSPOT_CLIENT_SECRET on your VPS.');
+        return;
+      }
+      const data = await resp.json().catch(() => null as any);
+      if (data && data.url) {
+        window.location.href = data.url as string;
+      } else {
+        logAuth('Unexpected response from /api/auth/hubspot/url', { data });
+        alert('Unable to start HubSpot OAuth. Please try again later.');
+      }
+    } catch (e) {
+      logAuth('Error contacting /api/auth/hubspot/url', { e });
+      alert('Cannot reach the server to start HubSpot OAuth. Check your network or try again.');
+    }
   };
 
   const testAuthentication = async () => {
