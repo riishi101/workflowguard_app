@@ -35,7 +35,7 @@ async function main() {
       name: 'Starter',
       price: 19,
       interval: 'month',
-      description: 'Perfect for small teams',
+      description: 'Perfect for individual users and small businesses',
       features: JSON.stringify([
         'Basic workflow protection',
         'Email support',
@@ -91,7 +91,6 @@ async function main() {
         'Approval workflows',
         'Advanced compliance reporting',
         'Complete audit trails',
-        'Team collaboration features',
         'Custom retention policies',
         'Advanced security features',
         'API access',
