@@ -301,15 +301,38 @@ export class RazorpayService {
   }
 
   // Utility Methods
-  getPlanIdForSubscription(planType: 'starter' | 'professional' | 'enterprise', currency: 'INR' = 'INR'): string {
+  getPlanIdForSubscription(planType: 'starter' | 'professional' | 'enterprise', currency: string = 'INR'): string {
     const envKey = `RAZORPAY_PLAN_ID_${planType.toUpperCase()}_${currency}`;
     const planId = this.configService.get<string>(envKey);
     
     if (!planId) {
-      throw new BadRequestException(`Plan ID not found for ${planType} in ${currency}`);
+      this.logger.warn(`Plan ID not found for ${planType} in ${currency}, falling back to INR`);
+      // Fallback to INR if currency-specific plan not found
+      const fallbackKey = `RAZORPAY_PLAN_ID_${planType.toUpperCase()}_INR`;
+      const fallbackPlanId = this.configService.get<string>(fallbackKey);
+      
+      if (!fallbackPlanId) {
+        throw new BadRequestException(`No plan ID found for ${planType} in any currency`);
+      }
+      
+      return fallbackPlanId;
     }
     
     return planId;
+  }
+
+  /**
+   * Get all available currencies for plans
+   */
+  getAvailableCurrencies(): string[] {
+    return ['INR', 'USD', 'GBP', 'EUR', 'CAD'];
+  }
+
+  /**
+   * Check if a currency is supported
+   */
+  isCurrencySupported(currency: string): boolean {
+    return this.getAvailableCurrencies().includes(currency.toUpperCase());
   }
 
   formatAmount(amount: number): number {

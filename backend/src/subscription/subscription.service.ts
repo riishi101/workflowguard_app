@@ -254,8 +254,8 @@ export class SubscriptionService {
           date: subscription.nextBillingDate,
           daysUntil: daysUntilPayment,
           isOverdue: daysUntilPayment < 0,
-          amount: this.getPlanPrice(subscription.planId),
-          currency: 'USD',
+          amount: this.getPlanPrice(subscription.planId, 'INR'),
+          currency: 'INR',
         },
       };
     } catch (error) {
@@ -265,15 +265,33 @@ export class SubscriptionService {
   }
 
   /**
-   * Get plan price based on plan ID
+   * Get plan price based on plan ID and currency
    */
-  private getPlanPrice(planId: string): number {
-    const prices: Record<string, number> = {
-      starter: 19,
-      professional: 49,
-      enterprise: 99,
+  private getPlanPrice(planId: string, currency: string = 'INR'): number {
+    const prices: Record<string, Record<string, number>> = {
+      starter: {
+        INR: 19,
+        USD: 19,
+        GBP: 15,
+        EUR: 18,
+        CAD: 25,
+      },
+      professional: {
+        INR: 49,
+        USD: 49,
+        GBP: 39,
+        EUR: 45,
+        CAD: 65,
+      },
+      enterprise: {
+        INR: 99,
+        USD: 99,
+        GBP: 79,
+        EUR: 89,
+        CAD: 129,
+      },
     };
-    return prices[planId] || 0;
+    return prices[planId]?.[currency] || prices[planId]?.['INR'] || 0;
   }
 
   // Razorpay Integration Methods
@@ -433,13 +451,63 @@ export class SubscriptionService {
   }
 
   private mapRazorpayPlanToLocal(razorpayPlanId: string): string {
-    // Map Razorpay plan IDs to local plan IDs
+    // Map Razorpay plan IDs to local plan IDs (Multi-currency support)
     const planMap: Record<string, string> = {
+      // INR Plans (Active)
       'plan_R6RI02CsUCUlDz': 'starter',
       'plan_R6RKEg5mqJK6Ky': 'professional', 
       'plan_R6RKnjqXu0BZsH': 'enterprise',
+      
+      // USD Plans (Placeholder)
+      'plan_starter_usd_monthly': 'starter',
+      'plan_professional_usd_monthly': 'professional',
+      'plan_enterprise_usd_monthly': 'enterprise',
+      
+      // GBP Plans (Placeholder)
+      'plan_starter_gbp_monthly': 'starter',
+      'plan_professional_gbp_monthly': 'professional',
+      'plan_enterprise_gbp_monthly': 'enterprise',
+      
+      // EUR Plans (Placeholder)
+      'plan_starter_eur_monthly': 'starter',
+      'plan_professional_eur_monthly': 'professional',
+      'plan_enterprise_eur_monthly': 'enterprise',
+      
+      // CAD Plans (Placeholder)
+      'plan_starter_cad_monthly': 'starter',
+      'plan_professional_cad_monthly': 'professional',
+      'plan_enterprise_cad_monthly': 'enterprise',
     };
     
     return planMap[razorpayPlanId] || 'starter';
+  }
+
+  /**
+   * Get currency from Razorpay plan ID
+   */
+  private getCurrencyFromPlanId(razorpayPlanId: string): string {
+    // Extract currency from plan ID
+    if (razorpayPlanId.includes('_usd_')) return 'USD';
+    if (razorpayPlanId.includes('_gbp_')) return 'GBP';
+    if (razorpayPlanId.includes('_eur_')) return 'EUR';
+    if (razorpayPlanId.includes('_cad_')) return 'CAD';
+    
+    // Default to INR for existing plans
+    return 'INR';
+  }
+
+  /**
+   * Get Razorpay plan ID for a given plan and currency
+   */
+  getRazorpayPlanId(planType: string, currency: string = 'INR'): string {
+    const envKey = `RAZORPAY_PLAN_ID_${planType.toUpperCase()}_${currency}`;
+    const planId = process.env[envKey];
+    
+    if (!planId) {
+      this.logger.warn(`No Razorpay plan ID found for ${planType} in ${currency}, falling back to INR`);
+      return process.env[`RAZORPAY_PLAN_ID_${planType.toUpperCase()}_INR`] || '';
+    }
+    
+    return planId;
   }
 }
