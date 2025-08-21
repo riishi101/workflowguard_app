@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { EmailService } from '../services/email.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -13,7 +21,7 @@ export class EmailController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -25,8 +33,8 @@ export class EmailController {
     } catch (error) {
       throw new HttpException(
         `Failed to send email: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-} 
+}

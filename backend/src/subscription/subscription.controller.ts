@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -14,20 +21,21 @@ export class SubscriptionController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const subscription = await this.subscriptionService.getUserSubscription(userId);
+      const subscription =
+        await this.subscriptionService.getUserSubscription(userId);
       return {
         success: true,
-        data: subscription
+        data: subscription,
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get subscription: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -38,16 +46,16 @@ export class SubscriptionController {
     try {
       const userId = req.user.sub || req.user.id || req.user.userId;
       const trialStatus = await this.subscriptionService.getTrialStatus(userId);
-      
+
       return {
         success: true,
-        data: trialStatus
+        data: trialStatus,
       };
     } catch (error: any) {
       return {
         success: false,
         message: `Failed to get trial status: ${error.message}`,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -57,17 +65,18 @@ export class SubscriptionController {
   async getExpirationStatus(@Req() req: any) {
     try {
       const userId = req.user.sub || req.user.id || req.user.userId;
-      const expirationStatus = await this.subscriptionService.checkSubscriptionExpiration(userId);
-      
+      const expirationStatus =
+        await this.subscriptionService.checkSubscriptionExpiration(userId);
+
       return {
         success: true,
-        data: expirationStatus
+        data: expirationStatus,
       };
     } catch (error: any) {
       return {
         success: false,
         message: `Failed to get expiration status: ${error.message}`,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -77,17 +86,18 @@ export class SubscriptionController {
   async getNextPaymentInfo(@Req() req: any) {
     try {
       const userId = req.user.sub || req.user.id || req.user.userId;
-      const paymentInfo = await this.subscriptionService.getNextPaymentInfo(userId);
-      
+      const paymentInfo =
+        await this.subscriptionService.getNextPaymentInfo(userId);
+
       return {
         success: true,
-        data: paymentInfo
+        data: paymentInfo,
       };
     } catch (error: any) {
       return {
         success: false,
         message: `Failed to get payment info: ${error.message}`,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -100,7 +110,7 @@ export class SubscriptionController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
@@ -108,13 +118,13 @@ export class SubscriptionController {
       const usageStats = await this.subscriptionService.getUsageStats(userId);
       return {
         success: true,
-        data: usageStats
+        data: usageStats,
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get usage stats: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-} 
+}

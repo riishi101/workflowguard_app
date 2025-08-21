@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -9,7 +21,7 @@ export class WebhookController {
 
   @Get()
   async getUserWebhooks(@Req() req: any) {
-    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -24,20 +36,23 @@ export class WebhookController {
     } catch (error) {
       throw new HttpException(
         `Failed to get webhooks: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Post()
   async createWebhook(@Body() webhookData: any, @Req() req: any) {
-    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
     try {
-      const webhook = await this.webhookService.createWebhook(userId, webhookData);
+      const webhook = await this.webhookService.createWebhook(
+        userId,
+        webhookData,
+      );
       return {
         success: true,
         data: webhook,
@@ -46,7 +61,7 @@ export class WebhookController {
     } catch (error) {
       throw new HttpException(
         `Failed to create webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -55,15 +70,19 @@ export class WebhookController {
   async updateWebhook(
     @Param('id') webhookId: string,
     @Body() webhookData: any,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
     try {
-      const webhook = await this.webhookService.updateWebhook(webhookId, userId, webhookData);
+      const webhook = await this.webhookService.updateWebhook(
+        webhookId,
+        userId,
+        webhookData,
+      );
       return {
         success: true,
         data: webhook,
@@ -72,14 +91,14 @@ export class WebhookController {
     } catch (error) {
       throw new HttpException(
         `Failed to update webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   @Delete(':id')
   async deleteWebhook(@Param('id') webhookId: string, @Req() req: any) {
-    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -93,7 +112,7 @@ export class WebhookController {
     } catch (error) {
       throw new HttpException(
         `Failed to delete webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

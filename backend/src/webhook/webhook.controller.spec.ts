@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WebhookController } from './webhook.controller';
+import { WebhookService } from './webhook.service';
 
 describe('WebhookController', () => {
   let controller: WebhookController;
@@ -7,6 +8,14 @@ describe('WebhookController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebhookController],
+      providers: [
+        {
+          provide: WebhookService,
+          useValue: {
+            handleHubSpotRequest: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     controller = module.get<WebhookController>(WebhookController);

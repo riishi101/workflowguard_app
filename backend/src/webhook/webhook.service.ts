@@ -14,7 +14,10 @@ export class WebhookService {
           name: webhookData.name,
           endpointUrl: webhookData.endpointUrl,
           secret: this.generateWebhookSecret(),
-          events: webhookData.events || ['workflow.changed', 'workflow.rolled_back'],
+          events: webhookData.events || [
+            'workflow.changed',
+            'workflow.rolled_back',
+          ],
         },
       });
 
@@ -22,7 +25,7 @@ export class WebhookService {
     } catch (error) {
       throw new HttpException(
         `Failed to create webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -34,22 +37,26 @@ export class WebhookService {
         orderBy: { createdAt: 'desc' },
       });
 
-      return webhooks.map(webhook => ({
+      return webhooks.map((webhook: any) => ({
         ...webhook,
         secret: webhook.secret ? `${webhook.secret.substring(0, 8)}...` : null,
       }));
     } catch (error) {
       throw new HttpException(
         `Failed to get webhooks: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async updateWebhook(webhookId: string, userId: string, webhookData: any): Promise<any> {
+  async updateWebhook(
+    webhookId: string,
+    userId: string,
+    webhookData: any,
+  ): Promise<any> {
     try {
       const webhook = await this.prisma.webhook.update({
-        where: { 
+        where: {
           id: webhookId,
           userId: userId,
         },
@@ -64,7 +71,7 @@ export class WebhookService {
     } catch (error) {
       throw new HttpException(
         `Failed to update webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -72,7 +79,7 @@ export class WebhookService {
   async deleteWebhook(webhookId: string, userId: string): Promise<any> {
     try {
       await this.prisma.webhook.delete({
-        where: { 
+        where: {
           id: webhookId,
           userId: userId,
         },
@@ -82,12 +89,16 @@ export class WebhookService {
     } catch (error) {
       throw new HttpException(
         `Failed to delete webhook: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async sendWebhookNotification(event: string, data: any, userId: string): Promise<void> {
+  async sendWebhookNotification(
+    event: string,
+    data: any,
+    userId: string,
+  ): Promise<void> {
     try {
       // Get user's webhooks for this event
       const webhooks = await this.prisma.webhook.findMany({
@@ -97,13 +108,13 @@ export class WebhookService {
       });
 
       // Filter webhooks that have the required event
-      const filteredWebhooks = webhooks.filter(webhook => 
-        webhook.events && webhook.events.includes(event)
+      const filteredWebhooks = webhooks.filter(
+        (webhook: any) => webhook.events && webhook.events.includes(event),
       );
 
       // Send webhook notifications
-      const webhookPromises = filteredWebhooks.map(webhook => 
-        this.sendWebhookToEndpoint(webhook, event, data)
+      const webhookPromises = filteredWebhooks.map((webhook: any) =>
+        this.sendWebhookToEndpoint(webhook, event, data),
       );
 
       await Promise.allSettled(webhookPromises);
@@ -112,7 +123,11 @@ export class WebhookService {
     }
   }
 
-  private async sendWebhookToEndpoint(webhook: any, event: string, data: any): Promise<void> {
+  private async sendWebhookToEndpoint(
+    webhook: any,
+    event: string,
+    data: any,
+  ): Promise<void> {
     try {
       const payload = {
         event: event,
@@ -138,8 +153,11 @@ export class WebhookService {
 
       // Note: lastUsed field doesn't exist in the schema, so we skip updating it
     } catch (error) {
-      console.error(`Failed to send webhook to ${webhook.endpointUrl}:`, error.message);
-      
+      console.error(
+        `Failed to send webhook to ${webhook.endpointUrl}:`,
+        error.message,
+      );
+
       // Log webhook failure
       await this.prisma.auditLog.create({
         data: {
@@ -171,35 +189,67 @@ export class WebhookService {
   }
 
   // Enterprise features
-  async sendWorkflowChangeNotification(workflowId: string, userId: string, changes: any): Promise<void> {
-    await this.sendWebhookNotification('workflow.changed', {
-      workflowId: workflowId,
-      changes: changes,
-      timestamp: new Date().toISOString(),
-    }, userId);
+  async sendWorkflowChangeNotification(
+    workflowId: string,
+    userId: string,
+    changes: any,
+  ): Promise<void> {
+    await this.sendWebhookNotification(
+      'workflow.changed',
+      {
+        workflowId: workflowId,
+        changes: changes,
+        timestamp: new Date().toISOString(),
+      },
+      userId,
+    );
   }
 
-  async sendWorkflowRollbackNotification(workflowId: string, userId: string, versionId: string): Promise<void> {
-    await this.sendWebhookNotification('workflow.rolled_back', {
-      workflowId: workflowId,
-      versionId: versionId,
-      timestamp: new Date().toISOString(),
-    }, userId);
+  async sendWorkflowRollbackNotification(
+    workflowId: string,
+    userId: string,
+    versionId: string,
+  ): Promise<void> {
+    await this.sendWebhookNotification(
+      'workflow.rolled_back',
+      {
+        workflowId: workflowId,
+        versionId: versionId,
+        timestamp: new Date().toISOString(),
+      },
+      userId,
+    );
   }
 
-  async sendApprovalRequestNotification(approvalRequestId: string, userId: string, workflowId: string): Promise<void> {
-    await this.sendWebhookNotification('approval.requested', {
-      approvalRequestId: approvalRequestId,
-      workflowId: workflowId,
-      timestamp: new Date().toISOString(),
-    }, userId);
+  async sendApprovalRequestNotification(
+    approvalRequestId: string,
+    userId: string,
+    workflowId: string,
+  ): Promise<void> {
+    await this.sendWebhookNotification(
+      'approval.requested',
+      {
+        approvalRequestId: approvalRequestId,
+        workflowId: workflowId,
+        timestamp: new Date().toISOString(),
+      },
+      userId,
+    );
   }
 
-  async sendComplianceReportNotification(workflowId: string, userId: string, reportData: any): Promise<void> {
-    await this.sendWebhookNotification('compliance.report_generated', {
-      workflowId: workflowId,
-      reportData: reportData,
-      timestamp: new Date().toISOString(),
-    }, userId);
+  async sendComplianceReportNotification(
+    workflowId: string,
+    userId: string,
+    reportData: any,
+  ): Promise<void> {
+    await this.sendWebhookNotification(
+      'compliance.report_generated',
+      {
+        workflowId: workflowId,
+        reportData: reportData,
+        timestamp: new Date().toISOString(),
+      },
+      userId,
+    );
   }
 }

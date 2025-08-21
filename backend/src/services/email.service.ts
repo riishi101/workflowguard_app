@@ -2,32 +2,34 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class EmailService {
-  async sendEmail(to: string, subject: string, content: string): Promise<void> {
+  async sendEmail(to: string, subject: string): Promise<void> {
     console.log(`Email sent to ${to}: ${subject}`);
   }
 
-  async sendNotificationEmail(to: string, template: string, data: any): Promise<void> {
+  async sendWelcomeEmail(to: string, name: string) {
+    console.log(`Email sent to ${to}: Welcome ${name}`);
+  }
+
+  async sendNotificationEmail(
+    to: string,
+    template: string,
+    data: any,
+  ): Promise<void> {
     console.log(`Notification email sent to ${to} using template ${template}`);
   }
 
-  // Add missing methods
   async sendOverageAlert(data: any): Promise<boolean> {
-    console.log('Overage alert email sent:', data);
+    console.log(`Overage alert sent with data:`, data);
     return true;
   }
 
   async sendBillingUpdate(data: any): Promise<boolean> {
-    console.log('Billing update email sent:', data);
+    console.log(`Billing update sent with data:`, data);
     return true;
   }
 
   async sendSystemAlert(data: any): Promise<boolean> {
-    console.log('System alert email sent:', data);
-    return true;
-  }
-
-  async sendWelcomeEmail(data: any): Promise<boolean> {
-    console.log('Welcome email sent:', data);
+    console.log(`System alert sent with data:`, data);
     return true;
   }
 
@@ -36,9 +38,15 @@ export class EmailService {
     currentPlan: string,
     recommendedPlan: string,
     reason: string,
-    additionalData?: any
+    additionalData?: any,
   ): Promise<boolean> {
-    console.log('Upgrade recommendation email sent:', { userName, currentPlan, recommendedPlan, reason, additionalData });
+    console.log(`Upgrade recommendation sent:`, {
+      userName,
+      currentPlan,
+      recommendedPlan,
+      reason,
+      additionalData,
+    });
     return true;
   }
 
@@ -48,9 +56,16 @@ export class EmailService {
     planId: string,
     currentUsage: number,
     limit: number,
-    percentageUsed: number
+    percentageUsed: number,
   ): Promise<boolean> {
-    console.log('Usage warning email sent:', { userEmail, userName, planId, currentUsage, limit, percentageUsed });
+    console.log(`Usage warning sent:`, {
+      userEmail,
+      userName,
+      planId,
+      currentUsage,
+      limit,
+      percentageUsed,
+    });
     return true;
   }
 
@@ -58,9 +73,14 @@ export class EmailService {
     userEmails: string[],
     subject: string,
     message: string,
-    isHtml?: boolean
+    isHtml?: boolean,
   ): Promise<any> {
-    console.log('Bulk notification email sent:', { userEmails, subject, message, isHtml });
-    return { success: true, sent: 1, failed: 0 };
+    console.log(`Bulk notification sent:`, {
+      userEmails,
+      subject,
+      message,
+      isHtml,
+    });
+    return { success: true, sent: userEmails.length, failed: 0 };
   }
-} 
+}

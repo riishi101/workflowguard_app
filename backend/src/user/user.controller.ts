@@ -1,10 +1,21 @@
-
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, HttpException, HttpStatus, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+  Put,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { randomUUID } from 'crypto';
 
 @Controller('user')
 export class UserController {
@@ -31,8 +42,8 @@ export class UserController {
         email: user.email,
         name: user.name,
 
-        subscription: user.subscription
-      }
+        subscription: user.subscription,
+      },
     };
   }
 
@@ -69,7 +80,7 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
@@ -80,7 +91,9 @@ export class UserController {
       }
 
       const planId = user?.subscription?.planId || 'starter';
-      const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      const plan =
+        (await this.userService.getPlanById(planId)) ||
+        (await this.userService.getPlanById('starter'));
 
       return {
         success: true,
@@ -89,16 +102,15 @@ export class UserController {
             id: user.id,
             email: user.email,
             name: user.name,
-
           },
           permissions: ['read_workflows', 'write_workflows', 'view_dashboard'],
-          plan: plan?.name || 'Starter'
-        }
+          plan: plan?.name || 'Starter',
+        },
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get user permissions: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -111,21 +123,21 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
       const settings = await this.userService.getNotificationSettings(userId);
-      
+
       return {
         success: true,
-        data: settings
+        data: settings,
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get notification settings: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -138,22 +150,25 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const updatedSettings = await this.userService.updateNotificationSettings(userId, settings);
-      
+      const updatedSettings = await this.userService.updateNotificationSettings(
+        userId,
+        settings,
+      );
+
       return {
         success: true,
         data: updatedSettings,
-        message: 'Notification settings updated successfully'
+        message: 'Notification settings updated successfully',
       };
     } catch (error) {
       throw new HttpException(
         `Failed to update notification settings: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -166,29 +181,34 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
       const user = await this.userService.findOneWithSubscription(userId);
       const planId = user?.subscription?.planId || 'starter';
-      const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      const plan =
+        (await this.userService.getPlanById(planId)) ||
+        (await this.userService.getPlanById('starter'));
 
       if (!plan?.features?.includes('api_access')) {
-        throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
+        throw new HttpException(
+          'API access is not available on your plan.',
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       const apiKeys = await this.userService.getApiKeys(userId);
 
       return {
         success: true,
-        data: apiKeys
+        data: apiKeys,
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get API keys: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -201,17 +221,22 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
       const user = await this.userService.findOneWithSubscription(userId);
       const planId = user?.subscription?.planId || 'starter';
-      const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      const plan =
+        (await this.userService.getPlanById(planId)) ||
+        (await this.userService.getPlanById('starter'));
 
       if (!plan?.features?.includes('api_access')) {
-        throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
+        throw new HttpException(
+          'API access is not available on your plan.',
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       const apiKey = await this.userService.createApiKey(userId, apiKeyData);
@@ -219,12 +244,12 @@ export class UserController {
       return {
         success: true,
         data: apiKey,
-        message: 'API key created successfully'
+        message: 'API key created successfully',
       };
     } catch (error) {
       throw new HttpException(
         `Failed to create API key: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -237,29 +262,34 @@ export class UserController {
       if (!userId) {
         userId = req.headers['x-user-id'];
       }
-      
+
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
       const user = await this.userService.findOneWithSubscription(userId);
       const planId = user?.subscription?.planId || 'starter';
-      const plan = await this.userService.getPlanById(planId) || await this.userService.getPlanById('starter');
+      const plan =
+        (await this.userService.getPlanById(planId)) ||
+        (await this.userService.getPlanById('starter'));
 
       if (!plan?.features?.includes('api_access')) {
-        throw new HttpException('API access is not available on your plan.', HttpStatus.FORBIDDEN);
+        throw new HttpException(
+          'API access is not available on your plan.',
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       await this.userService.deleteApiKey(userId, keyId);
 
       return {
         success: true,
-        message: 'API key deleted successfully'
+        message: 'API key deleted successfully',
       };
     } catch (error) {
       throw new HttpException(
         `Failed to delete API key: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

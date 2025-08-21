@@ -1,22 +1,25 @@
-import { Injectable, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService, 
+    private prisma: PrismaService,
     private userService: UserService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && user.password && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
+    if (
+      user &&
+      user.password &&
+      (await bcrypt.compare(password, user.password))
+    ) {
+      const { password: _password, ...result } = user;
       return result;
     }
     return null;
@@ -35,27 +38,30 @@ export class AuthService {
   }
 
   async register(createUserDto: any) {
-    const { password, ...userData } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const       user = await this.prisma.user.create({
-        data: {
-          ...userData,
-          password: hashedPassword,
-        },
-      });
+    const { email } = createUserDto;
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        ...createUserDto,
+        email,
+        password: hashedPassword,
+      },
+    });
 
     // Automatically create trial subscription for new users
     await this.userService.createTrialSubscription(user.id);
 
-    const { password: _, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
   async validateHubSpotUser(hubspotUser: any) {
     // For HubSpot App Marketplace users, create account if doesn't exist
-    let user = await this.prisma.user.findUnique({ where: { email: hubspotUser.email } });
-    
+    let user = await this.prisma.user.findUnique({
+      where: { email: hubspotUser.email },
+    });
+
     if (!user) {
       // Create new user from HubSpot
       user = await this.prisma.user.create({
@@ -84,37 +90,57 @@ export class AuthService {
       });
     }
 
-    const { password, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
   async validateJwtPayload(payload: { sub: string; email: string }) {
-    console.log('AuthService - validateJwtPayload called with payload:', payload);
-    
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    console.log('AuthService - User found in database:', user ? { id: user.id, email: user.email } : null);
-    
+    console.log(
+      'AuthService - validateJwtPayload called with payload:',
+      payload,
+    );
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+    console.log(
+      'AuthService - User found in database:',
+      user ? { id: user.id, email: user.email } : null,
+    );
+
     return user;
   }
 
   async verifyToken(token: string) {
     try {
-      console.log('AuthService - Verifying token:', token.substring(0, 20) + '...');
-      
+      console.log(
+        'AuthService - Verifying token:',
+        token.substring(0, 20) + '...',
+      );
+
       const payload = this.jwtService.verify(token);
-      console.log('AuthService - JWT payload verified:', { sub: payload.sub, email: payload.email });
-      
+      console.log('AuthService - JWT payload verified:', {
+        sub: payload.sub,
+        email: payload.email,
+      });
+
       const user = await this.validateJwtPayload(payload);
-      console.log('AuthService - User found from payload:', user ? { id: user.id, email: user.email } : null);
-      
+      console.log(
+        'AuthService - User found from payload:',
+        user ? { id: user.id, email: user.email } : null,
+      );
+
       if (!user) {
         console.log('AuthService - No user found for payload');
         return null;
       }
-      
+
       // Remove password from user object before returning
-      const { password: _, ...userWithoutPassword } = user as any;
-      console.log('AuthService - Returning user without password:', { id: userWithoutPassword.id, email: userWithoutPassword.email });
+      const { password: _, ...userWithoutPassword } = user;
+      console.log('AuthService - Returning user without password:', {
+        id: userWithoutPassword.id,
+        email: userWithoutPassword.email,
+      });
       return userWithoutPassword;
     } catch (error) {
       console.error('AuthService - Token verification failed:', error.message);
@@ -123,24 +149,30 @@ export class AuthService {
   }
 
   generateToken(user: any) {
-    return this.jwtService.sign({ 
-      sub: user.id, 
-      email: user.email
+    return this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
     });
   }
 
   async updateUserHubspotPortalId(userId: string, hubspotPortalId: string) {
     try {
       await this.prisma.user.update({
-      where: { id: userId },
-      data: { hubspotPortalId },
-    });
-    } catch (error) {
-      throw new HttpException('Failed to update HubSpot portal ID', HttpStatus.INTERNAL_SERVER_ERROR);
+        where: { id: userId },
+        data: { hubspotPortalId },
+      });
+    } catch {
+      throw new HttpException(
+        'Failed to update HubSpot portal ID',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
-  async updateUserHubspotTokens(userId: string, tokens: { access_token: string; refresh_token: string; expires_in: number }) {
+  async updateUserHubspotTokens(
+    userId: string,
+    tokens: { access_token: string; refresh_token: string; expires_in: number },
+  ) {
     try {
       const expiresAt = new Date();
       expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in);
@@ -153,8 +185,11 @@ export class AuthService {
           hubspotTokenExpiresAt: expiresAt,
         },
       });
-    } catch (error) {
-      throw new HttpException('Failed to update HubSpot tokens', HttpStatus.INTERNAL_SERVER_ERROR);
+    } catch {
+      throw new HttpException(
+        'Failed to update HubSpot tokens',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

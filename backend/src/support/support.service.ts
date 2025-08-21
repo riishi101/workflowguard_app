@@ -10,14 +10,14 @@ export class SupportService {
       const issueType = this.classifyIssue(description);
       const severity = this.determineSeverity(description, issueType);
       const automated = this.canAutoFix(issueType);
-      
+
       const diagnosis = {
         type: issueType,
         severity,
         description: this.getIssueDescription(issueType),
         solution: this.getSolution(issueType),
         automated,
-        confidence: this.getConfidence(description, issueType)
+        confidence: this.getConfidence(description, issueType),
       };
 
       await this.logDiagnosis(userId, diagnosis);
@@ -26,7 +26,7 @@ export class SupportService {
     } catch (error) {
       throw new HttpException(
         `Failed to diagnose issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -36,20 +36,20 @@ export class SupportService {
       const fixes = await Promise.all([
         this.validateRollbackIntegrity(userId),
         this.repairRollbackData(userId),
-        this.optimizeRollbackPerformance(userId)
+        this.optimizeRollbackPerformance(userId),
       ]);
 
       const result = {
         success: true,
-        fixes: fixes.filter(fix => fix.success),
-        message: 'Rollback issues have been automatically resolved'
+        fixes: fixes.filter((fix) => fix.success),
+        message: 'Rollback issues have been automatically resolved',
       };
 
       return result;
     } catch (error) {
       throw new HttpException(
         `Failed to fix rollback issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -59,20 +59,20 @@ export class SupportService {
       const fixes = await Promise.all([
         this.refreshHubSpotTokens(userId),
         this.retryFailedSyncs(userId),
-        this.validateSyncIntegrity(userId)
+        this.validateSyncIntegrity(userId),
       ]);
 
       const result = {
         success: true,
-        fixes: fixes.filter(fix => fix.success),
-        message: 'HubSpot sync issues have been automatically resolved'
+        fixes: fixes.filter((fix) => fix.success),
+        message: 'HubSpot sync issues have been automatically resolved',
       };
 
       return result;
     } catch (error) {
       throw new HttpException(
         `Failed to fix sync issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -82,20 +82,20 @@ export class SupportService {
       const fixes = await Promise.all([
         this.validateUserSession(userId),
         this.refreshAuthTokens(userId),
-        this.resetUserPermissions(userId)
+        this.resetUserPermissions(userId),
       ]);
 
       const result = {
         success: true,
-        fixes: fixes.filter(fix => fix.success),
-        message: 'Authentication issues have been automatically resolved'
+        fixes: fixes.filter((fix) => fix.success),
+        message: 'Authentication issues have been automatically resolved',
       };
 
       return result;
     } catch (error) {
       throw new HttpException(
         `Failed to fix auth issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -105,20 +105,20 @@ export class SupportService {
       const fixes = await Promise.all([
         this.validateDataIntegrity(userId),
         this.repairCorruptedData(userId),
-        this.optimizeDatabasePerformance(userId)
+        this.optimizeDatabasePerformance(userId),
       ]);
 
       const result = {
         success: true,
-        fixes: fixes.filter(fix => fix.success),
-        message: 'Data issues have been automatically resolved'
+        fixes: fixes.filter((fix) => fix.success),
+        message: 'Data issues have been automatically resolved',
       };
 
       return result;
     } catch (error) {
       throw new HttpException(
         `Failed to fix data issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -128,62 +128,86 @@ export class SupportService {
       const optimizations = await Promise.all([
         this.optimizeDatabaseQueries(userId),
         this.clearCache(userId),
-        this.optimizeAPIResponses(userId)
+        this.optimizeAPIResponses(userId),
       ]);
 
       const result = {
         success: true,
-        optimizations: optimizations.filter(opt => opt.success),
-        message: 'Performance has been automatically optimized'
+        optimizations: optimizations.filter((opt) => opt.success),
+        message: 'Performance has been automatically optimized',
       };
 
       return result;
     } catch (error) {
       throw new HttpException(
         `Failed to optimize performance: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   private classifyIssue(description: string): string {
     const lowerDesc = description.toLowerCase();
-    
+
     if (lowerDesc.includes('rollback') || lowerDesc.includes('restore')) {
       return 'rollback';
     } else if (lowerDesc.includes('sync') || lowerDesc.includes('hubspot')) {
       return 'sync';
-    } else if (lowerDesc.includes('auth') || lowerDesc.includes('login') || lowerDesc.includes('password')) {
+    } else if (
+      lowerDesc.includes('auth') ||
+      lowerDesc.includes('login') ||
+      lowerDesc.includes('password')
+    ) {
       return 'auth';
-    } else if (lowerDesc.includes('slow') || lowerDesc.includes('performance') || lowerDesc.includes('timeout')) {
+    } else if (
+      lowerDesc.includes('slow') ||
+      lowerDesc.includes('performance') ||
+      lowerDesc.includes('timeout')
+    ) {
       return 'performance';
-    } else if (lowerDesc.includes('data') || lowerDesc.includes('missing') || lowerDesc.includes('corrupt')) {
+    } else if (
+      lowerDesc.includes('data') ||
+      lowerDesc.includes('missing') ||
+      lowerDesc.includes('corrupt')
+    ) {
       return 'data';
     }
-    
+
     return 'general';
   }
 
   private determineSeverity(description: string, issueType: string): string {
-    const criticalKeywords = ['broken', 'critical', 'emergency', 'failed', 'error'];
+    const criticalKeywords = [
+      'broken',
+      'critical',
+      'emergency',
+      'failed',
+      'error',
+    ];
     const highKeywords = ['not working', 'issue', 'problem', 'sync'];
     const mediumKeywords = ['slow', 'performance', 'optimization'];
-    
+
     const lowerDesc = description.toLowerCase();
-    
-    if (criticalKeywords.some(keyword => lowerDesc.includes(keyword))) {
+
+    if (criticalKeywords.some((keyword) => lowerDesc.includes(keyword))) {
       return 'critical';
-    } else if (highKeywords.some(keyword => lowerDesc.includes(keyword))) {
+    } else if (highKeywords.some((keyword) => lowerDesc.includes(keyword))) {
       return 'high';
-    } else if (mediumKeywords.some(keyword => lowerDesc.includes(keyword))) {
+    } else if (mediumKeywords.some((keyword) => lowerDesc.includes(keyword))) {
       return 'medium';
     }
-    
+
     return 'low';
   }
 
   private canAutoFix(issueType: string): boolean {
-    const autoFixableTypes = ['rollback', 'sync', 'auth', 'performance', 'data'];
+    const autoFixableTypes = [
+      'rollback',
+      'sync',
+      'auth',
+      'performance',
+      'data',
+    ];
     return autoFixableTypes.includes(issueType);
   }
 
@@ -194,9 +218,9 @@ export class SupportService {
       auth: 'Authentication or authorization problems',
       performance: 'Slow loading or timeout issues',
       data: 'Missing or corrupted data',
-      general: 'General application issue'
+      general: 'General application issue',
     };
-    
+
     return descriptions[issueType] || descriptions.general;
   }
 
@@ -207,9 +231,9 @@ export class SupportService {
       auth: 'Automated authentication validation and token refresh',
       performance: 'Performance optimization and caching improvements',
       data: 'Automated data integrity checks and recovery',
-      general: 'General troubleshooting and diagnostics'
+      general: 'General troubleshooting and diagnostics',
     };
-    
+
     return solutions[issueType] || solutions.general;
   }
 
@@ -219,14 +243,14 @@ export class SupportService {
       sync: ['sync', 'hubspot', 'workflow', 'missing'],
       auth: ['login', 'password', 'token', 'auth'],
       performance: ['slow', 'timeout', 'loading', 'performance'],
-      data: ['data', 'missing', 'corrupt', 'history']
+      data: ['data', 'missing', 'corrupt', 'history'],
     };
-    
+
     const relevantKeywords = keywords[issueType] || [];
-    const matches = relevantKeywords.filter((keyword: string) => 
-      description.toLowerCase().includes(keyword)
+    const matches = relevantKeywords.filter((keyword: string) =>
+      description.toLowerCase().includes(keyword),
     ).length;
-    
+
     return Math.min(100, (matches / relevantKeywords.length) * 100);
   }
 
@@ -293,4 +317,4 @@ export class SupportService {
   private async logDiagnosis(userId: string, diagnosis: any): Promise<void> {
     // Log diagnosis for analytics and improvement
   }
-} 
+}

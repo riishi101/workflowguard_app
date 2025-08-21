@@ -9,4 +9,4 @@ export class HubSpotHealthService {
   async getMetrics(): Promise<any> {
     return { metrics: {} };
   }
-} 
+}

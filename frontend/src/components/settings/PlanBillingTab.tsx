@@ -462,7 +462,7 @@ const PlanBillingTab = () => {
                   {(subscription?.planId === 'professional' || trialStatus?.isTrial) ? 'Current Plan' : 'Select Plan'}
                 </Button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
-                  90 days version history, Up to 5 team members
+                  90 days version history
                 </p>
               </div>
             </CardContent>

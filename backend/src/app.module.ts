@@ -17,8 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppCacheModule } from './cache/cache.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
-import { HubSpotMarketplaceBillingService } from './services/hubspot-marketplace-billing.service';
-import { HubSpotBillingController } from './controllers/hubspot-billing.controller';
+import { BillingController } from './controllers/hubspot-billing.controller';
 
 @Module({
   imports: [
@@ -40,7 +39,7 @@ import { HubSpotBillingController } from './controllers/hubspot-billing.controll
     AnalyticsModule,
     AppCacheModule,
   ],
-  controllers: [AppController, HubSpotMarketplaceController, HubSpotBillingController],
-  providers: [AppService, HubSpotMarketplaceBillingService],
+  controllers: [AppController, HubSpotMarketplaceController, BillingController],
+  providers: [AppService],
 })
 export class AppModule {}

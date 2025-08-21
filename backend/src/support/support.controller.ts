@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { SupportService } from './support.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -13,22 +21,28 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
     if (!body.description) {
-      throw new HttpException('Issue description is required', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Issue description is required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
-      const diagnosis = await this.supportService.diagnoseIssue(body.description, userId);
+      const diagnosis = await this.supportService.diagnoseIssue(
+        body.description,
+        userId,
+      );
       return diagnosis;
     } catch (error) {
       throw new HttpException(
         `Failed to diagnose issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -40,7 +54,7 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -51,7 +65,7 @@ export class SupportController {
     } catch (error) {
       throw new HttpException(
         `Failed to fix rollback issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -63,7 +77,7 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -74,7 +88,7 @@ export class SupportController {
     } catch (error) {
       throw new HttpException(
         `Failed to fix sync issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -86,7 +100,7 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -97,7 +111,7 @@ export class SupportController {
     } catch (error) {
       throw new HttpException(
         `Failed to fix auth issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -109,7 +123,7 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -120,7 +134,7 @@ export class SupportController {
     } catch (error) {
       throw new HttpException(
         `Failed to fix data issue: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -132,7 +146,7 @@ export class SupportController {
     if (!userId) {
       userId = req.headers['x-user-id'];
     }
-    
+
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
@@ -143,8 +157,8 @@ export class SupportController {
     } catch (error) {
       throw new HttpException(
         `Failed to optimize performance: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-} 
+}

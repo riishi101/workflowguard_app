@@ -23,7 +23,7 @@ export class SubscriptionService {
       const planId = user.subscription?.planId || 'starter';
       let planName = 'Starter Plan';
       let price = 19;
-      let limits = { workflows: 5, versionHistory: 30, teamMembers: 1 };
+      let limits = { workflows: 5, versionHistory: 30 };
       let features = [
         'workflow_selection',
         'dashboard_overview',
@@ -34,7 +34,7 @@ export class SubscriptionService {
       if (planId === 'professional') {
         planName = 'Professional Plan';
         price = 49;
-        limits = { workflows: 25, versionHistory: 90, teamMembers: 5 };
+        limits = { workflows: 25, versionHistory: 90 };
         features = [
           'workflow_selection',
           'dashboard_overview',
@@ -50,7 +50,7 @@ export class SubscriptionService {
       } else if (planId === 'enterprise') {
         planName = 'Enterprise Plan';
         price = 99;
-        limits = { workflows: 9999, versionHistory: 365, teamMembers: 9999 };
+        limits = { workflows: 9999, versionHistory: 365 };
         features = [
           'unlimited_workflows',
           'real_time_change_notifications',
@@ -60,7 +60,6 @@ export class SubscriptionService {
           'custom_retention_policies',
           'advanced_security_features',
           'advanced_analytics',
-          'unlimited_team_members',
           'white_label_options',
           '24_7_whatsapp_support',
         ];
@@ -75,8 +74,11 @@ export class SubscriptionService {
         planName,
         price,
         status: user.subscription?.status || 'active',
-        currentPeriodStart: user.subscription?.createdAt || new Date().toISOString(),
-        currentPeriodEnd: user.subscription?.trialEndDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        currentPeriodStart:
+          user.subscription?.createdAt || new Date().toISOString(),
+        currentPeriodEnd:
+          user.subscription?.trialEndDate ||
+          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         trialEndDate: user.subscription?.trialEndDate,
         nextBillingDate: user.subscription?.nextBillingDate,
         features,
@@ -84,13 +86,12 @@ export class SubscriptionService {
         usage: {
           workflows: workflowsUsed,
           versionHistory: 0, // update if you track this
-          teamMembers: 1,    // update if you track this
-        }
+        },
       };
     } catch (error) {
       throw new HttpException(
         `Failed to get user subscription: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -112,7 +113,7 @@ export class SubscriptionService {
       const trialEndDate = user.subscription?.trialEndDate;
       const isTrialActive = trialEndDate && trialEndDate > now;
       const isTrialExpired = trialEndDate && trialEndDate <= now;
-      
+
       let trialDaysRemaining = 0;
       if (isTrialActive && trialEndDate) {
         const diffTime = trialEndDate.getTime() - now.getTime();
@@ -128,7 +129,7 @@ export class SubscriptionService {
     } catch (error) {
       throw new HttpException(
         `Failed to get trial status: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -159,11 +160,6 @@ export class SubscriptionService {
           limit: 30,
           percentage: 0,
         },
-        teamMembers: {
-          used: 1,
-          limit: 1,
-          percentage: 100,
-        },
         storage: {
           used: 0,
           limit: 1000, // MB
@@ -173,7 +169,7 @@ export class SubscriptionService {
     } catch (error) {
       throw new HttpException(
         `Failed to get usage stats: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -205,10 +201,10 @@ export class SubscriptionService {
           data: { status: 'expired' },
         });
 
-        return { 
-          isExpired: true, 
+        return {
+          isExpired: true,
           message: 'Subscription has expired',
-          expiredDate: subscription.nextBillingDate
+          expiredDate: subscription.nextBillingDate,
         };
       }
 
@@ -243,7 +239,8 @@ export class SubscriptionService {
       }
 
       const daysUntilPayment = Math.ceil(
-        (subscription.nextBillingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        (subscription.nextBillingDate.getTime() - now.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       return {
@@ -253,8 +250,8 @@ export class SubscriptionService {
           daysUntil: daysUntilPayment,
           isOverdue: daysUntilPayment < 0,
           amount: this.getPlanPrice(subscription.planId),
-          currency: 'USD'
-        }
+          currency: 'USD',
+        },
       };
     } catch (error) {
       console.error('Error getting next payment info:', error);
@@ -267,10 +264,10 @@ export class SubscriptionService {
    */
   private getPlanPrice(planId: string): number {
     const prices: Record<string, number> = {
-      'starter': 19,
-      'professional': 49,
-      'enterprise': 99
+      starter: 19,
+      professional: 49,
+      enterprise: 99,
     };
     return prices[planId] || 0;
   }
-} 
+}

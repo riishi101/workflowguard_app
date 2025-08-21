@@ -133,39 +133,28 @@ export class UserService {
   }
 
   async getOverageStats(userId: string) {
-    const overages = await this.prisma.overage.findMany({
-      where: { userId },
-      include: {
-        user: true,
-      },
-    });
-
+    // Overages not implemented - return default values
     return {
-      totalOverage: overages.reduce((sum, o) => sum + o.amount, 0),
-      unbilledOverage: overages
-        .filter(overage => !overage.isBilled)
-        .reduce((sum, o) => sum + o.amount, 0),
-      overageCount: overages.length,
-      unbilledCount: overages.filter(o => !o.isBilled).length,
+      totalOverage: 0,
+      unbilledOverage: 0,
+      overageCount: 0,
+      unbilledCount: 0,
     };
   }
 
   async createOverage(userId: string, amount: number, description?: string) {
-    return this.prisma.overage.create({
-      data: {
-        userId,
-        planId: 'starter', // Default plan
-        amount,
-        description,
-      },
-    });
+    // Overages not implemented
+    throw new HttpException(
+      'Overage functionality not implemented',
+      HttpStatus.NOT_IMPLEMENTED,
+    );
   }
 
   async getApiKeys(userId: string) {
     const apiKeys = await this.prisma.apiKey.findMany({
-      where: { 
+      where: {
         userId,
-        isActive: true 
+        isActive: true,
       },
       select: {
         id: true,
@@ -176,8 +165,8 @@ export class UserService {
         isActive: true,
       },
     });
-    
-    return apiKeys.map(key => ({
+
+    return apiKeys.map((key: any) => ({
       ...key,
       key: key.id.substring(0, 8) + '...' + key.id.substring(key.id.length - 4), // Mask the actual key
     }));
@@ -185,14 +174,17 @@ export class UserService {
 
   async createApiKey(userId: string, apiKeyData: any) {
     const { name, description } = apiKeyData;
-    
+
     if (!name) {
-      throw new HttpException('API key name is required', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'API key name is required',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Generate a secure API key
     const apiKeyValue = `wg_${randomUUID().replace(/-/g, '')}`;
-    
+
     const apiKey = await this.prisma.apiKey.create({
       data: {
         userId,
@@ -213,7 +205,8 @@ export class UserService {
 
     return {
       ...apiKey,
-      message: 'Store this API key securely. You won\'t be able to see it again.',
+      message:
+        "Store this API key securely. You won't be able to see it again.",
     };
   }
 
@@ -247,35 +240,44 @@ export class UserService {
 
   async checkTrialAccess(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { 
+      where: {
         userId,
         status: 'trial',
-        planId: 'professional'
+        planId: 'professional',
       },
     });
-    
+
     if (!subscription) {
       return { hasTrial: false, message: 'No trial subscription found' };
     }
 
     const now = new Date();
-    const isExpired = subscription.trialEndDate && subscription.trialEndDate < now;
-    
+    const isExpired =
+      subscription.trialEndDate && subscription.trialEndDate < now;
+
     return {
       hasTrial: !isExpired,
       isExpired,
       endDate: subscription.trialEndDate,
-      daysRemaining: subscription.trialEndDate ? Math.max(0, Math.ceil((subscription.trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0,
+      daysRemaining: subscription.trialEndDate
+        ? Math.max(
+            0,
+            Math.ceil(
+              (subscription.trialEndDate.getTime() - now.getTime()) /
+                (1000 * 60 * 60 * 24),
+            ),
+          )
+        : 0,
     };
   }
 
   async upgradeSubscription(userId: string, planId: string) {
     // Cancel existing trial subscription
     await this.prisma.subscription.updateMany({
-      where: { 
+      where: {
         userId,
         planId: 'professional',
-        status: 'trial'
+        status: 'trial',
       },
       data: { status: 'cancelled' },
     });
@@ -289,24 +291,24 @@ export class UserService {
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       },
     });
-    
+
     return newSubscription;
   }
 
   async getUserPlan(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { 
+      where: {
         userId,
-        status: 'active'
+        status: 'active',
       },
     });
-    
+
     return subscription || { plan: null, status: 'no_subscription' };
   }
 
   async getUserOverages(userId: string, startDate?: Date, endDate?: Date) {
     const whereClause: any = { userId };
-    
+
     if (startDate && endDate) {
       whereClause.createdAt = {
         gte: startDate,
@@ -320,22 +322,25 @@ export class UserService {
     });
 
     return {
-      overages,
-      totalAmount: overages.reduce((sum, o) => sum + o.amount, 0),
-      count: overages.length,
+      overages: [],
+      totalAmount: 0,
+      count: 0,
     };
   }
 
   async cancelMySubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { 
+      where: {
         userId,
-        status: 'active'
+        status: 'active',
       },
     });
 
     if (!subscription) {
-      throw new HttpException('No active subscription found', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'No active subscription found',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return this.prisma.subscription.update({
@@ -356,16 +361,18 @@ export class UserService {
     const settings = await this.prisma.notificationSettings.findUnique({
       where: { userId },
     });
-    
-    return settings || {
-      userId,
-      enabled: true,
-      email: '',
-      workflowDeleted: true,
-      enrollmentTriggerModified: true,
-      workflowRolledBack: true,
-      criticalActionModified: true,
-    };
+
+    return (
+      settings || {
+        userId,
+        enabled: true,
+        email: '',
+        workflowDeleted: true,
+        enrollmentTriggerModified: true,
+        workflowRolledBack: true,
+        criticalActionModified: true,
+      }
+    );
   }
 
   async updateNotificationSettings(userId: string, dto: any) {
@@ -381,16 +388,19 @@ export class UserService {
 
   async deleteApiKey(userId: string, keyId: string) {
     const result = await this.prisma.apiKey.updateMany({
-      where: { 
-        userId, 
+      where: {
+        userId,
         id: keyId,
-        isActive: true 
+        isActive: true,
       },
       data: { isActive: false },
     });
 
     if (result.count === 0) {
-      throw new HttpException('API key not found or already inactive', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'API key not found or already inactive',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return { success: true };
@@ -421,12 +431,12 @@ export class UserService {
 
   async getMySubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
-      where: { 
+      where: {
         userId,
-        status: 'active'
+        status: 'active',
       },
     });
-    
+
     return subscription || { plan: null, status: 'no_subscription' };
   }
 }

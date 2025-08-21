@@ -4,8 +4,10 @@ export default registerAs('hubspot', () => ({
   // OAuth Configuration
   clientId: process.env.HUBSPOT_CLIENT_ID,
   clientSecret: process.env.HUBSPOT_CLIENT_SECRET,
-  redirectUri: process.env.HUBSPOT_REDIRECT_URI || 'https://api.workflowguard.pro/api/auth/hubspot/callback',
-  
+  redirectUri:
+    process.env.HUBSPOT_REDIRECT_URI ||
+    'https://api.workflowguard.pro/api/auth/hubspot/callback',
+
   // Required Scopes for WorkflowGuard
   scopes: [
     'crm.schemas.deals.read',
@@ -62,11 +64,7 @@ export default registerAs('hubspot', () => ({
 
   // Portal Requirements
   minimumPortalPlan: 'professional', // Minimum HubSpot plan required
-  requiredFeatures: [
-    'automation',
-    'workflows',
-    'api_access',
-  ],
+  requiredFeatures: ['automation', 'workflows', 'api_access'],
 
   // Data Retention
   maxWorkflowVersions: 1000,
@@ -124,8 +122,7 @@ export default registerAs('hubspot', () => ({
     enableAutomaticBackups: true,
     enableRealTimeSync: true,
     enableAdvancedAnalytics: true,
-    enableTeamCollaboration: true,
     enableAuditLogging: true,
     enableApiAccess: true,
   },
-})); 
+}));
