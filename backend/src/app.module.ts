@@ -16,6 +16,7 @@ import { WebhookModule } from './webhook/webhook.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppCacheModule } from './cache/cache.module';
+import { RazorpayModule } from './razorpay/razorpay.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
 
@@ -38,6 +39,7 @@ import { BillingController } from './controllers/hubspot-billing.controller';
     DashboardModule,
     AnalyticsModule,
     AppCacheModule,
+    RazorpayModule,
   ],
   controllers: [AppController, HubSpotMarketplaceController, BillingController],
   providers: [AppService],

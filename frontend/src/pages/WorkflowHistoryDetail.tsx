@@ -294,7 +294,7 @@ const WorkflowHistoryDetail = () => {
   const filteredVersions = versions.filter(version =>
     version.changeSummary.toLowerCase().includes(searchTerm.toLowerCase()) ||
     version.modifiedBy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    version.versionNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    version.versionNumber.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {

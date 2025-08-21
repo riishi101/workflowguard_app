@@ -89,7 +89,7 @@
         "name": "Starter",
         "price": 19,
         "interval": "month",
-        "description": "Perfect for small teams",
+        "description": "Perfect for individual users",
         "features": [
           "Up to 10 workflows",
           "Workflow Selection",
@@ -134,7 +134,6 @@
           "Complete Audit Trails",
           "Custom Retention Policies",
           "Advanced Security Features",
-          "Unlimited Team Members",
           "White-label Options",
           "24/7 WhatsApp Support"
         ]

@@ -164,7 +164,7 @@ export class HubSpotService {
           const updatedUser = await this.prisma.user.findUnique({
             where: { id: userId },
           });
-          accessToken = updatedUser.hubspotAccessToken;
+          accessToken = updatedUser?.hubspotAccessToken || null;
         } else {
           throw new HttpException(
             'HubSpot token expired.',

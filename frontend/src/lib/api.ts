@@ -692,6 +692,77 @@ class ApiService {
     }
   }
 
+  // Razorpay Integration APIs
+  static async createRazorpayOrder(planId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/razorpay/create-order', { planId });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async confirmRazorpayPayment(paymentData: {
+    planId: string;
+    paymentId: string;
+    orderId: string;
+    signature: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/razorpay/confirm-payment', paymentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async cancelSubscription(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/subscription/cancel');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getBillingHistory(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/subscription/billing-history');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async downloadBillingHistoryCSV(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/subscription/billing-history/export', {
+        responseType: 'blob'
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getPaymentMethodUpdateUrl(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/subscription/payment-method-update-url');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getInvoice(invoiceId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get(`/subscription/invoice/${invoiceId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Support tickets
   static async createSupportTicket(ticketData: any): Promise<ApiResponse<any>> {
     try {

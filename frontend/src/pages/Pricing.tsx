@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, Star, Zap, Shield, Users, Crown } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { Badge } from '../components/ui/badge';
+import { Shield, Crown, CheckCircle, Loader2, Zap } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import PageLayout from "@/components/PageLayout";
+import ContentPageHeader from "@/components/ContentPageHeader";
+import RazorpayCheckout from "@/components/RazorpayCheckout";
 import HubSpotBillingService, { BillingPlan } from '@/services/HubSpotBillingService';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function Pricing() {
   const [plans, setPlans] = useState<BillingPlan[]>([]);

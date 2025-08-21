@@ -87,9 +87,12 @@ model Subscription {
   status          String
   trialEndDate    DateTime?
   nextBillingDate DateTime?
+  razorpayCustomerId String?
+  razorpaySubscriptionId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   user            User      @relation(fields: [userId], references: [id])
+  payments        Payment[]
 }
 
 model Webhook {
@@ -191,6 +194,20 @@ model SupportReply {
   updatedAt   DateTime       @updatedAt
   ticket      SupportTicket  @relation(fields: [ticketId], references: [id])
   user        User           @relation(fields: [userId], references: [id])
+}
+
+model Payment {
+  id                String       @id @default(uuid())
+  subscriptionId    String
+  subscription      Subscription @relation(fields: [subscriptionId], references: [id])
+  razorpayPaymentId String       @unique
+  amount            Float
+  currency          String       @default("INR")
+  status            String       // 'captured', 'failed', 'refunded'
+  method            String?      // 'card', 'netbanking', 'wallet', 'upi'
+  description       String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
 
 model ApprovalRequest {

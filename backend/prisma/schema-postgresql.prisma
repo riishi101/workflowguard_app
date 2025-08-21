@@ -80,8 +80,11 @@ model Subscription {
   status          String   // 'active', 'trial', 'cancelled', 'overdue'
   trialEndDate    DateTime?
   nextBillingDate DateTime?
+  razorpayCustomerId String?
+  razorpaySubscriptionId String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  payments        Payment[]
 }
 
 model Webhook {
@@ -145,6 +148,20 @@ model ApiKey {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id                String       @id @default(uuid())
+  subscriptionId    String
+  subscription      Subscription @relation(fields: [subscriptionId], references: [id])
+  razorpayPaymentId String       @unique
+  amount            Float
+  currency          String       @default("INR")
+  status            String       // 'captured', 'failed', 'refunded'
+  method            String?      // 'card', 'netbanking', 'wallet', 'upi'
+  description       String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 }
 
 model SsoConfig {

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ApiService } from '@/lib/api';
+import ManageSubscriptionTab from './ManageSubscription';
 
 const PlanBillingTab = () => {
   const { toast } = useToast();
@@ -31,6 +32,7 @@ const PlanBillingTab = () => {
   const [trialStatus, setTrialStatus] = useState<any>(null);
   const [usageStats, setUsageStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showManageSubscription, setShowManageSubscription] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -162,7 +164,7 @@ const PlanBillingTab = () => {
   };
 
   const handleManageSubscription = () => {
-    window.open('https://app.hubspot.com/billing', '_blank');
+    setShowManageSubscription(true);
   };
 
   const handleUpdatePayment = () => {
@@ -187,6 +189,24 @@ const PlanBillingTab = () => {
             </div>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Show ManageSubscription component when requested
+  if (showManageSubscription) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowManageSubscription(false)}
+            className="flex items-center gap-2"
+          >
+            ← Back to Plans
+          </Button>
+        </div>
+        <ManageSubscriptionTab />
       </div>
     );
   }
