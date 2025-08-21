@@ -2,14 +2,27 @@
 import { render } from '@testing-library/react';
 import { screen, fireEvent, waitFor } from '@testing-library/dom';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { ApiService } from '@/lib/api';
 import WorkflowHistoryDetail from '../WorkflowHistoryDetail';
 import { useToast } from '@/hooks/use-toast';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ReactNode } from 'react';
 
 // Mock dependencies
 vi.mock('@/lib/api');
 vi.mock('@/hooks/use-toast');
+vi.mock('@/contexts/AuthContext', () => ({
+  AuthProvider: ({ children }: { children: ReactNode }) => children,
+  useAuth: () => ({
+    user: { id: 'test-user', email: 'test@example.com', name: 'Test User' },
+    isAuthenticated: true,
+    login: vi.fn(),
+    logout: vi.fn(),
+    loading: false,
+  }),
+}));
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -55,6 +68,27 @@ const mockVersions = [
   }
 ];
 
+// Test wrapper component with all providers
+const TestWrapper = ({ children }: { children: ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          {children}
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
+
 describe('WorkflowHistoryDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,9 +129,9 @@ describe('WorkflowHistoryDetail', () => {
 
   it('renders loading state initially', () => {
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
@@ -105,9 +139,9 @@ describe('WorkflowHistoryDetail', () => {
 
   it('fetches and displays workflow details and versions', async () => {
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     // Wait for data to load
@@ -128,9 +162,9 @@ describe('WorkflowHistoryDetail', () => {
 
   it('handles search functionality', async () => {
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -153,9 +187,9 @@ describe('WorkflowHistoryDetail', () => {
     });
 
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -177,9 +211,9 @@ describe('WorkflowHistoryDetail', () => {
     });
 
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -200,9 +234,9 @@ describe('WorkflowHistoryDetail', () => {
 
   it('handles compare mode', async () => {
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -228,9 +262,9 @@ describe('WorkflowHistoryDetail', () => {
     vi.mocked(ApiService.getWorkflowDetails).mockRejectedValue(new Error('Failed to load'));
 
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -246,9 +280,9 @@ describe('WorkflowHistoryDetail', () => {
     });
 
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
@@ -258,9 +292,9 @@ describe('WorkflowHistoryDetail', () => {
 
   it('handles view details modal', async () => {
     render(
-      <BrowserRouter>
+      <TestWrapper>
         <WorkflowHistoryDetail />
-      </BrowserRouter>
+      </TestWrapper>
     );
 
     await waitFor(() => {
