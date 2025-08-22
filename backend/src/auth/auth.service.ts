@@ -68,7 +68,7 @@ export class AuthService {
         data: {
           email: hubspotUser.email,
           name: hubspotUser.name || hubspotUser.email,
-          hubspotPortalId: hubspotUser.portalId,
+          hubspotPortalId: String(hubspotUser.portalId), // Ensure string type
           hubspotAccessToken: hubspotUser.accessToken,
           hubspotRefreshToken: hubspotUser.refreshToken,
           hubspotTokenExpiresAt: hubspotUser.tokenExpiresAt,
@@ -82,7 +82,7 @@ export class AuthService {
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          hubspotPortalId: hubspotUser.portalId,
+          hubspotPortalId: String(hubspotUser.portalId), // Ensure string type
           hubspotAccessToken: hubspotUser.accessToken,
           hubspotRefreshToken: hubspotUser.refreshToken,
           hubspotTokenExpiresAt: hubspotUser.tokenExpiresAt,

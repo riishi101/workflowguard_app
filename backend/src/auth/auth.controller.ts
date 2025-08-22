@@ -200,7 +200,7 @@ export class AuthController {
         user = await this.authService.validateHubSpotUser({
           email,
           name: email.split('@')[0], // Use email prefix as name
-          portalId: hub_id,
+          portalId: String(hub_id), // Convert to string for Prisma schema
           accessToken: access_token,
           refreshToken: refresh_token,
           tokenExpiresAt: new Date(
@@ -221,7 +221,7 @@ export class AuthController {
           user = await this.prisma.user.upsert({
             where: { email },
             update: {
-              hubspotPortalId: hub_id,
+              hubspotPortalId: String(hub_id), // Convert to string for Prisma schema
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
               hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
@@ -229,7 +229,7 @@ export class AuthController {
             create: {
               email,
               name: email.split('@')[0],
-              hubspotPortalId: hub_id,
+              hubspotPortalId: String(hub_id), // Convert to string for Prisma schema
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
               hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
