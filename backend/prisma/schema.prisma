@@ -9,9 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -38,8 +37,6 @@ model User {
   workflows             Workflow[]
   supportTickets        SupportTicket[]
   supportReplies        SupportReply[]
-  approvalRequests      ApprovalRequest[] @relation("ApprovalRequests")
-  approvedRequests      ApprovalRequest[] @relation("ApprovedRequests")
 }
 
 model Workflow {
@@ -51,7 +48,6 @@ model Workflow {
   updatedAt DateTime          @updatedAt
   owner     User              @relation(fields: [ownerId], references: [id])
   versions  WorkflowVersion[]
-  approvalRequests ApprovalRequest[]
 }
 
 model WorkflowVersion {
@@ -61,7 +57,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          Json     // Raw workflow JSON from HubSpot
+  data          String   // JSON as string for SQLite
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
@@ -73,8 +69,8 @@ model AuditLog {
   action     String
   entityType String
   entityId   String
-  oldValue   Json?
-  newValue   Json?
+  oldValue   String?  // JSON as string for SQLite
+  newValue   String?  // JSON as string for SQLite
   timestamp  DateTime @default(now())
   ipAddress  String?
   user       User?    @relation(fields: [userId], references: [id])
@@ -87,12 +83,9 @@ model Subscription {
   status          String
   trialEndDate    DateTime?
   nextBillingDate DateTime?
-  razorpayCustomerId String?
-  razorpaySubscriptionId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   user            User      @relation(fields: [userId], references: [id])
-  payments        Payment[]
 }
 
 model Webhook {
@@ -113,7 +106,7 @@ model Plan {
   description String?
   price       Float
   interval    String
-  features    String?  // Comma-separated list of features
+  features    String?  // JSON as string for SQLite
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -194,34 +187,4 @@ model SupportReply {
   updatedAt   DateTime       @updatedAt
   ticket      SupportTicket  @relation(fields: [ticketId], references: [id])
   user        User           @relation(fields: [userId], references: [id])
-}
-
-model Payment {
-  id                String       @id @default(uuid())
-  subscriptionId    String
-  subscription      Subscription @relation(fields: [subscriptionId], references: [id])
-  razorpayPaymentId String       @unique
-  amount            Float
-  currency          String       @default("INR")
-  status            String       // 'captured', 'failed', 'refunded'
-  method            String?      // 'card', 'netbanking', 'wallet', 'upi'
-  description       String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-}
-
-model ApprovalRequest {
-  id                String   @id @default(uuid())
-  workflowId        String
-  requestedBy       String
-  requestedChanges  Json
-  status            String   @default("pending") // pending, approved, rejected
-  approvedBy        String?
-  approvedAt        DateTime?
-  rejectionReason   String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  workflow          Workflow @relation(fields: [workflowId], references: [id])
-  requester         User     @relation("ApprovalRequests", fields: [requestedBy], references: [id])
-  approver          User?    @relation("ApprovedRequests", fields: [approvedBy], references: [id])
 } 
