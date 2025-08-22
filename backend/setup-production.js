@@ -8,7 +8,7 @@ DATABASE_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyy
 DIRECT_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 # JWT Configuration
-JWT_SECRET="dDjMTsWdYi+VBy4J5+ocmBbazSM+NJgunjbgBggZPOu8HNzXoUijNXiRbvHZ7JWcFfkHDDEbdeYwzFb9HvqDMw=="
+JWT_SECRET="xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw=="
 JWT_EXPIRES_IN="7d"
 
 # Server Configuration
