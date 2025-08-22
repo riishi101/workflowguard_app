@@ -255,9 +255,9 @@ export class AuthController {
         console.log('Redirecting to marketplace success:', redirectUrl);
         return res.redirect(redirectUrl);
       } else {
-        // For regular OAuth, redirect to frontend with success and token
+        // For regular OAuth, redirect to frontend root with success and token
         console.log('OAuth callback completed successfully');
-        const redirectUrl = `https://www.workflowguard.pro/workflow-selection?success=true&token=${encodeURIComponent(token)}`;
+        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}`;
         console.log('Redirecting to:', redirectUrl);
         return res.redirect(redirectUrl);
       }

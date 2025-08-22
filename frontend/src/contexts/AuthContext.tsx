@@ -57,9 +57,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const urlParams = new URLSearchParams(window.location.search);
         const successParam = urlParams.get('success');
         const tokenParam = urlParams.get('token');
+        const errorParam = urlParams.get('error');
         const isMarketplace = urlParams.get('marketplace') === 'true';
 
-        logAuth('URL parameters', { success: successParam, hasToken: !!tokenParam, isMarketplace });
+        logAuth('URL parameters', { success: successParam, hasToken: !!tokenParam, error: errorParam, isMarketplace });
+
+        // Handle OAuth errors
+        if (errorParam) {
+          logAuth('OAuth error detected', { error: errorParam });
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          let errorMessage = 'Authentication failed';
+          switch (errorParam) {
+            case 'user_creation_failed':
+              errorMessage = 'Failed to create user account. Please try again.';
+              break;
+            case 'oauth_failed':
+              errorMessage = 'OAuth authentication failed. Please try again.';
+              break;
+            case 'config_error':
+              errorMessage = 'HubSpot configuration error. Please contact support.';
+              break;
+            case 'token_error':
+              errorMessage = 'Token exchange failed. Please try again.';
+              break;
+            default:
+              errorMessage = `Authentication error: ${errorParam}`;
+          }
+          
+          toast({
+            title: 'Authentication Error',
+            description: errorMessage,
+            variant: 'destructive'
+          });
+          
+          setLoading(false);
+          setHasInitialized(true);
+          return;
+        }
 
         // Handle OAuth callback
         if (successParam === 'true' && tokenParam) {
