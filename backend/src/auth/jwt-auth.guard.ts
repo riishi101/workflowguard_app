@@ -17,6 +17,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (isPublic) {
       return true;
     }
+    
+    // Debug JWT guard activation
+    const request = context.switchToHttp().getRequest();
+    console.log('🔒 JwtAuthGuard - canActivate called for:', request.url);
+    console.log('🔒 JwtAuthGuard - Authorization header:', request.headers.authorization);
+    
     return super.canActivate(context);
   }
 }

@@ -335,8 +335,19 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getCurrentUser(@Req() req: Request) {
     try {
+      // Debug headers
+      console.log('🔍 /api/auth/me - Headers received:', {
+        authorization: req.headers.authorization,
+        'content-type': req.headers['content-type'],
+        origin: req.headers.origin,
+        'user-agent': req.headers['user-agent']?.substring(0, 50) + '...'
+      });
+      
       const userId = (req.user as any)?.sub || (req.user as any)?.id;
+      console.log('🔍 /api/auth/me - User from JWT:', { userId, user: req.user });
+      
       if (!userId) {
+        console.log('❌ /api/auth/me - No userId found in JWT payload');
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
