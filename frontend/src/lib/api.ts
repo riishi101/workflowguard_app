@@ -18,8 +18,18 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
+    console.log('🔗 API Request:', {
+      url: config.url,
+      method: config.method,
+      hasToken: !!token,
+      tokenLength: token?.length,
+      tokenStart: token?.substring(0, 20) + '...'
+    });
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
+    } else {
+      console.log('❌ No token found in localStorage');
     }
     return config;
   },
@@ -37,7 +47,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token for auth endpoints
       if (error.config.url?.includes('/auth')) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
       }
       // Don't clear token for non-auth endpoints to avoid infinite loops
     }

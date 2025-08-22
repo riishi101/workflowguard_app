@@ -74,10 +74,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         const token = localStorage.getItem('authToken');
-        logAuth('Checking token', { hasToken: !!token });
+        logAuth('Checking token', { hasToken: !!token, tokenLength: token?.length });
 
         if (token) {
           logAuth('Validating token with API');
+          // Add small delay to ensure token is properly set
+          await new Promise(resolve => setTimeout(resolve, 100));
           try {
             const response = await ApiService.getCurrentUser();
             logAuth('API response received', { success: response.success });
