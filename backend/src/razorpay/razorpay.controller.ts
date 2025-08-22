@@ -14,6 +14,8 @@ import {
   BadRequestException,
   HttpCode,
   HttpStatus,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
@@ -26,6 +28,7 @@ export class RazorpayController {
 
   constructor(
     private razorpayService: RazorpayService,
+    @Inject(forwardRef(() => SubscriptionService))
     private subscriptionService: SubscriptionService,
   ) {}
 
