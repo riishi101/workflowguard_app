@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -57,7 +58,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          String   // JSON as string for SQLite
+  data          Json     // JSON for PostgreSQL
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
@@ -69,8 +70,8 @@ model AuditLog {
   action     String
   entityType String
   entityId   String
-  oldValue   String?  // JSON as string for SQLite
-  newValue   String?  // JSON as string for SQLite
+  oldValue   Json?    // JSON for PostgreSQL
+  newValue   Json?    // JSON for PostgreSQL
   timestamp  DateTime @default(now())
   ipAddress  String?
   user       User?    @relation(fields: [userId], references: [id])
@@ -83,6 +84,8 @@ model Subscription {
   status          String
   trialEndDate    DateTime?
   nextBillingDate DateTime?
+  razorpayCustomerId String?
+  razorpaySubscriptionId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   user            User      @relation(fields: [userId], references: [id])
@@ -106,7 +109,7 @@ model Plan {
   description String?
   price       Float
   interval    String
-  features    String?  // JSON as string for SQLite
+  features    Json?    // JSON for PostgreSQL
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
