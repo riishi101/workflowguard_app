@@ -3,13 +3,13 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: youruser
-      POSTGRES_PASSWORD: yourpassword
       POSTGRES_DB: workflowguard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build: ./backend
@@ -21,24 +21,34 @@ services:
       HUBSPOT_APP_ID: "18270797"
       HUBSPOT_CLIENT_ID: "5e6a6429-8317-4e2a-a9b5-46e8669f72f6"
       HUBSPOT_CLIENT_SECRET: "07f931e2-bc75-4686-a9cf-c1d464c55019"
-      HUBSPOT_REDIRECT_URI: "http://api.workflowguard.pro:4000/api/auth/hubspot/callback"
+      HUBSPOT_REDIRECT_URI: "https://api.workflowguard.pro/api/auth/hubspot/callback"
       RAZORPAY_KEY_ID: "rzp_test_placeholder"
       RAZORPAY_KEY_SECRET: "placeholder_secret"
       RAZORPAY_WEBHOOK_SECRET: "placeholder_webhook"
       RAZORPAY_PLAN_ID_STARTER_INR: "plan_starter_placeholder"
       RAZORPAY_PLAN_ID_PROFESSIONAL_INR: "plan_professional_placeholder"
       RAZORPAY_PLAN_ID_ENTERPRISE_INR: "plan_enterprise_placeholder"
-    ports:
-      - "4000:4000"
+    expose:
+      - "4000"
     depends_on:
       - db 
 
   frontend:
     build: ./frontend
+    expose:
+      - "80"
+
+  nginx:
+    image: nginx:alpine
     ports:
-      - "3000:80"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-ssl.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
+      - frontend
       - backend
 
 volumes:
-  db_data:
+  postgres_data:
