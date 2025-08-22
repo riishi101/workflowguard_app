@@ -23,6 +23,9 @@
     <meta property="og:description" content="Protect your HubSpot workflows with version control, rollback capabilities, and automated monitoring." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/LogoW.png?v=3" />
+    
+    <!-- Content Security Policy to prevent HubSpot bundle loading errors -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://app.hubspot.com https://*.hubspot.com https://*.hs-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: http:; connect-src 'self' https://api.workflowguard.pro https://app.hubspot.com https://*.hubspot.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; media-src 'none'; frame-src 'self' https://app.hubspot.com https://*.hubspot.com; base-uri 'self'; form-action 'self';">
   </head>
 
   <body>

@@ -40,11 +40,11 @@ export class AuthController {
         process.env.HUBSPOT_REDIRECT_URI ||
         'https://api.workflowguard.pro/api/auth/hubspot/callback';
 
-      // Use marketplace-specific scopes if coming from marketplace
+      // Use exact scopes from hubspot-app-manifest.json to avoid mismatch
       const scopes =
         marketplace === 'true'
-          ? 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read marketplace'
-          : 'crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read';
+          ? 'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth'
+          : 'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth';
 
       // Debug logging
       console.log('HUBSPOT_CLIENT_ID:', clientId);
@@ -81,9 +81,9 @@ export class AuthController {
       process.env.HUBSPOT_REDIRECT_URI ||
         'http://localhost:3000/auth/hubspot/callback',
     );
-    // Use only valid scopes (no deprecated 'contacts')
+    // Use exact scopes from hubspot-app-manifest.json to avoid mismatch
     const scopes = encodeURIComponent(
-      'automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read crm.schemas.companies.read crm.schemas.contacts.read crm.schemas.deals.read',
+      'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth',
     );
 
     const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${redirectUri}`;
@@ -210,10 +210,38 @@ export class AuthController {
         console.log('User found/created:', user.id);
       } catch (dbError) {
         console.error('Database operation failed:', dbError);
-        // If all else fails, redirect with error
-        return res.redirect(
-          'https://www.workflowguard.pro?error=user_creation_failed',
-        );
+        console.error('Database error details:', {
+          message: dbError.message,
+          code: dbError.code,
+          meta: dbError.meta,
+          stack: dbError.stack
+        });
+        // Try alternative user creation approach
+        try {
+          user = await this.prisma.user.upsert({
+            where: { email },
+            update: {
+              hubspotPortalId: hub_id,
+              hubspotAccessToken: access_token,
+              hubspotRefreshToken: refresh_token,
+              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+            },
+            create: {
+              email,
+              name: email.split('@')[0],
+              hubspotPortalId: hub_id,
+              hubspotAccessToken: access_token,
+              hubspotRefreshToken: refresh_token,
+              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+            },
+          });
+          console.log('User upserted successfully:', user.id);
+        } catch (upsertError) {
+          console.error('User upsert also failed:', upsertError);
+          return res.redirect(
+            'https://www.workflowguard.pro?error=user_creation_failed',
+          );
+        }
       }
 
       // 4. Generate JWT token for the user
