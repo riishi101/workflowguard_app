@@ -22,7 +22,7 @@ import { GetUser } from '../auth/get-user.decorator';
 import { RazorpayService, CreateSubscriptionDto, CreateCustomerDto } from './razorpay.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 
-@Controller('api/razorpay')
+@Controller('razorpay')
 export class RazorpayController {
   private readonly logger = new Logger(RazorpayController.name);
 
