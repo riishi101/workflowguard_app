@@ -22,6 +22,12 @@ services:
       HUBSPOT_CLIENT_ID: "5e6a6429-8317-4e2a-a9b5-46e8669f72f6"
       HUBSPOT_CLIENT_SECRET: "07f931e2-bc75-4686-a9cf-c1d464c55019"
       HUBSPOT_REDIRECT_URI: "https://api.workflowguard.pro/api/auth/hubspot/callback"
+      RAZORPAY_KEY_ID: "rzp_test_placeholder"
+      RAZORPAY_KEY_SECRET: "placeholder_secret"
+      RAZORPAY_WEBHOOK_SECRET: "placeholder_webhook"
+      RAZORPAY_PLAN_ID_STARTER_INR: "plan_starter_placeholder"
+      RAZORPAY_PLAN_ID_PROFESSIONAL_INR: "plan_professional_placeholder"
+      RAZORPAY_PLAN_ID_ENTERPRISE_INR: "plan_enterprise_placeholder"
     ports:
       - "4000:4000"
     depends_on:
