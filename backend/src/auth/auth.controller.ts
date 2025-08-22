@@ -40,11 +40,8 @@ export class AuthController {
         process.env.HUBSPOT_REDIRECT_URI ||
         'https://api.workflowguard.pro/api/auth/hubspot/callback';
 
-      // Use exact scopes from hubspot-app-manifest.json to avoid mismatch
-      const scopes =
-        marketplace === 'true'
-          ? 'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth'
-          : 'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth';
+      // Use minimal scopes as required by HubSpot marketplace review
+      const scopes = 'automation oauth';
 
       // Debug logging
       console.log('HUBSPOT_CLIENT_ID:', clientId);
@@ -81,10 +78,8 @@ export class AuthController {
       process.env.HUBSPOT_REDIRECT_URI ||
         'http://localhost:3000/auth/hubspot/callback',
     );
-    // Use exact scopes from hubspot-app-manifest.json to avoid mismatch
-    const scopes = encodeURIComponent(
-      'automation crm.objects.contacts.read crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.schemas.companies.read crm.schemas.deals.read oauth',
-    );
+    // Use minimal scopes as required by HubSpot marketplace review
+    const scopes = encodeURIComponent('automation oauth');
 
     const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${redirectUri}`;
 

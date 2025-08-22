@@ -8,16 +8,10 @@ export default registerAs('hubspot', () => ({
     process.env.HUBSPOT_REDIRECT_URI ||
     'https://api.workflowguard.pro/api/auth/hubspot/callback',
 
-  // Required Scopes for WorkflowGuard
+  // Minimal scopes as required by HubSpot marketplace review
   scopes: [
-    'crm.schemas.deals.read',
     'automation',
     'oauth',
-    'crm.objects.companies.read',
-    'crm.objects.deals.read',
-    'crm.schemas.contacts.read',
-    'crm.objects.contacts.read',
-    'crm.schemas.companies.read',
   ].join(' '),
 
   // API Configuration
