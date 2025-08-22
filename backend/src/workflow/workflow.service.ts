@@ -211,13 +211,23 @@ export class WorkflowService {
         // Always convert hubspotId to string for Prisma
         const hubspotId = String(workflowObj?.hubspotId || workflowId);
 
-        // Try to find the workflow by hubspotId and ownerId
-        const existingWorkflow = await this.prisma.workflow.findFirst({
+        // Use upsert to handle existing workflows properly
+        const workflow = await this.prisma.workflow.upsert({
           where: {
             hubspotId: hubspotId,
+          },
+          update: {
+            name: workflowObj?.name || 'Unnamed Workflow',
+            ownerId: finalUserId,
+            updatedAt: new Date(),
+          },
+          create: {
+            hubspotId: hubspotId,
+            name: workflowObj?.name || 'Unnamed Workflow',
             ownerId: finalUserId,
           },
           include: {
+            owner: true,
             versions: {
               orderBy: { versionNumber: 'desc' },
               take: 1,
@@ -225,34 +235,8 @@ export class WorkflowService {
           },
         });
 
-        let workflow;
-        if (existingWorkflow) {
-          workflow = await this.prisma.workflow.update({
-            where: { id: existingWorkflow.id },
-            data: {
-              updatedAt: new Date(),
-            },
-            include: {
-              owner: true,
-              versions: true,
-            },
-          });
-        } else {
-          workflow = await this.prisma.workflow.create({
-            data: {
-              hubspotId: hubspotId,
-              name: workflowObj?.name || 'Unnamed Workflow',
-              ownerId: finalUserId,
-            },
-            include: {
-              owner: true,
-              versions: true,
-            },
-          });
-        }
-
         // Create initial version if no versions exist
-        if (!existingWorkflow?.versions?.length) {
+        if (!workflow?.versions?.length) {
           try {
             // Get workflow data from HubSpot
             const hubspotWorkflows =
