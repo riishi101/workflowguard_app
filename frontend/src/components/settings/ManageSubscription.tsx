@@ -583,18 +583,16 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
               <p className="text-sm text-gray-600">
                 Cancelling your subscription will downgrade you to the free plan at the end of your billing cycle.
               </p>
-              <p className="text-sm text-gray-500">Expires {subscription?.paymentMethod?.exp}</p>
             </div>
+            <Button variant="destructive" onClick={handleCancelSubscription} disabled={isCancelling}>
+              {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+            </Button>
           </div>
-          <Button variant="outline" onClick={handleUpdatePayment} disabled={isUpdatingPayment}>
-            {isUpdatingPayment ? 'Processing...' : <><Pencil className="w-4 h-4 mr-2"/>Update Method</>}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
 
-    {/* Billing History Section */}
-    <Card>
+      {/* Billing History Section */}
+      <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -647,127 +645,128 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
       </CardContent>
     </Card>
 
-    {/* Current Usage Section */}
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Current Usage</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Workflows</span>
-              <span className="font-medium text-gray-900">{usageStats?.workflows.used} / {usageStats?.workflows.limit}</span>
+      {/* Current Usage Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Current Usage</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Workflows</span>
+                <span className="font-medium text-gray-900">{usageStats?.workflows.used} / {usageStats?.workflows.limit}</span>
+              </div>
+              <Progress value={usageStats ? (usageStats.workflows.used / usageStats.workflows.limit) * 100 : 0} className="h-2" />
             </div>
-            <Progress value={usageStats ? (usageStats.workflows.used / usageStats.workflows.limit) * 100 : 0} className="h-2" />
-          </div>
-          <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600">Version History Days</span>
-              <span className="font-medium text-gray-900">{usageStats?.versionHistory.used} / {usageStats?.versionHistory.limit}</span>
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Version History Days</span>
+                <span className="font-medium text-gray-900">{usageStats?.versionHistory.used} / {usageStats?.versionHistory.limit}</span>
+              </div>
+              <Progress value={usageStats ? (usageStats.versionHistory.used / usageStats.versionHistory.limit) * 100 : 0} className="h-2" />
             </div>
-            <Progress value={usageStats ? (usageStats.versionHistory.used / usageStats.versionHistory.limit) * 100 : 0} className="h-2" />
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
 
-    {/* Subscription Controls Section */}
-    <Card className="border-red-200">
-      <CardHeader>
-        <CardTitle className="text-lg text-red-600 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          Danger Zone
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-gray-900 mb-1">Cancel Subscription</p>
-            <p className="text-sm text-gray-600">
-              Cancelling your subscription will downgrade you to the free plan at the end of your billing cycle.
-            </p>
-          </div>
-          <Button variant="destructive" onClick={handleCancelSubscription} disabled={isCancelling}>
-            {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-
-    {/* Change Plan Modal */}
-    {showChangePlanModal && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Change Your Plan</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowChangePlanModal(false)}
-            >
-              <X className="w-4 h-4" />
+      {/* Subscription Controls Section */}
+      <Card className="border-red-200">
+        <CardHeader>
+          <CardTitle className="text-lg text-red-600 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-gray-900 mb-1">Cancel Subscription</p>
+              <p className="text-sm text-gray-600">
+                Cancelling your subscription will downgrade you to the free plan at the end of your billing cycle.
+              </p>
+            </div>
+            <Button variant="destructive" onClick={handleCancelSubscription} disabled={isCancelling}>
+              {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
             </Button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {availablePlans.map((plan) => (
-              <Card 
-                key={plan.id} 
-                className={`relative cursor-pointer transition-all duration-200 hover:shadow-md ${
-                  subscription?.planId === plan.id 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}
-                onClick={() => handlePlanSelect(plan.id)}
+        </CardContent>
+      </Card>
+
+      {/* Change Plan Modal */}
+      {showChangePlanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Change Your Plan</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowChangePlanModal(false)}
               >
-                {subscription?.planId === plan.id && (
-                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <CardContent className="p-6">
-                  <div className="mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900">{plan.name}</h4>
-                    <div className="mt-2">
-                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                      <span className="text-gray-600">/month</span>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {availablePlans.map((plan) => (
+                <Card 
+                  key={plan.id} 
+                  className={`relative cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    subscription?.planId === plan.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-blue-300'
+                  }`}
+                  onClick={() => handlePlanSelect(plan.id)}
+                >
+                  {subscription?.planId === plan.id && (
+                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+                      <Check className="w-4 h-4" />
                     </div>
-                    {subscription?.planId === plan.id && (
-                      <Badge className="mt-2 bg-blue-100 text-blue-800">Current Plan</Badge>
-                    )}
-                  </div>
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center text-sm">
-                        <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6">
-                    <Button 
-                      className="w-full"
-                      variant={subscription?.planId === plan.id ? "outline" : "default"}
-                      disabled={subscription?.planId === plan.id || !!isUpgrading}
-                    >
-                      {subscription?.planId === plan.id 
-                        ? 'Current Plan' 
-                        : isUpgrading === plan.id 
-                          ? 'Processing...' 
-                          : 'Select Plan'
-                      }
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  )}
+                  <CardContent className="p-6">
+                    <div className="mb-4">
+                      <h4 className="text-lg font-semibold text-gray-900">{plan.name}</h4>
+                      <div className="mt-2">
+                        <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                        <span className="text-gray-600">/month</span>
+                      </div>
+                      {subscription?.planId === plan.id && (
+                        <Badge className="mt-2 bg-blue-100 text-blue-800">Current Plan</Badge>
+                      )}
+                    </div>
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-center text-sm">
+                          <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6">
+                      <Button 
+                        className="w-full"
+                        variant={subscription?.planId === plan.id ? "outline" : "default"}
+                        disabled={subscription?.planId === plan.id || !!isUpgrading}
+                      >
+                        {subscription?.planId === plan.id 
+                          ? 'Current Plan' 
+                          : isUpgrading === plan.id 
+                            ? 'Processing...' 
+                            : 'Select Plan'
+                        }
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};
 
 // Standalone page component with MainAppLayout
 const ManageSubscriptionPage = () => {
