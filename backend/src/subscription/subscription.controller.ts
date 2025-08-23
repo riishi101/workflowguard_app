@@ -127,4 +127,30 @@ export class SubscriptionController {
       );
     }
   }
+
+  @Get('billing-history')
+  @UseGuards(JwtAuthGuard)
+  async getBillingHistory(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const billingHistory = await this.subscriptionService.getBillingHistory(userId);
+      return {
+        success: true,
+        data: billingHistory,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get billing history: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

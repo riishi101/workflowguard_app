@@ -497,6 +497,55 @@ export class SubscriptionService {
   }
 
   /**
+   * Get billing history for a user
+   */
+  async getBillingHistory(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // For now, return mock billing history since Razorpay integration is basic
+      // In production, this would fetch from Razorpay API using user.razorpayCustomerId
+      const mockBillingHistory = [
+        {
+          id: 'pay_1',
+          date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          currency: 'USD',
+          status: 'paid',
+          planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
+          description: 'Monthly subscription payment',
+        },
+        {
+          id: 'pay_2',
+          date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
+          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          currency: 'USD',
+          status: 'paid',
+          planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
+          description: 'Monthly subscription payment',
+        },
+      ];
+
+      return mockBillingHistory;
+    } catch (error) {
+      this.logger.error(`Failed to get billing history for user ${userId}:`, error);
+      throw new HttpException(
+        'Failed to retrieve billing history',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
    * Get Razorpay plan ID for a given plan and currency
    */
   getRazorpayPlanId(planType: string, currency: string = 'INR'): string {
