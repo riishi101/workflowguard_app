@@ -477,11 +477,11 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
                 <tbody>
                   {billingHistory.map((item: BillingHistoryItem, index) => (
                     <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 text-gray-900">{item.date}</td>
-                      <td className="py-3 font-medium text-gray-900">${item.amount}</td>
+                      <td className="py-3 text-gray-900">{new Date(item.date).toLocaleDateString()}</td>
+                      <td className="py-3 font-medium text-gray-900">${item.amount} {item.currency}</td>
                       <td className="py-3">
-                        <Badge variant={item.status === 'Paid' ? 'default' : 'destructive'}>
-                          {item.status}
+                        <Badge variant={item.status === 'paid' ? 'default' : 'destructive'}>
+                          {item.status === 'paid' ? 'Paid' : item.status}
                         </Badge>
                       </td>
                       <td className="text-right py-3">

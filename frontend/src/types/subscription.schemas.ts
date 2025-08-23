@@ -7,16 +7,27 @@ export const SubscriptionSchema = z.object({
   planName: z.string(),
   price: z.number(),
   status: z.string(),
+  currentPeriodStart: z.string().optional(),
+  currentPeriodEnd: z.string().optional(),
+  trialEndDate: z.string().optional(),
+  nextBillingDate: z.string().optional(),
+  razorpayCustomerId: z.string().optional(),
+  razorpaySubscriptionId: z.string().optional(),
+  features: z.array(z.string()).optional(),
+  limits: z.object({
+    workflows: z.number(),
+    versionHistory: z.number(),
+  }).optional(),
+  usage: z.object({
+    workflows: z.number(),
+    versionHistory: z.number(),
+  }).optional(),
   email: z.string().optional(),
   paymentMethod: z.object({
     brand: z.string(),
     last4: z.string(),
     exp: z.string(),
   }).optional(),
-  nextBillingDate: z.string().optional(),
-  trialEndDate: z.string().optional(),
-  razorpayCustomerId: z.string().optional(),
-  razorpaySubscriptionId: z.string().optional(),
 });
 
 // Usage stats schema
@@ -24,21 +35,30 @@ export const UsageStatsSchema = z.object({
   workflows: z.object({
     used: z.number(),
     limit: z.number(),
+    percentage: z.number().optional(),
   }),
   versionHistory: z.object({
     used: z.number(),
     limit: z.number(),
+    percentage: z.number().optional(),
   }),
+  storage: z.object({
+    used: z.number(),
+    limit: z.number(),
+    percentage: z.number().optional(),
+  }).optional(),
 });
 
 // Billing history item schema
 export const BillingHistoryItemSchema = z.object({
   id: z.string().optional(),
   date: z.string(),
-  amount: z.string(),
+  amount: z.number(),
+  currency: z.string(),
   status: z.string(),
+  planName: z.string(),
+  description: z.string(),
   invoice: z.string().optional(),
-  description: z.string().optional(),
 });
 
 // Billing history schema (array of items)
