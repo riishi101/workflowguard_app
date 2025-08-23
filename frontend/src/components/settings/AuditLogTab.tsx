@@ -22,10 +22,16 @@ import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
 import { Download, Calendar, AlertTriangle, Loader2, RefreshCw, ChevronLeft, ChevronRight, Users } from "lucide-react";
 
+interface UserObject {
+  name?: string;
+  email?: string;
+  id?: string;
+}
+
 interface AuditLog {
   id: string;
   timestamp: string | object;
-  user: string | object;
+  user: string | UserObject;
   action: string | object;
   workflowName: string | object;
   oldValue: string | object;
@@ -193,11 +199,12 @@ const AuditLogTab = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
-  const getActionColor = (action: string) => {
-    if (action.toLowerCase().includes('delete')) return "bg-red-100 text-red-800";
-    if (action.toLowerCase().includes('create')) return "bg-green-100 text-green-800";
-    if (action.toLowerCase().includes('update')) return "bg-blue-100 text-blue-800";
-    if (action.toLowerCase().includes('rollback')) return "bg-orange-100 text-orange-800";
+  const getActionColor = (action: string | object) => {
+    const actionStr = typeof action === 'string' ? action : JSON.stringify(action);
+    if (actionStr.toLowerCase().includes('delete')) return "bg-red-100 text-red-800";
+    if (actionStr.toLowerCase().includes('create')) return "bg-green-100 text-green-800";
+    if (actionStr.toLowerCase().includes('update')) return "bg-blue-100 text-blue-800";
+    if (actionStr.toLowerCase().includes('rollback')) return "bg-orange-100 text-orange-800";
     return "bg-gray-100 text-gray-800";
   };
 
@@ -542,7 +549,7 @@ const AuditLogTab = () => {
                       </TableCell>
                       <TableCell className="font-medium">
                         {typeof log.user === 'object' ? 
-                          (log.user?.name || log.user?.email || 'Unknown User') : 
+                          ((log.user as UserObject)?.name || (log.user as UserObject)?.email || 'Unknown User') : 
                           (log.user || 'Unknown User')
                         }
                       </TableCell>
