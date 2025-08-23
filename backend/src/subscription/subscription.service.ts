@@ -70,7 +70,7 @@ export class SubscriptionService {
 
       // Calculate usage
       const workflowsUsed = user.workflows ? user.workflows.length : 0;
-      // Return real subscription data from database
+      // Return real subscription data from database with proper schema compliance
       return {
         id: user.subscription?.id || 'mock-subscription-id',
         planId,
@@ -78,12 +78,12 @@ export class SubscriptionService {
         price,
         status: user.subscription?.status || 'active',
         currentPeriodStart:
-          user.subscription?.createdAt || new Date().toISOString(),
+          user.subscription?.createdAt?.toISOString() || new Date().toISOString(),
         currentPeriodEnd:
-          user.subscription?.trialEndDate ||
+          user.subscription?.trialEndDate?.toISOString() ||
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        trialEndDate: user.subscription?.trialEndDate,
-        nextBillingDate: user.subscription?.nextBillingDate,
+        trialEndDate: user.subscription?.trialEndDate?.toISOString(),
+        nextBillingDate: user.subscription?.nextBillingDate?.toISOString(),
         razorpayCustomerId: (user.subscription as any)?.razorpayCustomerId,
         razorpaySubscriptionId: (user.subscription as any)?.razorpaySubscriptionId,
         features,
@@ -91,6 +91,12 @@ export class SubscriptionService {
         usage: {
           workflows: workflowsUsed,
           versionHistory: 0, // update if you track this
+        },
+        email: user.email, // Add user email for frontend schema compliance
+        paymentMethod: {
+          brand: 'Visa', // Mock payment method data
+          last4: '4242',
+          exp: '12/25',
         },
       };
     } catch (error) {
@@ -153,16 +159,31 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
+      // Get plan limits based on user's subscription
+      const planId = user.subscription?.planId || 'starter';
+      let workflowLimit = 5;
+      let versionHistoryLimit = 30;
+      
+      if (planId === 'professional') {
+        workflowLimit = 25;
+        versionHistoryLimit = 90;
+      } else if (planId === 'enterprise') {
+        workflowLimit = 9999;
+        versionHistoryLimit = 365;
+      }
+
+      const workflowsUsed = user.workflows?.length || 0;
+      
       // Return real usage stats from database
       return {
         workflows: {
-          used: user.workflows?.length || 0,
-          limit: 5,
-          percentage: Math.min(((user.workflows?.length || 0) / 5) * 100, 100),
+          used: workflowsUsed,
+          limit: workflowLimit,
+          percentage: Math.min((workflowsUsed / workflowLimit) * 100, 100),
         },
         versionHistory: {
           used: 0,
-          limit: 30,
+          limit: versionHistoryLimit,
           percentage: 0,
         },
         storage: {

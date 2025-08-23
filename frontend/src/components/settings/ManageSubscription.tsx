@@ -75,9 +75,19 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(billingRes.message || 'Failed to load billing history');
       }
     } catch (error: any) {
+      console.error('Failed to load subscription data:', error);
+      
+      // Extract more detailed error information
+      let errorMessage = 'Failed to load subscription information. Please refresh the page or contact support.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error Loading Data',
-        description: error.message || 'Failed to load subscription information. Please refresh the page or contact support.',
+        description: errorMessage,
         variant: 'destructive',
       });
       
