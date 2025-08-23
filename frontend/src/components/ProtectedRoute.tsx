@@ -30,14 +30,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const hasToken = localStorage.getItem('authToken');
   
   if (!isAuthenticated && !hasToken) {
-    console.log('ProtectedRoute - No authentication, redirecting to root');
+    
     return <Navigate to="/" replace />;
   }
 
   // If user has token but isAuthenticated is false, still allow access
   // This handles temporary authentication state issues
   if (!isAuthenticated && hasToken) {
-    console.log('ProtectedRoute - Has token but not authenticated, allowing access anyway');
+    
   }
 
   return <>{children}</>;

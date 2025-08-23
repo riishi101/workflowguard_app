@@ -75,7 +75,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const fetchWorkflows = async () => {
     // Check if user is authenticated before making API call
     if (!isAuthenticated) {
-      console.log('WorkflowSelection - User not authenticated, skipping workflow fetch');
+      
       setError('Please connect your HubSpot account first to view workflows.');
       setWorkflows([]);
       setLoading(false);
@@ -98,18 +98,18 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setLoading(true);
       setError(null);
       
-      console.log('WorkflowSelection - Starting to fetch workflows from HubSpot');
+      
       
       // Try to get real data from HubSpot API
-      console.log('WorkflowSelection - Making API call to fetch workflows...');
+      
       const apiStartTime = Date.now();
       
       const response = await ApiService.getHubSpotWorkflows();
       
       const apiEndTime = Date.now();
-      console.log(`WorkflowSelection - API call completed in ${apiEndTime - apiStartTime}ms`);
-      console.log('WorkflowSelection - HubSpot API response:', response);
-      console.log('WorkflowSelection - Response type:', typeof response);
+      
+      
+      
       console.log('WorkflowSelection - Response structure:', {
         success: response.success,
         hasData: !!response.data,
@@ -125,15 +125,15 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
       // Extract workflows from the response data
       const workflows = response.data || [];
-      console.log('WorkflowSelection - Extracted workflows:', workflows.length);
+      
       
       if (workflows.length > 0) {
-        console.log('WorkflowSelection - Found workflows:', workflows.length);
-        console.log('WorkflowSelection - Sample workflow:', workflows[0]);
+        
+        
         
         // Validate workflow structure
         const validWorkflows = workflows.map(workflow => {
-          console.log('Workflow before filtering:', workflow);
+          
           return {
             ...workflow,
             isProtected: workflow.isProtected ?? false, // Default to false if undefined
@@ -152,7 +152,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         });
       } else {
         // No workflows found in HubSpot
-        console.log('WorkflowSelection - No workflows found in HubSpot');
+        
         setWorkflows([]);
         toast({
           title: "No Workflows Found",
@@ -209,7 +209,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const remainingTime = Math.max(0, minLoadingTime - totalTime);
       
       if (remainingTime > 0) {
-        console.log(`WorkflowSelection - Waiting ${remainingTime}ms to ensure minimum loading time`);
+        
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
       
@@ -244,7 +244,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       if (subscription.success && subscription.data) {
         const limit = subscription.data.planCapacity || 500;
         setPlanLimit(limit);
-        console.log('WorkflowSelection - Plan limit updated:', limit);
+        
       }
     } catch (error) {
       console.error('WorkflowSelection - Failed to fetch subscription:', error);
@@ -262,7 +262,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       // Fallback: if workflows don't load within 5 seconds, show the screen anyway
       const fallbackTimer = setTimeout(() => {
         if (!workflowsFetched) {
-          console.log('WorkflowSelection - Fallback: showing screen after 5 seconds');
+          
           setWorkflowsFetched(true);
         }
       }, 5000);
@@ -277,7 +277,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   useEffect(() => {
     if (error && retryCount < maxRetries && !loading) {
       const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Max 30 seconds
-      console.log(`WorkflowSelection - Auto-retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      `);
       
       const timer = setTimeout(() => {
         setRetryCount(prev => prev + 1);
@@ -356,7 +356,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         description: "Configuring WorkflowGuard for your selected workflows.",
       });
 
-      console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
+      
       console.log('WorkflowSelection - Authentication state:', { 
         isAuthenticated, 
         userId: user?.id, 
@@ -378,12 +378,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           isProtected: workflow.isProtected || false
         }));
 
-      console.log('WorkflowSelection - Selected workflow objects:', selectedWorkflowObjects);
+      
 
       // Call real API to start protection
       const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
       
-      console.log('WorkflowSelection - Protection API response:', response);
+      
 
       if (response.success) {
         // Store selected workflows in WorkflowState for backward compatibility
@@ -399,7 +399,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Navigate to dashboard
-        console.log('WorkflowSelection - Navigating to dashboard after successful protection');
+        
         navigate("/dashboard");
         
         // Show success toast
@@ -526,10 +526,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   useEffect(() => {
-    console.log('WorkflowSelection - Initial workflows:', workflows);
-    console.log('WorkflowSelection - Selected workflows:', selectedWorkflows);
+    
+    
     workflows.forEach(workflow => {
-      console.log('🔍 DEBUG: Workflow isProtected value:', workflow.isProtected);
+      
     });
   }, [workflows, selectedWorkflows]);
 

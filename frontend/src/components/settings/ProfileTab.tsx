@@ -40,27 +40,21 @@ const ProfileTab = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  console.log('🔍 ProfileTab - Component mounted');
 
   useEffect(() => {
-    console.log('🔍 ProfileTab - useEffect called, fetching user profile');
     fetchUserProfile();
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      console.log('🔍 ProfileTab - Starting fetchUserProfile');
       setLoading(true);
       setError(null);
       const response = await ApiService.getUserProfile();
-      console.log('🔍 ProfileTab - API response:', response);
       
       // Handle case where response.data might be undefined
       if (response && response.data) {
         setProfile(response.data);
-        console.log('🔍 ProfileTab - Profile set:', response.data);
       } else {
-        console.error('🔍 ProfileTab - No data in response:', response);
         setError('No profile data received from server');
         toast({
           title: "Error",
@@ -69,7 +63,7 @@ const ProfileTab = () => {
         });
       }
     } catch (err: any) {
-      console.error('🔍 ProfileTab - Failed to fetch user profile:', err);
+      console.error('Failed to fetch user profile:', err);
       setError(err.response?.data?.message || 'Failed to load user profile. Please try again.');
       toast({
         title: "Error",
@@ -78,7 +72,6 @@ const ProfileTab = () => {
       });
     } finally {
       setLoading(false);
-      console.log('🔍 ProfileTab - Loading finished');
     }
   };
 

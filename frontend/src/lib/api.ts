@@ -27,9 +27,9 @@ apiClient.interceptors.request.use(
     });
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
+      }...`);
     } else {
-      console.log('❌ No token found in localStorage');
+      
     }
     return config;
   },
