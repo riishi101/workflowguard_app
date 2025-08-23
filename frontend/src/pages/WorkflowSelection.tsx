@@ -357,7 +357,11 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       });
 
       console.log('WorkflowSelection - Starting protection for workflows:', selectedWorkflows);
-      console.log('WorkflowSelection - Authentication state:', { isAuthenticated, user });
+      console.log('WorkflowSelection - Authentication state:', { 
+        isAuthenticated, 
+        userId: user?.id, 
+        userEmail: user?.email 
+      });
 
       // Transform selected workflows for API
       const selectedWorkflowObjects = workflows
