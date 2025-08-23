@@ -148,7 +148,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         setWorkflowsFetched(true);
         toast({
           title: "Connected to HubSpot",
-          description: `Found ${validWorkflows.length} workflows in your account.`,
+          description: "Found " + validWorkflows.length + " workflows in your account.",
         });
       } else {
         // No workflows found in HubSpot
@@ -277,7 +277,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   useEffect(() => {
     if (error && retryCount < maxRetries && !loading) {
       const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Max 30 seconds
-      `);
       
       const timer = setTimeout(() => {
         setRetryCount(prev => prev + 1);
@@ -297,7 +296,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         if (prev.length >= planLimit) {
           toast({
             title: "Plan Limit Reached",
-            description: `You can only select up to ${planLimit} workflows with your current plan.`,
+            description: "You can only select up to " + planLimit + " workflows with your current plan.",
             variant: "destructive",
           });
           return prev;
@@ -322,7 +321,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       if (activeWorkflowIds.length > planLimit) {
         toast({
           title: "Plan Limit Applied",
-          description: `Only ${planLimit} workflows selected due to your plan limit.`,
+          description: "Only " + planLimit + " workflows selected due to your plan limit.",
           variant: "default",
         });
       }
@@ -405,7 +404,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         // Show success toast
         toast({
           title: "Protection Activated!",
-          description: response.message || `${selectedWorkflows.length} workflows are now being monitored.`,
+          description: response.message || (selectedWorkflows.length + " workflows are now being monitored."),
         });
       } else {
         throw new Error(response.message || 'Failed to start protection');
@@ -1008,3 +1007,5 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 };
 
 export default WorkflowSelection;
+
+
