@@ -364,12 +364,33 @@ export class RazorpayService {
         currency,
         notes: notes || {},
       });
-      
-      this.logger.log(`Order created successfully: ${order.id}`);
+      this.logger.log(`Order created: ${order.id}`);
       return order;
     } catch (error) {
       this.logger.error(`Failed to create order: ${error.message}`);
       throw new InternalServerErrorException('Failed to create order');
+    }
+  }
+
+  verifyPaymentSignature(orderId: string, paymentId: string, signature: string): boolean {
+    try {
+      const body = orderId + '|' + paymentId;
+      const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
+      
+      if (!keySecret) {
+        this.logger.error('RAZORPAY_KEY_SECRET not configured');
+        return false;
+      }
+      
+      const expectedSignature = crypto
+        .createHmac('sha256', keySecret)
+        .update(body.toString())
+        .digest('hex');
+      
+      return expectedSignature === signature;
+    } catch (error) {
+      this.logger.error(`Payment signature verification failed: ${error.message}`);
+      return false;
     }
   }
 }

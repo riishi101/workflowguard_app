@@ -202,6 +202,81 @@ export class RazorpayController {
     return await this.razorpayService.getPlan(planId);
   }
 
+  // Create Order for Plan Upgrade
+  @Post('create-order')
+  @UseGuards(JwtAuthGuard)
+  async createRazorpayOrder(
+    @Body() body: { planId: string },
+    @GetUser() user: any,
+  ) {
+    this.logger.log(`Creating Razorpay order for plan upgrade: ${body.planId}, user: ${user.id}`);
+    
+    // Get plan pricing
+    const planPricing = {
+      starter: 1900, // ₹19 in paise
+      professional: 4900, // ₹49 in paise  
+      enterprise: 9900, // ₹99 in paise
+    };
+    
+    const amount = planPricing[body.planId as keyof typeof planPricing] || 1900;
+    
+    const order = await this.razorpayService.createOrder(amount, 'INR', {
+      plan_id: body.planId,
+      user_id: user.id,
+      type: 'subscription_upgrade',
+    });
+    
+    return {
+      success: true,
+      data: order,
+    };
+  }
+
+  // Confirm Razorpay Payment
+  @Post('confirm-payment')
+  @UseGuards(JwtAuthGuard)
+  async confirmRazorpayPayment(
+    @Body() body: { planId: string; paymentId: string; orderId: string; signature: string },
+    @GetUser() user: any,
+  ) {
+    this.logger.log(`Confirming Razorpay payment: ${body.paymentId}, user: ${user.id}`);
+    
+    try {
+      // Verify payment signature
+      const isValid = this.razorpayService.verifyPaymentSignature(
+        body.orderId,
+        body.paymentId,
+        body.signature
+      );
+      
+      if (!isValid) {
+        throw new BadRequestException('Invalid payment signature');
+      }
+      
+      // Fetch payment details from Razorpay
+      const payment = await this.razorpayService.getPayment(body.paymentId);
+      
+      if (payment.status !== 'captured') {
+        throw new BadRequestException('Payment not captured');
+      }
+      
+      // Update user subscription
+      await this.subscriptionService.upgradeUserPlan(user.id, body.planId, {
+        razorpayPaymentId: body.paymentId,
+        razorpayOrderId: body.orderId,
+      });
+      
+      return {
+        success: true,
+        message: 'Payment confirmed and subscription updated',
+        data: { paymentId: body.paymentId, planId: body.planId },
+      };
+    } catch (error) {
+      this.logger.error(`Payment confirmation failed: ${error.message}`);
+      throw error;
+    }
+  }
+
   // Create Order (for one-time payments)
   @Post('orders')
   @UseGuards(JwtAuthGuard)

@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RazorpaySubscription } from '../razorpay/razorpay.service';
 
@@ -455,20 +455,70 @@ export class SubscriptionService {
     }
   }
 
-  // Helper Methods
+  async upgradeUserPlan(
+    userId: string, 
+    planId: string, 
+    paymentDetails: { razorpayPaymentId: string; razorpayOrderId: string }
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { subscription: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const planConfig = {
+      starter: { name: 'Starter', price: 19, workflowLimit: 10 },
+      professional: { name: 'Professional', price: 49, workflowLimit: 25 },
+      enterprise: { name: 'Enterprise', price: 99, workflowLimit: -1 },
+    };
+
+    const plan = planConfig[planId as keyof typeof planConfig];
+    if (!plan) {
+      throw new BadRequestException('Invalid plan ID');
+    }
+
+    // Update or create subscription
+    if (user.subscription) {
+      await this.prisma.subscription.update({
+        where: { id: user.subscription.id },
+        data: {
+          planId,
+          price: plan.price,
+          status: 'active',
+          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        } as any,
+      });
+    } else {
+      await this.prisma.subscription.create({
+        data: {
+          userId,
+          planId,
+          price: plan.price,
+          status: 'active',
+          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        } as any,
+      });
+    }
+
+    this.logger.log(`User plan upgraded: ${userId} to ${planId}`);
+  }
+
   private mapRazorpayStatus(razorpayStatus: string): string {
-    const statusMap: Record<string, string> = {
-      'created': 'trial',
-      'authenticated': 'trial',
+    const statusMap = {
+      'created': 'pending',
+      'authenticated': 'active',
       'active': 'active',
-      'paused': 'paused',
-      'halted': 'overdue',
+      'pending': 'pending',
+      'halted': 'paused',
       'cancelled': 'cancelled',
       'completed': 'completed',
-      'expired': 'cancelled',
+      'expired': 'expired',
     };
     
-    return statusMap[razorpayStatus] || 'active';
+    return statusMap[razorpayStatus as keyof typeof statusMap] || 'pending';
   }
 
   private mapRazorpayPlanToLocal(razorpayPlanId: string): string {
