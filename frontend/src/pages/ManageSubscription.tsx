@@ -25,7 +25,6 @@ const ManageSubscription = () => {
   };
 
   const handleConfirmCancellation = () => {
-    console.log("Subscription cancelled");
   };
 
   return (

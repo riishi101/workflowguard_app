@@ -29,7 +29,6 @@ const CreateNewWorkflowModal = ({
 
   const handleCreate = () => {
     // Handle workflow creation logic here
-    console.log("Creating workflow:", { workflowName, selectedFolder });
     onClose();
   };
 

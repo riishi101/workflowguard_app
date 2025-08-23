@@ -118,7 +118,6 @@ const WorkflowHistoryDetail = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 WorkflowHistoryDetail - Fetching history for workflowId:', workflowId);
       
       // Only fetch from backend API
       const versionHistory = await ApiService.getWorkflowHistory(workflowId);

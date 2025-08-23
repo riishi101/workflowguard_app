@@ -30,7 +30,6 @@ class WorkflowService {
       lastModified: lastModified || new Date().toISOString(),
     };
 
-    console.log('🔍 DEBUG: Transformed Workflow in WorkflowService:', transformedWorkflow);
     return transformedWorkflow;
   }
 

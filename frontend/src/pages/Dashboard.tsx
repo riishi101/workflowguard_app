@@ -109,10 +109,6 @@ const Dashboard: React.FC = () => {
   // Removed useEffect as data fetching is handled by useWorkflows hook
 
   const handleViewHistory = (workflowId: string, workflowName: string) => {
-    console.log('🔍 Dashboard - handleViewHistory called with:', {
-      workflowId,
-      workflowName
-    });
     
     // Store the current workflow context for the history page
     localStorage.setItem('currentWorkflow', JSON.stringify({ id: workflowId, name: workflowName }));

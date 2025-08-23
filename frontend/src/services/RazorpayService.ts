@@ -225,13 +225,11 @@ class RazorpayService {
         color: '#3B82F6',
       },
       handler: (response) => {
-        console.log('Subscription payment successful:', response);
         // Handle successful payment
         window.location.reload();
       },
       modal: {
         ondismiss: () => {
-          console.log('Subscription checkout dismissed');
         },
       },
     });
@@ -254,13 +252,11 @@ class RazorpayService {
         color: '#3B82F6',
       },
       handler: (response) => {
-        console.log('Payment successful:', response);
         // Handle successful payment
         window.location.reload();
       },
       modal: {
         ondismiss: () => {
-          console.log('Payment checkout dismissed');
         },
       },
     });

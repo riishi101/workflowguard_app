@@ -44,7 +44,6 @@ const AddWebhookModal = ({ open, onClose }: AddWebhookModalProps) => {
 
   const handleSubmit = () => {
     // Handle webhook creation logic
-    console.log("Creating webhook:", formData);
     onClose();
   };
 

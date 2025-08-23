@@ -18,7 +18,6 @@ const EmptyDashboard = () => {
     setHasSelectedWorkflows(hasSelected);
     setSelectedCount(count);
     
-    console.log('EmptyDashboard - Workflow state:', { hasSelected, count });
   }, []);
 
   const handleAddWorkflow = () => {
