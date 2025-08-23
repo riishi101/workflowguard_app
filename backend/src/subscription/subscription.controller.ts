@@ -153,4 +153,109 @@ export class SubscriptionController {
       );
     }
   }
+
+  @Post('cancel')
+  @UseGuards(JwtAuthGuard)
+  async cancelSubscription(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const result = await this.subscriptionService.cancelSubscription(userId);
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to cancel subscription: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('billing-history/export')
+  @UseGuards(JwtAuthGuard)
+  async exportBillingHistory(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const csvData = await this.subscriptionService.exportBillingHistoryCSV(userId);
+      return {
+        success: true,
+        data: csvData,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to export billing history: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('payment-method-update-url')
+  @UseGuards(JwtAuthGuard)
+  async getPaymentMethodUpdateUrl(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const updateUrl = await this.subscriptionService.getPaymentMethodUpdateUrl(userId);
+      return {
+        success: true,
+        data: { updateUrl },
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get payment method update URL: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('invoice/:invoiceId')
+  @UseGuards(JwtAuthGuard)
+  async getInvoice(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const invoiceId = req.params.invoiceId;
+      const invoiceUrl = await this.subscriptionService.getInvoice(userId, invoiceId);
+      return {
+        success: true,
+        data: { invoiceUrl },
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get invoice: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -546,6 +546,132 @@ export class SubscriptionService {
   }
 
   /**
+   * Cancel subscription for a user
+   */
+  async cancelSubscription(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!user.subscription) {
+        throw new HttpException('No active subscription found', HttpStatus.NOT_FOUND);
+      }
+
+      // Update subscription to cancelled status
+      const updatedSubscription = await this.prisma.subscription.update({
+        where: { userId },
+        data: {
+          status: 'cancelled',
+        },
+      });
+
+      // In production, this would also call Razorpay API to cancel the subscription
+      // await razorpayInstance.subscriptions.cancel(user.razorpaySubscriptionId);
+
+      return {
+        message: 'Subscription cancelled successfully',
+        subscription: updatedSubscription,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to cancel subscription for user ${userId}:`, error);
+      throw new HttpException(
+        'Failed to cancel subscription',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Export billing history as CSV
+   */
+  async exportBillingHistoryCSV(userId: string): Promise<string> {
+    try {
+      const billingHistory = await this.getBillingHistory(userId);
+      
+      // Create CSV header
+      const csvHeader = 'Date,Amount,Currency,Status,Plan Name,Description\n';
+      
+      // Create CSV rows
+      const csvRows = billingHistory.map(item => 
+        `${item.date},${item.amount},${item.currency},${item.status},"${item.planName}","${item.description}"`
+      ).join('\n');
+      
+      return csvHeader + csvRows;
+    } catch (error) {
+      this.logger.error(`Failed to export billing history for user ${userId}:`, error);
+      throw new HttpException(
+        'Failed to export billing history',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get payment method update URL
+   */
+  async getPaymentMethodUpdateUrl(userId: string): Promise<string> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          subscription: true,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // In production, this would generate a Razorpay customer portal URL
+      // For now, return a mock URL
+      const mockUpdateUrl = `https://dashboard.razorpay.com/app/subscriptions/${user.subscription?.razorpayCustomerId || 'mock-customer-id'}/update-payment-method`;
+      
+      return mockUpdateUrl;
+    } catch (error) {
+      this.logger.error(`Failed to get payment method update URL for user ${userId}:`, error);
+      throw new HttpException(
+        'Failed to get payment method update URL',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get invoice URL
+   */
+  async getInvoice(userId: string, invoiceId: string): Promise<string> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // In production, this would fetch the actual invoice from Razorpay
+      // For now, return a mock invoice URL
+      const mockInvoiceUrl = `https://dashboard.razorpay.com/app/invoices/${invoiceId}/download`;
+      
+      return mockInvoiceUrl;
+    } catch (error) {
+      this.logger.error(`Failed to get invoice for user ${userId}, invoice ${invoiceId}:`, error);
+      throw new HttpException(
+        'Failed to get invoice',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
    * Get Razorpay plan ID for a given plan and currency
    */
   getRazorpayPlanId(planType: string, currency: string = 'INR'): string {

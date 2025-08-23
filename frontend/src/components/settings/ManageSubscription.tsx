@@ -75,7 +75,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(billingRes.message || 'Failed to load billing history');
       }
     } catch (error: any) {
-      console.error('Error fetching subscription data:', error);
       toast({
         title: 'Error Loading Data',
         description: error.message || 'Failed to load subscription information. Please refresh the page or contact support.',
@@ -156,7 +155,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
               throw new Error(confirmResponse.message || 'Payment confirmation failed');
             }
           } catch (err: any) {
-            console.error('Payment confirmation error:', err);
             toast({ 
               title: 'Payment Processing Error', 
               description: err.message || 'Payment was processed but confirmation failed. Please contact support.',
@@ -183,7 +181,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         setIsUpgrading(null);
       });
     } catch (error: any) {
-            console.error('Upgrade error:', error);
       toast({ 
         title: 'Upgrade Failed', 
         description: error.message || 'Unable to initiate plan upgrade. Please try again.',
@@ -208,7 +205,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(response.message || 'Failed to cancel subscription');
       }
         } catch (error: any) {
-      console.error('Error cancelling subscription:', error);
       toast({ 
         title: 'Cancel Failed', 
         description: error.message || 'Unable to cancel subscription. Please contact support.',
@@ -235,7 +231,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(response.message || 'Failed to get payment update URL');
       }
         } catch (error: any) {
-      console.error('Error updating payment method:', error);
       toast({
         title: 'Update Failed',
         description: error.message || 'Unable to open payment method update. Please try again or contact support.',
@@ -277,7 +272,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(response.message || 'Export failed');
       }
         } catch (error: any) {
-      console.error('Error exporting billing history:', error);
       toast({
         title: 'Export Failed',
         description: error.message || 'Unable to export billing history. Please try again or contact support.',
@@ -314,7 +308,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(response.message || 'Failed to get invoice URL');
       }
         } catch (error: any) {
-      console.error('Error viewing invoice:', error);
       toast({
         title: 'View Failed',
         description: error.message || 'Unable to open invoice. Please try again.',
