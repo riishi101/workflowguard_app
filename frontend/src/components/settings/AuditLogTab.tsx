@@ -24,13 +24,13 @@ import { Download, Calendar, AlertTriangle, Loader2, RefreshCw, ChevronLeft, Che
 
 interface AuditLog {
   id: string;
-  timestamp: string;
-  user: string;
-  action: string;
-  workflowName: string;
-  oldValue: string;
-  newValue: string;
-  ipAddress: string;
+  timestamp: string | object;
+  user: string | object;
+  action: string | object;
+  workflowName: string | object;
+  oldValue: string | object;
+  newValue: string | object;
+  ipAddress: string | object;
 }
 
 interface User {
@@ -201,11 +201,14 @@ const AuditLogTab = () => {
     return "bg-gray-100 text-gray-800";
   };
 
-  const formatTimestamp = (timestamp: string) => {
+  const formatTimestamp = (timestamp: string | object) => {
     try {
+      if (typeof timestamp === 'object') {
+        return JSON.stringify(timestamp);
+      }
       return new Date(timestamp).toLocaleString();
     } catch {
-      return timestamp;
+      return typeof timestamp === 'string' ? timestamp : JSON.stringify(timestamp);
     }
   };
 
@@ -537,26 +540,48 @@ const AuditLogTab = () => {
                       <TableCell className="font-mono text-sm text-gray-600">
                         {formatTimestamp(log.timestamp)}
                       </TableCell>
-                      <TableCell className="font-medium">{log.user}</TableCell>
+                      <TableCell className="font-medium">
+                        {typeof log.user === 'object' ? 
+                          (log.user?.name || log.user?.email || 'Unknown User') : 
+                          (log.user || 'Unknown User')
+                        }
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="secondary"
                           className={getActionColor(log.action)}
                         >
-                          {log.action}
+                          {typeof log.action === 'object' ? 
+                            JSON.stringify(log.action) : 
+                            (log.action || 'Unknown')
+                          }
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Button variant="link" className="p-0 text-blue-600">
-                          {log.workflowName}
+                          {typeof log.workflowName === 'object' ? 
+                            JSON.stringify(log.workflowName) : 
+                            (log.workflowName || 'Unknown Workflow')
+                          }
                         </Button>
                       </TableCell>
                       <TableCell className="text-gray-600">
-                        {log.oldValue}
+                        {typeof log.oldValue === 'object' ? 
+                          JSON.stringify(log.oldValue) : 
+                          (log.oldValue || '-')
+                        }
                       </TableCell>
-                      <TableCell className="font-medium">{log.newValue}</TableCell>
+                      <TableCell className="font-medium">
+                        {typeof log.newValue === 'object' ? 
+                          JSON.stringify(log.newValue) : 
+                          (log.newValue || '-')
+                        }
+                      </TableCell>
                       <TableCell className="font-mono text-sm text-gray-600">
-                        {log.ipAddress}
+                        {typeof log.ipAddress === 'object' ? 
+                          JSON.stringify(log.ipAddress) : 
+                          (log.ipAddress || '-')
+                        }
                       </TableCell>
                     </TableRow>
                   ))}
