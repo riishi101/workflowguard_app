@@ -82,13 +82,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       return;
     }
 
-    // Debug authentication status
-    console.log('WorkflowSelection - Authentication check:', {
-      isAuthenticated,
-      authLoading,
-      user: user ? { id: user.id, email: user.email } : null,
-      token: localStorage.getItem('authToken') ? 'exists' : 'missing'
-    });
 
     // Ensure minimum loading time to prevent too quick completion
     const minLoadingTime = 2000; // 2 seconds minimum
@@ -110,13 +103,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
       
       
-      console.log('WorkflowSelection - Response structure:', {
-        success: response.success,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        isDataArray: Array.isArray(response.data),
-        dataLength: Array.isArray(response.data) ? response.data.length : 'N/A'
-      });
       
       // Validate the response structure
       if (!response || !response.success) {
@@ -229,7 +215,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setRetryCount(prev => prev + 1);
       await fetchWorkflows();
     } catch (error) {
-      console.error('Failed to refresh workflows:', error);
     } finally {
       setRefreshing(false);
     }
@@ -247,7 +232,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         
       }
     } catch (error) {
-      console.error('WorkflowSelection - Failed to fetch subscription:', error);
       // Keep default limit of 500
     }
   };
@@ -356,11 +340,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       });
 
       
-      console.log('WorkflowSelection - Authentication state:', { 
-        isAuthenticated, 
-        userId: user?.id, 
-        userEmail: user?.email 
-      });
 
       // Transform selected workflows for API
       const selectedWorkflowObjects = workflows

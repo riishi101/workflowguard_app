@@ -112,12 +112,10 @@ const WorkflowHistory = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 WorkflowHistory - Fetching workflows from backend');
       
       // Try to fetch from backend API first
       try {
         const apiResponse = await ApiService.getProtectedWorkflows();
-        console.log('🔍 WorkflowHistory - Backend API response:', apiResponse);
         
         // Handle ApiResponse wrapper
         const apiWorkflows = apiResponse.data || apiResponse;
