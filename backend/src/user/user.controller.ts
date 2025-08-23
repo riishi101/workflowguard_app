@@ -53,8 +53,37 @@ export class UserController {
   }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  @UseGuards(JwtAuthGuard)
+  async findAll(@Req() req: any) {
+    try {
+      // For single-user architecture, return current user info
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+      
+      const user = await this.userService.findOne(userId);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      
+      return {
+        success: true,
+        data: [{
+          id: user.id,
+          name: user.name || user.email,
+          email: user.email
+        }]
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get users: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get(':id')

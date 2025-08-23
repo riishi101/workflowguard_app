@@ -287,7 +287,7 @@ const AuditLogTab = () => {
                     <SelectItem value="all">All Users</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+                        {user.name || user.email || 'Unknown User'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -463,7 +463,7 @@ const AuditLogTab = () => {
                 <SelectItem value="all">All Users</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
-                    {user.name}
+                    {user.name || user.email || 'Unknown User'}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -541,7 +541,7 @@ class ApiService {
 
   static async getUsers(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/users');
+      const response = await apiClient.get('/user');
       return response.data;
     } catch (error) {
       throw error;
