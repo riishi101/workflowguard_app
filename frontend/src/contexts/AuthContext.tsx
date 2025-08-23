@@ -117,11 +117,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
 
             if (response.success && response.data) {
-              logAuth('User validation successful', {
-                userId: response.data.id,
-                email: response.data.email,
-                portalId: response.data.hubspotPortalId
-              });
               setUser(response.data);
 
               // Don't redirect here - let the OnboardingFlow handle navigation
@@ -143,24 +138,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
       } catch (error) {
-        logAuth('Auth initialization error', { 
-          error,
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
-        });
         localStorage.removeItem('authToken');
         setUser(null);
       } finally {
         setLoading(false);
         setHasInitialized(true);
-        // Log after state is set
-        setTimeout(() => {
-          logAuth('Auth initialization complete', { 
-            isAuthenticated: !!localStorage.getItem('authToken'),
-            hasToken: !!localStorage.getItem('authToken'),
-            userSet: !!user
-          });
-        }, 0);
       }
     };
 
@@ -205,11 +187,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const testAuthentication = async () => {
     
     const token = localStorage.getItem('authToken');
-    logAuth('Auth test state', { 
-      hasToken: !!token,
-      isAuthenticated: !!user,
-      currentUrl: window.location.href
-    });
     return;
   };
 
