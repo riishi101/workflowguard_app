@@ -342,7 +342,7 @@ const ProfileTab = () => {
       <div className="flex items-center gap-4">
         <div className="relative">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={previewUrl || profile.avatarUrl || "/placeholder-avatar.jpg"} alt={profile.name} />
+            <AvatarImage src={previewUrl || profile.avatarUrl} alt={profile.name} />
             <AvatarFallback className="text-lg">
               {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
             </AvatarFallback>
