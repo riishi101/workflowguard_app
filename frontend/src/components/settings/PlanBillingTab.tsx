@@ -167,13 +167,6 @@ const PlanBillingTab = () => {
     setShowManageSubscription(true);
   };
 
-  const handleUpdatePayment = () => {
-    window.open('https://app.hubspot.com/billing/payment-methods', '_blank');
-  };
-
-  const handleViewBillingHistory = () => {
-    window.open('https://app.hubspot.com/billing/invoices', '_blank');
-  };
 
   if (loading) {
     return (
@@ -573,10 +566,8 @@ const PlanBillingTab = () => {
           Manage Your Subscription & Plan
         </h2>
         <p className="text-gray-600 mb-4">
-          Your subscription is managed through HubSpot. To change your
-          plan, update payment methods, or manage your subscription
-          details, you will be redirected to your HubSpot account billing
-          section.
+          Manage your subscription, billing history, payment methods, and plan changes
+          all in one place through our integrated subscription management system.
         </p>
         <div className="flex space-x-4">
           <Button 
@@ -584,19 +575,7 @@ const PlanBillingTab = () => {
             onClick={handleManageSubscription}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Manage Subscription in HubSpot
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleUpdatePayment}
-          >
-            Update Payment Methods
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleViewBillingHistory}
-          >
-            View Billing History
+            Manage Subscription
           </Button>
         </div>
       </div>

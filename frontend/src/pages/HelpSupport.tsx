@@ -295,7 +295,7 @@ const HelpSupport = () => {
                     <Mail className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Support</h3>
-                  <p className="text-blue-600 font-medium mb-2">support@workflowguard.pro</p>
+                  <p className="text-blue-600 font-medium mb-2">contact@workflowguard.pro</p>
                   <p className="text-sm text-gray-600">Available 24/7 for all users</p>
                 </CardContent>
               </Card>
@@ -307,7 +307,15 @@ const HelpSupport = () => {
                     <MessageSquare className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp Support</h3>
-                  <p className="text-blue-600 font-medium mb-2">+1 (555) 123-4567</p>
+                  <a 
+                    href="https://wa.me/message/R74K5JOOYVURD1" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-3"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Start WhatsApp Chat
+                  </a>
                   <p className="text-sm text-gray-600">Professional & Enterprise plans only</p>
                 </CardContent>
               </Card>
