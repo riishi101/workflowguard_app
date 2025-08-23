@@ -84,8 +84,8 @@ export class SubscriptionService {
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         trialEndDate: user.subscription?.trialEndDate?.toISOString(),
         nextBillingDate: user.subscription?.nextBillingDate?.toISOString(),
-        razorpayCustomerId: (user.subscription as any)?.razorpayCustomerId,
-        razorpaySubscriptionId: (user.subscription as any)?.razorpaySubscriptionId,
+        razorpayCustomerId: (user.subscription as any)?.razorpayCustomerId || undefined,
+        razorpaySubscriptionId: (user.subscription as any)?.razorpaySubscriptionId || undefined,
         features,
         limits,
         usage: {

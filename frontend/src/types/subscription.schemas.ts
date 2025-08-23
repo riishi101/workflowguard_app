@@ -11,8 +11,8 @@ export const SubscriptionSchema = z.object({
   currentPeriodEnd: z.string().optional(),
   trialEndDate: z.string().optional(),
   nextBillingDate: z.string().optional(),
-  razorpayCustomerId: z.string().optional(),
-  razorpaySubscriptionId: z.string().optional(),
+  razorpayCustomerId: z.string().optional().nullable(),
+  razorpaySubscriptionId: z.string().optional().nullable(),
   features: z.array(z.string()).optional(),
   limits: z.object({
     workflows: z.number(),
