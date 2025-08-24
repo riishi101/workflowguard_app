@@ -308,7 +308,7 @@ const HelpSupport = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp Support</h3>
                   <a 
-                    href="https://wa.me/message/R74K5JOOYVURD1" 
+                    href="https://wa.me/916000576799" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-3"
