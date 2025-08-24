@@ -41,7 +41,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
   const [showChangePlanModal, setShowChangePlanModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
-  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isViewingInvoice, setIsViewingInvoice] = useState<string | null>(null);
 
@@ -229,31 +228,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
     }
   };
 
-    const handleUpdatePayment = async () => {
-    setIsUpdatingPayment(true);
-    try {
-      toast({
-        title: 'Redirecting...',
-        description: 'Opening payment method update page...',
-      });
-      
-      const response = await ApiService.getPaymentMethodUpdateUrl();
-      
-      if (response.success && response.data?.updateUrl) {
-        window.open(response.data.updateUrl, '_blank');
-      } else {
-        throw new Error(response.message || 'Failed to get payment update URL');
-      }
-        } catch (error: any) {
-      toast({
-        title: 'Update Failed',
-        description: error.message || 'Unable to open payment method update. Please try again or contact support.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUpdatingPayment(false);
-    }
-  };
 
     const handleExportHistory = async () => {
     setIsExporting(true);
@@ -466,28 +440,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         </CardContent>
       </Card>
 
-      {/* Payment Method Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Payment Method</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CreditCard className="w-6 h-6 text-gray-400" />
-              <div>
-                <p className="font-medium text-gray-900">
-                  {subscription?.paymentMethod?.brand} ending in {subscription?.paymentMethod?.last4}
-                </p>
-                <p className="text-sm text-gray-500">Expires {subscription?.paymentMethod?.exp}</p>
-              </div>
-            </div>
-                        <Button variant="outline" onClick={handleUpdatePayment} disabled={isUpdatingPayment}>
-                            {isUpdatingPayment ? 'Processing...' : <><Pencil className="w-4 h-4 mr-2"/>Update Method</>}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Billing History Section */}
       <Card>
@@ -591,107 +543,6 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         </CardContent>
       </Card>
 
-      {/* Billing History Section */}
-      <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">Billing History</CardTitle>
-            <CardDescription>Your past invoices and payment records.</CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleExportHistory} disabled={isExporting}>
-            {isExporting ? 'Exporting...' : 'Export All'}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        {billingHistory.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>No billing history available</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-medium text-gray-500 py-3">Date</th>
-                  <th className="text-left font-medium text-gray-500 py-3">Amount</th>
-                  <th className="text-left font-medium text-gray-500 py-3">Status</th>
-                  <th className="text-right font-medium text-gray-500 py-3">Invoice</th>
-                </tr>
-              </thead>
-              <tbody>
-                {billingHistory.map((item: BillingHistoryItem, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 text-gray-900">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="py-3 font-medium text-gray-900">${item.amount} {item.currency}</td>
-                    <td className="py-3">
-                      <Badge variant={item.status === 'paid' ? 'default' : 'destructive'}>
-                        {item.status === 'paid' ? 'Paid' : item.status}
-                      </Badge>
-                    </td>
-                    <td className="text-right py-3">
-                      <Button variant="link" size="sm" onClick={() => handleViewInvoice(item.invoice)} disabled={isViewingInvoice === item.invoice}>
-                        {isViewingInvoice === item.invoice ? 'Loading...' : 'View'}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-
-      {/* Current Usage Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Current Usage</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Workflows</span>
-                <span className="font-medium text-gray-900">{usageStats?.workflows.used} / {usageStats?.workflows.limit}</span>
-              </div>
-              <Progress value={usageStats ? (usageStats.workflows.used / usageStats.workflows.limit) * 100 : 0} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">Version History Days</span>
-                <span className="font-medium text-gray-900">{usageStats?.versionHistory.used} / {usageStats?.versionHistory.limit}</span>
-              </div>
-              <Progress value={usageStats ? (usageStats.versionHistory.used / usageStats.versionHistory.limit) * 100 : 0} className="h-2" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Subscription Controls Section */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-lg text-red-600 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            Danger Zone
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900 mb-1">Cancel Subscription</p>
-              <p className="text-sm text-gray-600">
-                Cancelling your subscription will downgrade you to the free plan at the end of your billing cycle.
-              </p>
-            </div>
-            <Button variant="destructive" onClick={handleCancelSubscription} disabled={isCancelling}>
-              {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Change Plan Modal */}
       {showChangePlanModal && (

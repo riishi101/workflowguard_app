@@ -107,51 +107,92 @@ const PlanBillingTab = () => {
     }
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve, reject) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => reject('Failed to load Razorpay');
+      document.body.appendChild(script);
+    });
+  };
+
   const handleUpgrade = async (planId: string) => {
-    try {
-      // Show loading toast
+    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKeyId) {
       toast({
-        title: "Processing Upgrade",
-        description: "Initiating plan upgrade process...",
+        title: 'Configuration Error',
+        description: 'Razorpay is not configured. Please contact support.',
+        variant: 'destructive',
       });
-
-      // First, update the subscription in our system
-      const updateResponse = await ApiService.updateSubscription(planId);
-
-      if (!updateResponse.success) {
-        throw new Error(updateResponse.message || 'Failed to update subscription');
+      return;
+    }
+    try {
+      toast({ title: 'Processing...', description: 'Initiating plan upgrade...' });
+      
+      await loadRazorpayScript();
+      const resp = await ApiService.createRazorpayOrder(planId);
+      
+      if (!resp.success || !resp.data?.id) {
+        throw new Error(resp.message || 'Failed to create payment order');
       }
 
-      // Show success message
-      toast({
-        title: "Plan Upgrade Initiated",
-        description: "Redirecting to HubSpot to complete your upgrade...",
-      });
-
-      // Refresh subscription data
-      await fetchData();
+      const order = resp.data;
       
-      // Redirect to HubSpot billing to complete the process
-      setTimeout(() => {
-        const hubspotBillingUrl = `https://app.hubspot.com/billing/upgrade/${planId}`;
-        window.open(hubspotBillingUrl, '_blank');
-      }, 1000);
+      const options = {
+        key: razorpayKeyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'WorkflowGuard',
+        description: `Upgrade to ${planId} plan`,
+        order_id: order.id,
+        handler: async function (paymentResult: any) {
+          try {
+            const confirmResponse = await ApiService.confirmRazorpayPayment({
+              planId,
+              paymentId: paymentResult.razorpay_payment_id,
+              orderId: order.id,
+              signature: paymentResult.razorpay_signature,
+            });
 
-      // Set up polling to check subscription status
-      const pollInterval = setInterval(async () => {
-        const status = await ApiService.getSubscription();
-        if (status.data?.planId === planId) {
-          clearInterval(pollInterval);
-          toast({
-            title: "Upgrade Complete",
-            description: `Successfully upgraded to ${planId} plan!`,
-          });
-          fetchData(); // Refresh the data one final time
-        }
-      }, 5000); // Check every 5 seconds
+            if (confirmResponse.success) {
+              toast({
+                title: 'Upgrade Successful!',
+                description: `Successfully upgraded to ${planId} plan.`,
+              });
+              await fetchData();
+            } else {
+              throw new Error(confirmResponse.message || 'Payment confirmation failed');
+            }
+          } catch (error: any) {
+            toast({
+              title: 'Upgrade Failed',
+              description: error.message || 'Payment confirmation failed. Please contact support.',
+              variant: 'destructive',
+            });
+          }
+        },
+        prefill: {
+          name: subscription?.customerName || '',
+          email: subscription?.customerEmail || '',
+        },
+        theme: { color: '#2563eb' },
+      };
+      
+            const rzp = new window.Razorpay(options);
+      rzp.open();
 
-      // Clear polling after 5 minutes if not completed
-      setTimeout(() => clearInterval(pollInterval), 300000);
+      rzp.on('payment.failed', () => {
+        toast({
+          title: 'Payment Failed',
+          description: 'Your payment was not processed. Please try again.',
+          variant: 'destructive',
+        });
+      });
 
     } catch (error: any) {
       console.error('Plan upgrade failed:', error);
