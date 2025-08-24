@@ -3,15 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import {
-  CheckCircle2,
-  CreditCard,
-  AlertTriangle,
-  Pencil,
-  ArrowLeft,
-  X,
-  Check
-} from 'lucide-react';
+import { CheckCircle2, CreditCard, AlertTriangle } from 'lucide-react';
+import NextBillingCard from '@/components/billing/NextBillingCard';
+import { ArrowLeft, X, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ApiService } from '@/lib/api';
 import { z } from 'zod';
@@ -440,6 +434,13 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         </CardContent>
       </Card>
 
+      {/* Next Billing Section */}
+      <NextBillingCard 
+        nextBillingDate={subscription?.nextBillingDate}
+        amount={subscription?.price || 0}
+        currency="USD"
+        planName={subscription?.planName}
+      />
 
       {/* Billing History Section */}
       <Card>

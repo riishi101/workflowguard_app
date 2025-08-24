@@ -3,25 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
+  AlertTriangle, 
   Check, 
+  CreditCard,
   ExternalLink, 
   Star, 
   Zap, 
   Shield,
-  AlertTriangle,
   Clock,
   Users,
   FileText,
   Settings,
-  CreditCard,
   History,
   Bell,
   List,
   Key,
   User
 } from 'lucide-react';
+import TrialStatusCard from '@/components/trial/TrialStatusCard';
 import { useToast } from '@/hooks/use-toast';
 import { ApiService } from '@/lib/api';
 import ManageSubscriptionTab from './ManageSubscription';
@@ -248,62 +248,13 @@ const PlanBillingTab = () => {
   return (
     <div className="space-y-8">
       {/* Trial Status Section */}
-      {trialStatus?.isTrial && (
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            🎉 Your Free Trial
-          </h2>
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-bold text-blue-900 mb-2">
-                    Professional Trial Active
-                  </h3>
-                  <p className="text-blue-700 mb-4">
-                    You're currently enjoying all Professional Plan features during your 21-day free trial!
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {trialStatus.trialDaysRemaining}
-                  </div>
-                  <div className="text-sm text-blue-600">
-                    days remaining
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="bg-white rounded-lg p-3">
-                  <div className="text-sm text-gray-600">Trial End Date</div>
-                  <div className="font-semibold text-gray-900">
-                    {trialStatus.trialEndDate ? new Date(trialStatus.trialEndDate).toLocaleDateString() : 'N/A'}
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg p-3">
-                  <div className="text-sm text-gray-600">Current Features</div>
-                  <div className="font-semibold text-gray-900">Professional Plan</div>
-                </div>
-                <div className="bg-white rounded-lg p-3">
-                  <div className="text-sm text-gray-600">After Trial</div>
-                  <div className="font-semibold text-gray-900">$49/month</div>
-                </div>
-              </div>
-
-              {trialStatus.trialDaysRemaining <= 7 && (
-                <Alert className="border-orange-200 bg-orange-50 mb-4">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <AlertDescription className="text-orange-800">
-                    <strong>Trial Ending Soon:</strong> Your trial ends in {trialStatus.trialDaysRemaining} days. 
-                    Upgrade now to continue enjoying Professional features without interruption.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <TrialStatusCard 
+        daysRemaining={trialStatus?.trialDaysRemaining || 0}
+        totalTrialDays={21}
+        planName="Professional Plan"
+        isTrialActive={trialStatus?.isTrial || false}
+        onUpgrade={() => handleUpgrade('professional')}
+      />
 
       {/* Current Subscription Overview */}
       <div>
