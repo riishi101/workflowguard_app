@@ -211,14 +211,14 @@ export class RazorpayController {
   ) {
     this.logger.log(`Creating Razorpay order for plan upgrade: ${body.planId}, user: ${user.id}`);
     
-    // Get plan pricing
+    // Get plan pricing in rupees (will be converted to paise in service)
     const planPricing = {
-      starter: 1900, // ₹19 in paise
-      professional: 4900, // ₹49 in paise  
-      enterprise: 9900, // ₹99 in paise
+      starter: 19, // ₹19
+      professional: 49, // ₹49  
+      enterprise: 99, // ₹99
     };
     
-    const amount = planPricing[body.planId as keyof typeof planPricing] || 1900;
+    const amount = planPricing[body.planId as keyof typeof planPricing] || 19;
     
     const order = await this.razorpayService.createOrder(amount, 'INR', {
       plan_id: body.planId,
