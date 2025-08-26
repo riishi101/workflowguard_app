@@ -16,7 +16,7 @@ import ContentPageHeader from "@/components/ContentPageHeader";
 import PageSection from "@/components/PageSection";
 import Footer from "@/components/Footer";
 import { LAYOUT, TYPOGRAPHY, COLORS } from "@/lib/layout-constants";
-import { Mail, MessageCircle, Clock, CheckCircle } from "lucide-react";
+import { Mail, MessageCircle, Clock, CheckCircle, MessageSquare } from "lucide-react";
 import { ApiService } from "@/lib/api";
 
 const ContactUs = () => {
@@ -233,6 +233,28 @@ const ContactUs = () => {
                     </p>
                     <p className="text-gray-500 text-xs mt-1">
                       Track your issues and get updates
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">WhatsApp Support</h3>
+                    <p className="text-gray-600 text-sm">
+                      <a 
+                        href="https://wa.me/14155238886" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-emerald-500 hover:text-emerald-600"
+                      >
+                        +1 (415) 523-8886
+                      </a>
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      Direct messaging for quick support
                     </p>
                   </div>
                 </div>
