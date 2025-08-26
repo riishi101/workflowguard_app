@@ -474,6 +474,24 @@ class ApiService {
     }
   }
 
+  static async sendWhatsAppSupport(message: string, phoneNumber?: string): Promise<ApiResponse<any>> {
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await apiClient.post('/support/whatsapp', { message, phoneNumber }, { headers });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async getDashboardStats(): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.get('/dashboard/stats');

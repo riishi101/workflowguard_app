@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import WhatsAppSupportModal from '@/components/WhatsAppSupportModal';
 import { 
   Bot,
   BookOpen,
@@ -35,6 +36,7 @@ const HelpSupport = () => {
   const { toast } = useToast();
   const [issueDescription, setIssueDescription] = useState('');
   const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   const handleDiagnoseIssue = async () => {
     if (!issueDescription.trim()) {
@@ -303,26 +305,30 @@ const HelpSupport = () => {
               {/* WhatsApp Support */}
               <Card className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-6">
-                  <div className="bg-blue-600 p-3 rounded-lg w-fit mb-4">
+                  <div className="bg-green-600 p-3 rounded-lg w-fit mb-4">
                     <MessageSquare className="w-6 h-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">WhatsApp Support</h3>
-                  <a 
-                    href="https://wa.me/916000576799" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <Button
+                    onClick={() => setIsWhatsAppModalOpen(true)}
                     className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-3"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Start WhatsApp Chat
-                  </a>
+                  </Button>
                   <p className="text-sm text-gray-600">Professional & Enterprise plans only</p>
+                  <p className="text-xs text-gray-500 mt-2">Powered by Twilio WhatsApp Business API</p>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </ContentSection>
+      
+      <WhatsAppSupportModal 
+        isOpen={isWhatsAppModalOpen} 
+        onClose={() => setIsWhatsAppModalOpen(false)} 
+      />
     </MainAppLayout>
   );
 };

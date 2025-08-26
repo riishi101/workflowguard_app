@@ -161,4 +161,41 @@ export class SupportController {
       );
     }
   }
+
+  @Post('whatsapp')
+  @UseGuards(JwtAuthGuard)
+  async sendWhatsAppSupport(
+    @Body() body: { message: string; phoneNumber?: string },
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (!body.message) {
+      throw new HttpException(
+        'Message is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const result = await this.supportService.sendWhatsAppSupportRequest(
+        userId,
+        body.message,
+        body.phoneNumber,
+      );
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to send WhatsApp support request: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

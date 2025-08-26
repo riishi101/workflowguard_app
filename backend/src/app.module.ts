@@ -17,6 +17,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppCacheModule } from './cache/cache.module';
 import { RazorpayModule } from './razorpay/razorpay.module';
+import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
 
@@ -40,6 +41,7 @@ import { BillingController } from './controllers/hubspot-billing.controller';
     AnalyticsModule,
     AppCacheModule,
     RazorpayModule,
+    WhatsAppModule,
   ],
   controllers: [AppController, HubSpotMarketplaceController, BillingController],
   providers: [AppService],

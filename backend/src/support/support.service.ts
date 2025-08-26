@@ -1,9 +1,13 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
 export class SupportService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private whatsappService: WhatsAppService,
+  ) {}
 
   async diagnoseIssue(description: string, userId: string): Promise<any> {
     try {
@@ -21,6 +25,14 @@ export class SupportService {
       };
 
       await this.logDiagnosis(userId, diagnosis);
+
+      // Send WhatsApp notification for critical issues
+      if (severity === 'critical' && this.whatsappService.isConfigured()) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (user?.email) {
+          await this.whatsappService.sendAutoReplyMessage('+916000576799', issueType);
+        }
+      }
 
       return diagnosis;
     } catch (error) {
@@ -312,6 +324,56 @@ export class SupportService {
 
   private async optimizeAPIResponses(userId: string): Promise<any> {
     return { success: true, action: 'optimized_api_responses' };
+  }
+
+  async sendWhatsAppSupportRequest(
+    userId: string,
+    message: string,
+    phoneNumber?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      if (!this.whatsappService.isConfigured()) {
+        return {
+          success: false,
+          message: 'WhatsApp service is not configured',
+        };
+      }
+
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Send to support team WhatsApp number
+      const supportNumber = '+916000576799';
+      const success = await this.whatsappService.sendSupportMessage(
+        supportNumber,
+        message,
+        user.email,
+      );
+
+      if (success) {
+        // Send auto-reply to user if they provided their phone number
+        if (phoneNumber) {
+          await this.whatsappService.sendWelcomeMessage(phoneNumber, user.name || undefined);
+        }
+
+        return {
+          success: true,
+          message: 'Support request sent successfully via WhatsApp',
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Failed to send WhatsApp message',
+        };
+      }
+    } catch (error) {
+      throw new HttpException(
+        `Failed to send WhatsApp support request: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   private async logDiagnosis(userId: string, diagnosis: any): Promise<void> {
