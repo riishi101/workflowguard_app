@@ -97,7 +97,7 @@ export class WhatsAppService {
   }
 
   async sendAutoReplyMessage(to: string, issueType: string): Promise<boolean> {
-    const autoReplyMessages = {
+    const autoReplyMessages: { [key: string]: string } = {
       rollback: 'We received your rollback issue. Our team is investigating and will get back to you within 2 hours.',
       sync: 'We received your sync issue. Please try refreshing your workflows. If the issue persists, we\'ll help you resolve it.',
       auth: 'We received your authentication issue. Please try logging out and back in. If that doesn\'t work, we\'ll assist you further.',
