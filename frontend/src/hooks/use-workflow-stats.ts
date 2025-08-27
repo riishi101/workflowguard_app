@@ -24,7 +24,7 @@ export function useWorkflowStats(workflows: any[]) {
           totalWorkflows: workflows.length,
           activeWorkflows: workflows.filter(w => w.status === 'active').length,
           protectedWorkflows: workflows.filter(w => w.protectionStatus === 'protected').length,
-          totalVersions: workflows.reduce((total, w) => total + (w.versions?.length || 0), 0),
+          totalVersions: workflows.reduce((total, w) => total + (w.versions || 0), 0),
           uptime: 99.9, // Default value
           lastSnapshot: workflows.length > 0 ? new Date().toISOString() : '',
           planCapacity: subscription.planCapacity || 100,

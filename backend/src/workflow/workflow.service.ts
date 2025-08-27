@@ -935,8 +935,9 @@ export class WorkflowService {
 
     try {
       // 3. Fetch the latest workflow data from HubSpot
-      // Assuming getWorkflowById exists in HubSpotService. If not, this will need to be implemented.
-      const hubspotWorkflowData = await this.hubspotService.getWorkflowById(
+      const { HubSpotService } = await import('../services/hubspot.service');
+      const hubspotService = new HubSpotService(this.prisma);
+      const hubspotWorkflowData = await hubspotService.getWorkflowById(
         user.id,
         hubspotWorkflowId,
       );
@@ -958,7 +959,7 @@ export class WorkflowService {
         workflow.id,
         user.id,
         hubspotWorkflowData,
-        'webhook',
+        'Automated',
       );
 
       console.log(

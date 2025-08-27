@@ -10,16 +10,22 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  HttpCode,
+  Headers,
 } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('webhooks')
-@UseGuards(JwtAuthGuard)
 export class WebhookController {
-  constructor(private readonly webhookService: WebhookService) {}
+  constructor(
+    private readonly webhookService: WebhookService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getUserWebhooks(@Req() req: any) {
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -42,6 +48,7 @@ export class WebhookController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createWebhook(@Body() webhookData: any, @Req() req: any) {
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -67,6 +74,7 @@ export class WebhookController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async updateWebhook(
     @Param('id') webhookId: string,
     @Body() webhookData: any,
@@ -97,6 +105,7 @@ export class WebhookController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async deleteWebhook(@Param('id') webhookId: string, @Req() req: any) {
     const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
@@ -114,6 +123,41 @@ export class WebhookController {
         `Failed to delete webhook: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  @Post('hubspot')
+  @HttpCode(HttpStatus.OK)
+  async handleHubSpotWebhook(@Body() body: any, @Headers() headers: any) {
+    try {
+      console.log('🔔 Received HubSpot webhook:', JSON.stringify(body, null, 2));
+      
+      // Verify webhook signature if needed
+      const signature = headers['x-hubspot-signature-v3'] || headers['x-hubspot-signature'];
+      if (signature && process.env.HUBSPOT_WEBHOOK_SECRET) {
+        // Add signature verification logic here if needed
+      }
+
+      // Handle workflow update events
+      if (body.subscriptionType === 'automation.workflow.updated') {
+        const { portalId, objectId: workflowId } = body;
+        
+        if (portalId && workflowId) {
+          // Import services dynamically to avoid circular dependency
+          const { WorkflowService } = await import('../workflow/workflow.service');
+          const { HubSpotService } = await import('../services/hubspot.service');
+          
+          const hubspotService = new HubSpotService(this.prisma);
+          const workflowService = new WorkflowService(this.prisma, hubspotService);
+          
+          await workflowService.handleWorkflowUpdate(portalId.toString(), workflowId.toString());
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error handling HubSpot webhook:', error);
+      return { success: false, error: error.message };
     }
   }
 }

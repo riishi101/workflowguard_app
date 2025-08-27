@@ -27,12 +27,8 @@
   },
   "webhooks": [
     {
-      "subscriptionType": "contact.propertyChange",
-      "propertyName": "workflow_status"
-    },
-    {
-      "subscriptionType": "deal.propertyChange", 
-      "propertyName": "workflow_modified"
+      "subscriptionType": "automation.workflow.updated",
+      "url": "https://www.workflowguard.pro/api/webhooks/hubspot"
     }
   ],
   "settings": {
