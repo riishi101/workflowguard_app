@@ -181,125 +181,148 @@ export class WorkflowService {
     userId: string,
     selectedWorkflowObjects: any[],
   ): Promise<any[]> {
-    let finalUserId = userId;
-    if (!finalUserId) {
-      finalUserId = 'default-user-id';
+    if (!userId) {
+      throw new HttpException('User ID is required', HttpStatus.BAD_REQUEST);
     }
 
-    // Check if user exists, create if not
-    let user = await this.prisma.user.findUnique({
-      where: { id: finalUserId },
+    // Validate user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          id: finalUserId,
-          email: 'default@example.com',
-          name: 'Default User',
-        },
-      });
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    const protectedWorkflows = [];
+    const protectedWorkflows: any[] = [];
+    const errors: Array<{ workflowId: string; error: string }> = [];
 
-    for (const workflowId of workflowIds) {
-      try {
-        // Find the workflow object from selectedWorkflowObjects
-        const workflowObj = selectedWorkflowObjects?.find(
-          (w: any) => w.id === workflowId,
-        );
-        // Always convert hubspotId to string for Prisma
-        const hubspotId = String(workflowObj?.hubspotId || workflowId);
+    // Use transaction to ensure data consistency
+    await this.prisma.$transaction(async (tx) => {
+      for (const workflowId of workflowIds) {
+        try {
+          // Find the workflow object from selectedWorkflowObjects
+          const workflowObj = selectedWorkflowObjects?.find(
+            (w: any) => w.id === workflowId,
+          );
+          const hubspotId = String(workflowObj?.hubspotId || workflowId);
 
-        // Use upsert to handle existing workflows properly
-        const workflow = await this.prisma.workflow.upsert({
-          where: {
-            hubspotId: hubspotId,
-          },
-          update: {
-            name: workflowObj?.name || 'Unnamed Workflow',
-            ownerId: finalUserId,
-            updatedAt: new Date(),
-          },
-          create: {
-            hubspotId: hubspotId,
-            name: workflowObj?.name || 'Unnamed Workflow',
-            ownerId: finalUserId,
-          },
-          include: {
-            owner: true,
-            versions: {
-              orderBy: { versionNumber: 'desc' },
-              take: 1,
+          // Create or update workflow
+          const workflow = await tx.workflow.upsert({
+            where: {
+              hubspotId: hubspotId,
             },
-          },
-        });
+            update: {
+              name: workflowObj?.name || 'Unnamed Workflow',
+              ownerId: userId,
+              updatedAt: new Date(),
+            },
+            create: {
+              hubspotId: hubspotId,
+              name: workflowObj?.name || 'Unnamed Workflow',
+              ownerId: userId,
+            },
+            include: {
+              owner: true,
+              versions: {
+                orderBy: { versionNumber: 'desc' },
+                take: 1,
+              },
+            },
+          });
 
-        // Create initial version if no versions exist
-        if (!workflow?.versions?.length) {
-          try {
-            // Get workflow data from HubSpot
-            const hubspotWorkflows =
-              await this.hubspotService.getWorkflows(finalUserId);
-            const hubspotWorkflowData = hubspotWorkflows.find(
-              (w) => String(w.id) === hubspotId,
-            );
+          // ALWAYS ensure workflow has at least one version
+          if (!workflow?.versions?.length) {
+            let workflowData = null;
+            
+            // Try to get workflow data from HubSpot
+            try {
+              const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+              workflowData = hubspotWorkflows.find((w) => String(w.id) === hubspotId);
+            } catch (hubspotError) {
+              console.warn('Could not fetch HubSpot data, using minimal data:', hubspotError.message);
+            }
 
-            // Use WorkflowVersionService to create initial version
-            const { WorkflowVersionService } = await import(
-              '../workflow-version/workflow-version.service'
-            );
-            const workflowVersionService = new WorkflowVersionService(
-              this.prisma,
-            );
-
-            const initialVersion =
-              await workflowVersionService.createInitialVersion(
-                workflow,
-                finalUserId,
-                hubspotWorkflowData || {
-                  hubspotId,
-                  name: workflow.name,
-                  status: 'active',
-                  metadata: {
-                    protection: {
-                      initialProtection: true,
-                      protectedAt: new Date().toISOString(),
-                      protectedBy: finalUserId,
-                    },
-                  },
+            // Create initial version with available data
+            const initialVersionData = workflowData || {
+              hubspotId,
+              name: workflow.name,
+              status: 'active',
+              type: 'unknown',
+              enabled: true,
+              metadata: {
+                protection: {
+                  initialProtection: true,
+                  protectedAt: new Date().toISOString(),
+                  protectedBy: userId,
+                  source: workflowData ? 'hubspot' : 'minimal',
                 },
-              );
+              },
+            };
 
-            // Add the version to the workflow object
+            // Create the initial version
+            const initialVersion = await tx.workflowVersion.create({
+              data: {
+                workflowId: workflow.id,
+                versionNumber: 1,
+                snapshotType: 'Initial Protection',
+                createdBy: userId,
+                data: initialVersionData as any,
+              },
+            });
+
+            // Create audit log
+            await tx.auditLog.create({
+              data: {
+                userId,
+                action: 'workflow_protection_started',
+                entityType: 'workflow',
+                entityId: workflow.id,
+                oldValue: null as any,
+                newValue: JSON.stringify({
+                  versionId: initialVersion.id,
+                  versionNumber: 1,
+                  protectionType: 'initial',
+                }),
+              },
+            });
+
+            // Add version to workflow object
             workflow.versions = [initialVersion];
 
-            console.log('Created initial version for workflow:', {
+            console.log('✅ Created initial version for workflow:', {
               workflowId: workflow.id,
+              workflowName: workflow.name,
               versionId: initialVersion.id,
               versionNumber: initialVersion.versionNumber,
+              dataSource: workflowData ? 'hubspot' : 'minimal',
             });
-          } catch (versionError) {
-            console.error('Error creating initial version for workflow:', {
-              workflowId: workflow.id,
-              error: versionError,
-            });
-            // Don't throw here, continue with protection even if version creation fails
           }
+
+          protectedWorkflows.push(workflow);
+        } catch (err) {
+          const errorMessage = `Failed to protect workflow ${workflowId}: ${err?.message || err}`;
+          console.error('❌ Error protecting workflow:', {
+            workflowId,
+            error: err,
+            userId,
+          });
+          errors.push({ workflowId, error: errorMessage });
+          // Don't throw here, collect all errors
         }
-        protectedWorkflows.push(workflow);
-      } catch (err) {
-        console.error('Error protecting workflow:', {
-          workflowId,
-          error: err,
-          selectedWorkflowObjects,
-          userId: finalUserId,
-        });
-        throw new HttpException(
-          `Failed to protect workflow ${workflowId}: ${err?.message || err}`,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
       }
+    });
+
+    // If there were errors, throw with details
+    if (errors.length > 0) {
+      throw new HttpException(
+        {
+          message: 'Some workflows could not be protected',
+          errors,
+          successCount: protectedWorkflows.length,
+          totalCount: workflowIds.length,
+        },
+        HttpStatus.PARTIAL_CONTENT,
+      );
     }
 
     return protectedWorkflows;
@@ -315,37 +338,48 @@ export class WorkflowService {
         where: { ownerId: userId },
         include: {
           owner: true,
-          versions: true,
+          versions: {
+            orderBy: { versionNumber: 'desc' },
+            take: 1, // Only get latest version for performance
+          },
+          _count: {
+            select: { versions: true }
+          }
         },
         orderBy: { updatedAt: 'desc' },
       });
 
       // Transform database records to match Dashboard expectations
-      return workflows.map((workflow: any) => ({
-        id: workflow.hubspotId || workflow.id,
-        name: workflow.name,
-        status:
-          workflow.versions && workflow.versions.length > 0
-            ? 'active'
-            : 'inactive',
-        protectionStatus: 'protected', // All workflows in this endpoint are protected
-        lastModified: workflow.updatedAt
-          ? new Date(workflow.updatedAt).toLocaleDateString()
-          : 'Unknown',
-        versions: workflow.versions?.length || 1,
-        lastModifiedBy: {
-          name: workflow.owner?.name || 'Unknown User',
-          initials: workflow.owner?.name
-            ? workflow.owner.name
-                .split(' ')
-                .map((n: string) => n[0])
-                .join('')
-                .toUpperCase()
-            : 'U',
-          email: workflow.owner?.email || 'unknown@example.com',
-        },
-      }));
-    } catch {
+      return workflows.map((workflow: any) => {
+        const versionCount = workflow._count.versions;
+        const latestVersion = workflow.versions[0];
+        
+        return {
+          id: workflow.hubspotId || workflow.id,
+          name: workflow.name,
+          status: versionCount > 0 ? 'active' : 'inactive',
+          protectionStatus: versionCount > 0 ? 'protected' : 'unprotected',
+          lastModified: latestVersion?.createdAt 
+            ? new Date(latestVersion.createdAt).toLocaleDateString()
+            : workflow.updatedAt
+            ? new Date(workflow.updatedAt).toLocaleDateString()
+            : 'Unknown',
+          versions: versionCount, // Use actual count from database
+          lastModifiedBy: {
+            name: workflow.owner?.name || 'Unknown User',
+            initials: workflow.owner?.name
+              ? workflow.owner.name
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+              : 'U',
+            email: workflow.owner?.email || 'unknown@example.com',
+          },
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching protected workflows:', error);
       return [];
     }
   }
