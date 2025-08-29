@@ -119,7 +119,7 @@ export class RazorpayController {
   @UseGuards(JwtAuthGuard)
   async upgradeSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() body: { newPlanType: 'starter' | 'professional' | 'enterprise' },
+    @Body() body: { newPlanType: 'starter' | 'professional' | 'enterprise'; currency?: string },
     @GetUser() user: any,
   ) {
     this.logger.log(`Upgrading subscription: ${subscriptionId} to ${body.newPlanType} for user: ${user.id}`);
@@ -133,8 +133,9 @@ export class RazorpayController {
       throw new BadRequestException('User does not have a Razorpay customer ID');
     }
     
-    // Create new subscription with new plan
-    const newPlanId = this.razorpayService.getPlanIdForSubscription(body.newPlanType);
+    // Get the correct plan ID for the currency
+    const currency = body.currency || 'USD';
+    const newPlanId = this.razorpayService.getPlanIdForSubscription(body.newPlanType, currency);
     const newSubscription = await this.razorpayService.createSubscription({
       planId: newPlanId,
       customerId: userSubscription.razorpayCustomerId,
@@ -142,6 +143,7 @@ export class RazorpayController {
         upgrade_from: subscriptionId,
         previous_plan: userSubscription.planId,
         user_id: user.id,
+        currency: currency,
       },
     });
     
@@ -206,25 +208,46 @@ export class RazorpayController {
   @Post('create-order')
   @UseGuards(JwtAuthGuard)
   async createRazorpayOrder(
-    @Body() body: { planId: string },
+    @Body() body: { planId: string; currency?: string },
     @GetUser() user: any,
   ) {
     this.logger.log(`Creating Razorpay order for plan upgrade: ${body.planId}, user: ${user.id}`);
     
-    // Get plan pricing in rupees (will be converted to paise in service)
-    // USD to INR conversion: $19 = ₹1577, $49 = ₹4067, $99 = ₹8217
+    // Detect user's currency (default to USD for international users)
+    const currency = body.currency || 'USD';
+    
+    // Multi-currency pricing
     const planPricing = {
-      starter: 1577, // ₹1,577 (equivalent to $19)
-      professional: 4067, // ₹4,067 (equivalent to $49)  
-      enterprise: 8217, // ₹8,217 (equivalent to $99)
+      starter: {
+        USD: 19,
+        GBP: 15,
+        EUR: 17,
+        CAD: 27,
+        INR: 19,
+      },
+      professional: {
+        USD: 49,
+        GBP: 39,
+        EUR: 44,
+        CAD: 69,
+        INR: 49,
+      },
+      enterprise: {
+        USD: 99,
+        GBP: 79,
+        EUR: 89,
+        CAD: 139,
+        INR: 99,
+      },
     };
     
-    const amount = planPricing[body.planId as keyof typeof planPricing] || 1577;
+    const amount = planPricing[body.planId as keyof typeof planPricing]?.[currency as keyof typeof planPricing.starter] || 19;
     
-    const order = await this.razorpayService.createOrder(amount, 'INR', {
+    const order = await this.razorpayService.createOrder(amount, currency, {
       plan_id: body.planId,
       user_id: user.id,
       type: 'subscription_upgrade',
+      currency: currency,
     });
     
     return {

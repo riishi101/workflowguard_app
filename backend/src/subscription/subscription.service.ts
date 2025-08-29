@@ -294,22 +294,22 @@ export class SubscriptionService {
         INR: 19,
         USD: 19,
         GBP: 15,
-        EUR: 18,
-        CAD: 25,
+        EUR: 17,
+        CAD: 27,
       },
       professional: {
         INR: 49,
         USD: 49,
         GBP: 39,
-        EUR: 45,
-        CAD: 65,
+        EUR: 44,
+        CAD: 69,
       },
       enterprise: {
         INR: 99,
         USD: 99,
         GBP: 79,
         EUR: 89,
-        CAD: 129,
+        CAD: 139,
       },
     };
     return prices[planId]?.[currency] || prices[planId]?.['INR'] || 0;
@@ -529,25 +529,25 @@ export class SubscriptionService {
       'plan_R6RKEg5mqJK6Ky': 'professional', 
       'plan_R6RKnjqXu0BZsH': 'enterprise',
       
-      // USD Plans (Placeholder)
-      'plan_starter_usd_monthly': 'starter',
-      'plan_professional_usd_monthly': 'professional',
-      'plan_enterprise_usd_monthly': 'enterprise',
+      // USD Plans (Active)
+      'plan_RBDqWapKHZfPU7': 'starter',
+      'plan_RBDrKWI81HS1FZ': 'professional',
+      'plan_RBDrX9dGapWrTe': 'enterprise',
       
-      // GBP Plans (Placeholder)
-      'plan_starter_gbp_monthly': 'starter',
-      'plan_professional_gbp_monthly': 'professional',
-      'plan_enterprise_gbp_monthly': 'enterprise',
+      // GBP Plans (Active)
+      'plan_RBFxk81S3ySXxj': 'starter',
+      'plan_RBFy8LsuW36jIj': 'professional',
+      'plan_RBFyJlB5jxwxB9': 'enterprise',
       
-      // EUR Plans (Placeholder)
-      'plan_starter_eur_monthly': 'starter',
-      'plan_professional_eur_monthly': 'professional',
-      'plan_enterprise_eur_monthly': 'enterprise',
+      // EUR Plans (Active)
+      'plan_RBFjbYhAtD3snL': 'starter',
+      'plan_RBFjqo5wE0d4jz': 'professional',
+      'plan_RBFovOUIUXISBE': 'enterprise',
       
-      // CAD Plans (Placeholder)
-      'plan_starter_cad_monthly': 'starter',
-      'plan_professional_cad_monthly': 'professional',
-      'plan_enterprise_cad_monthly': 'enterprise',
+      // CAD Plans (Active)
+      'plan_RBFrtufmxmxwi8': 'starter',
+      'plan_RBFsD6U2rQb4B6': 'professional',
+      'plan_RBFscXaosRIzEc': 'enterprise',
     };
     
     return planMap[razorpayPlanId] || 'starter';
@@ -557,14 +557,35 @@ export class SubscriptionService {
    * Get currency from Razorpay plan ID
    */
   private getCurrencyFromPlanId(razorpayPlanId: string): string {
-    // Extract currency from plan ID
-    if (razorpayPlanId.includes('_usd_')) return 'USD';
-    if (razorpayPlanId.includes('_gbp_')) return 'GBP';
-    if (razorpayPlanId.includes('_eur_')) return 'EUR';
-    if (razorpayPlanId.includes('_cad_')) return 'CAD';
+    // Map actual Razorpay plan IDs to currencies
+    const currencyMap: Record<string, string> = {
+      // USD Plans
+      'plan_RBDqWapKHZfPU7': 'USD',
+      'plan_RBDrKWI81HS1FZ': 'USD',
+      'plan_RBDrX9dGapWrTe': 'USD',
+      
+      // GBP Plans
+      'plan_RBFxk81S3ySXxj': 'GBP',
+      'plan_RBFy8LsuW36jIj': 'GBP',
+      'plan_RBFyJlB5jxwxB9': 'GBP',
+      
+      // EUR Plans
+      'plan_RBFjbYhAtD3snL': 'EUR',
+      'plan_RBFjqo5wE0d4jz': 'EUR',
+      'plan_RBFovOUIUXISBE': 'EUR',
+      
+      // CAD Plans
+      'plan_RBFrtufmxmxwi8': 'CAD',
+      'plan_RBFsD6U2rQb4B6': 'CAD',
+      'plan_RBFscXaosRIzEc': 'CAD',
+      
+      // INR Plans (existing)
+      'plan_R6RI02CsUCUlDz': 'INR',
+      'plan_R6RKEg5mqJK6Ky': 'INR',
+      'plan_R6RKnjqXu0BZsH': 'INR',
+    };
     
-    // Default to INR for existing plans
-    return 'INR';
+    return currencyMap[razorpayPlanId] || 'INR';
   }
 
   /**
