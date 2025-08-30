@@ -421,6 +421,44 @@ export class WorkflowController {
     }
   }
 
+  @Get(':id/compare/:versionA/:versionB')
+  @UseGuards(JwtAuthGuard, TrialGuard)
+  async compareWorkflowVersions(
+    @Param('id') workflowId: string,
+    @Param('versionA') versionA: string,
+    @Param('versionB') versionB: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const comparison = await this.workflowService.compareWorkflowVersions(
+        workflowId,
+        versionA,
+        versionB,
+        userId,
+      );
+      return {
+        success: true,
+        data: comparison,
+        message: 'Workflow versions compared successfully',
+      };
+    } catch (error) {
+      console.error('Failed to compare workflow versions:', error);
+      throw new HttpException(
+        `Failed to compare workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('start-protection')
   @UseGuards(JwtAuthGuard, TrialGuard)
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {

@@ -1010,4 +1010,86 @@ export class WorkflowService {
       // Do not re-throw error to prevent HubSpot from retrying indefinitely
     }
   }
+
+  async compareWorkflowVersions(
+    workflowId: string,
+    versionAId: string,
+    versionBId: string,
+    userId: string,
+  ): Promise<any> {
+    try {
+      // Verify workflow belongs to user
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Workflow not found or access denied',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Fetch both versions
+      const [versionA, versionB] = await Promise.all([
+        this.prisma.workflowVersion.findFirst({
+          where: {
+            id: versionAId,
+            workflowId: workflowId,
+          },
+        }),
+        this.prisma.workflowVersion.findFirst({
+          where: {
+            id: versionBId,
+            workflowId: workflowId,
+          },
+        }),
+      ]);
+
+      if (!versionA || !versionB) {
+        throw new HttpException(
+          'One or both versions not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Return comparison data
+      return {
+        workflow: {
+          id: workflow.id,
+          name: workflow.name,
+          hubspotId: workflow.hubspotId,
+        },
+        versionA: {
+          id: versionA.id,
+          versionNumber: versionA.versionNumber,
+          snapshotType: versionA.snapshotType,
+          createdAt: versionA.createdAt,
+          createdBy: versionA.createdBy,
+          data: versionA.data,
+        },
+        versionB: {
+          id: versionB.id,
+          versionNumber: versionB.versionNumber,
+          snapshotType: versionB.snapshotType,
+          createdAt: versionB.createdAt,
+          createdBy: versionB.createdBy,
+          data: versionB.data,
+        },
+        comparison: {
+          hasChanges: JSON.stringify(versionA.data) !== JSON.stringify(versionB.data),
+          versionDifference: Math.abs(versionA.versionNumber - versionB.versionNumber),
+        },
+      };
+    } catch (error) {
+      console.error('Error comparing workflow versions:', error);
+      throw new HttpException(
+        `Failed to compare workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
