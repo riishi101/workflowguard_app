@@ -420,19 +420,33 @@ export class WorkflowService {
             },
           });
           
-          // Create new version if workflow data has changed
-          const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-          const workflowVersionService = new WorkflowVersionService(this.prisma);
+          // Create new version only if workflow data has actually changed
+          const latestVersion = await this.prisma.workflowVersion.findFirst({
+            where: { workflowId: existingWorkflow.id },
+            orderBy: { versionNumber: 'desc' },
+          });
           
-          try {
-            await workflowVersionService.createVersion(
-              existingWorkflow.id,
-              userId,
-              hubspotWorkflow,
-              'Sync Update'
-            );
-          } catch (error) {
-            console.log(`Version creation skipped for workflow ${existingWorkflow.id}: ${error.message}`);
+          // Compare current HubSpot data with latest version data
+          const hasChanged = !latestVersion || 
+            JSON.stringify(latestVersion.data) !== JSON.stringify(hubspotWorkflow);
+          
+          if (hasChanged) {
+            const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+            const workflowVersionService = new WorkflowVersionService(this.prisma);
+            
+            try {
+              await workflowVersionService.createVersion(
+                existingWorkflow.id,
+                userId,
+                hubspotWorkflow,
+                'Sync Update'
+              );
+              console.log(`Version created for changed workflow: ${existingWorkflow.name}`);
+            } catch (error) {
+              console.log(`Version creation failed for workflow ${existingWorkflow.id}: ${error.message}`);
+            }
+          } else {
+            console.log(`No changes detected for workflow: ${existingWorkflow.name}`);
           }
           
           syncedWorkflows.push(updatedWorkflow);
