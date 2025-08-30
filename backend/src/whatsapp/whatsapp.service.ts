@@ -13,13 +13,24 @@ export class WhatsAppService {
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
     this.fromNumber = 'whatsapp:+14155238886'; // Twilio Sandbox WhatsApp number
 
-    if (!accountSid || !authToken) {
-      this.logger.warn('Twilio credentials not configured. WhatsApp service will be disabled.');
+    // Validate Twilio credentials format and presence
+    if (!accountSid || !authToken || 
+        accountSid === 'your-twilio-account-sid' || 
+        authToken === 'your-twilio-auth-token' ||
+        accountSid === 'AC00000000000000000000000000000000' ||
+        !accountSid.startsWith('AC') || 
+        accountSid.length !== 34) {
+      this.logger.warn('Twilio credentials not configured or invalid. WhatsApp service will be disabled.');
       return;
     }
 
-    this.twilioClient = new Twilio(accountSid, authToken);
-    this.logger.log('WhatsApp service initialized with Twilio Sandbox');
+    try {
+      this.twilioClient = new Twilio(accountSid, authToken);
+      this.logger.log('WhatsApp service initialized with Twilio Sandbox');
+    } catch (error) {
+      this.logger.error('Failed to initialize Twilio client:', error);
+      this.logger.warn('WhatsApp service will be disabled due to initialization error.');
+    }
   }
 
   async sendSupportMessage(to: string, message: string, userEmail?: string): Promise<boolean> {
