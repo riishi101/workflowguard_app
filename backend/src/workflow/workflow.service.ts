@@ -420,15 +420,33 @@ export class WorkflowService {
             },
           });
           
+          // Normalize workflow data for accurate comparison
+          const normalizeWorkflowData = (data: any) => {
+            if (!data) return {};
+            
+            // Remove metadata fields that change frequently but don't affect workflow logic
+            const { 
+              updatedAt, 
+              createdAt, 
+              lastModifiedAt,
+              modifiedAt,
+              lastUpdated,
+              ...workflowContent 
+            } = data;
+            
+            // Sort keys to ensure consistent comparison
+            return JSON.stringify(workflowContent, Object.keys(workflowContent).sort());
+          };
+          
           // Create new version only if workflow data has actually changed
           const latestVersion = await this.prisma.workflowVersion.findFirst({
             where: { workflowId: existingWorkflow.id },
             orderBy: { versionNumber: 'desc' },
           });
           
-          // Compare current HubSpot data with latest version data
+          // Compare normalized workflow content
           const hasChanged = !latestVersion || 
-            JSON.stringify(latestVersion.data) !== JSON.stringify(hubspotWorkflow);
+            normalizeWorkflowData(latestVersion.data) !== normalizeWorkflowData(hubspotWorkflow);
           
           if (hasChanged) {
             const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
