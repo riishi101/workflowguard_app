@@ -407,6 +407,7 @@ export class WorkflowService {
         });
 
         if (existingWorkflow) {
+          // Only sync existing protected workflows
           const updatedWorkflow = await this.prisma.workflow.update({
             where: { id: existingWorkflow.id },
             data: {
@@ -418,21 +419,25 @@ export class WorkflowService {
               versions: true,
             },
           });
+          
+          // Create new version if workflow data has changed
+          const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+          const workflowVersionService = new WorkflowVersionService(this.prisma);
+          
+          try {
+            await workflowVersionService.createVersion(
+              existingWorkflow.id,
+              userId,
+              hubspotWorkflow,
+              'Sync Update'
+            );
+          } catch (error) {
+            console.log(`Version creation skipped for workflow ${existingWorkflow.id}: ${error.message}`);
+          }
+          
           syncedWorkflows.push(updatedWorkflow);
-        } else {
-          const newWorkflow = await this.prisma.workflow.create({
-            data: {
-              hubspotId: String(hubspotWorkflow.id),
-              name: hubspotWorkflow.name,
-              ownerId: userId,
-            },
-            include: {
-              owner: true,
-              versions: true,
-            },
-          });
-          syncedWorkflows.push(newWorkflow);
         }
+        // Skip creating new workflows - only sync existing protected ones
       }
 
       return syncedWorkflows;
