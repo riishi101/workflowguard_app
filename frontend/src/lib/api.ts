@@ -266,27 +266,18 @@ class ApiService {
     }
   }
 
-  static async getHubSpotWorkflows(): Promise<ApiResponse<any>> {
+  static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/workflow/hubspot');
+      const response = await apiClient.post('/workflow/sync-hubspot');
       return response.data;
     } catch (error) {
       throw error;
     }
   }
 
-  static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
-    const headers: any = {
-      'Content-Type': 'application/json',
-    };
-
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
+  static async getHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/workflow/sync-hubspot', {}, { headers });
+      const response = await apiClient.get('/workflow/hubspot');
       return response.data;
     } catch (error) {
       throw error;

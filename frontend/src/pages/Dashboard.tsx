@@ -74,7 +74,10 @@ const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [sortBy, setSortBy] = useState<"name" | "lastModified" | "versions">("lastModified");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [syncing, setSyncing] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
 
@@ -104,6 +107,28 @@ const Dashboard: React.FC = () => {
       title: "Dashboard Refreshed",
       description: "Dashboard data has been updated successfully.",
     });
+  };
+
+  const syncHubSpotChanges = async () => {
+    setSyncing(true);
+    try {
+      const response = await ApiService.syncHubSpotWorkflows();
+      if (response.success) {
+        refreshWorkflows();
+        toast({
+          title: "Sync Complete",
+          description: response.message || "Successfully synced workflow changes from HubSpot.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync changes from HubSpot. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // Removed useEffect as data fetching is handled by useWorkflows hook
@@ -366,20 +391,36 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refreshWorkflows()}
-              disabled={isRefreshing}
-              aria-label="Refresh Dashboard"
-            >
-              {isRefreshing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={syncHubSpotChanges}
+                disabled={syncing || isRefreshing}
+                aria-label="Sync HubSpot Changes"
+              >
+                {syncing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Sync Changes
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refreshWorkflows()}
+                disabled={isRefreshing || syncing}
+                aria-label="Refresh Dashboard"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
       </ContentSection>
@@ -497,7 +538,7 @@ const Dashboard: React.FC = () => {
                 />
               </div>
               <div className="flex items-center gap-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={(value: "all" | "active" | "inactive") => setStatusFilter(value)}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
