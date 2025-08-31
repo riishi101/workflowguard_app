@@ -72,7 +72,7 @@ const App = () => {
                 path="/workflow-history/:workflowId"
                 element={<ProtectedRoute><TrialAccessGuard><WorkflowHistoryDetail /></TrialAccessGuard></ProtectedRoute>}
               />
-              <Route path="/compare-versions" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/compare-versions/:workflowId" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
               <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />

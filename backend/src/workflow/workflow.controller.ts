@@ -516,6 +516,37 @@ export class WorkflowController {
     }
   }
 
+  @Get(':id/versions')
+  @UseGuards(JwtAuthGuard, TrialGuard)
+  async getWorkflowVersions(
+    @Param('id') workflowId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const versions = await this.workflowService.getWorkflowVersions(workflowId, userId);
+      return {
+        success: true,
+        data: versions,
+        message: 'Workflow versions retrieved successfully',
+      };
+    } catch (error) {
+      console.error('Failed to get workflow versions:', error);
+      throw new HttpException(
+        'Workflow versions not found or access denied',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
   @Get('stats')
   @UseGuards(JwtAuthGuard, TrialGuard)
   async getWorkflowStats(@Req() req: any) {

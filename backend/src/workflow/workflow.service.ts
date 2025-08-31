@@ -604,6 +604,53 @@ export class WorkflowService {
     }
   }
 
+  async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
+    try {
+      // Verify workflow belongs to user
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Workflow not found or access denied',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Get versions for comparison
+      const versions = await this.prisma.workflowVersion.findMany({
+        where: { workflowId },
+        orderBy: { versionNumber: 'desc' },
+        take: 50,
+      });
+
+      // Transform for frontend
+      return versions.map((version, index) => ({
+        id: version.id,
+        workflowId: version.workflowId,
+        versionNumber: version.versionNumber,
+        date: version.createdAt.toISOString(),
+        type: version.snapshotType,
+        initiator: version.createdBy,
+        notes: this.generateChangeSummary(
+          this.calculateChanges(version.data),
+          version.data,
+        ),
+        changes: this.calculateChanges(version.data),
+        status: index === 0 ? 'current' : 'archived',
+      }));
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
     try {
       const { WorkflowVersionService } = await import(
@@ -931,6 +978,95 @@ export class WorkflowService {
     }
   }
 
+  private calculateChanges(data: any, previousData?: any): any {
+    if (!data) {
+      return { added: 0, modified: 0, removed: 0 };
+    }
+    
+    // If no previous data to compare, treat as initial version
+    if (!previousData) {
+      const steps = this.extractStepsFromWorkflowData(data);
+      return {
+        added: steps.length,
+        modified: 0,
+        removed: 0,
+      };
+    }
+    
+    const currentSteps = this.extractStepsFromWorkflowData(data);
+    const previousSteps = this.extractStepsFromWorkflowData(previousData);
+    
+    // Calculate differences
+    const added = currentSteps.filter(step => 
+      !previousSteps.find(prevStep => this.stepsEqual(step, prevStep))
+    ).length;
+    
+    const removed = previousSteps.filter(step => 
+      !currentSteps.find(currStep => this.stepsEqual(step, currStep))
+    ).length;
+    
+    const modified = currentSteps.filter(step => {
+      const prevStep = previousSteps.find(prevStep => 
+        prevStep.id === step.id || prevStep.actionId === step.actionId
+      );
+      return prevStep && !this.stepsEqual(step, prevStep);
+    }).length;
+    
+    return { added, modified, removed };
+  }
+  
+  private extractStepsFromWorkflowData(data: any): any[] {
+    if (!data) return [];
+    
+    // Handle different HubSpot workflow data structures
+    if (data.actions && Array.isArray(data.actions)) {
+      return data.actions;
+    }
+    if (data.steps && Array.isArray(data.steps)) {
+      return data.steps;
+    }
+    if (data.workflowActions && Array.isArray(data.workflowActions)) {
+      return data.workflowActions;
+    }
+    
+    return [];
+  }
+  
+  private stepsEqual(step1: any, step2: any): boolean {
+    if (!step1 || !step2) return false;
+    
+    // Compare by ID first
+    if (step1.id && step2.id) {
+      return step1.id === step2.id;
+    }
+    
+    // Compare by actionId and other properties
+    return step1.actionId === step2.actionId &&
+           step1.type === step2.type &&
+           step1.actionType === step2.actionType &&
+           JSON.stringify(step1.settings || {}) === JSON.stringify(step2.settings || {});
+  }
+
+  private areStepsEqual(step1: any, step2: any): boolean {
+    return step1.id === step2.id &&
+           step1.actionId === step2.actionId &&
+           step1.type === step2.type &&
+           step1.actionType === step2.actionType &&
+           JSON.stringify(step1.settings || {}) === JSON.stringify(step2.settings || {});
+  }
+
+  private generateChangeSummary(changes: any, data: any): string {
+    const { added, modified, removed } = changes;
+    const summaries = [];
+    if (added > 0) summaries.push(`${added} step(s) added`);
+    if (modified > 0) summaries.push(`${modified} step(s) modified`);
+    if (removed > 0) summaries.push(`${removed} step(s) removed`);
+    if (summaries.length === 0) {
+      return 'No changes detected';
+    }
+    return summaries.join(', ');
+  }
+
   /**
    * Handle workflow updates from HubSpot webhooks.
    * This method is called when a workflow is created, changed, or deleted in HubSpot.
@@ -1011,85 +1147,86 @@ export class WorkflowService {
     }
   }
 
-  async compareWorkflowVersions(
-    workflowId: string,
-    versionAId: string,
-    versionBId: string,
-    userId: string,
-  ): Promise<any> {
-    try {
-      // Verify workflow belongs to user
-      const workflow = await this.prisma.workflow.findFirst({
-        where: {
-          id: workflowId,
-          ownerId: userId,
-        },
-      });
-
-      if (!workflow) {
-        throw new HttpException(
-          'Workflow not found or access denied',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      // Fetch both versions
-      const [versionA, versionB] = await Promise.all([
-        this.prisma.workflowVersion.findFirst({
-          where: {
-            id: versionAId,
-            workflowId: workflowId,
-          },
-        }),
-        this.prisma.workflowVersion.findFirst({
-          where: {
-            id: versionBId,
-            workflowId: workflowId,
-          },
-        }),
-      ]);
-
-      if (!versionA || !versionB) {
-        throw new HttpException(
-          'One or both versions not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      // Return comparison data
-      return {
-        workflow: {
-          id: workflow.id,
-          name: workflow.name,
-          hubspotId: workflow.hubspotId,
-        },
-        versionA: {
-          id: versionA.id,
-          versionNumber: versionA.versionNumber,
-          snapshotType: versionA.snapshotType,
-          createdAt: versionA.createdAt,
-          createdBy: versionA.createdBy,
-          data: versionA.data,
-        },
-        versionB: {
-          id: versionB.id,
-          versionNumber: versionB.versionNumber,
-          snapshotType: versionB.snapshotType,
-          createdAt: versionB.createdAt,
-          createdBy: versionB.createdBy,
-          data: versionB.data,
-        },
-        comparison: {
-          hasChanges: JSON.stringify(versionA.data) !== JSON.stringify(versionB.data),
-          versionDifference: Math.abs(versionA.versionNumber - versionB.versionNumber),
-        },
-      };
-    } catch (error) {
-      console.error('Error comparing workflow versions:', error);
-      throw new HttpException(
-        `Failed to compare workflow versions: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+  private calculateWorkflowDifferences(stepsA: any[], stepsB: any[]): any {
+    const added = [];
+    const modified = [];
+    const removed = [];
+    
+    // Find added steps (in B but not in A)
+    for (const stepB of stepsB) {
+      const matchingStepA = stepsA.find(stepA => 
+        this.stepsEqual(stepA, stepB) || stepA.id === stepB.id || stepA.actionId === stepB.actionId
       );
+      if (!matchingStepA) {
+        added.push({
+          step: stepB,
+          type: 'added',
+          field: 'workflow_step',
+          oldValue: null,
+          newValue: stepB,
+        });
+      }
     }
+    
+    // Find removed steps (in A but not in B)
+    for (const stepA of stepsA) {
+      const matchingStepB = stepsB.find(stepB => 
+        this.stepsEqual(stepA, stepB) || stepA.id === stepB.id || stepA.actionId === stepB.actionId
+      );
+      if (!matchingStepB) {
+        removed.push({
+          step: stepA,
+          type: 'removed',
+          field: 'workflow_step',
+          oldValue: stepA,
+          newValue: null,
+        });
+      }
+    }
+    
+    // Find modified steps
+    for (const stepA of stepsA) {
+      const stepB = stepsB.find(stepB => 
+        (stepA.id && stepA.id === stepB.id) || 
+        (stepA.actionId && stepA.actionId === stepB.actionId)
+      );
+      if (stepB && !this.stepsEqual(stepA, stepB)) {
+        modified.push({
+          step: stepB,
+          type: 'modified',
+          field: 'workflow_step',
+          oldValue: stepA,
+          newValue: stepB,
+        });
+      }
+    }
+    
+    return { added, modified, removed };
+  }
+  
+  private transformStepsForComparison(steps: any[], otherSteps: any[], version: 'A' | 'B'): any[] {
+    return steps.map(step => {
+      const otherStep = otherSteps.find(other => 
+        (step.id && step.id === other.id) || 
+        (step.actionId && step.actionId === other.actionId)
+      );
+      
+      let changeType = null;
+      if (!otherStep) {
+        changeType = version === 'A' ? 'removed' : 'added';
+      } else if (!this.stepsEqual(step, otherStep)) {
+        changeType = 'modified';
+      }
+      
+      return {
+        id: step.id || step.actionId || `step-${Math.random()}`,
+        title: step.name || step.title || step.actionType || 'Unnamed Step',
+        type: step.type || step.actionType || 'action',
+        settings: step.settings || step.config || {},
+        isNew: changeType === 'added',
+        isModified: changeType === 'modified',
+        isRemoved: changeType === 'removed',
+      };
+    });
   }
 }

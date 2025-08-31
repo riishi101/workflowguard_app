@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import { useToast } from "@/hooks/use-toast";
-import { ApiService, WorkflowVersion, WorkflowHistoryVersion } from "@/lib/api";
+import { ApiService } from "@/lib/api";
 import {
   ArrowLeft,
   Plus,
@@ -31,15 +31,34 @@ import {
   Download,
 } from "lucide-react";
 
+interface WorkflowVersion {
+  id: string;
+  versionNumber: string;
+  dateTime: string;
+  notes: string;
+  changes: {
+    added: number;
+    modified: number;
+    removed: number;
+  };
+  status: string;
+  type?: string;
+  date?: string;
+  initiator?: string;
+  steps?: any[];
+}
+
+interface WorkflowHistoryVersion extends WorkflowVersion {}
+
 const CompareVersions = () => {
-  const navigate = useNavigate();
   const { workflowId } = useParams<{ workflowId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [versions, setVersions] = useState<WorkflowHistoryVersion[]>([]);
+  const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [versionA, setVersionA] = useState(searchParams.get("versionA") || "");
   const [versionB, setVersionB] = useState(searchParams.get("versionB") || "");
   const [syncScroll, setSyncScroll] = useState(true);
@@ -69,62 +88,58 @@ const CompareVersions = () => {
 
   const fetchVersions = async () => {
     if (!workflowId) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const [workflowResponse, versionsResponse] = await Promise.all([
         ApiService.getWorkflowDetails(workflowId),
-        ApiService.getWorkflowVersionsForComparison(workflowId)
+        ApiService.getWorkflowVersionsForComparison(workflowId),
       ]);
-      
+
       // Add safety checks for responses
       if (!workflowResponse || !workflowResponse.data) {
-        throw new Error('No workflow details received from server');
+        throw new Error("No workflow details received from server");
       }
-      
+
       if (!versionsResponse || !versionsResponse.data || !Array.isArray(versionsResponse.data)) {
-        throw new Error('No workflow versions received from server');
+        throw new Error("No workflow versions received from server");
       }
-      
+
       // Safely set workflow details
       const safeWorkflowDetails = {
-        id: typeof workflowResponse.data.id === 'string' ? workflowResponse.data.id : '',
-        name: typeof workflowResponse.data.name === 'string' ? workflowResponse.data.name : 'Unknown Workflow',
-        status: typeof workflowResponse.data.status === 'string' ? workflowResponse.data.status : 'unknown',
-        lastModified: typeof workflowResponse.data.lastModified === 'string' ? workflowResponse.data.lastModified : new Date().toISOString(),
-        totalVersions: typeof workflowResponse.data.totalVersions === 'number' ? workflowResponse.data.totalVersions : 0
+        id: typeof workflowResponse.data.id === "string" ? workflowResponse.data.id : "",
+        name: typeof workflowResponse.data.name === "string" ? workflowResponse.data.name : "Unknown Workflow",
+        status: typeof workflowResponse.data.status === "string" ? workflowResponse.data.status : "unknown",
+        lastModified: typeof workflowResponse.data.lastModified === "string" ? workflowResponse.data.lastModified : new Date().toISOString(),
+        totalVersions: typeof workflowResponse.data.totalVersions === "number" ? workflowResponse.data.totalVersions : 0,
       };
-      
+
       setWorkflowDetails(safeWorkflowDetails);
-      
+
       // Safely filter and map versions
       const safeVersions = versionsResponse.data
-        .filter((version: any) => version && typeof version === 'object')
+        .filter((version: any) => version && typeof version === "object")
         .map((version: any) => ({
-          id: typeof version.id === 'string' ? version.id : '',
-          date: typeof version.date === 'string' ? version.date : new Date().toISOString(),
-          type: typeof version.type === 'string' ? version.type : 'Unknown',
-          initiator: typeof version.initiator === 'string' ? version.initiator : 'Unknown',
-          notes: typeof version.notes === 'string' ? version.notes : 'No notes available',
-          workflowId: typeof version.workflowId === 'string' ? version.workflowId : '',
-          versionNumber: typeof version.versionNumber === 'number' ? version.versionNumber : 0,
-          changes: version.changes && typeof version.changes === 'object' ? version.changes : null,
-          status: typeof version.status === 'string' ? version.status : 'unknown'
+          id: typeof version.id === "string" ? version.id : "",
+          versionNumber: typeof version.versionNumber === "string" ? version.versionNumber : "",
+          dateTime: typeof version.dateTime === "string" ? version.dateTime : new Date().toISOString(),
+          notes: typeof version.notes === "string" ? version.notes : "No notes available",
+          changes: version.changes && typeof version.changes === "object" ? version.changes : null,
+          status: typeof version.status === "string" ? version.status : "unknown",
         }));
-      
+
       setVersions(safeVersions);
-      
+
       // Set default versions if not already set
       if (safeVersions.length >= 2) {
         if (!versionA) setVersionA(safeVersions[0].id);
         if (!versionB) setVersionB(safeVersions[1].id);
       }
-      
     } catch (err: any) {
-      console.error('Failed to fetch versions:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load workflow versions. Please try again.');
+      console.error("Failed to fetch versions:", err);
+      setError(err.response?.data?.message || err.message || "Failed to load workflow versions. Please try again.");
       setVersions([]);
       toast({
         title: "Error",
@@ -138,34 +153,37 @@ const CompareVersions = () => {
 
   const fetchComparisonData = async () => {
     if (!workflowId || !versionA || !versionB) return;
-    
+
     try {
       setLoading(true);
       const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
-      
+
+      console.log("Comparison response:", response); // Debug log
+
       // Add safety checks for response
       if (!response || !response.data) {
-        throw new Error('No comparison data received from server');
+        throw new Error("No comparison data received from server");
       }
-      
+
       // Safely set comparison data with validation
       const safeComparisonData = {
-        versionA: response.data.versionA && typeof response.data.versionA === 'object' ? response.data.versionA : null,
-        versionB: response.data.versionB && typeof response.data.versionB === 'object' ? response.data.versionB : null,
-        differences: response.data.differences && typeof response.data.differences === 'object' ? {
+        versionA: response.data.versionA && typeof response.data.versionA === "object" ? response.data.versionA : null,
+        versionB: response.data.versionB && typeof response.data.versionB === "object" ? response.data.versionB : null,
+        differences: response.data.differences && typeof response.data.differences === "object" ? {
           added: Array.isArray(response.data.differences.added) ? response.data.differences.added : [],
           modified: Array.isArray(response.data.differences.modified) ? response.data.differences.modified : [],
-          removed: Array.isArray(response.data.differences.removed) ? response.data.differences.removed : []
+          removed: Array.isArray(response.data.differences.removed) ? response.data.differences.removed : [],
         } : {
           added: [],
           modified: [],
-          removed: []
-        }
+          removed: [],
+        },
       };
-      
+
+      console.log("Safe comparison data:", safeComparisonData); // Debug log
       setComparisonData(safeComparisonData);
     } catch (err: any) {
-      console.error('Failed to fetch comparison data:', err);
+      console.error("Failed to fetch comparison data:", err);
       setComparisonData(null);
       toast({
         title: "Comparison Failed",
@@ -183,21 +201,20 @@ const CompareVersions = () => {
 
   const handleRestoreVersion = async (versionId: string, versionLabel: string) => {
     if (!workflowId) return;
-    
+
     try {
       setRestoring(true);
       await ApiService.restoreWorkflowVersion(workflowId, versionId);
-      
+
       toast({
         title: "Version Restored",
         description: `Successfully restored ${versionLabel}`,
       });
-      
+
       // Navigate back to workflow history
       navigate(`/workflow-history/${workflowId}`);
-      
     } catch (err: any) {
-      console.error('Failed to restore version:', err);
+      console.error("Failed to restore version:", err);
       toast({
         title: "Restore Failed",
         description: err.response?.data?.message || "Failed to restore version. Please try again.",
@@ -210,34 +227,33 @@ const CompareVersions = () => {
 
   const handleDownloadVersion = async (versionId: string, versionLabel: string) => {
     if (!workflowId) return;
-    
+
     try {
       const response = await ApiService.downloadWorkflowVersion(workflowId, versionId);
-      
+
       // Add safety check for response.data
       if (!response || !response.data) {
-        throw new Error('No data received from server');
+        throw new Error("No data received from server");
       }
-      
+
       // Create and download the file
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      const workflowName = workflowDetails?.name || 'unknown-workflow';
+      const workflowName = workflowDetails?.name || "unknown-workflow";
       a.download = `workflow-${workflowName}-${versionLabel}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast({
         title: "Download Complete",
         description: "Workflow version downloaded successfully.",
       });
-      
     } catch (err: any) {
-      console.error('Failed to download version:', err);
+      console.error("Failed to download version:", err);
       toast({
         title: "Download Failed",
         description: err.response?.data?.message || err.message || "Failed to download workflow version. Please try again.",
@@ -323,9 +339,9 @@ const CompareVersions = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               {error}
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleRefresh}
                 className="ml-2"
               >
@@ -344,9 +360,9 @@ const CompareVersions = () => {
 
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         onClick={handleRefresh}
         disabled={loading}
       >
@@ -358,16 +374,16 @@ const CompareVersions = () => {
 
   return (
     <MainAppLayout
-      title={`Compare Workflow Versions: ${workflowDetails?.name || 'Workflow'}`}
+      title={`Compare Workflow Versions: ${workflowDetails?.name || "Workflow"}`}
       description={workflowDetails?.lastModified ? `Last modified: ${new Date(workflowDetails.lastModified).toLocaleString()}` : undefined}
       headerActions={headerActions}
     >
       {/* Breadcrumb */}
       <ContentSection spacing="tight">
         <nav className="flex items-center space-x-2 text-sm text-gray-600">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleBackToHistory}
             className="p-0 h-auto text-gray-600 hover:text-gray-900"
           >
@@ -386,14 +402,14 @@ const CompareVersions = () => {
               <span className="text-sm font-medium text-gray-700">
                 Version A:
               </span>
-              <Select value={versionA} onValueChange={setVersionA} disabled={loading}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select version" />
+              <Select value={versionA} onValueChange={setVersionA}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Version A" />
                 </SelectTrigger>
                 <SelectContent>
                   {versions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {new Date(version.date).toLocaleString()} - {version.type}
+                      Version {version.versionNumber}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -404,14 +420,14 @@ const CompareVersions = () => {
               <span className="text-sm font-medium text-gray-700">
                 Version B:
               </span>
-              <Select value={versionB} onValueChange={setVersionB} disabled={loading}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select version" />
+              <Select value={versionB} onValueChange={setVersionB}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Version B" />
                 </SelectTrigger>
                 <SelectContent>
                   {versions.map((version) => (
                     <SelectItem key={version.id} value={version.id}>
-                      {new Date(version.date).toLocaleString()} - {version.type}
+                      Version {version.versionNumber}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -443,14 +459,14 @@ const CompareVersions = () => {
             <div className="border border-gray-200 rounded-lg">
               <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <h3 className="font-semibold text-gray-900">
-                  Version A - {versionAData?.type}
+                  Version A - {versionAData?.versionNumber}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {versionAData?.date && new Date(versionAData.date).toLocaleString()} by {versionAData?.initiator}
+                  {versionAData?.dateTime && new Date(versionAData.dateTime).toLocaleString()}
                 </p>
               </div>
               <div className="p-4 space-y-3">
-                {comparisonData.versionA?.steps.map((step, index) => {
+                {comparisonData.versionA?.steps?.map((step, index) => {
                   const IconComponent = getStepIcon(step);
                   return (
                     <div
@@ -480,14 +496,14 @@ const CompareVersions = () => {
             <div className="border border-gray-200 rounded-lg">
               <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <h3 className="font-semibold text-gray-900">
-                  Version B - {versionBData?.type}
+                  Version B - {versionBData?.versionNumber}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {versionBData?.date && new Date(versionBData.date).toLocaleString()} by {versionBData?.initiator}
+                  {versionBData?.dateTime && new Date(versionBData.dateTime).toLocaleString()}
                 </p>
               </div>
               <div className="p-4 space-y-3">
-                {comparisonData.versionB?.steps.map((step, index) => {
+                {comparisonData.versionB?.steps?.map((step, index) => {
                   const IconComponent = getStepIcon(step);
                   return (
                     <div

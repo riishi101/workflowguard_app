@@ -241,7 +241,7 @@ const WorkflowHistoryDetail = () => {
 
   const handleCompareSelected = () => {
     if (selectedVersions.length === 2) {
-      navigate(`/compare-versions?workflowId=${workflowId}&versionA=${selectedVersions[0]}&versionB=${selectedVersions[1]}`);
+      navigate(`/compare-versions/${workflowId}?versionA=${selectedVersions[0]}&versionB=${selectedVersions[1]}`);
     }
   };
 
@@ -249,7 +249,7 @@ const WorkflowHistoryDetail = () => {
     // If only one version is selected, use it as the second version
     if (selectedVersions.length === 1) {
       const otherVersion = selectedVersions[0];
-      navigate(`/compare-versions?workflowId=${workflowId}&versionA=${otherVersion}&versionB=${versionId}`);
+      navigate(`/compare-versions/${workflowId}?versionA=${otherVersion}&versionB=${versionId}`);
     } else {
       // If no versions are selected, select this one
       setSelectedVersions([versionId]);
