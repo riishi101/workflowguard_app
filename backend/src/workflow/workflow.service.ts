@@ -1147,6 +1147,98 @@ export class WorkflowService {
     }
   }
 
+  async compareWorkflowVersions(
+    workflowId: string,
+    versionAId: string,
+    versionBId: string,
+    userId: string,
+  ): Promise<any> {
+    try {
+      // Verify workflow belongs to user
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Workflow not found or access denied',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Fetch both versions
+      const [versionA, versionB] = await Promise.all([
+        this.prisma.workflowVersion.findFirst({
+          where: {
+            id: versionAId,
+            workflowId: workflowId,
+          },
+        }),
+        this.prisma.workflowVersion.findFirst({
+          where: {
+            id: versionBId,
+            workflowId: workflowId,
+          },
+        }),
+      ]);
+
+      if (!versionA || !versionB) {
+        throw new HttpException(
+          'One or both versions not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Extract and compare workflow steps
+      const stepsA = this.extractStepsFromWorkflowData(versionA.data);
+      const stepsB = this.extractStepsFromWorkflowData(versionB.data);
+      
+      // Calculate differences
+      const differences = this.calculateWorkflowDifferences(stepsA, stepsB);
+      
+      // Transform steps for frontend display
+      const transformedStepsA = this.transformStepsForComparison(stepsA, stepsB, 'A');
+      const transformedStepsB = this.transformStepsForComparison(stepsB, stepsA, 'B');
+
+      // Return comparison data in expected format
+      return {
+        workflow: {
+          id: workflow.id,
+          name: workflow.name,
+          hubspotId: workflow.hubspotId,
+        },
+        versionA: {
+          id: versionA.id,
+          versionNumber: versionA.versionNumber,
+          snapshotType: versionA.snapshotType,
+          createdAt: versionA.createdAt,
+          createdBy: versionA.createdBy,
+          data: versionA.data,
+          steps: transformedStepsA,
+        },
+        versionB: {
+          id: versionB.id,
+          versionNumber: versionB.versionNumber,
+          snapshotType: versionB.snapshotType,
+          createdAt: versionB.createdAt,
+          createdBy: versionB.createdBy,
+          data: versionB.data,
+          steps: transformedStepsB,
+        },
+        differences: differences,
+      };
+    } catch (error) {
+      console.error('Error comparing workflow versions:', error);
+      throw new HttpException(
+        `Failed to compare workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   private calculateWorkflowDifferences(stepsA: any[], stepsB: any[]): any {
     const added = [];
     const modified = [];
