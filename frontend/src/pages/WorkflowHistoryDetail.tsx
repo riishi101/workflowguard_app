@@ -118,6 +118,12 @@ const WorkflowHistoryDetail = () => {
       setLoading(true);
       setError(null);
       
+      // Validate workflowId format - should be UUID, not HubSpot ID
+      if (!workflowId || /^\d+$/.test(workflowId)) {
+        setError('Invalid workflow ID. Please navigate from the Dashboard instead of entering URLs manually.');
+        setLoading(false);
+        return;
+      }
       
       // Only fetch from backend API
       const versionHistory = await ApiService.getWorkflowHistory(workflowId);

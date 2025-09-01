@@ -76,6 +76,12 @@ const CompareVersions = () => {
 
   useEffect(() => {
     if (workflowId) {
+      // Validate workflowId format - should be UUID, not HubSpot ID
+      if (/^\d+$/.test(workflowId)) {
+        setError('Invalid workflow ID. Please navigate from the Dashboard instead of entering URLs manually.');
+        setLoading(false);
+        return;
+      }
       fetchVersions();
     }
   }, [workflowId]);
