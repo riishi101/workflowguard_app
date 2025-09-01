@@ -106,6 +106,7 @@ export class HubSpotService {
       return workflows;
     } catch (error: any) {
       console.error('🔍 HubSpotService - Error fetching workflows:', error);
+      console.error('🔍 HubSpotService - Error stack:', error.stack);
 
       // Provide more specific error messages
       if (error instanceof HttpException) {
@@ -116,6 +117,14 @@ export class HubSpotService {
         throw new HttpException(
           `HubSpot API error: ${error.message}`,
           HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Add better error handling for common issues
+      if (error.message?.includes('fetch')) {
+        throw new HttpException(
+          'Failed to connect to HubSpot API. Please check your internet connection.',
+          HttpStatus.SERVICE_UNAVAILABLE,
         );
       }
 
