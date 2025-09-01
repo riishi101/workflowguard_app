@@ -817,6 +817,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                     Workflow Name
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
+                    HubSpot ID
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
                     HubSpot Folder
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
@@ -836,7 +839,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
               <tbody className="divide-y divide-gray-200">
                 {filteredWorkflows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center">
+                    <td colSpan={8} className="px-4 py-8 text-center">
                       {searchTerm || statusFilter !== "all" || folderFilter !== "all" ? (
                         <div className="text-gray-500">
                           No workflows match your filters. Try adjusting your search criteria.
@@ -895,6 +898,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
                             </div>
                           )}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 font-mono">
+                        {workflow.id}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {workflow.folder}
