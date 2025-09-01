@@ -107,8 +107,8 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        'https://www.workflowguard.pro',
-        'https://workflowguard.pro',
+        process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
+        process.env.FRONTEND_URL?.replace('www.', '') || 'https://workflowguard.pro',
         'http://localhost:5173',
         'http://localhost:3000',
         'http://127.0.0.1:5173',

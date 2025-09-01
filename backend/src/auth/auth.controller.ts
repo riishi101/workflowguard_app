@@ -9,10 +9,13 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import hubspotConfig from '../config/hubspot.config';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { Public } from './public.decorator';
@@ -22,6 +25,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    @Inject(hubspotConfig.KEY)
+    private hubspotConf: ConfigType<typeof hubspotConfig>,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -36,9 +41,7 @@ export class AuthController {
   async getHubSpotAuthUrl(@Query('marketplace') marketplace?: string) {
     try {
       const clientId = process.env.HUBSPOT_CLIENT_ID;
-      const redirectUri =
-        process.env.HUBSPOT_REDIRECT_URI ||
-        'https://api.workflowguard.pro/api/auth/hubspot/callback';
+      const redirectUri = this.hubspotConf.redirectUri;
 
       // Use minimal scopes as required by HubSpot marketplace review
       const scopes = 'automation oauth';
@@ -56,7 +59,7 @@ export class AuthController {
         );
       }
 
-      const authUrl = `https://app-na2.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+      const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
 
       console.log('Generated OAuth URL:', authUrl);
 
@@ -94,14 +97,14 @@ export class AuthController {
     @Res() res: Response,
   ) {
     // Set CORS headers for the OAuth callback
-    res.header('Access-Control-Allow-Origin', 'https://www.workflowguard.pro');
+    res.header('Access-Control-Allow-Origin', this.hubspotConf.frontendUrl);
     res.header('Access-Control-Allow-Credentials', 'true');
     try {
       console.log('HubSpot callback received with code:', code);
 
       if (!code) {
         console.error('No authorization code provided');
-        return res.redirect('https://www.workflowguard.pro?error=no_code');
+        return res.redirect(`${this.hubspotConf.frontendUrl}?error=no_code`);
       }
 
       // Parse state to check if this is a marketplace installation
@@ -119,9 +122,7 @@ export class AuthController {
       // Full OAuth flow with proper environment variables
       const clientId = process.env.HUBSPOT_CLIENT_ID;
       const clientSecret = process.env.HUBSPOT_CLIENT_SECRET;
-      const redirectUri =
-        process.env.HUBSPOT_REDIRECT_URI ||
-        'https://api.workflowguard.pro/api/auth/hubspot/callback';
+      const redirectUri = this.hubspotConf.redirectUri;
 
       console.log('Using clientId:', clientId);
       console.log('Using redirectUri:', redirectUri);
@@ -130,13 +131,13 @@ export class AuthController {
 
       if (!clientId || !clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
-        return res.redirect('https://www.workflowguard.pro?error=config_error');
+        return res.redirect(`${this.hubspotConf.frontendUrl}?error=config_error`);
       }
 
       // 1. Exchange code for tokens
       console.log('Exchanging code for tokens...');
       const tokenRes = await axios.post(
-        'https://api.hubapi.com/oauth/v1/token',
+        `${this.hubspotConf.apiBaseUrl}/oauth/v1/token`,
         null,
         {
           params: {
@@ -156,13 +157,13 @@ export class AuthController {
 
       if (!access_token) {
         console.error('No access token received from HubSpot');
-        return res.redirect('https://www.workflowguard.pro?error=token_error');
+        return res.redirect(`${this.hubspotConf.frontendUrl}?error=token_error`);
       }
 
       // 2. Fetch user email from HubSpot
       console.log('Fetching user info from HubSpot...');
       const userRes = await axios.get(
-        'https://api.hubapi.com/integrations/v1/me',
+        `${this.hubspotConf.apiBaseUrl}/integrations/v1/me`,
         {
           headers: { Authorization: `Bearer ${access_token}` },
         },
@@ -185,7 +186,7 @@ export class AuthController {
       if (!email) {
         console.error('No email found in HubSpot user response');
         console.error('Available fields:', Object.keys(userRes.data));
-        return res.redirect('https://www.workflowguard.pro?error=user_error');
+        return res.redirect(`${this.hubspotConf.frontendUrl}?error=user_error`);
       }
 
       // 3. Create or update user in your DB with hubspotPortalId and tokens
@@ -234,7 +235,7 @@ export class AuthController {
         } catch (upsertError) {
           console.error('User upsert also failed:', upsertError);
           return res.redirect(
-            'https://www.workflowguard.pro?error=user_creation_failed',
+            `${this.hubspotConf.frontendUrl}?error=user_creation_failed`,
           );
         }
       }
@@ -251,13 +252,13 @@ export class AuthController {
       if (isMarketplaceInstall) {
         // For marketplace installations, redirect to dashboard with success
         console.log('Marketplace installation completed successfully');
-        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}&marketplace=true`;
+        const redirectUrl = `${this.hubspotConf.frontendUrl}?success=true&token=${encodeURIComponent(token)}&marketplace=true`;
         console.log('Redirecting to marketplace success:', redirectUrl);
         return res.redirect(redirectUrl);
       } else {
         // For regular OAuth, redirect to frontend root with success and token
         console.log('OAuth callback completed successfully');
-        const redirectUrl = `https://www.workflowguard.pro?success=true&token=${encodeURIComponent(token)}`;
+        const redirectUrl = `${this.hubspotConf.frontendUrl}?success=true&token=${encodeURIComponent(token)}`;
         console.log('Redirecting to:', redirectUrl);
         return res.redirect(redirectUrl);
       }
@@ -279,7 +280,7 @@ export class AuthController {
       console.error('Error message:', error.message);
       console.error('Error name:', error.name);
 
-      return res.redirect('https://www.workflowguard.pro?error=oauth_failed');
+      return res.redirect(`${this.hubspotConf.frontendUrl}?error=oauth_failed`);
     }
   }
 

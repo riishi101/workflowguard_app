@@ -722,11 +722,14 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // In production, this would generate a Razorpay customer portal URL
-      // For now, return a mock URL
-      const mockUpdateUrl = `https://dashboard.razorpay.com/app/subscriptions/${user.subscription?.razorpayCustomerId || 'mock-customer-id'}/update-payment-method`;
+      // Generate Razorpay customer portal URL for payment method updates
+      if (!user.subscription?.razorpayCustomerId) {
+        throw new BadRequestException('No active subscription found');
+      }
       
-      return mockUpdateUrl;
+      const updateUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/subscriptions/${user.subscription.razorpayCustomerId}/update-payment-method`;
+      
+      return updateUrl;
     } catch (error) {
       this.logger.error(`Failed to get payment method update URL for user ${userId}:`, error);
       throw new HttpException(
@@ -749,11 +752,10 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // In production, this would fetch the actual invoice from Razorpay
-      // For now, return a mock invoice URL
-      const mockInvoiceUrl = `https://dashboard.razorpay.com/app/invoices/${invoiceId}/download`;
+      // Generate Razorpay invoice download URL
+      const invoiceUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/invoices/${invoiceId}/download`;
       
-      return mockInvoiceUrl;
+      return invoiceUrl;
     } catch (error) {
       this.logger.error(`Failed to get invoice for user ${userId}, invoice ${invoiceId}:`, error);
       throw new HttpException(

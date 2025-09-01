@@ -7,6 +7,10 @@ export default registerAs('hubspot', () => ({
   redirectUri:
     process.env.HUBSPOT_REDIRECT_URI ||
     'https://api.workflowguard.pro/api/auth/hubspot/callback',
+  
+  // Frontend URLs
+  frontendUrl: process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
+  apiUrl: process.env.API_URL || 'https://api.workflowguard.pro',
 
   // Minimal scopes as required by HubSpot marketplace review
   scopes: [
