@@ -229,8 +229,8 @@ export class HubSpotService {
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
     try {
-      // Use the current HubSpot API v4 endpoint for workflows
-      const endpoint = `https://api.hubapi.com/automation/v4/workflows?limit=100&properties=id,name,description,enabled,createdAt,updatedAt`;
+      // Use the correct HubSpot API v3 endpoint for workflows
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows?limit=100`;
 
       console.log('🔍 HubSpotService - Calling endpoint:', endpoint);
 
