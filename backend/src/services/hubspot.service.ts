@@ -276,14 +276,14 @@ export class HubSpotService {
         );
       }
 
-      const data = (await response.json()) as HubSpotApiResponse;
+      const data = (await response.json()) as any;
       console.log(
         '🔍 HubSpotService - Raw API response:',
         JSON.stringify(data, null, 2),
       );
 
-      // Extract workflows from response
-      const workflowList: HubSpotWorkflow[] = data.results || [];
+      // Extract workflows from response - v3 API uses 'workflows' property
+      const workflowList: HubSpotWorkflow[] = data.workflows || [];
       console.log(
         '🔍 HubSpotService - Extracted workflow list:',
         workflowList.length,
