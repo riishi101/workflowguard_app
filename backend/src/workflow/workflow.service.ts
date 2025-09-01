@@ -1056,15 +1056,16 @@ export class WorkflowService {
   }
 
   private generateChangeSummary(changes: any, data: any): string {
-    const { added, modified, removed } = changes;
-    const summaries = [];
-    if (added > 0) summaries.push(`${added} step(s) added`);
-    if (modified > 0) summaries.push(`${modified} step(s) modified`);
-    if (removed > 0) summaries.push(`${removed} step(s) removed`);
-    if (summaries.length === 0) {
+    if (!changes || (changes.added === 0 && changes.modified === 0 && changes.removed === 0)) {
       return 'No changes detected';
     }
-    return summaries.join(', ');
+
+    const parts = [];
+    if (changes.added > 0) parts.push(`${changes.added} added`);
+    if (changes.modified > 0) parts.push(`${changes.modified} modified`);
+    if (changes.removed > 0) parts.push(`${changes.removed} removed`);
+
+    return parts.join(', ');
   }
 
   /**
