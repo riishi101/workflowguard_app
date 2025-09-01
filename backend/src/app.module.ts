@@ -18,6 +18,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AppCacheModule } from './cache/cache.module';
 import { RazorpayModule } from './razorpay/razorpay.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
+import { HubSpotModule } from './services/hubspot.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
 
@@ -27,6 +28,7 @@ import { BillingController } from './controllers/hubspot-billing.controller';
       isGlobal: true,
     }),
     PrismaModule,
+    HubSpotModule,
     AuthModule,
     UserModule,
     WorkflowModule,

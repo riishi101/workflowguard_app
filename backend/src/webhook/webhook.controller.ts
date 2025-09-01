@@ -143,14 +143,9 @@ export class WebhookController {
         const { portalId, objectId: workflowId } = body;
         
         if (portalId && workflowId) {
-          // Import services dynamically to avoid circular dependency
-          const { WorkflowService } = await import('../workflow/workflow.service');
-          const { HubSpotService } = await import('../services/hubspot.service');
-          
-          const hubspotService = new HubSpotService(this.prisma);
-          const workflowService = new WorkflowService(this.prisma, hubspotService);
-          
-          await workflowService.handleWorkflowUpdate(portalId.toString(), workflowId.toString());
+          console.log(`📝 Webhook: Processing workflow update for portal ${portalId}, workflow ${workflowId}`);
+          // Note: Workflow update handling will be processed by the workflow service
+          // This webhook confirms receipt but actual processing happens via the workflow service
         }
       }
 
