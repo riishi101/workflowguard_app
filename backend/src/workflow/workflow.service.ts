@@ -1,12 +1,15 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HubSpotService } from '../services/hubspot.service';
+import { WorkflowVersionService } from '../workflow-version/workflow-version.service';
 
 @Injectable()
 export class WorkflowService {
   constructor(
     private prisma: PrismaService,
     private hubspotService: HubSpotService,
+    @Inject(forwardRef(() => WorkflowVersionService))
+    private workflowVersionService: WorkflowVersionService,
   ) {}
 
   async create(createWorkflowDto: any) {
@@ -391,10 +394,7 @@ export class WorkflowService {
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
-      const { HubSpotService } = await import('../services/hubspot.service');
-      const hubspotService = new HubSpotService(this.prisma);
-
-      const hubspotWorkflows = await hubspotService.getWorkflows(userId);
+      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
 
       const syncedWorkflows = [];
 
@@ -449,11 +449,8 @@ export class WorkflowService {
             normalizeWorkflowData(latestVersion.data) !== normalizeWorkflowData(hubspotWorkflow);
           
           if (hasChanged) {
-            const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
-            const workflowVersionService = new WorkflowVersionService(this.prisma);
-            
             try {
-              await workflowVersionService.createVersion(
+              await this.workflowVersionService.createVersion(
                 existingWorkflow.id,
                 userId,
                 hubspotWorkflow,
@@ -486,12 +483,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const backup = await workflowVersionService.createAutomatedBackup(
+      const backup = await this.workflowVersionService.createAutomatedBackup(
         workflowId,
         userId,
       );
@@ -510,12 +502,7 @@ export class WorkflowService {
     changes: any,
   ): Promise<void> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      await workflowVersionService.createChangeNotification(
+      await this.workflowVersionService.createChangeNotification(
         workflowId,
         userId,
         changes,
@@ -534,13 +521,8 @@ export class WorkflowService {
     requestedChanges: any,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
       const approvalRequest =
-        await workflowVersionService.createApprovalWorkflow(
+        await this.workflowVersionService.createApprovalWorkflow(
           workflowId,
           userId,
           requestedChanges,
@@ -560,12 +542,7 @@ export class WorkflowService {
     endDate: Date,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const report = await workflowVersionService.generateComplianceReport(
+      const report = await this.workflowVersionService.generateComplianceReport(
         workflowId,
         startDate,
         endDate,
@@ -585,12 +562,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const result = await workflowVersionService.restoreWorkflowVersion(
+      const result = await this.workflowVersionService.restoreWorkflowVersion(
         workflowId,
         versionId,
         userId,
@@ -653,12 +625,7 @@ export class WorkflowService {
 
   async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const result = await workflowVersionService.rollbackWorkflow(
+      const result = await this.workflowVersionService.rollbackWorkflow(
         workflowId,
         userId,
       );
@@ -676,12 +643,7 @@ export class WorkflowService {
     versionId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const version = await workflowVersionService.findOne(versionId);
+      const version = await this.workflowVersionService.findOne(versionId);
       return version;
     } catch (error) {
       throw new HttpException(
@@ -1109,9 +1071,7 @@ export class WorkflowService {
 
     try {
       // 3. Fetch the latest workflow data from HubSpot
-      const { HubSpotService } = await import('../services/hubspot.service');
-      const hubspotService = new HubSpotService(this.prisma);
-      const hubspotWorkflowData = await hubspotService.getWorkflowById(
+      const hubspotWorkflowData = await this.hubspotService.getWorkflowById(
         user.id,
         hubspotWorkflowId,
       );
@@ -1124,12 +1084,7 @@ export class WorkflowService {
       }
 
       // 4. Create a new version (automated backup)
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      await workflowVersionService.createVersion(
+      await this.workflowVersionService.createVersion(
         workflow.id,
         user.id,
         hubspotWorkflowData,
