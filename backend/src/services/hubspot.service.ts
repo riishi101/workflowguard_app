@@ -233,6 +233,7 @@ export class HubSpotService {
       const endpoint = `https://api.hubapi.com/automation/v3/workflows?limit=100`;
 
       console.log('🔍 HubSpotService - Calling endpoint:', endpoint);
+      console.log('🔍 HubSpotService - Using access token (first 10 chars):', accessToken?.substring(0, 10));
 
       const response = await fetch(endpoint, {
         method: 'GET',
@@ -244,6 +245,7 @@ export class HubSpotService {
       });
 
       console.log('🔍 HubSpotService - Response status:', response.status);
+      console.log('🔍 HubSpotService - Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -308,9 +310,36 @@ export class HubSpotService {
       return workflows;
     } catch (error: any) {
       console.error('🔍 HubSpotService - Error calling HubSpot API:', error);
-      throw new Error(
-        `Failed to fetch workflows from HubSpot: ${error.message}`,
-      );
+      console.error('🔍 HubSpotService - Error details:', {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        cause: error.cause,
+        stack: error.stack?.substring(0, 500)
+      });
+      
+      // Provide more specific error messages based on error type
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new HttpException(
+          'Failed to connect to HubSpot API. Please check your internet connection.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw new HttpException(
+          'Unable to reach HubSpot servers. Please try again later.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      } else if (error.message.includes('timeout')) {
+        throw new HttpException(
+          'HubSpot API request timed out. Please try again.',
+          HttpStatus.REQUEST_TIMEOUT,
+        );
+      } else {
+        throw new HttpException(
+          `Failed to fetch workflows from HubSpot: ${error.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
     }
   }
 
