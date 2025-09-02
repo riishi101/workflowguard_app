@@ -650,6 +650,7 @@ export class WorkflowService {
           });
 
           // Fetch current workflow data from HubSpot for comparison
+          console.log(`Fetching current data for workflow ${hubspotWorkflow.id}...`);
           const currentWorkflowData = await hubspotService.getWorkflowById(
             String(hubspotWorkflow.id),
             userId,
@@ -657,8 +658,12 @@ export class WorkflowService {
 
           let shouldCreateVersion = false;
           
+          console.log(`Workflow ${hubspotWorkflow.id} - Latest version exists:`, !!latestVersion);
+          console.log(`Workflow ${hubspotWorkflow.id} - Current data exists:`, !!currentWorkflowData);
+          
           if (latestVersion && currentWorkflowData) {
             // Compare current HubSpot data with latest version
+            console.log(`Comparing data for workflow ${hubspotWorkflow.id}...`);
             const normalizedCurrentData = this.normalizeWorkflowData(currentWorkflowData);
             const normalizedLatestData = this.normalizeWorkflowData(latestVersion.data);
             
@@ -667,15 +672,25 @@ export class WorkflowService {
             
             shouldCreateVersion = currentDataString !== latestDataString;
             
-            console.log(`Workflow ${hubspotWorkflow.id} comparison:`, {
+            console.log(`Workflow ${hubspotWorkflow.id} comparison result:`, {
               hasChanges: shouldCreateVersion,
               currentDataLength: currentDataString.length,
-              latestDataLength: latestDataString.length
+              latestDataLength: latestDataString.length,
+              latestVersionNumber: latestVersion.versionNumber,
+              latestVersionCreated: latestVersion.createdAt
             });
-          } else if (!latestVersion) {
+            
+            if (shouldCreateVersion) {
+              console.log(`CHANGES DETECTED for workflow ${hubspotWorkflow.id} - will create new version`);
+            } else {
+              console.log(`NO CHANGES detected for workflow ${hubspotWorkflow.id} - skipping version creation`);
+            }
+          } else if (!latestVersion && currentWorkflowData) {
             // No versions exist, create initial version
             shouldCreateVersion = true;
-            console.log(`Creating initial version for workflow ${hubspotWorkflow.id}`);
+            console.log(`Creating initial version for workflow ${hubspotWorkflow.id} (no existing versions)`);
+          } else if (!currentWorkflowData) {
+            console.log(`ERROR: Could not fetch current data for workflow ${hubspotWorkflow.id}`);
           }
 
           // Update workflow metadata
