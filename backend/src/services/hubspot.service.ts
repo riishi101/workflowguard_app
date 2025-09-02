@@ -161,7 +161,7 @@ export class HubSpotService {
         }
       }
 
-      const endpoint = `https://api.hubapi.com/automation/v4/workflows/${workflowId}`;
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
       console.log(`🔍 HubSpotService - Calling endpoint: ${endpoint}`);
 
       const response = await fetch(endpoint, {
@@ -208,8 +208,8 @@ export class HubSpotService {
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
     try {
-      // Use the v4 API endpoint for workflows
-      const endpoint = `https://api.hubapi.com/automation/v4/workflows?properties=name,enabled,description&limit=100`;
+      // Use the v3 API endpoint for workflows (v4 returns 404 errors)
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows?limit=100`;
 
       console.log('🔍 HubSpotService - Calling endpoint:', endpoint);
       console.log('🔍 HubSpotService - Using access token (first 10 chars):', accessToken?.substring(0, 10));
