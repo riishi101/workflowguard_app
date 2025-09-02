@@ -267,17 +267,8 @@ class ApiService {
   }
 
   static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
-    const headers: any = {
-      'Content-Type': 'application/json',
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     try {
-      const response = await apiClient.post('/workflow/sync-hubspot', {}, { headers });
+      const response = await apiClient.post('/workflow/sync-hubspot');
       return response.data;
     } catch (error) {
       throw error;
