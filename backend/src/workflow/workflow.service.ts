@@ -93,12 +93,42 @@ export class WorkflowService {
 
   async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
     try {
+      // First, try to find the workflow by internal ID
+      let workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+        },
+      });
+
+      // If not found by internal ID, try by HubSpot ID
+      if (!workflow) {
+        workflow = await this.prisma.workflow.findFirst({
+          where: {
+            hubspotId: workflowId,
+            ownerId: userId,
+          },
+        });
+      }
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
       const versions = await this.prisma.workflowVersion.findMany({
         where: {
-          workflowId: workflowId,
+          workflowId: workflow.id,
         },
         orderBy: {
           createdAt: 'desc',
+        },
+        include: {
+          workflow: {
+            select: {
+              name: true,
+              hubspotId: true,
+            },
+          },
         },
       });
 
@@ -106,6 +136,101 @@ export class WorkflowService {
     } catch (error) {
       throw new HttpException(
         `Failed to get workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async createInitialVersionIfMissing(workflowId: string, userId: string): Promise<any> {
+    try {
+      // First, find the workflow by internal ID or HubSpot ID
+      let workflow = await this.prisma.workflow.findFirst({
+        where: {
+          OR: [
+            { id: workflowId, ownerId: userId },
+            { hubspotId: workflowId, ownerId: userId },
+          ],
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Check if versions already exist
+      const existingVersions = await this.prisma.workflowVersion.findMany({
+        where: { workflowId: workflow.id },
+      });
+
+      if (existingVersions.length > 0) {
+        return existingVersions[0]; // Already has versions
+      }
+
+      // Try to get workflow data from HubSpot
+      let workflowData = null;
+      try {
+        const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+        workflowData = hubspotWorkflows.find((w) => String(w.id) === workflow.hubspotId);
+      } catch (hubspotError) {
+        console.warn('Could not fetch HubSpot data for initial version:', hubspotError.message);
+      }
+
+      // Create initial version data
+      const initialVersionData = workflowData || {
+        hubspotId: workflow.hubspotId,
+        name: workflow.name,
+        status: 'active',
+        type: 'unknown',
+        enabled: true,
+        metadata: {
+          protection: {
+            initialProtection: true,
+            protectedAt: new Date().toISOString(),
+            protectedBy: userId,
+            source: workflowData ? 'hubspot' : 'minimal',
+          },
+        },
+      };
+
+      // Create the initial version
+      const initialVersion = await this.prisma.workflowVersion.create({
+        data: {
+          workflowId: workflow.id,
+          versionNumber: 1,
+          snapshotType: 'Initial Protection',
+          createdBy: userId,
+          data: initialVersionData as any,
+        },
+      });
+
+      // Create audit log
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'initial_version_created',
+          entityType: 'workflow',
+          entityId: workflow.id,
+          newValue: JSON.stringify({
+            versionId: initialVersion.id,
+            versionNumber: 1,
+            protectionType: 'initial',
+          }),
+        },
+      });
+
+      console.log('✅ Created initial version for workflow:', {
+        workflowId: workflow.id,
+        workflowName: workflow.name,
+        hubspotId: workflow.hubspotId,
+        versionId: initialVersion.id,
+        dataSource: workflowData ? 'hubspot' : 'minimal',
+      });
+
+      return initialVersion;
+    } catch (error) {
+      console.error('Failed to create initial version:', error);
+      throw new HttpException(
+        `Failed to create initial version: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
