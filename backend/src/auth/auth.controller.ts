@@ -192,51 +192,62 @@ export class AuthController {
       console.log('Creating/updating user in database...');
       let user;
       try {
-        user = await this.authService.validateHubSpotUser({
-          email,
-          name: email.split('@')[0], // Use email prefix as name
-          portalId: String(hub_id), // Convert to string for Prisma schema
-          accessToken: access_token,
-          refreshToken: refresh_token,
-          tokenExpiresAt: new Date(
-            Date.now() + tokenRes.data.expires_in * 1000,
-          ),
+        // First try to find existing user
+        user = await this.prisma.user.findUnique({
+          where: { email },
         });
-        console.log('User found/created:', user.id);
+
+        if (user) {
+          // Update existing user
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              hubspotPortalId: String(hub_id),
+              hubspotAccessToken: access_token,
+              hubspotRefreshToken: refresh_token,
+              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+            },
+          });
+          console.log('User updated successfully:', user.id);
+        } else {
+          // Create new user
+          user = await this.prisma.user.create({
+            data: {
+              email,
+              name: email.split('@')[0],
+              hubspotPortalId: String(hub_id),
+              hubspotAccessToken: access_token,
+              hubspotRefreshToken: refresh_token,
+              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+            },
+          });
+          console.log('User created successfully:', user.id);
+
+          // Try to create trial subscription, but don't fail if it doesn't work
+          try {
+            await this.prisma.subscription.create({
+              data: {
+                userId: user.id,
+                planId: 'professional',
+                status: 'trial',
+                trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days
+              },
+            });
+            console.log('Trial subscription created for user:', user.id);
+          } catch (subscriptionError) {
+            console.warn('Failed to create trial subscription, but continuing:', subscriptionError.message);
+          }
+        }
       } catch (dbError) {
         console.error('Database operation failed:', dbError);
         console.error('Database error details:', {
           message: dbError.message,
           code: dbError.code,
           meta: dbError.meta,
-          stack: dbError.stack
         });
-        // Try alternative user creation approach
-        try {
-          user = await this.prisma.user.upsert({
-            where: { email },
-            update: {
-              hubspotPortalId: String(hub_id), // Convert to string for Prisma schema
-              hubspotAccessToken: access_token,
-              hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
-            },
-            create: {
-              email,
-              name: email.split('@')[0],
-              hubspotPortalId: String(hub_id), // Convert to string for Prisma schema
-              hubspotAccessToken: access_token,
-              hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
-            },
-          });
-          console.log('User upserted successfully:', user.id);
-        } catch (upsertError) {
-          console.error('User upsert also failed:', upsertError);
-          return res.redirect(
-            `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_creation_failed`,
-          );
-        }
+        return res.redirect(
+          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_creation_failed`,
+        );
       }
 
       // 4. Generate JWT token for the user
