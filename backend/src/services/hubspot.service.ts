@@ -209,7 +209,7 @@ export class HubSpotService {
 
     try {
       // Use the v4 API endpoint for workflows
-      const endpoint = `https://api.hubapi.com/automation/v4/workflows?limit=100`;
+      const endpoint = `https://api.hubapi.com/automation/v4/workflows?properties=name,enabled,description&limit=100`;
 
       console.log('🔍 HubSpotService - Calling endpoint:', endpoint);
       console.log('🔍 HubSpotService - Using access token (first 10 chars):', accessToken?.substring(0, 10));
@@ -264,24 +264,26 @@ export class HubSpotService {
         JSON.stringify(data, null, 2),
       );
 
-      // Extract workflows from response - v3 API uses 'workflows' property
-      const workflowList: HubSpotWorkflow[] = data.workflows || [];
+      // Extract workflows from response - v4 API returns results directly
+      const workflowList: HubSpotWorkflow[] = data.results || [];
       console.log(
         '🔍 HubSpotService - Extracted workflow list:',
         workflowList.length,
       );
 
       // Transform HubSpot workflows to our format
-      const workflows = workflowList.map(
-        (workflow: HubSpotWorkflow): WorkflowResponse => ({
-          id: workflow.id || 'unknown',
-          name: workflow.name || 'Unnamed Workflow',
-          description: workflow.description || '',
-          type: 'workflow',
-          status: workflow.enabled ? 'active' : 'inactive',
-          hubspotData: workflow, // Keep original data for reference
-        }),
-      );
+      const workflows = workflowList
+        .filter(workflow => workflow.type === 'WORKFLOW') // Only get workflows, not other action types
+        .map(
+          (workflow: HubSpotWorkflow): WorkflowResponse => ({
+            id: workflow.id || 'unknown',
+            name: workflow.name || 'Unnamed Workflow',
+            description: workflow.description || '',
+            type: 'workflow',
+            status: workflow.enabled ? 'active' : 'inactive',
+            hubspotData: workflow, // Keep original data for reference
+          }),
+        );
 
       console.log(
         '🔍 HubSpotService - Final transformed workflows:',
