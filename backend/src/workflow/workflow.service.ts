@@ -578,6 +578,53 @@ export class WorkflowService {
     return workflows.map((workflow) => workflow.id);
   }
 
+  private normalizeWorkflowData(data: any): any {
+    if (!data) return {};
+    
+    // Create a copy to avoid mutating original data
+    const normalized = JSON.parse(JSON.stringify(data));
+    
+    // Remove metadata fields that change frequently but don't affect workflow logic
+    const fieldsToRemove = [
+      'updatedAt',
+      'createdAt', 
+      'lastModified',
+      'lastUpdated',
+      'modifiedAt',
+      'id', // HubSpot internal ID can change
+      'portalId',
+      'migrationStatus',
+      'insertedAt'
+    ];
+    
+    const removeFields = (obj: any) => {
+      if (typeof obj === 'object' && obj !== null) {
+        if (Array.isArray(obj)) {
+          obj.forEach(removeFields);
+        } else {
+          fieldsToRemove.forEach(field => delete obj[field]);
+          Object.values(obj).forEach(removeFields);
+        }
+      }
+    };
+    
+    removeFields(normalized);
+    
+    // Sort object keys for consistent comparison
+    const sortKeys = (obj: any): any => {
+      if (typeof obj !== 'object' || obj === null) return obj;
+      if (Array.isArray(obj)) return obj.map(sortKeys);
+      
+      const sorted: any = {};
+      Object.keys(obj).sort().forEach(key => {
+        sorted[key] = sortKeys(obj[key]);
+      });
+      return sorted;
+    };
+    
+    return sortKeys(normalized);
+  }
+
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
       const { HubSpotService } = await import('../services/hubspot.service');
@@ -596,6 +643,42 @@ export class WorkflowService {
         });
 
         if (existingWorkflow) {
+          // Get the latest version to compare with current HubSpot data
+          const latestVersion = await this.prisma.workflowVersion.findFirst({
+            where: { workflowId: existingWorkflow.id },
+            orderBy: { createdAt: 'desc' },
+          });
+
+          // Fetch current workflow data from HubSpot for comparison
+          const currentWorkflowData = await hubspotService.getWorkflowById(
+            String(hubspotWorkflow.id),
+            userId,
+          );
+
+          let shouldCreateVersion = false;
+          
+          if (latestVersion && currentWorkflowData) {
+            // Compare current HubSpot data with latest version
+            const normalizedCurrentData = this.normalizeWorkflowData(currentWorkflowData);
+            const normalizedLatestData = this.normalizeWorkflowData(latestVersion.data);
+            
+            const currentDataString = JSON.stringify(normalizedCurrentData);
+            const latestDataString = JSON.stringify(normalizedLatestData);
+            
+            shouldCreateVersion = currentDataString !== latestDataString;
+            
+            console.log(`Workflow ${hubspotWorkflow.id} comparison:`, {
+              hasChanges: shouldCreateVersion,
+              currentDataLength: currentDataString.length,
+              latestDataLength: latestDataString.length
+            });
+          } else if (!latestVersion) {
+            // No versions exist, create initial version
+            shouldCreateVersion = true;
+            console.log(`Creating initial version for workflow ${hubspotWorkflow.id}`);
+          }
+
+          // Update workflow metadata
           const updatedWorkflow = await this.prisma.workflow.update({
             where: { id: existingWorkflow.id },
             data: {
@@ -604,10 +687,39 @@ export class WorkflowService {
             },
             include: {
               owner: true,
-              versions: true,
+              versions: { orderBy: { createdAt: 'desc' } },
             },
           });
-          syncedWorkflows.push(updatedWorkflow);
+
+          // Create new version if content changed
+          if (shouldCreateVersion && currentWorkflowData) {
+            const nextVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+            
+            await this.prisma.workflowVersion.create({
+              data: {
+                workflowId: existingWorkflow.id,
+                versionNumber: nextVersionNumber,
+                data: currentWorkflowData,
+                snapshotType: 'Manual Sync',
+                createdBy: 'System (Sync)',
+                createdAt: new Date(),
+              },
+            });
+
+            console.log(`Created version ${nextVersionNumber} for workflow ${hubspotWorkflow.id}`);
+            
+            // Refetch workflow with updated versions
+            const workflowWithNewVersion = await this.prisma.workflow.findUnique({
+              where: { id: existingWorkflow.id },
+              include: {
+                owner: true,
+                versions: { orderBy: { createdAt: 'desc' } },
+              },
+            });
+            syncedWorkflows.push(workflowWithNewVersion);
+          } else {
+            syncedWorkflows.push(updatedWorkflow);
+          }
         } else {
           const newWorkflow = await this.prisma.workflow.create({
             data: {
