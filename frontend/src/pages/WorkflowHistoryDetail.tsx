@@ -125,7 +125,11 @@ const WorkflowHistoryDetail = () => {
         return;
       }
       
-      // Only fetch from backend API
+      // Determine if this is a HubSpot ID (numeric) or internal UUID
+      const isHubSpotId = /^\d+$/.test(workflowId);
+      console.log('Workflow ID type:', { workflowId, isHubSpotId });
+      
+      // Fetch workflow history using appropriate API method
       const versionHistory = await ApiService.getWorkflowHistory(workflowId);
       const apiVersions = versionHistory.data || versionHistory;
       if (apiVersions && Array.isArray(apiVersions) && apiVersions.length > 0) {
