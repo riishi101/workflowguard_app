@@ -132,6 +132,8 @@ const WorkflowHistoryDetail = () => {
       // Fetch workflow history using appropriate API method
       const versionHistory = await ApiService.getWorkflowHistory(workflowId);
       const apiVersions = versionHistory.data || versionHistory;
+      
+      // Handle successful response with versions
       if (apiVersions && Array.isArray(apiVersions) && apiVersions.length > 0) {
         const transformedVersions: WorkflowVersion[] = apiVersions.map((version: any, index: number) => ({
           id: version.id,
@@ -156,6 +158,37 @@ const WorkflowHistoryDetail = () => {
             lastModified: workflowDetails?.lastModified || '',
             totalVersions: apiVersions.length,
             hubspotUrl: workflowDetails?.hubspotUrl || ''
+          });
+        }
+      } else if (apiVersions && Array.isArray(apiVersions) && apiVersions.length === 0) {
+        // Workflow exists but has no versions yet - this is valid
+        console.log('Workflow found but no versions exist yet');
+        setVersions([]);
+        
+        // Try to fetch workflow details to show workflow info even without versions
+        try {
+          const workflowDetailsResponse = await ApiService.getWorkflowDetails(workflowId);
+          const workflowData = workflowDetailsResponse.data || workflowDetailsResponse;
+          if (workflowData) {
+            setWorkflowDetails({
+              id: workflowData.id || workflowId,
+              name: workflowData.name || `Workflow ${workflowId}`,
+              status: workflowData.enabled ? 'active' : 'inactive',
+              lastModified: workflowData.updatedAt || '',
+              totalVersions: 0,
+              hubspotUrl: workflowData.hubspotUrl || ''
+            });
+          }
+        } catch (detailsError) {
+          console.error('Failed to fetch workflow details:', detailsError);
+          // Set basic workflow details even if API call fails
+          setWorkflowDetails({
+            id: workflowId,
+            name: `Workflow ${workflowId}`,
+            status: 'active',
+            lastModified: '',
+            totalVersions: 0,
+            hubspotUrl: ''
           });
         }
       } else {
