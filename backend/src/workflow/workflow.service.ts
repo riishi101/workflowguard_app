@@ -384,6 +384,14 @@ export class WorkflowService {
     const protectedWorkflows: any[] = [];
     const errors: Array<{ workflowId: string; error: string }> = [];
 
+    // Fetch HubSpot workflows OUTSIDE the transaction to avoid conflicts
+    let hubspotWorkflows: any[] = [];
+    try {
+      hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+    } catch (hubspotError) {
+      console.warn('Could not fetch HubSpot workflows, proceeding with minimal data:', hubspotError.message);
+    }
+
     // Use transaction to ensure data consistency
     await this.prisma.$transaction(async (tx) => {
       for (const workflowId of workflowIds) {
@@ -420,15 +428,8 @@ export class WorkflowService {
 
           // ALWAYS ensure workflow has at least one version
           if (!workflow?.versions?.length) {
-            let workflowData = null;
-            
-            // Try to get workflow data from HubSpot
-            try {
-              const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
-              workflowData = hubspotWorkflows.find((w) => String(w.id) === hubspotId);
-            } catch (hubspotError) {
-              console.warn('Could not fetch HubSpot data, using minimal data:', hubspotError.message);
-            }
+            // Use pre-fetched HubSpot data (outside transaction)
+            const workflowData = hubspotWorkflows.find((w) => String(w.id) === hubspotId);
 
             // Create initial version with available data
             const initialVersionData = workflowData || {

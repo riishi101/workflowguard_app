@@ -173,7 +173,7 @@ export class HubSpotService {
         }
       }
 
-      const endpoint = `https://api.hubapi.com/automation/v4/workflows/${workflowId}`;
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
       console.log(`🔍 HubSpotService - Calling endpoint: ${endpoint}`);
 
       const response = await fetch(endpoint, {
@@ -222,17 +222,12 @@ export class HubSpotService {
     try {
       // Try multiple HubSpot API endpoints for workflows
       const endpoints = [
-        // Current HubSpot API endpoints (v4 is preferred)
-        `https://api.hubapi.com/automation/v4/workflows`,
-        `https://api.hubapi.com/automation/v4/workflows?limit=100`,
-        `https://api.hubapi.com/automation/v4/workflows?properties=id,name,description,enabled,createdAt,updatedAt`,
-        `https://api.hubapi.com/automation/v4/workflows?limit=50&properties=id,name,description,enabled`,
-        // Legacy endpoints as fallback
+        // Use v3 endpoints first (v4 returns 404 errors)
         `https://api.hubapi.com/automation/v3/workflows`,
         `https://api.hubapi.com/automation/v3/workflows?limit=100`,
         `https://api.hubapi.com/automation/v3/workflows?properties=id,name,description,enabled,createdAt,updatedAt`,
         `https://api.hubapi.com/automation/v3/workflows?limit=50&properties=id,name,description,enabled`,
-        // Alternative endpoints
+        // Alternative endpoints as fallback
         `https://api.hubapi.com/marketing/v3/workflows`,
         `https://api.hubapi.com/workflows/v1/workflows`,
       ];
