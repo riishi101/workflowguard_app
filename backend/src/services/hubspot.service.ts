@@ -267,23 +267,21 @@ export class HubSpotService {
       // Extract workflows from response - v4 API returns results directly
       const workflowList: HubSpotWorkflow[] = data.results || [];
       console.log(
-        '🔍 HubSpotService - Extracted workflow list:',
-        workflowList.length,
+        '🔍 HubSpotService - Raw workflow list:',
+        JSON.stringify(workflowList, null, 2),
       );
 
       // Transform HubSpot workflows to our format
-      const workflows = workflowList
-        .filter(workflow => workflow.type === 'WORKFLOW') // Only get workflows, not other action types
-        .map(
-          (workflow: HubSpotWorkflow): WorkflowResponse => ({
-            id: workflow.id || 'unknown',
-            name: workflow.name || 'Unnamed Workflow',
-            description: workflow.description || '',
-            type: 'workflow',
-            status: workflow.enabled ? 'active' : 'inactive',
-            hubspotData: workflow, // Keep original data for reference
-          }),
-        );
+      const workflows = workflowList.map(
+        (workflow: HubSpotWorkflow): WorkflowResponse => ({
+          id: workflow.id || workflow.workflowId || 'unknown',
+          name: workflow.name || workflow.workflowName || 'Unnamed Workflow',
+          description: workflow.description || workflow.meta?.description || '',
+          type: 'workflow',
+          status: workflow.enabled === false ? 'inactive' : 'active',
+          hubspotData: workflow,
+        }),
+      );
 
       console.log(
         '🔍 HubSpotService - Final transformed workflows:',

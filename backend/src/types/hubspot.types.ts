@@ -3,7 +3,9 @@ export interface HubSpotWorkflow {
   name: string;
   description?: string;
   enabled?: boolean;
+  type?: string;
   status?: string;
+  actionType?: string;
   workflowId?: string;
   objectId?: string;
   workflowName?: string;
@@ -11,6 +13,8 @@ export interface HubSpotWorkflow {
   meta?: {
     description?: string;
     status?: string;
+    actionType?: string;
+    type?: string;
   };
 }
 
