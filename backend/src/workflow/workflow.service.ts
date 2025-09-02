@@ -1,15 +1,12 @@
-import { Injectable, HttpException, HttpStatus, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HubSpotService } from '../services/hubspot.service';
-import { WorkflowVersionService } from '../workflow-version/workflow-version.service';
 
 @Injectable()
 export class WorkflowService {
   constructor(
     private prisma: PrismaService,
     private hubspotService: HubSpotService,
-    @Inject(forwardRef(() => WorkflowVersionService))
-    private workflowVersionService: WorkflowVersionService,
   ) {}
 
   async create(createWorkflowDto: any) {
@@ -33,23 +30,12 @@ export class WorkflowService {
         '🔍 WorkflowService - getHubSpotWorkflows called for userId:',
         userId,
       );
-      try {
-        const workflows = await this.hubspotService.getWorkflows(userId);
-        console.log(
-          '🔍 WorkflowService - Retrieved workflows from HubSpot:',
-          workflows.length,
-        );
-        return workflows;
-      } catch (error) {
-        // Ensure HubSpot error messages are propagated
-        if (error?.response?.data?.message || error?.response?.message) {
-          throw new HttpException(
-            error.response.data?.message || error.response.message,
-            error.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-        }
-        throw error;
-      }
+      const workflows = await this.hubspotService.getWorkflows(userId);
+      console.log(
+        '🔍 WorkflowService - Retrieved workflows from HubSpot:',
+        workflows.length,
+      );
+      return workflows;
     } catch (error) {
       console.error(
         '🔍 WorkflowService - Error getting HubSpot workflows:',
@@ -405,7 +391,10 @@ export class WorkflowService {
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
-      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+      const { HubSpotService } = await import('../services/hubspot.service');
+      const hubspotService = new HubSpotService(this.prisma);
+
+      const hubspotWorkflows = await hubspotService.getWorkflows(userId);
 
       const syncedWorkflows = [];
 
@@ -418,7 +407,6 @@ export class WorkflowService {
         });
 
         if (existingWorkflow) {
-          // Only sync existing protected workflows
           const updatedWorkflow = await this.prisma.workflow.update({
             where: { id: existingWorkflow.id },
             data: {
@@ -430,54 +418,21 @@ export class WorkflowService {
               versions: true,
             },
           });
-          
-          // Normalize workflow data for accurate comparison
-          const normalizeWorkflowData = (data: any) => {
-            if (!data) return {};
-            
-            // Remove metadata fields that change frequently but don't affect workflow logic
-            const { 
-              updatedAt, 
-              createdAt, 
-              lastModifiedAt,
-              modifiedAt,
-              lastUpdated,
-              ...workflowContent 
-            } = data;
-            
-            // Sort keys to ensure consistent comparison
-            return JSON.stringify(workflowContent, Object.keys(workflowContent).sort());
-          };
-          
-          // Create new version only if workflow data has actually changed
-          const latestVersion = await this.prisma.workflowVersion.findFirst({
-            where: { workflowId: existingWorkflow.id },
-            orderBy: { versionNumber: 'desc' },
-          });
-          
-          // Compare normalized workflow content
-          const hasChanged = !latestVersion || 
-            normalizeWorkflowData(latestVersion.data) !== normalizeWorkflowData(hubspotWorkflow);
-          
-          if (hasChanged) {
-            try {
-              await this.workflowVersionService.createVersion(
-                existingWorkflow.id,
-                userId,
-                hubspotWorkflow,
-                'Sync Update'
-              );
-              console.log(`Version created for changed workflow: ${existingWorkflow.name}`);
-            } catch (error) {
-              console.log(`Version creation failed for workflow ${existingWorkflow.id}: ${error.message}`);
-            }
-          } else {
-            console.log(`No changes detected for workflow: ${existingWorkflow.name}`);
-          }
-          
           syncedWorkflows.push(updatedWorkflow);
+        } else {
+          const newWorkflow = await this.prisma.workflow.create({
+            data: {
+              hubspotId: String(hubspotWorkflow.id),
+              name: hubspotWorkflow.name,
+              ownerId: userId,
+            },
+            include: {
+              owner: true,
+              versions: true,
+            },
+          });
+          syncedWorkflows.push(newWorkflow);
         }
-        // Skip creating new workflows - only sync existing protected ones
       }
 
       return syncedWorkflows;
@@ -494,7 +449,12 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const backup = await this.workflowVersionService.createAutomatedBackup(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      const backup = await workflowVersionService.createAutomatedBackup(
         workflowId,
         userId,
       );
@@ -513,7 +473,12 @@ export class WorkflowService {
     changes: any,
   ): Promise<void> {
     try {
-      await this.workflowVersionService.createChangeNotification(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      await workflowVersionService.createChangeNotification(
         workflowId,
         userId,
         changes,
@@ -532,8 +497,13 @@ export class WorkflowService {
     requestedChanges: any,
   ): Promise<any> {
     try {
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
       const approvalRequest =
-        await this.workflowVersionService.createApprovalWorkflow(
+        await workflowVersionService.createApprovalWorkflow(
           workflowId,
           userId,
           requestedChanges,
@@ -553,7 +523,12 @@ export class WorkflowService {
     endDate: Date,
   ): Promise<any> {
     try {
-      const report = await this.workflowVersionService.generateComplianceReport(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      const report = await workflowVersionService.generateComplianceReport(
         workflowId,
         startDate,
         endDate,
@@ -573,7 +548,12 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const result = await this.workflowVersionService.restoreWorkflowVersion(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      const result = await workflowVersionService.restoreWorkflowVersion(
         workflowId,
         versionId,
         userId,
@@ -587,56 +567,14 @@ export class WorkflowService {
     }
   }
 
-  async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
-    try {
-      // Verify workflow belongs to user
-      const workflow = await this.prisma.workflow.findFirst({
-        where: {
-          id: workflowId,
-          ownerId: userId,
-        },
-      });
-
-      if (!workflow) {
-        throw new HttpException(
-          'Workflow not found or access denied',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      // Get versions for comparison
-      const versions = await this.prisma.workflowVersion.findMany({
-        where: { workflowId },
-        orderBy: { versionNumber: 'desc' },
-        take: 50,
-      });
-
-      // Transform for frontend
-      return versions.map((version, index) => ({
-        id: version.id,
-        workflowId: version.workflowId,
-        versionNumber: version.versionNumber,
-        date: version.createdAt.toISOString(),
-        type: version.snapshotType,
-        initiator: version.createdBy,
-        notes: this.generateChangeSummary(
-          this.calculateChanges(version.data),
-          version.data,
-        ),
-        changes: this.calculateChanges(version.data),
-        status: index === 0 ? 'current' : 'archived',
-      }));
-    } catch (error) {
-      throw new HttpException(
-        `Failed to get workflow versions: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
     try {
-      const result = await this.workflowVersionService.rollbackWorkflow(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      const result = await workflowVersionService.rollbackWorkflow(
         workflowId,
         userId,
       );
@@ -654,7 +592,12 @@ export class WorkflowService {
     versionId: string,
   ): Promise<any> {
     try {
-      const version = await this.workflowVersionService.findOne(versionId);
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      const version = await workflowVersionService.findOne(versionId);
       return version;
     } catch (error) {
       throw new HttpException(
@@ -951,96 +894,6 @@ export class WorkflowService {
     }
   }
 
-  private calculateChanges(data: any, previousData?: any): any {
-    if (!data) {
-      return { added: 0, modified: 0, removed: 0 };
-    }
-    
-    // If no previous data to compare, treat as initial version
-    if (!previousData) {
-      const steps = this.extractStepsFromWorkflowData(data);
-      return {
-        added: steps.length,
-        modified: 0,
-        removed: 0,
-      };
-    }
-    
-    const currentSteps = this.extractStepsFromWorkflowData(data);
-    const previousSteps = this.extractStepsFromWorkflowData(previousData);
-    
-    // Calculate differences
-    const added = currentSteps.filter(step => 
-      !previousSteps.find(prevStep => this.stepsEqual(step, prevStep))
-    ).length;
-    
-    const removed = previousSteps.filter(step => 
-      !currentSteps.find(currStep => this.stepsEqual(step, currStep))
-    ).length;
-    
-    const modified = currentSteps.filter(step => {
-      const prevStep = previousSteps.find(prevStep => 
-        prevStep.id === step.id || prevStep.actionId === step.actionId
-      );
-      return prevStep && !this.stepsEqual(step, prevStep);
-    }).length;
-    
-    return { added, modified, removed };
-  }
-  
-  private extractStepsFromWorkflowData(data: any): any[] {
-    if (!data) return [];
-    
-    // Handle different HubSpot workflow data structures
-    if (data.actions && Array.isArray(data.actions)) {
-      return data.actions;
-    }
-    if (data.steps && Array.isArray(data.steps)) {
-      return data.steps;
-    }
-    if (data.workflowActions && Array.isArray(data.workflowActions)) {
-      return data.workflowActions;
-    }
-    
-    return [];
-  }
-  
-  private stepsEqual(step1: any, step2: any): boolean {
-    if (!step1 || !step2) return false;
-    
-    // Compare by ID first
-    if (step1.id && step2.id) {
-      return step1.id === step2.id;
-    }
-    
-    // Compare by actionId and other properties
-    return step1.actionId === step2.actionId &&
-           step1.type === step2.type &&
-           step1.actionType === step2.actionType &&
-           JSON.stringify(step1.settings || {}) === JSON.stringify(step2.settings || {});
-  }
-
-  private areStepsEqual(step1: any, step2: any): boolean {
-    return step1.id === step2.id &&
-           step1.actionId === step2.actionId &&
-           step1.type === step2.type &&
-           step1.actionType === step2.actionType &&
-           JSON.stringify(step1.settings || {}) === JSON.stringify(step2.settings || {});
-  }
-
-  private generateChangeSummary(changes: any, data: any): string {
-    if (!changes || (changes.added === 0 && changes.modified === 0 && changes.removed === 0)) {
-      return 'No changes detected';
-    }
-
-    const parts = [];
-    if (changes.added > 0) parts.push(`${changes.added} added`);
-    if (changes.modified > 0) parts.push(`${changes.modified} modified`);
-    if (changes.removed > 0) parts.push(`${changes.removed} removed`);
-
-    return parts.join(', ');
-  }
-
   /**
    * Handle workflow updates from HubSpot webhooks.
    * This method is called when a workflow is created, changed, or deleted in HubSpot.
@@ -1082,6 +935,7 @@ export class WorkflowService {
 
     try {
       // 3. Fetch the latest workflow data from HubSpot
+      // Assuming getWorkflowById exists in HubSpotService. If not, this will need to be implemented.
       const hubspotWorkflowData = await this.hubspotService.getWorkflowById(
         user.id,
         hubspotWorkflowId,
@@ -1095,11 +949,16 @@ export class WorkflowService {
       }
 
       // 4. Create a new version (automated backup)
-      await this.workflowVersionService.createVersion(
+      const { WorkflowVersionService } = await import(
+        '../workflow-version/workflow-version.service'
+      );
+      const workflowVersionService = new WorkflowVersionService(this.prisma);
+
+      await workflowVersionService.createVersion(
         workflow.id,
         user.id,
         hubspotWorkflowData,
-        'Automated',
+        'webhook',
       );
 
       console.log(
@@ -1112,180 +971,5 @@ export class WorkflowService {
       );
       // Do not re-throw error to prevent HubSpot from retrying indefinitely
     }
-  }
-
-  async compareWorkflowVersions(
-    workflowId: string,
-    versionAId: string,
-    versionBId: string,
-    userId: string,
-  ): Promise<any> {
-    try {
-      // Verify workflow belongs to user
-      const workflow = await this.prisma.workflow.findFirst({
-        where: {
-          id: workflowId,
-          ownerId: userId,
-        },
-      });
-
-      if (!workflow) {
-        throw new HttpException(
-          'Workflow not found or access denied',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      // Fetch both versions
-      const [versionA, versionB] = await Promise.all([
-        this.prisma.workflowVersion.findFirst({
-          where: {
-            id: versionAId,
-            workflowId: workflowId,
-          },
-        }),
-        this.prisma.workflowVersion.findFirst({
-          where: {
-            id: versionBId,
-            workflowId: workflowId,
-          },
-        }),
-      ]);
-
-      if (!versionA || !versionB) {
-        throw new HttpException(
-          'One or both versions not found',
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      // Extract and compare workflow steps
-      const stepsA = this.extractStepsFromWorkflowData(versionA.data);
-      const stepsB = this.extractStepsFromWorkflowData(versionB.data);
-      
-      // Calculate differences
-      const differences = this.calculateWorkflowDifferences(stepsA, stepsB);
-      
-      // Transform steps for frontend display
-      const transformedStepsA = this.transformStepsForComparison(stepsA, stepsB, 'A');
-      const transformedStepsB = this.transformStepsForComparison(stepsB, stepsA, 'B');
-
-      // Return comparison data in expected format
-      return {
-        workflow: {
-          id: workflow.id,
-          name: workflow.name,
-          hubspotId: workflow.hubspotId,
-        },
-        versionA: {
-          id: versionA.id,
-          versionNumber: versionA.versionNumber,
-          snapshotType: versionA.snapshotType,
-          createdAt: versionA.createdAt,
-          createdBy: versionA.createdBy,
-          data: versionA.data,
-          steps: transformedStepsA,
-        },
-        versionB: {
-          id: versionB.id,
-          versionNumber: versionB.versionNumber,
-          snapshotType: versionB.snapshotType,
-          createdAt: versionB.createdAt,
-          createdBy: versionB.createdBy,
-          data: versionB.data,
-          steps: transformedStepsB,
-        },
-        differences: differences,
-      };
-    } catch (error) {
-      console.error('Error comparing workflow versions:', error);
-      throw new HttpException(
-        `Failed to compare workflow versions: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private calculateWorkflowDifferences(stepsA: any[], stepsB: any[]): any {
-    const added = [];
-    const modified = [];
-    const removed = [];
-    
-    // Find added steps (in B but not in A)
-    for (const stepB of stepsB) {
-      const matchingStepA = stepsA.find(stepA => 
-        this.stepsEqual(stepA, stepB) || stepA.id === stepB.id || stepA.actionId === stepB.actionId
-      );
-      if (!matchingStepA) {
-        added.push({
-          step: stepB,
-          type: 'added',
-          field: 'workflow_step',
-          oldValue: null,
-          newValue: stepB,
-        });
-      }
-    }
-    
-    // Find removed steps (in A but not in B)
-    for (const stepA of stepsA) {
-      const matchingStepB = stepsB.find(stepB => 
-        this.stepsEqual(stepA, stepB) || stepA.id === stepB.id || stepA.actionId === stepB.actionId
-      );
-      if (!matchingStepB) {
-        removed.push({
-          step: stepA,
-          type: 'removed',
-          field: 'workflow_step',
-          oldValue: stepA,
-          newValue: null,
-        });
-      }
-    }
-    
-    // Find modified steps
-    for (const stepA of stepsA) {
-      const stepB = stepsB.find(stepB => 
-        (stepA.id && stepA.id === stepB.id) || 
-        (stepA.actionId && stepA.actionId === stepB.actionId)
-      );
-      if (stepB && !this.stepsEqual(stepA, stepB)) {
-        modified.push({
-          step: stepB,
-          type: 'modified',
-          field: 'workflow_step',
-          oldValue: stepA,
-          newValue: stepB,
-        });
-      }
-    }
-    
-    return { added, modified, removed };
-  }
-  
-  private transformStepsForComparison(steps: any[], otherSteps: any[], version: 'A' | 'B'): any[] {
-    return steps.map(step => {
-      const otherStep = otherSteps.find(other => 
-        (step.id && step.id === other.id) || 
-        (step.actionId && step.actionId === other.actionId)
-      );
-      
-      let changeType = null;
-      if (!otherStep) {
-        changeType = version === 'A' ? 'removed' : 'added';
-      } else if (!this.stepsEqual(step, otherStep)) {
-        changeType = 'modified';
-      }
-      
-      return {
-        id: step.id || step.actionId || `step-${Math.random()}`,
-        title: step.name || step.title || step.actionType || 'Unnamed Step',
-        type: step.type || step.actionType || 'action',
-        settings: step.settings || step.config || {},
-        isNew: changeType === 'added',
-        isModified: changeType === 'modified',
-        isRemoved: changeType === 'removed',
-      };
-    });
   }
 }
