@@ -5,12 +5,7 @@ import {
   HubSpotApiResponse,
   WorkflowResponse,
   HubSpotTokenResponse,
-} from '../types/        if (response.status === 403) {
-          const errorData = await response.json();
-          throw new HttpException(
-            `HubSpot permission error: ${errorData.message}`,
-            HttpStatus.FORBIDDEN,
-          );ot.types';
+} from '../types/hubspot.types';
 
 @Injectable()
 export class HubSpotService {
