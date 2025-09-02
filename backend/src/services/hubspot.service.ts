@@ -5,7 +5,12 @@ import {
   HubSpotApiResponse,
   WorkflowResponse,
   HubSpotTokenResponse,
-} from '../types/hubspot.types';
+} from '../types/        if (response.status === 403) {
+          const errorData = await response.json();
+          throw new HttpException(
+            `HubSpot permission error: ${errorData.message}`,
+            HttpStatus.FORBIDDEN,
+          );ot.types';
 
 @Injectable()
 export class HubSpotService {
@@ -208,8 +213,8 @@ export class HubSpotService {
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
     try {
-      // Use the correct HubSpot API v3 endpoint for workflows
-      const endpoint = `https://api.hubapi.com/automation/v3/workflows?limit=100`;
+      // Use the v4 API endpoint for workflows
+      const endpoint = `https://api.hubapi.com/automation/v4/workflows?limit=100`;
 
       console.log('🔍 HubSpotService - Calling endpoint:', endpoint);
       console.log('🔍 HubSpotService - Using access token (first 10 chars):', accessToken?.substring(0, 10));
@@ -240,8 +245,9 @@ export class HubSpotService {
             HttpStatus.UNAUTHORIZED,
           );
         } else if (response.status === 403) {
+          const errorData = await response.json() as { message: string };
           throw new HttpException(
-            'Insufficient permissions to access HubSpot workflows.',
+            `HubSpot permission error: ${errorData.message}`,
             HttpStatus.FORBIDDEN,
           );
         } else if (response.status === 429) {
