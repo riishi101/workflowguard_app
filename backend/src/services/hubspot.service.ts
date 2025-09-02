@@ -227,7 +227,23 @@ export class HubSpotService {
       console.log('🔍 HubSpotService - Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        let errorData: any = null;
+        
+        try {
+          errorText = await response.text();
+          // Try to parse as JSON if possible
+          if (errorText) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              // Not JSON, keep as text
+            }
+          }
+        } catch (error) {
+          console.error('Failed to read error response:', error);
+        }
+        
         console.error(
           '🔍 HubSpotService - API request failed:',
           response.status,
@@ -240,9 +256,9 @@ export class HubSpotService {
             HttpStatus.UNAUTHORIZED,
           );
         } else if (response.status === 403) {
-          const errorData = await response.json() as { message: string };
+          const message = errorData?.message || errorText || 'Permission denied';
           throw new HttpException(
-            `HubSpot permission error: ${errorData.message}`,
+            `HubSpot permission error: ${message}`,
             HttpStatus.FORBIDDEN,
           );
         } else if (response.status === 429) {
@@ -253,7 +269,7 @@ export class HubSpotService {
         }
         
         throw new HttpException(
-          `HubSpot API error: ${response.status}`,
+          `HubSpot API error: ${response.status} - ${errorText}`,
           HttpStatus.BAD_REQUEST,
         );
       }
