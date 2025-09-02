@@ -48,6 +48,69 @@ export class WorkflowService {
     }
   }
 
+  async compareWorkflowVersions(
+    workflowId: string,
+    versionA: string,
+    versionB: string,
+  ): Promise<any> {
+    try {
+      const versionAData = await this.prisma.workflowVersion.findFirst({
+        where: {
+          workflowId: workflowId,
+          versionNumber: parseInt(versionA),
+        },
+      });
+
+      const versionBData = await this.prisma.workflowVersion.findFirst({
+        where: {
+          workflowId: workflowId,
+          versionNumber: parseInt(versionB),
+        },
+      });
+
+      if (!versionAData || !versionBData) {
+        throw new HttpException(
+          'One or both versions not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return {
+        versionA: versionAData,
+        versionB: versionBData,
+        comparison: {
+          // Add comparison logic here
+          differences: [],
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to compare workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
+    try {
+      const versions = await this.prisma.workflowVersion.findMany({
+        where: {
+          workflowId: workflowId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return versions;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async findOne(id: string, userId: string) {
     try {
       const workflow = await this.prisma.workflow.findFirst({
