@@ -699,7 +699,7 @@ export class WorkflowService {
               data: {
                 workflowId: existingWorkflow.id,
                 versionNumber: nextVersionNumber,
-                data: currentWorkflowData,
+                data: currentWorkflowData as any,
                 snapshotType: 'Manual Sync',
                 createdBy: 'System (Sync)',
                 createdAt: new Date(),
