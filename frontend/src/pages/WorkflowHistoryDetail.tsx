@@ -160,7 +160,25 @@ const WorkflowHistoryDetail = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch workflow history:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to load workflow history';
+      console.error('Error details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      let errorMessage = 'Failed to load workflow history';
+      
+      if (err.response?.status === 404) {
+        errorMessage = `Workflow not found. This workflow (ID: ${workflowId}) may not be protected yet or may not exist in your account.`;
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please refresh the page and try again.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
