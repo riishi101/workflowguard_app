@@ -443,7 +443,6 @@ export class WorkflowController {
         workflowId,
         versionA,
         versionB,
-        userId,
       );
       return {
         success: true,
