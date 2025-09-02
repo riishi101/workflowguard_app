@@ -181,7 +181,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       } else if (err.response?.status === 401) {
         setError('Authentication failed. Please reconnect your HubSpot account.');
       } else {
-        setError('Failed to load workflows from HubSpot. This might be a temporary issue.');
+        // Show the specific error message from the API if available
+      const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+      setError(`Failed to load workflows from HubSpot: ${errorMessage}`);
       }
       
       // Set empty workflows array instead of demo data

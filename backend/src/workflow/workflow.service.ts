@@ -33,12 +33,23 @@ export class WorkflowService {
         '🔍 WorkflowService - getHubSpotWorkflows called for userId:',
         userId,
       );
-      const workflows = await this.hubspotService.getWorkflows(userId);
-      console.log(
-        '🔍 WorkflowService - Retrieved workflows from HubSpot:',
-        workflows.length,
-      );
-      return workflows;
+      try {
+        const workflows = await this.hubspotService.getWorkflows(userId);
+        console.log(
+          '🔍 WorkflowService - Retrieved workflows from HubSpot:',
+          workflows.length,
+        );
+        return workflows;
+      } catch (error) {
+        // Ensure HubSpot error messages are propagated
+        if (error?.response?.data?.message || error?.response?.message) {
+          throw new HttpException(
+            error.response.data?.message || error.response.message,
+            error.response.status || HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+        throw error;
+      }
     } catch (error) {
       console.error(
         '🔍 WorkflowService - Error getting HubSpot workflows:',
