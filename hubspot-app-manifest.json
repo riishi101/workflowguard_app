@@ -6,7 +6,8 @@
     "type": "oauth2",
     "scopes": [
       "automation",
-      "oauth"
+      "oauth",
+      "workflows-access-public-api"
     ]
   },
   "ui": {
