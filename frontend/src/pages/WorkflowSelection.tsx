@@ -182,8 +182,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         setError('Authentication failed. Please reconnect your HubSpot account.');
       } else {
         // Show the specific error message from the API if available
-      const errorMessage = error.response?.data?.message || error.response?.data || error.message;
-      setError(`Failed to load workflows from HubSpot: ${errorMessage}`);
+        const errorMessage = err?.response?.data?.message || err?.response?.data || err?.message;
+        setError(`Failed to load workflows from HubSpot: ${errorMessage}`);
       }
       
       // Set empty workflows array instead of demo data
@@ -216,7 +216,8 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       setError(null);
       setRetryCount(prev => prev + 1);
       await fetchWorkflows();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to refresh workflows:', error);
     } finally {
       setRefreshing(false);
     }
@@ -231,9 +232,9 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       if (subscription.success && subscription.data) {
         const limit = subscription.data.planCapacity || 500;
         setPlanLimit(limit);
-        
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch subscription:', error);
       // Keep default limit of 500
     }
   };
@@ -394,10 +395,10 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
     } catch (error: any) {
       console.error('WorkflowSelection - Failed to start protection:', error);
       console.error('WorkflowSelection - Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        statusText: error.response?.statusText
+        message: (error as any)?.message,
+        status: (error as any)?.response?.status,
+        data: (error as any)?.response?.data,
+        statusText: (error as any)?.response?.statusText
       });
       
       // Reset navigation state on error
@@ -405,13 +406,13 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
       let errorMessage = "Failed to start protection. Please try again.";
       
-      if (error.response?.status === 401) {
+      if ((error as any)?.response?.status === 401) {
         errorMessage = "Authentication failed. Please reconnect your HubSpot account.";
-      } else if (error.response?.status === 400) {
-        errorMessage = error.response?.data?.message || "Invalid request. Please check your selection.";
-      } else if (error.response?.status === 500) {
+      } else if ((error as any)?.response?.status === 400) {
+        errorMessage = (error as any)?.response?.data?.message || "Invalid request. Please check your selection.";
+      } else if ((error as any)?.response?.status === 500) {
         errorMessage = "Server error. Please try again later.";
-      } else if (error.message?.includes('Network Error')) {
+      } else if ((error as any)?.message?.includes('Network Error')) {
         errorMessage = "Network error. Please check your connection and try again.";
       }
       
