@@ -532,6 +532,19 @@ export class WorkflowController {
 
     try {
       const versions = await this.workflowService.getWorkflowVersions(workflowId, userId);
+      
+      // If no versions found, try to create an initial version
+      if (versions.length === 0) {
+        await this.workflowService.createInitialVersionIfMissing(workflowId, userId);
+        // Retry getting versions after creating initial version
+        const newVersions = await this.workflowService.getWorkflowVersions(workflowId, userId);
+        return {
+          success: true,
+          data: newVersions,
+          message: 'Initial version created and retrieved successfully',
+        };
+      }
+      
       return {
         success: true,
         data: versions,
