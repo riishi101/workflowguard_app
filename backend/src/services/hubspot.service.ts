@@ -28,32 +28,16 @@ export class HubSpotService {
         },
       });
 
-      console.log(
-        '🔍 HubSpotService - User found:',
-        user
-          ? {
-              id: user.id,
-              email: user.email,
-              hasAccessToken: !!user.hubspotAccessToken,
-              hasRefreshToken: !!user.hubspotRefreshToken,
-              hasPortalId: !!user.hubspotPortalId,
-              tokenExpiresAt: user.hubspotTokenExpiresAt,
-            }
-          : null,
-      );
-
       if (!user) {
         console.log('🔍 HubSpotService - User not found');
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       if (!user.hubspotAccessToken) {
-        console.log(
-          '🔍 HubSpotService - No HubSpot access token found for user',
-        );
+        console.log('🔍 HubSpotService - No HubSpot access token found for user');
         throw new HttpException(
           'HubSpot not connected. Please connect your HubSpot account first.',
-          HttpStatus.BAD_REQUEST,
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
@@ -66,7 +50,7 @@ export class HubSpotService {
         } else {
           console.log('🔍 HubSpotService - No refresh token available');
           throw new HttpException(
-            'HubSpot token expired and no refresh token available. Please reconnect your HubSpot account.',
+            'Your HubSpot session has expired and cannot be refreshed. Please reconnect your HubSpot account.',
             HttpStatus.UNAUTHORIZED,
           );
         }
@@ -79,19 +63,12 @@ export class HubSpotService {
       });
 
       if (!currentUser?.hubspotAccessToken) {
-        console.log(
-          '🔍 HubSpotService - No valid HubSpot access token after refresh',
-        );
+        console.log('🔍 HubSpotService - No valid HubSpot access token after refresh');
         throw new HttpException(
-          'No valid HubSpot access token',
+          'No valid HubSpot access token. Please reconnect your HubSpot account.',
           HttpStatus.UNAUTHORIZED,
         );
       }
-
-      console.log(
-        '🔍 HubSpotService - Calling HubSpot API with token:',
-        currentUser.hubspotAccessToken.substring(0, 20) + '...',
-      );
 
       // Call HubSpot API to get workflows
       const workflows = await this.fetchWorkflowsFromHubSpot(
@@ -99,35 +76,37 @@ export class HubSpotService {
         currentUser.hubspotPortalId || '',
       );
 
-      console.log(
-        '🔍 HubSpotService - Fetched workflows from HubSpot:',
-        workflows.length,
-      );
       return workflows;
     } catch (error: any) {
       console.error('🔍 HubSpotService - Error fetching workflows:', error);
-      console.error('🔍 HubSpotService - Error stack:', error.stack);
-
       // Provide more specific error messages
       if (error instanceof HttpException) {
         throw error;
       }
-
-      if (error.message?.includes('HubSpot API error')) {
+      if (error.message?.includes('HubSpot token expired') || error.message?.includes('No valid HubSpot access token')) {
         throw new HttpException(
-          `HubSpot API error: ${error.message}`,
-          HttpStatus.BAD_REQUEST,
+          'Your HubSpot session is invalid or expired. Please reconnect your HubSpot account.',
+          HttpStatus.UNAUTHORIZED,
         );
       }
-
-      // Add better error handling for common issues
-      if (error.message?.includes('fetch')) {
+      if (error.message?.includes('Insufficient permissions')) {
+        throw new HttpException(
+          'Insufficient permissions to access HubSpot workflows. Please check your HubSpot app permissions.',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+      if (error.message?.includes('rate limit')) {
+        throw new HttpException(
+          'HubSpot API rate limit exceeded. Please try again later.',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+      if (error.message?.includes('fetch') || error.message?.includes('connect')) {
         throw new HttpException(
           'Failed to connect to HubSpot API. Please check your internet connection.',
           HttpStatus.SERVICE_UNAVAILABLE,
         );
       }
-
       throw new HttpException(
         `Failed to fetch HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
