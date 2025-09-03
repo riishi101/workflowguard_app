@@ -658,8 +658,8 @@ export class WorkflowService {
           // Fetch current workflow data from HubSpot for comparison
           console.log(`Fetching current data for workflow ${hubspotWorkflow.id}...`);
           const currentWorkflowData = await hubspotService.getWorkflowById(
-            String(hubspotWorkflow.id),
             userId,
+            String(hubspotWorkflow.id),
           );
 
           let shouldCreateVersion = false;
