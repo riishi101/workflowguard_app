@@ -105,13 +105,25 @@ export class WorkflowService {
       
       const differences = this.findWorkflowDifferences(dataA, dataB);
 
+      // Transform version data for frontend display
+      const transformedVersionA = {
+        ...versionAData,
+        steps: this.transformWorkflowDataToSteps(versionAData.data)
+      };
+
+      const transformedVersionB = {
+        ...versionBData,
+        steps: this.transformWorkflowDataToSteps(versionBData.data)
+      };
+
       return {
-        versionA: versionAData,
-        versionB: versionBData,
-        comparison: {
-          differences: differences,
-          hasChanges: differences.length > 0,
-        },
+        versionA: transformedVersionA,
+        versionB: transformedVersionB,
+        differences: {
+          added: differences.filter(d => d.type === 'added'),
+          modified: differences.filter(d => d.type === 'changed'),
+          removed: differences.filter(d => d.type === 'removed')
+        }
       };
     } catch (error) {
       throw new HttpException(
@@ -194,6 +206,79 @@ export class WorkflowService {
     }
 
     return differences;
+  }
+
+  private transformWorkflowDataToSteps(workflowData: any): any[] {
+    const steps = [];
+    
+    try {
+      // If workflow has actions, transform them to steps
+      if (workflowData?.actions && Array.isArray(workflowData.actions)) {
+        workflowData.actions.forEach((action: any, index: number) => {
+          steps.push({
+            id: action.id || `action-${index}`,
+            title: action.type || action.actionType || `Action ${index + 1}`,
+            type: this.getStepType(action),
+            description: action.description || action.subject || '',
+            isNew: false,
+            isModified: false,
+            isRemoved: false
+          });
+        });
+      }
+
+      // If no actions but has enrollment triggers, show them
+      if (steps.length === 0 && workflowData?.enrollmentTriggers) {
+        steps.push({
+          id: 'enrollment-trigger',
+          title: 'Enrollment Trigger',
+          type: 'condition',
+          description: 'Workflow enrollment conditions',
+          isNew: false,
+          isModified: false,
+          isRemoved: false
+        });
+      }
+
+      // If still no steps, create a basic workflow step
+      if (steps.length === 0) {
+        steps.push({
+          id: 'workflow-basic',
+          title: workflowData?.name || 'Workflow',
+          type: 'email',
+          description: `Status: ${workflowData?.enabled ? 'Active' : 'Inactive'}`,
+          isNew: false,
+          isModified: false,
+          isRemoved: false
+        });
+      }
+
+    } catch (error) {
+      console.error('Error transforming workflow data to steps:', error);
+      // Return a fallback step
+      steps.push({
+        id: 'fallback-step',
+        title: 'Workflow Step',
+        type: 'email',
+        description: 'Unable to parse workflow details',
+        isNew: false,
+        isModified: false,
+        isRemoved: false
+      });
+    }
+
+    return steps;
+  }
+
+  private getStepType(action: any): string {
+    const actionType = action.type || action.actionType || '';
+    
+    if (actionType.toLowerCase().includes('email')) return 'email';
+    if (actionType.toLowerCase().includes('delay')) return 'delay';
+    if (actionType.toLowerCase().includes('meeting')) return 'meeting';
+    if (actionType.toLowerCase().includes('condition')) return 'condition';
+    
+    return 'email'; // default
   }
 
   async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
