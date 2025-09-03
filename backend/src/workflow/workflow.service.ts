@@ -627,14 +627,19 @@ export class WorkflowService {
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
+      console.log(`🔄 SYNC STARTED for user: ${userId}`);
       const { HubSpotService } = await import('../services/hubspot.service');
       const hubspotService = new HubSpotService(this.prisma);
 
+      console.log(`📡 Fetching HubSpot workflows for user: ${userId}`);
       const hubspotWorkflows = await hubspotService.getWorkflows(userId);
+      console.log(`📊 Found ${hubspotWorkflows.length} HubSpot workflows`);
 
       const syncedWorkflows = [];
+      console.log(`🔄 Starting sync loop for ${hubspotWorkflows.length} workflows`);
 
       for (const hubspotWorkflow of hubspotWorkflows) {
+        console.log(`📝 Checking workflow: ${hubspotWorkflow.id} - ${hubspotWorkflow.name}`);
         const existingWorkflow = await this.prisma.workflow.findFirst({
           where: {
             hubspotId: String(hubspotWorkflow.id),
@@ -643,6 +648,7 @@ export class WorkflowService {
         });
 
         if (existingWorkflow) {
+          console.log(`🔍 Processing protected workflow: ${hubspotWorkflow.id} (${hubspotWorkflow.name})`);
           // Get the latest version to compare with current HubSpot data
           const latestVersion = await this.prisma.workflowVersion.findFirst({
             where: { workflowId: existingWorkflow.id },
