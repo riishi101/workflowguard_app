@@ -54,17 +54,21 @@ export class WorkflowService {
     versionB: string,
   ): Promise<any> {
     try {
+      // Check if versionA and versionB are UUIDs or version numbers
+      const isVersionAUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(versionA);
+      const isVersionBUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(versionB);
+
       const versionAData = await this.prisma.workflowVersion.findFirst({
         where: {
           workflowId: workflowId,
-          versionNumber: parseInt(versionA),
+          ...(isVersionAUUID ? { id: versionA } : { versionNumber: parseInt(versionA) }),
         },
       });
 
       const versionBData = await this.prisma.workflowVersion.findFirst({
         where: {
           workflowId: workflowId,
-          versionNumber: parseInt(versionB),
+          ...(isVersionBUUID ? { id: versionB } : { versionNumber: parseInt(versionB) }),
         },
       });
 
@@ -75,12 +79,18 @@ export class WorkflowService {
         );
       }
 
+      // Simple comparison logic - compare the workflow data
+      const dataA = versionAData.data;
+      const dataB = versionBData.data;
+      
+      const differences = this.findWorkflowDifferences(dataA, dataB);
+
       return {
         versionA: versionAData,
         versionB: versionBData,
         comparison: {
-          // Add comparison logic here
-          differences: [],
+          differences: differences,
+          hasChanges: differences.length > 0,
         },
       };
     } catch (error) {
@@ -89,6 +99,81 @@ export class WorkflowService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  private findWorkflowDifferences(dataA: any, dataB: any): any[] {
+    const differences = [];
+    
+    try {
+      // Compare basic workflow properties
+      if (dataA.name !== dataB.name) {
+        differences.push({
+          field: 'name',
+          oldValue: dataA.name,
+          newValue: dataB.name,
+          type: 'changed'
+        });
+      }
+
+      if (dataA.enabled !== dataB.enabled) {
+        differences.push({
+          field: 'enabled',
+          oldValue: dataA.enabled,
+          newValue: dataB.enabled,
+          type: 'changed'
+        });
+      }
+
+      // Compare actions array
+      if (dataA.actions && dataB.actions) {
+        if (dataA.actions.length !== dataB.actions.length) {
+          differences.push({
+            field: 'actions',
+            oldValue: `${dataA.actions.length} actions`,
+            newValue: `${dataB.actions.length} actions`,
+            type: 'changed'
+          });
+        } else {
+          // Compare individual actions
+          for (let i = 0; i < dataA.actions.length; i++) {
+            const actionA = dataA.actions[i];
+            const actionB = dataB.actions[i];
+            
+            if (JSON.stringify(actionA) !== JSON.stringify(actionB)) {
+              differences.push({
+                field: `actions[${i}]`,
+                oldValue: actionA.type || 'Unknown action',
+                newValue: actionB.type || 'Unknown action',
+                type: 'changed'
+              });
+            }
+          }
+        }
+      }
+
+      // Compare enrollment triggers
+      if (dataA.enrollmentTriggers && dataB.enrollmentTriggers) {
+        if (JSON.stringify(dataA.enrollmentTriggers) !== JSON.stringify(dataB.enrollmentTriggers)) {
+          differences.push({
+            field: 'enrollmentTriggers',
+            oldValue: 'Previous triggers',
+            newValue: 'Updated triggers',
+            type: 'changed'
+          });
+        }
+      }
+
+    } catch (error) {
+      console.error('Error comparing workflow data:', error);
+      differences.push({
+        field: 'comparison',
+        oldValue: 'Error comparing',
+        newValue: 'Error comparing',
+        type: 'error'
+      });
+    }
+
+    return differences;
   }
 
   async getWorkflowVersions(workflowId: string, userId: string): Promise<any[]> {
