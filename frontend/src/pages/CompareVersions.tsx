@@ -395,6 +395,71 @@ const CompareVersions = () => {
         </nav>
       </ContentSection>
 
+      {/* Action Buttons */}
+      <ContentSection>
+        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <Button variant="outline" onClick={handleBackToHistory}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Version History
+          </Button>
+          {comparisonData && (
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                className="text-blue-600"
+                onClick={() => handleDownloadVersion(versionA, "Version-A")}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Version A
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-blue-600"
+                onClick={() => handleDownloadVersion(versionB, "Version-B")}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Version B
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-green-600"
+                onClick={() => handleRestoreVersion(versionA, "Version A")}
+                disabled={restoring}
+              >
+                {restoring ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Restoring...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore Version A
+                  </>
+                )}
+              </Button>
+              <Button 
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => handleRestoreVersion(versionB, "Version B")}
+                disabled={restoring}
+              >
+                {restoring ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Restoring...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restore Version B
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      </ContentSection>
+
       {/* Version Selectors and Controls */}
       <ContentSection>
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
@@ -546,71 +611,6 @@ const CompareVersions = () => {
             </p>
           </div>
         )}
-      </ContentSection>
-
-      {/* Action Buttons */}
-      <ContentSection>
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-          <Button variant="outline" onClick={handleBackToHistory}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Version History
-          </Button>
-          {comparisonData && (
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="outline" 
-                className="text-blue-600"
-                onClick={() => handleDownloadVersion(versionA, "Version-A")}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Version A
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-blue-600"
-                onClick={() => handleDownloadVersion(versionB, "Version-B")}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Version B
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-green-600"
-                onClick={() => handleRestoreVersion(versionA, "Version A")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version A
-                  </>
-                )}
-              </Button>
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => handleRestoreVersion(versionB, "Version B")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version B
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
       </ContentSection>
     </MainAppLayout>
   );
