@@ -54,20 +54,40 @@ export class WorkflowService {
     versionB: string,
   ): Promise<any> {
     try {
+      // First, resolve the workflowId - it might be a HubSpot ID or WorkflowGuard UUID
+      let actualWorkflowId = workflowId;
+      const isWorkflowIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workflowId);
+      
+      if (!isWorkflowIdUUID) {
+        // It's likely a HubSpot ID, find the corresponding WorkflowGuard workflow
+        const workflow = await this.prisma.workflow.findFirst({
+          where: { hubspotId: workflowId },
+        });
+        
+        if (!workflow) {
+          throw new HttpException(
+            `Workflow not found for HubSpot ID: ${workflowId}`,
+            HttpStatus.NOT_FOUND,
+          );
+        }
+        
+        actualWorkflowId = workflow.id;
+      }
+
       // Check if versionA and versionB are UUIDs or version numbers
       const isVersionAUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(versionA);
       const isVersionBUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(versionB);
 
       const versionAData = await this.prisma.workflowVersion.findFirst({
         where: {
-          workflowId: workflowId,
+          workflowId: actualWorkflowId,
           ...(isVersionAUUID ? { id: versionA } : { versionNumber: parseInt(versionA) }),
         },
       });
 
       const versionBData = await this.prisma.workflowVersion.findFirst({
         where: {
-          workflowId: workflowId,
+          workflowId: actualWorkflowId,
           ...(isVersionBUUID ? { id: versionB } : { versionNumber: parseInt(versionB) }),
         },
       });
