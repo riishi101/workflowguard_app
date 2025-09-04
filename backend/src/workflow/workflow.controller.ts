@@ -17,6 +17,7 @@ import { CreateWorkflowDto } from './dto/create-workflow.dto';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TrialGuard } from '../guards/trial.guard';
+import { SubscriptionGuard } from '../guards/subscription.guard';
 
 @Controller('workflow')
 export class WorkflowController {
@@ -459,7 +460,7 @@ export class WorkflowController {
   }
 
   @Post('start-protection')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {

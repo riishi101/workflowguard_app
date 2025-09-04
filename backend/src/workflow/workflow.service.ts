@@ -1,12 +1,14 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HubSpotService } from '../services/hubspot.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 @Injectable()
 export class WorkflowService {
   constructor(
     private prisma: PrismaService,
     private hubspotService: HubSpotService,
+    private subscriptionService: SubscriptionService,
   ) {}
 
   async create(createWorkflowDto: any) {
@@ -571,6 +573,9 @@ export class WorkflowService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
+    // Check workflow limits before proceeding
+    await this.checkWorkflowLimits(userId, workflowIds.length);
+
     const protectedWorkflows: any[] = [];
     const errors: Array<{ workflowId: string; error: string }> = [];
 
@@ -705,6 +710,48 @@ export class WorkflowService {
     }
 
     return protectedWorkflows;
+  }
+
+  /**
+   * Check if user can protect additional workflows based on their subscription plan
+   */
+  private async checkWorkflowLimits(userId: string, requestedCount: number): Promise<void> {
+    try {
+      // Get current protected workflows count
+      const currentWorkflows = await this.getProtectedWorkflows(userId);
+      const currentCount = currentWorkflows.length;
+      
+      // Get user subscription and limits
+      const subscription = await this.subscriptionService.getUserSubscription(userId);
+      const workflowLimit = subscription.limits.workflows;
+      
+      // Check if adding requested workflows would exceed limit
+      const totalAfterAddition = currentCount + requestedCount;
+      
+      if (totalAfterAddition > workflowLimit) {
+        throw new HttpException(
+          {
+            message: `Workflow limit exceeded. Your ${subscription.planName} allows ${workflowLimit} workflows. You currently have ${currentCount} protected workflows and are trying to add ${requestedCount} more.`,
+            currentCount,
+            requestedCount,
+            limit: workflowLimit,
+            planName: subscription.planName,
+            upgradeRequired: true
+          },
+          HttpStatus.FORBIDDEN,
+        );
+      }
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      console.error('Error checking workflow limits:', error);
+      throw new HttpException(
+        'Failed to verify workflow limits',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async getProtectedWorkflows(userId: string): Promise<any[]> {
