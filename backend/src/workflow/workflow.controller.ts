@@ -34,7 +34,7 @@ export class WorkflowController {
   }
 
   @Get('by-hubspot-id/:hubspotId')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async findByHubspotId(
     @Param('hubspotId') hubspotId: string,
     @Req() req: any,
@@ -76,7 +76,7 @@ export class WorkflowController {
   }
 
   @Get('hubspot')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async getHubSpotWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
@@ -105,7 +105,7 @@ export class WorkflowController {
   }
 
   @Get('protected')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async getProtectedWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
@@ -135,7 +135,7 @@ export class WorkflowController {
   }
 
   @Post('sync-hubspot')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async syncHubSpotWorkflows(@Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
@@ -423,7 +423,7 @@ export class WorkflowController {
   }
 
   @Get(':id/compare/:versionA/:versionB')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async compareWorkflowVersions(
     @Param('id') workflowId: string,
     @Param('versionA') versionA: string,
@@ -517,7 +517,7 @@ export class WorkflowController {
   }
 
   @Get(':id/versions')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async getWorkflowVersions(
     @Param('id') workflowId: string,
     @Req() req: any,
