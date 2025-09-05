@@ -425,51 +425,6 @@ const CompareVersions = () => {
         </div>
       </ContentSection>
 
-      {/* Version Selectors and Controls */}
-      <ContentSection>
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version A:
-              </span>
-              <Select value={versionA} onValueChange={setVersionA}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Version A" />
-                </SelectTrigger>
-                <SelectContent>
-                  {versions.map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      Version {version.versionNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version B:
-              </span>
-              <Select value={versionB} onValueChange={setVersionB}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Version B" />
-                </SelectTrigger>
-                <SelectContent>
-                  {versions.map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      Version {version.versionNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-          </div>
-        </div>
-      </ContentSection>
 
       {/* Comparison Content */}
       <ContentSection>
