@@ -93,7 +93,7 @@ const TopNavigation = () => {
   ];
 
   // Check if user has workflows to determine if Workflow History should be active
-  const hasWorkflows = user && user.subscription;
+  const hasWorkflows = user;
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -131,12 +131,7 @@ const TopNavigation = () => {
   };
 
   const getSubscriptionStatus = () => {
-    if (!user?.subscription) return null;
-    return {
-      plan: user.subscription.planId || "Starter",
-      status: user.subscription.status || "Active",
-      isActive: user.subscription.status === "active" || user.subscription.status === "trial"
-    };
+    return null;
   };
 
   const subscriptionStatus = getSubscriptionStatus();
@@ -319,10 +314,6 @@ const TopNavigation = () => {
               <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/manage-subscription")}>
-                <CreditCard className="w-4 h-4 mr-2" />
-                Billing & Subscription
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/help-support")}>

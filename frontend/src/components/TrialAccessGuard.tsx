@@ -21,7 +21,7 @@ const TrialAccessGuard = ({ children }: TrialAccessGuardProps) => {
   const [usageStats, setUsageStats] = useState<any>(null);
 
   // Routes that are always accessible (billing and settings)
-  const allowedRoutes = ['/settings', '/manage-subscription', '/contact-us', '/help-support'];
+  const allowedRoutes = ['/settings', '/contact-us', '/help-support'];
 
   useEffect(() => {
     const checkTrialAccess = async () => {
