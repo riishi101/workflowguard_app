@@ -467,17 +467,6 @@ const CompareVersions = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={syncScroll}
-                onCheckedChange={setSyncScroll}
-                id="sync-scroll"
-                disabled={loading}
-              />
-              <label htmlFor="sync-scroll" className="text-sm text-gray-700">
-                Sync Scroll
-              </label>
-            </div>
           </div>
         </div>
       </ContentSection>
