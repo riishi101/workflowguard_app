@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HubSpotService } from '../services/hubspot.service';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { WorkflowVersionService } from '../workflow-version/workflow-version.service';
 
 @Injectable()
 export class WorkflowService {
@@ -9,6 +10,7 @@ export class WorkflowService {
     private prisma: PrismaService,
     private hubspotService: HubSpotService,
     private subscriptionService: SubscriptionService,
+    private workflowVersionService: WorkflowVersionService,
   ) {}
 
   async create(createWorkflowDto: any) {
@@ -1128,13 +1130,31 @@ export class WorkflowService {
 
   async rollbackWorkflow(workflowId: string, userId: string): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
+      // Handle HubSpot ID conversion if needed
+      let actualWorkflowId = workflowId;
+      
+      // Check if workflowId is a UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      
+      if (!uuidRegex.test(workflowId)) {
+        // It's likely a HubSpot ID, convert to WorkflowGuard UUID
+        const workflow = await this.prisma.workflow.findFirst({
+          where: { hubspotId: workflowId }
+        });
+        
+        if (!workflow) {
+          throw new HttpException(
+            'Workflow not found',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+        
+        actualWorkflowId = workflow.id;
+      }
 
-      const result = await workflowVersionService.rollbackWorkflow(
-        workflowId,
+      // Use injected WorkflowVersionService instead of manual instantiation
+      const result = await this.workflowVersionService.rollbackWorkflow(
+        actualWorkflowId,
         userId,
       );
       return result;
