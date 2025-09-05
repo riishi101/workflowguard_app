@@ -420,41 +420,6 @@ const CompareVersions = () => {
                 <Download className="w-4 h-4 mr-2" />
                 Download Version B
               </Button>
-              <Button 
-                variant="outline" 
-                className="text-green-600"
-                onClick={() => handleRestoreVersion(versionA, "Version A")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version A
-                  </>
-                )}
-              </Button>
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => handleRestoreVersion(versionB, "Version B")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version B
-                  </>
-                )}
-              </Button>
             </div>
           )}
         </div>
