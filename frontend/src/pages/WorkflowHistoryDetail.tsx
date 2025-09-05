@@ -236,10 +236,10 @@ const WorkflowHistoryDetail = () => {
     setRollbackModal({ open: true, version });
   };
 
-  const handleRollbackVersion = async (versionId: string) => {
+  const handleRollbackConfirm = async (versionId: string) => {
     setRestoring(versionId);
     try {
-      await ApiService.restoreWorkflowVersion(workflowDetails?.id, versionId);
+      await ApiService.rollbackWorkflow(workflowDetails?.id, versionId);
       toast({
         title: "Version Restored",
         description: "The workflow has been successfully rolled back to the selected version.",
@@ -744,7 +744,7 @@ const WorkflowHistoryDetail = () => {
       <RollbackConfirmModal
         open={rollbackModal.open}
         onClose={() => setRollbackModal({ open: false, version: null })}
-        onConfirm={() => handleRollbackVersion(rollbackModal.version?.id)}
+        onConfirm={() => handleRollbackConfirm(rollbackModal.version?.id)}
         version={rollbackModal.version}
         loading={restoring === rollbackModal.version?.id}
       />
