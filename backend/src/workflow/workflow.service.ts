@@ -1701,7 +1701,7 @@ export class WorkflowService {
         {
           name: workflowData?.name || `${workflow.name} (Restored)`,
           enabled: false, // Start disabled for safety
-          description: workflowData?.description || 'Restored by WorkflowGuard',
+          description: workflowData?.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
           actions: workflowData?.actions || [],
           triggers: workflowData?.triggers || [],
           goals: workflowData?.goals || [],
