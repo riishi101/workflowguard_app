@@ -29,6 +29,10 @@
     {
       "subscriptionType": "automation.workflow.updated",
       "url": "https://www.workflowguard.pro/api/webhooks/hubspot"
+    },
+    {
+      "subscriptionType": "automation.workflow.deleted",
+      "url": "https://www.workflowguard.pro/api/webhooks/hubspot"
     }
   ],
   "settings": {

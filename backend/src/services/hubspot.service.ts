@@ -481,4 +481,108 @@ export class HubSpotService {
       return false;
     }
   }
+
+  /**
+   * Create a new workflow in HubSpot using the provided workflow data.
+   * This is used to restore deleted workflows.
+   */
+  async createWorkflow(userId: string, workflowData: any): Promise<any> {
+    console.log('🔧 HubSpotService - createWorkflow called for userId:', userId);
+
+    try {
+      // Get user with HubSpot tokens
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          hubspotAccessToken: true,
+          hubspotRefreshToken: true,
+          hubspotTokenExpiresAt: true,
+        },
+      });
+
+      if (!user || !user.hubspotAccessToken) {
+        throw new HttpException(
+          'User not found or HubSpot not connected',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Check if token needs refresh
+      if (
+        user.hubspotTokenExpiresAt &&
+        new Date() >= user.hubspotTokenExpiresAt
+      ) {
+        console.log('🔧 HubSpotService - Token expired, refreshing...');
+        await this.refreshAccessToken(userId, user.hubspotRefreshToken!);
+        
+        // Get updated user data
+        const updatedUser = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { hubspotAccessToken: true },
+        });
+        user.hubspotAccessToken = updatedUser?.hubspotAccessToken || null;
+      }
+
+      // Prepare workflow creation payload
+      const createPayload = {
+        name: workflowData.name,
+        enabled: workflowData.enabled || false,
+        description: workflowData.description || 'Restored by WorkflowGuard',
+        // Include other workflow properties as needed
+        actions: workflowData.actions || [],
+        triggers: workflowData.triggers || [],
+        goals: workflowData.goals || [],
+        settings: workflowData.settings || {},
+      };
+
+      console.log('🔧 HubSpotService - Creating workflow with payload:', {
+        name: createPayload.name,
+        enabled: createPayload.enabled,
+        actionsCount: createPayload.actions.length,
+        triggersCount: createPayload.triggers.length,
+      });
+
+      // Create workflow in HubSpot
+      const response = await fetch(
+        'https://api.hubapi.com/automation/v3/workflows',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${user.hubspotAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(createPayload),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('🔧 HubSpotService - Create workflow failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+
+        throw new HttpException(
+          `Failed to create workflow in HubSpot: ${response.status} ${response.statusText}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const createdWorkflow = await response.json() as any;
+      console.log('🔧 HubSpotService - Workflow created successfully:', {
+        id: createdWorkflow.id,
+        name: createdWorkflow.name,
+      });
+
+      return createdWorkflow;
+    } catch (error: any) {
+      console.error('🔧 HubSpotService - Error creating workflow:', error);
+      throw new HttpException(
+        `Failed to create workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

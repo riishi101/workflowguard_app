@@ -149,6 +149,36 @@ export class WebhookController {
         }
       }
 
+      // Handle workflow deletion events
+      if (body.subscriptionType === 'automation.workflow.deleted') {
+        const { portalId, objectId: workflowId } = body;
+        
+        if (portalId && workflowId) {
+          console.log(`🗑️ Webhook: Processing workflow deletion for portal ${portalId}, workflow ${workflowId}`);
+          
+          // Import WorkflowService dynamically to avoid circular dependencies
+          const { WorkflowService } = await import('../workflow/workflow.service');
+          const { PrismaService } = await import('../prisma/prisma.service');
+          const { HubSpotService } = await import('../services/hubspot.service');
+          const { SubscriptionService } = await import('../subscription/subscription.service');
+          const { WorkflowVersionService } = await import('../workflow-version/workflow-version.service');
+          
+          const prismaService = new PrismaService();
+          const hubspotService = new HubSpotService(prismaService);
+          const subscriptionService = new SubscriptionService(prismaService);
+          const workflowVersionService = new WorkflowVersionService(prismaService);
+          const workflowService = new WorkflowService(
+            prismaService,
+            hubspotService,
+            subscriptionService,
+            workflowVersionService
+          );
+          
+          // Handle workflow deletion
+          await workflowService.handleWorkflowDeletion(portalId, workflowId);
+        }
+      }
+
       return { success: true };
     } catch (error) {
       console.error('❌ Error handling HubSpot webhook:', error);

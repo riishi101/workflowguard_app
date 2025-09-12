@@ -41,14 +41,17 @@ model User {
 }
 
 model Workflow {
-  id        String            @id @default(uuid())
-  hubspotId String            @unique
-  name      String
-  ownerId   String
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  owner     User              @relation(fields: [ownerId], references: [id])
-  versions  WorkflowVersion[]
+  id          String            @id @default(uuid())
+  hubspotId   String            @unique
+  name        String
+  ownerId     String
+  isDeleted   Boolean           @default(false)
+  deletedAt   DateTime?
+  restoredAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  owner       User              @relation(fields: [ownerId], references: [id])
+  versions    WorkflowVersion[]
 }
 
 model WorkflowVersion {

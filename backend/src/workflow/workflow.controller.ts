@@ -374,29 +374,46 @@ export class WorkflowController {
   }
 
   @Post(':id/rollback')
-  @UseGuards(JwtAuthGuard, TrialGuard)
-  async rollbackWorkflow(@Param('id') workflowId: string, @Req() req: any) {
-    let userId = req.user?.sub || req.user?.id || req.user?.userId;
-    if (!userId) {
-      userId = req.headers['x-user-id'];
-    }
-
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
+  async rollbackWorkflow(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
     try {
-      const result = await this.workflowService.rollbackWorkflow(
-        workflowId,
-        userId,
-      );
+      const result = await this.workflowService.rollbackWorkflow(id, userId);
       return {
+        success: true,
+        data: result,
         message: 'Workflow rolled back successfully',
-        result: result,
       };
     } catch (error) {
       throw new HttpException(
         `Failed to rollback workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':id/restore-deleted')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
+  async restoreDeletedWorkflow(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const result = await this.workflowService.restoreDeletedWorkflow(id, userId);
+      return {
+        success: true,
+        data: result,
+        message: 'Deleted workflow restored successfully',
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to restore deleted workflow: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

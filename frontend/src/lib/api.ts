@@ -210,6 +210,15 @@ class ApiService {
     }
   }
 
+  static async restoreDeletedWorkflow(workflowId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post(`/workflow/${workflowId}/restore-deleted`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async restoreWorkflowVersion(workflowId: string, versionId: string): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post(`/workflow/${workflowId}/restore/${versionId}`);

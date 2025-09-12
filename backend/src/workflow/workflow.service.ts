@@ -1551,4 +1551,218 @@ export class WorkflowService {
       // Do not re-throw error to prevent HubSpot from retrying indefinitely
     }
   }
+
+  /**
+   * Handle workflow deletions from HubSpot webhooks.
+   * This method creates a final backup before marking the workflow as deleted.
+   */
+  async handleWorkflowDeletion(
+    portalId: string,
+    hubspotWorkflowId: string,
+  ): Promise<void> {
+    console.log(
+      `🗑️ Handling workflow deletion for portalId: ${portalId}, workflowId: ${hubspotWorkflowId}`,
+    );
+
+    try {
+      // 1. Find the user associated with the portal
+      const user = await this.prisma.user.findFirst({
+        where: { hubspotPortalId: portalId },
+      });
+
+      if (!user) {
+        console.warn(
+          `⚠️ No user found for portalId: ${portalId}. Skipping workflow deletion handling.`,
+        );
+        return;
+      }
+
+      // 2. Find the workflow in our database to ensure it's a protected workflow
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          hubspotId: hubspotWorkflowId,
+          ownerId: user.id,
+        },
+        include: {
+          versions: {
+            orderBy: { versionNumber: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (!workflow) {
+        console.log(
+          `ℹ️ Workflow ${hubspotWorkflowId} is not protected for user ${user.id}. Skipping deletion handling.`,
+        );
+        return;
+      }
+
+      // 3. Create final backup with the last known version data
+      if (workflow.versions && workflow.versions.length > 0) {
+        const latestVersion = workflow.versions[0];
+        
+        await this.workflowVersionService.createVersion(
+          workflow.id,
+          user.id,
+          latestVersion.data,
+          'deletion_backup',
+        );
+
+        console.log(
+          `✅ Created final backup for deleted workflow ${workflow.id} (HubSpot ID: ${hubspotWorkflowId})`,
+        );
+      }
+
+      // 4. Mark workflow as deleted in our database
+      await this.prisma.workflow.update({
+        where: { id: workflow.id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      });
+
+      // 5. Create audit log entry
+      await this.prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'workflow_deleted',
+          entityType: 'workflow',
+          entityId: workflow.id,
+          oldValue: JSON.stringify({ hubspotId: hubspotWorkflowId }),
+          newValue: JSON.stringify({ deleted: true, deletedAt: new Date() }),
+        },
+      });
+
+      console.log(
+        `✅ Successfully handled workflow deletion for ${workflow.id} (HubSpot ID: ${hubspotWorkflowId})`,
+      );
+    } catch (error) {
+      console.error(
+        `❌ Error handling workflow deletion for workflowId ${hubspotWorkflowId}:`,
+        error,
+      );
+      // Do not re-throw error to prevent HubSpot from retrying indefinitely
+    }
+  }
+
+  /**
+   * Restore a deleted workflow back to HubSpot using the latest backup data.
+   */
+  async restoreDeletedWorkflow(
+    workflowId: string,
+    userId: string,
+  ): Promise<any> {
+    try {
+      console.log(
+        `🔄 Attempting to restore deleted workflow ${workflowId} for user ${userId}`,
+      );
+
+      // 1. Find the deleted workflow
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+          isDeleted: true,
+        },
+        include: {
+          versions: {
+            orderBy: { versionNumber: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Deleted workflow not found or not accessible',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (!workflow.versions || workflow.versions.length === 0) {
+        throw new HttpException(
+          'No backup data available for this workflow',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // 2. Get the latest backup data
+      const latestBackup = workflow.versions[0];
+      const workflowData = latestBackup.data;
+
+      // 3. Recreate the workflow in HubSpot
+      const restoredWorkflow = await this.hubspotService.createWorkflow(
+        userId,
+        {
+          name: workflowData.name || `${workflow.name} (Restored)`,
+          enabled: false, // Start disabled for safety
+          ...workflowData,
+        },
+      );
+
+      if (!restoredWorkflow) {
+        throw new HttpException(
+          'Failed to recreate workflow in HubSpot',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      // 4. Update our database with the new HubSpot ID
+      const updatedWorkflow = await this.prisma.workflow.update({
+        where: { id: workflow.id },
+        data: {
+          hubspotId: restoredWorkflow.id.toString(),
+          isDeleted: false,
+          deletedAt: null,
+          restoredAt: new Date(),
+        },
+      });
+
+      // 5. Create a restoration version
+      await this.workflowVersionService.createVersion(
+        workflow.id,
+        userId,
+        restoredWorkflow,
+        'restoration',
+      );
+
+      // 6. Create audit log entry
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'workflow_restored',
+          entityType: 'workflow',
+          entityId: workflow.id,
+          oldValue: JSON.stringify({ deleted: true }),
+          newValue: JSON.stringify({
+            restored: true,
+            newHubspotId: restoredWorkflow.id,
+            restoredAt: new Date(),
+          }),
+        },
+      });
+
+      console.log(
+        `✅ Successfully restored workflow ${workflow.id} with new HubSpot ID: ${restoredWorkflow.id}`,
+      );
+
+      return {
+        success: true,
+        message: 'Workflow successfully restored to HubSpot',
+        workflow: updatedWorkflow,
+        hubspotWorkflow: restoredWorkflow,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Error restoring deleted workflow ${workflowId}:`,
+        error,
+      );
+      throw new HttpException(
+        `Failed to restore deleted workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
