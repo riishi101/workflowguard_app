@@ -507,84 +507,75 @@ export class HubSpotService {
           HttpStatus.NOT_FOUND,
         );
       }
-
-      // Check if token needs refresh
-      if (
-        user.hubspotTokenExpiresAt &&
-        new Date() >= user.hubspotTokenExpiresAt
-      ) {
-        console.log('🔧 HubSpotService - Token expired, refreshing...');
-        await this.refreshAccessToken(userId, user.hubspotRefreshToken!);
-        
-        // Get updated user data
-        const updatedUser = await this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { hubspotAccessToken: true },
-        });
-        user.hubspotAccessToken = updatedUser?.hubspotAccessToken || null;
-      }
-
-      // Prepare simplified workflow creation payload
-      // HubSpot workflow creation API only accepts basic fields
-      const createPayload = {
-        name: workflowData.name || 'Restored Workflow',
-        enabled: false, // Always start disabled for safety
-        description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
-        type: 'DRIP_DELAY', // Basic workflow type
-      };
-
-      console.log('🔧 HubSpotService - Creating workflow with payload:', {
-        name: createPayload.name,
-        enabled: createPayload.enabled,
-        type: createPayload.type,
-        description: createPayload.description.substring(0, 50) + '...',
-      });
-
-      // Create workflow in HubSpot
-      const response = await fetch(
-        'https://api.hubapi.com/automation/v3/workflows',
+      // Try multiple approaches for workflow creation
+      const approaches = [
+        // Approach 1: Create with full complex data in initial request
         {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${user.hubspotAccessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(createPayload),
+          name: 'Full Complex Data',
+          payload: {
+            name: workflowData.name || 'Restored Workflow',
+            enabled: false,
+            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            type: workflowData.type || 'DRIP_DELAY',
+            actions: workflowData.actions || [],
+            triggers: workflowData.triggers || [],
+            goals: workflowData.goals || [],
+            settings: workflowData.settings || {},
+          }
         },
-      );
+        // Approach 2: Create with actions only
+        {
+          name: 'Actions Only',
+          payload: {
+            name: workflowData.name || 'Restored Workflow',
+            enabled: false,
+            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            type: workflowData.type || 'DRIP_DELAY',
+            actions: workflowData.actions || [],
+          }
+        },
+        // Approach 3: Create basic workflow only (fallback)
+        {
+          name: 'Basic Only',
+          payload: {
+            name: workflowData.name || 'Restored Workflow',
+            enabled: false,
+            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            type: workflowData.type || 'DRIP_DELAY',
+          }
+        }
+      ];
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('🔧 HubSpotService - Create workflow failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-        });
-
-        throw new HttpException(
-          `Failed to create workflow in HubSpot: ${response.status} ${response.statusText}`,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-
-      const createdWorkflow = await response.json() as any;
-      console.log('🔧 HubSpotService - Workflow created successfully:', {
-        id: createdWorkflow.id,
-        name: createdWorkflow.name,
-      });
-
-      // Step 2: Try to update the workflow with complex data if provided
-      if (workflowData.actions || workflowData.triggers || workflowData.goals) {
+      for (const approach of approaches) {
         try {
-          console.log('🔧 HubSpotService - Attempting to update workflow with complex data...');
-          await this.updateWorkflowWithComplexData(userId, createdWorkflow.id, workflowData);
-        } catch (updateError) {
-          console.warn('🔧 HubSpotService - Failed to update with complex data, but basic workflow created:', updateError);
-          // Don't fail the entire operation if complex data update fails
+          console.log(`🔧 HubSpotService - Trying ${approach.name} approach...`);
+          
+          const response = await fetch('https://api.hubapi.com/automation/v3/workflows', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${user.hubspotAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(approach.payload),
+          });
+
+          if (response.ok) {
+            const createdWorkflow = await response.json() as any;
+            console.log(`🔧 HubSpotService - SUCCESS with ${approach.name} approach:`, {
+              id: createdWorkflow.id,
+              name: createdWorkflow.name,
+            });
+            return createdWorkflow;
+          } else {
+            const errorText = await response.text();
+            console.log(`🔧 HubSpotService - ${approach.name} approach failed:`, response.status, errorText);
+          }
+        } catch (error) {
+          console.log(`🔧 HubSpotService - ${approach.name} approach error:`, error);
         }
       }
 
-      return createdWorkflow;
+      throw new Error('All workflow creation approaches failed');
     } catch (error: any) {
       console.error('🔧 HubSpotService - Error creating workflow:', error);
       throw new HttpException(
@@ -594,63 +585,4 @@ export class HubSpotService {
     }
   }
 
-  private async updateWorkflowWithComplexData(userId: string, workflowId: string, workflowData: any) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { hubspotAccessToken: true },
-    });
-
-    if (!user?.hubspotAccessToken) {
-      throw new Error('User token not available');
-    }
-
-    // Try different update approaches
-    const updatePayloads = [
-      // Approach 1: Full workflow data
-      {
-        actions: workflowData.actions || [],
-        triggers: workflowData.triggers || [],
-        goals: workflowData.goals || [],
-        settings: workflowData.settings || {},
-      },
-      // Approach 2: Only actions
-      {
-        actions: workflowData.actions || [],
-      },
-      // Approach 3: Only triggers
-      {
-        triggers: workflowData.triggers || [],
-      }
-    ];
-
-    for (const [index, payload] of updatePayloads.entries()) {
-      try {
-        console.log(`🔧 HubSpotService - Trying update approach ${index + 1}:`, Object.keys(payload));
-        
-        const response = await fetch(
-          `https://api.hubapi.com/automation/v3/workflows/${workflowId}`,
-          {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${user.hubspotAccessToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          }
-        );
-
-        if (response.ok) {
-          console.log(`🔧 HubSpotService - Successfully updated workflow with approach ${index + 1}`);
-          return;
-        } else {
-          const errorText = await response.text();
-          console.log(`🔧 HubSpotService - Approach ${index + 1} failed:`, response.status, errorText);
-        }
-      } catch (error) {
-        console.log(`🔧 HubSpotService - Approach ${index + 1} error:`, error);
-      }
-    }
-
-    throw new Error('All update approaches failed');
-  }
 }
