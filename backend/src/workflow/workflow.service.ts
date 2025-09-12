@@ -1690,15 +1690,19 @@ export class WorkflowService {
 
       // 2. Get the latest backup data
       const latestBackup = workflow.versions[0];
-      const workflowData = latestBackup.data;
+      const workflowData = latestBackup.data as any;
 
       // 3. Recreate the workflow in HubSpot
       const restoredWorkflow = await this.hubspotService.createWorkflow(
         userId,
         {
-          name: workflowData.name || `${workflow.name} (Restored)`,
+          name: workflowData?.name || `${workflow.name} (Restored)`,
           enabled: false, // Start disabled for safety
-          ...workflowData,
+          description: workflowData?.description || 'Restored by WorkflowGuard',
+          actions: workflowData?.actions || [],
+          triggers: workflowData?.triggers || [],
+          goals: workflowData?.goals || [],
+          settings: workflowData?.settings || {},
         },
       );
 
