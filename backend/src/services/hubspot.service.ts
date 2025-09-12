@@ -524,23 +524,20 @@ export class HubSpotService {
         user.hubspotAccessToken = updatedUser?.hubspotAccessToken || null;
       }
 
-      // Prepare workflow creation payload
+      // Prepare simplified workflow creation payload
+      // HubSpot workflow creation API only accepts basic fields
       const createPayload = {
-        name: workflowData.name,
-        enabled: workflowData.enabled || false,
-        description: workflowData.description || 'Restored by WorkflowGuard',
-        // Include other workflow properties as needed
-        actions: workflowData.actions || [],
-        triggers: workflowData.triggers || [],
-        goals: workflowData.goals || [],
-        settings: workflowData.settings || {},
+        name: workflowData.name || 'Restored Workflow',
+        enabled: false, // Always start disabled for safety
+        description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+        type: 'DRIP_DELAY', // Basic workflow type
       };
 
       console.log('🔧 HubSpotService - Creating workflow with payload:', {
         name: createPayload.name,
         enabled: createPayload.enabled,
-        actionsCount: createPayload.actions.length,
-        triggersCount: createPayload.triggers.length,
+        type: createPayload.type,
+        description: createPayload.description.substring(0, 50) + '...',
       });
 
       // Create workflow in HubSpot
