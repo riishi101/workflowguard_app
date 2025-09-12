@@ -584,6 +584,7 @@ const Dashboard: React.FC = () => {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="deleted">Deleted</SelectItem>
                     <SelectItem value="error">Error</SelectItem>
                   </SelectContent>
                 </Select>
@@ -643,20 +644,28 @@ const Dashboard: React.FC = () => {
                   </tr>
                 ) : (
                   filteredWorkflows.map((workflow) => (
-                    <tr key={workflow.id} className="hover:bg-gray-50">
+                    <tr key={workflow.id} className={`hover:bg-gray-50 ${workflow.isDeleted ? 'bg-red-50 border-l-4 border-red-400' : ''}`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-gray-900">
+                          {workflow.isDeleted && (
+                            <div className="w-2 h-2 bg-red-500 rounded-full" title="Deleted Workflow" />
+                          )}
+                          <span className={`text-sm font-medium ${workflow.isDeleted ? 'text-red-700 line-through' : 'text-gray-900'}`}>
                             {safeToString(workflow.name, 'Unnamed Workflow')}
+                            {workflow.isDeleted && (
+                              <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                                DELETED
+                              </span>
+                            )}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <Badge
                           variant="secondary"
-                          className={getStatusColor(workflow.status)}
+                          className={workflow.isDeleted ? 'bg-red-100 text-red-800 border-red-200' : getStatusColor(workflow.status)}
                         >
-                          {safeToString(workflow.status, 'Unknown')}
+                          {workflow.isDeleted ? 'deleted' : safeToString(workflow.status, 'Unknown')}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
