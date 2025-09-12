@@ -509,9 +509,29 @@ export class HubSpotService {
       }
       // Try multiple approaches for workflow creation
       const approaches = [
-        // Approach 1: Create with full complex data in initial request
+        // Approach 1: HubSpot v4 API with full workflow structure
         {
-          name: 'Full Complex Data',
+          name: 'v4 API Full Workflow',
+          endpoint: 'https://api.hubapi.com/automations/v4/flows',
+          payload: {
+            isEnabled: false,
+            flowType: 'WORKFLOW',
+            name: workflowData.name || 'Restored Workflow',
+            type: workflowData.objectTypeId === '0-2' ? 'PLATFORM_FLOW' : 'CONTACT_FLOW',
+            objectTypeId: workflowData.objectTypeId || '0-1',
+            actions: workflowData.actions || [],
+            enrollmentCriteria: workflowData.enrollmentCriteria || workflowData.triggers || {},
+            timeWindows: workflowData.timeWindows || [],
+            blockedDates: workflowData.blockedDates || [],
+            customProperties: workflowData.customProperties || {},
+            suppressionListIds: workflowData.suppressionListIds || [],
+            canEnrollFromSalesforce: workflowData.canEnrollFromSalesforce || false,
+          }
+        },
+        // Approach 2: v3 API with full complex data
+        {
+          name: 'v3 API Full Complex Data',
+          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
@@ -523,9 +543,10 @@ export class HubSpotService {
             settings: workflowData.settings || {},
           }
         },
-        // Approach 2: Create with actions only
+        // Approach 3: v3 API with actions only
         {
-          name: 'Actions Only',
+          name: 'v3 API Actions Only',
+          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
@@ -534,9 +555,10 @@ export class HubSpotService {
             actions: workflowData.actions || [],
           }
         },
-        // Approach 3: Create basic workflow only (fallback)
+        // Approach 4: v3 API basic workflow only (fallback)
         {
-          name: 'Basic Only',
+          name: 'v3 API Basic Only',
+          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
@@ -550,7 +572,7 @@ export class HubSpotService {
         try {
           console.log(`🔧 HubSpotService - Trying ${approach.name} approach...`);
           
-          const response = await fetch('https://api.hubapi.com/automation/v3/workflows', {
+          const response = await fetch(approach.endpoint, {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${user.hubspotAccessToken}`,
@@ -562,7 +584,7 @@ export class HubSpotService {
           if (response.ok) {
             const createdWorkflow = await response.json() as any;
             console.log(`🔧 HubSpotService - SUCCESS with ${approach.name} approach:`, {
-              id: createdWorkflow.id,
+              id: createdWorkflow.id || createdWorkflow.flowId,
               name: createdWorkflow.name,
             });
             return createdWorkflow;
