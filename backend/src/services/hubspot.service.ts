@@ -573,6 +573,17 @@ export class HubSpotService {
         name: createdWorkflow.name,
       });
 
+      // Step 2: Try to update the workflow with complex data if provided
+      if (workflowData.actions || workflowData.triggers || workflowData.goals) {
+        try {
+          console.log('🔧 HubSpotService - Attempting to update workflow with complex data...');
+          await this.updateWorkflowWithComplexData(userId, createdWorkflow.id, workflowData);
+        } catch (updateError) {
+          console.warn('🔧 HubSpotService - Failed to update with complex data, but basic workflow created:', updateError);
+          // Don't fail the entire operation if complex data update fails
+        }
+      }
+
       return createdWorkflow;
     } catch (error: any) {
       console.error('🔧 HubSpotService - Error creating workflow:', error);
@@ -581,5 +592,65 @@ export class HubSpotService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  private async updateWorkflowWithComplexData(userId: string, workflowId: string, workflowData: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { hubspotAccessToken: true },
+    });
+
+    if (!user?.hubspotAccessToken) {
+      throw new Error('User token not available');
+    }
+
+    // Try different update approaches
+    const updatePayloads = [
+      // Approach 1: Full workflow data
+      {
+        actions: workflowData.actions || [],
+        triggers: workflowData.triggers || [],
+        goals: workflowData.goals || [],
+        settings: workflowData.settings || {},
+      },
+      // Approach 2: Only actions
+      {
+        actions: workflowData.actions || [],
+      },
+      // Approach 3: Only triggers
+      {
+        triggers: workflowData.triggers || [],
+      }
+    ];
+
+    for (const [index, payload] of updatePayloads.entries()) {
+      try {
+        console.log(`🔧 HubSpotService - Trying update approach ${index + 1}:`, Object.keys(payload));
+        
+        const response = await fetch(
+          `https://api.hubapi.com/automation/v3/workflows/${workflowId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${user.hubspotAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (response.ok) {
+          console.log(`🔧 HubSpotService - Successfully updated workflow with approach ${index + 1}`);
+          return;
+        } else {
+          const errorText = await response.text();
+          console.log(`🔧 HubSpotService - Approach ${index + 1} failed:`, response.status, errorText);
+        }
+      } catch (error) {
+        console.log(`🔧 HubSpotService - Approach ${index + 1} error:`, error);
+      }
+    }
+
+    throw new Error('All update approaches failed');
   }
 }
