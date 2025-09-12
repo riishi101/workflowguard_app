@@ -880,6 +880,30 @@ export class WorkflowService {
       const syncedWorkflows = [];
       console.log(`🔄 Starting sync loop for ${hubspotWorkflows.length} workflows`);
 
+      // Get all protected workflows for this user to check for deletions
+      const allProtectedWorkflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        include: { versions: true }
+      });
+
+      // Create a set of HubSpot workflow IDs that still exist
+      const existingHubSpotIds = new Set(hubspotWorkflows.map(w => String(w.id)));
+
+      // Mark workflows as deleted if they're no longer in HubSpot
+      for (const protectedWorkflow of allProtectedWorkflows) {
+        if (!existingHubSpotIds.has(protectedWorkflow.hubspotId) && !protectedWorkflow.isDeleted) {
+          console.log(`🗑️ Workflow ${protectedWorkflow.hubspotId} (${protectedWorkflow.name}) no longer exists in HubSpot - marking as deleted`);
+          await this.prisma.workflow.update({
+            where: { id: protectedWorkflow.id },
+            data: {
+              isDeleted: true,
+              deletedAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+        }
+      }
+
       for (const hubspotWorkflow of hubspotWorkflows) {
         console.log(`📝 Checking workflow: ${hubspotWorkflow.id} - ${hubspotWorkflow.name}`);
         const existingWorkflow = await this.prisma.workflow.findFirst({
