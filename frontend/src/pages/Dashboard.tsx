@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import EmptyDashboard from "@/components/EmptyDashboard";
-import { RollbackConfirmModal } from '../components/RollbackConfirmModal';
+import RollbackConfirmModal from '../components/RollbackConfirmModal';
 import { RestoreDeletedWorkflowModal } from '../components/RestoreDeletedWorkflowModal';
 import { WorkflowState } from "@/lib/workflowState";
 import { ApiService } from "@/lib/api";
