@@ -46,6 +46,7 @@ import {
 
 interface DashboardWorkflow {
   id: string;
+  internalId?: string;
   name: string;
   versions: number;
   lastModifiedBy: {
@@ -53,9 +54,11 @@ interface DashboardWorkflow {
     initials: string;
     email: string;
   };
-  status: "active" | "inactive" | "error";
+  status: "active" | "inactive" | "error" | "deleted";
   protectionStatus: "protected" | "unprotected" | "error";
   lastModified: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
 }
 
 interface DashboardStats {
@@ -80,7 +83,9 @@ const Dashboard: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [syncing, setSyncing] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
+  const [restoring, setRestoring] = useState<Record<string, boolean>>({});
 
   // Use our custom hooks
   const { 
@@ -164,6 +169,38 @@ const Dashboard: React.FC = () => {
     await handleRollback(selectedWorkflow.id);
     setShowRollbackModal(false);
     setSelectedWorkflow(null);
+  };
+
+  const handleRestoreDeleted = (workflow: DashboardWorkflow) => {
+    setSelectedWorkflow(workflow);
+    setShowRestoreModal(true);
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!selectedWorkflow) return;
+    
+    setRestoring(prev => ({ ...prev, [selectedWorkflow.id]: true }));
+    
+    try {
+      const response = await ApiService.restoreDeletedWorkflow(selectedWorkflow.internalId || selectedWorkflow.id);
+      if (response.success) {
+        toast({
+          title: "Workflow Restored",
+          description: `${selectedWorkflow.name} has been successfully restored to HubSpot.`,
+        });
+        refreshWorkflows();
+      }
+    } catch (error) {
+      toast({
+        title: "Restore Failed",
+        description: "Failed to restore workflow. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setRestoring(prev => ({ ...prev, [selectedWorkflow.id]: false }));
+      setShowRestoreModal(false);
+      setSelectedWorkflow(null);
+    }
   };
 
   const handleAddWorkflow = async () => {
@@ -672,25 +709,47 @@ const Dashboard: React.FC = () => {
                             <Eye className="w-4 h-4 mr-1" />
                             View History
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRollbackLatest(workflow)}
-                            disabled={rollbacking[workflow.id]}
-                            className="text-orange-600"
-                          >
-                            {rollbacking[workflow.id] ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                Rolling Back...
-                              </>
-                            ) : (
-                              <>
-                                <RotateCcw className="w-4 h-4 mr-1" />
-                                Rollback
-                              </>
-                            )}
-                          </Button>
+                          {workflow.isDeleted ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRestoreDeleted(workflow)}
+                              disabled={restoring[workflow.id]}
+                              className="text-green-600"
+                            >
+                              {restoring[workflow.id] ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                  Restoring...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="w-4 h-4 mr-1" />
+                                  Restore
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRollbackLatest(workflow)}
+                              disabled={rollbacking[workflow.id]}
+                              className="text-orange-600"
+                            >
+                              {rollbacking[workflow.id] ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                  Rolling Back...
+                                </>
+                              ) : (
+                                <>
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Rollback
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -720,6 +779,19 @@ const Dashboard: React.FC = () => {
           status: selectedWorkflow.status || 'unknown'
         } : null}
         loading={selectedWorkflow ? rollbacking[selectedWorkflow.id] : false}
+      />
+
+      {/* Restore Deleted Workflow Modal */}
+      <RestoreDeletedWorkflowModal
+        open={showRestoreModal}
+        onClose={() => setShowRestoreModal(false)}
+        onConfirm={handleConfirmRestore}
+        workflow={selectedWorkflow ? {
+          id: selectedWorkflow.id,
+          name: selectedWorkflow.name,
+          deletedAt: selectedWorkflow.deletedAt || new Date().toISOString(),
+        } : null}
+        loading={selectedWorkflow ? restoring[selectedWorkflow.id] : false}
       />
     </MainAppLayout>
   );
