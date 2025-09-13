@@ -1475,8 +1475,8 @@ export class WorkflowService {
     try {
       console.log(`📤 Exporting deleted workflow ${workflowId} for user ${userId}`);
 
-      // Find the deleted workflow
-      const workflow = await this.prisma.workflow.findFirst({
+      // Try to find by WorkflowGuard UUID first, then by HubSpot ID
+      let workflow = await this.prisma.workflow.findFirst({
         where: {
           id: workflowId,
           ownerId: userId,
@@ -1489,6 +1489,23 @@ export class WorkflowService {
           },
         },
       });
+
+      // If not found by UUID, try by HubSpot ID
+      if (!workflow) {
+        workflow = await this.prisma.workflow.findFirst({
+          where: {
+            hubspotId: workflowId,
+            ownerId: userId,
+            isDeleted: true,
+          },
+          include: {
+            versions: {
+              orderBy: { versionNumber: 'desc' },
+              take: 1,
+            },
+          },
+        });
+      }
 
       if (!workflow) {
         throw new HttpException(
