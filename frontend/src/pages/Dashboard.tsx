@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import MainAppLayout from "@/components/MainAppLayout";
@@ -84,6 +85,8 @@ const Dashboard: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportData, setExportData] = useState<any>(null);
   const [selectedWorkflow, setSelectedWorkflow] = useState<DashboardWorkflow | null>(null);
   const [restoring, setRestoring] = useState<Record<string, boolean>>({});
 
@@ -295,6 +298,42 @@ const Dashboard: React.FC = () => {
       return fallback;
     }
     return String(value);
+  };
+
+  const handleExportWorkflow = async (workflow: DashboardWorkflow) => {
+    try {
+      setSelectedWorkflow(workflow);
+      const response = await ApiService.exportDeletedWorkflow(workflow.id);
+      setExportData(response.data);
+      setShowExportModal(true);
+      toast({
+        title: "Success",
+        description: "Workflow data exported successfully",
+        variant: "default",
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: "Error",
+        description: error.message || 'Failed to export workflow data',
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadExportData = () => {
+    if (!exportData || !selectedWorkflow) return;
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${selectedWorkflow.name}-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -722,21 +761,11 @@ const Dashboard: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleRestoreDeleted(workflow)}
-                              disabled={restoring[workflow.id]}
-                              className="text-green-600"
+                              onClick={() => handleExportWorkflow(workflow)}
+                              className="text-blue-600"
                             >
-                              {restoring[workflow.id] ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                  Restoring...
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw className="w-4 h-4 mr-1" />
-                                  Restore
-                                </>
-                              )}
+                              <Download className="w-4 h-4 mr-1" />
+                              Export Data
                             </Button>
                           ) : (
                             <Button
@@ -802,6 +831,130 @@ const Dashboard: React.FC = () => {
         } : null}
         loading={selectedWorkflow ? restoring[selectedWorkflow.id] : false}
       />
+
+      {/* Export Data Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Workflow Data: {selectedWorkflow?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Since HubSpot doesn't allow automatic workflow creation via API, use this data to manually recreate your workflow.
+            </DialogDescription>
+          </DialogHeader>
+
+          {exportData && (
+            <div className="space-y-6">
+              {/* Manual Recreation Steps */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-3">📋 Manual Recreation Steps</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
+                  {exportData.manualRecreationSteps?.map((step: string, index: number) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+
+              {/* Workflow Info */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-3">ℹ️ Workflow Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Name:</span> {exportData.workflowInfo?.name}
+                  </div>
+                  <div>
+                    <span className="font-medium">Type:</span> {exportData.workflowInfo?.type}
+                  </div>
+                  <div className="col-span-2">
+                    <span className="font-medium">Description:</span> {exportData.workflowInfo?.description}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              {exportData.actions && exportData.actions.length > 0 && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-3">⚡ Workflow Actions</h3>
+                  <div className="space-y-2">
+                    {exportData.actions.map((action: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded border text-sm">
+                        <div className="font-medium">Step {action.step}: {action.description}</div>
+                        <div className="text-gray-600 mt-1">Type: {action.type}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Triggers */}
+              {exportData.triggers && exportData.triggers.length > 0 && (
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-orange-900 mb-3">🎯 Enrollment Triggers</h3>
+                  <div className="space-y-2">
+                    {exportData.triggers.map((trigger: any, index: number) => (
+                      <div key={index} className="bg-white p-3 rounded border text-sm">
+                        <div className="font-medium">{trigger.description}</div>
+                        <div className="text-gray-600 mt-1">
+                          Filters: {trigger.filters?.length || 0} conditions
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Settings */}
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-purple-900 mb-3">⚙️ Workflow Settings</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Multiple Enrollments:</span>{' '}
+                    {exportData.settings?.allowMultipleEnrollments ? 'Yes' : 'No'}
+                  </div>
+                  <div>
+                    <span className="font-medium">Start Enabled:</span> No (for safety)
+                  </div>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <h3 className="font-semibold mb-3">📊 Backup Metadata</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                  <div>
+                    <span className="font-medium">Original HubSpot ID:</span> {exportData.metadata?.originalHubSpotId}
+                  </div>
+                  <div>
+                    <span className="font-medium">Deleted At:</span>{' '}
+                    {exportData.metadata?.deletedAt ? new Date(exportData.metadata.deletedAt).toLocaleString() : 'N/A'}
+                  </div>
+                  <div>
+                    <span className="font-medium">Last Backup:</span>{' '}
+                    {exportData.metadata?.lastBackupDate ? new Date(exportData.metadata.lastBackupDate).toLocaleString() : 'N/A'}
+                  </div>
+                  <div>
+                    <span className="font-medium">Exported At:</span>{' '}
+                    {exportData.metadata?.exportedAt ? new Date(exportData.metadata.exportedAt).toLocaleString() : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowExportModal(false)}>
+              Close
+            </Button>
+            <Button onClick={downloadExportData} className="bg-blue-600 hover:bg-blue-700">
+              <Download className="h-4 w-4 mr-2" />
+              Download JSON
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </MainAppLayout>
   );
 };

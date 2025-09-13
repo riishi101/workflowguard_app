@@ -1465,6 +1465,153 @@ export class WorkflowService {
     }
   }
 
+  /**
+   * Export deleted workflow data for manual recreation
+   */
+  async exportDeletedWorkflow(
+    workflowId: string,
+    userId: string,
+  ): Promise<any> {
+    try {
+      console.log(`📤 Exporting deleted workflow ${workflowId} for user ${userId}`);
+
+      // Find the deleted workflow
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+          isDeleted: true,
+        },
+        include: {
+          versions: {
+            orderBy: { versionNumber: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Deleted workflow not found or not accessible',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      if (!workflow.versions || workflow.versions.length === 0) {
+        throw new HttpException(
+          'No backup data available for this workflow',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const latestBackup = workflow.versions[0];
+      const workflowData = latestBackup.data as any;
+
+      // Format data for easy manual recreation
+      const exportData = {
+        workflowInfo: {
+          name: workflowData?.name || workflow.name,
+          description: workflowData?.description || 'Restored from WorkflowGuard backup',
+          type: workflowData?.type || 'DRIP_DELAY',
+          enabled: false, // Start disabled for safety
+        },
+        actions: this.formatActionsForExport(workflowData?.actions || []),
+        triggers: this.formatTriggersForExport(workflowData?.triggerSets || []),
+        enrollmentCriteria: workflowData?.segmentCriteria || [],
+        goals: workflowData?.goalCriteria || [],
+        settings: {
+          allowMultipleEnrollments: workflowData?.allowContactToTriggerMultipleTimes || false,
+          suppressForCurrentlyEnrolled: true,
+          unenrollmentSettings: workflowData?.unenrollmentSetting || {},
+        },
+        metadata: {
+          originalHubSpotId: workflow.hubspotId,
+          deletedAt: workflow.deletedAt,
+          lastBackupDate: latestBackup.createdAt,
+          exportedAt: new Date().toISOString(),
+          exportedBy: userId,
+        },
+        manualRecreationSteps: [
+          "1. Go to HubSpot → Automation → Workflows",
+          "2. Click 'Create workflow'",
+          "3. Choose 'Contact-based' workflow",
+          "4. Set the workflow name and description from the data above",
+          "5. Configure enrollment triggers using the triggers data",
+          "6. Add actions in sequence using the actions data below",
+          "7. Set goals and unenrollment criteria if needed",
+          "8. Test the workflow before enabling",
+          "9. Enable the workflow when ready"
+        ]
+      };
+
+      // Create audit log
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'workflow_exported',
+          entityType: 'workflow',
+          entityId: workflow.id,
+          newValue: JSON.stringify({ exported: true, format: 'manual_recreation' }),
+        },
+      });
+
+      return exportData;
+    } catch (error) {
+      console.error('❌ Error exporting deleted workflow:', error);
+      throw new HttpException(
+        `Failed to export workflow: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private formatActionsForExport(actions: any[]): any[] {
+    return actions.map((action, index) => ({
+      step: index + 1,
+      type: action.type,
+      description: this.getActionDescription(action),
+      configuration: this.getActionConfiguration(action),
+      stepId: action.stepId,
+    }));
+  }
+
+  private formatTriggersForExport(triggerSets: any[]): any[] {
+    return triggerSets.map((triggerSet, index) => ({
+      triggerSet: index + 1,
+      description: "Contact enrollment criteria",
+      filters: triggerSet.filters || [],
+      configuration: triggerSet,
+    }));
+  }
+
+  private getActionDescription(action: any): string {
+    switch (action.type) {
+      case 'SET_CONTACT_PROPERTY':
+        return `Set contact property: ${action.propertyName}`;
+      case 'DELAY':
+        return `Delay for ${Math.round(action.delayMillis / 60000)} minutes`;
+      case 'TASK':
+        return `Create task: ${action.subject}`;
+      case 'EMAIL':
+        return `Send email: ${action.subject}`;
+      case 'DEAL':
+        return `Create deal: ${action.dealName}`;
+      case 'BRANCH':
+        return `Branch based on conditions`;
+      case 'UNSUPPORTED_ACTION':
+        return `Custom action (may need manual configuration)`;
+      default:
+        return `${action.type} action`;
+    }
+  }
+
+  private getActionConfiguration(action: any): any {
+    const config: any = { ...action };
+    delete config.stepId;
+    delete config.actionId;
+    return config;
+  }
+
   private calculateWorkflowSteps(workflowData: any): number {
     try {
       if (typeof workflowData === 'string') {

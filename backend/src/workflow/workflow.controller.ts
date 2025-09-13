@@ -409,12 +409,37 @@ export class WorkflowController {
       return {
         success: true,
         data: result,
-        message: 'Deleted workflow restored successfully',
+        message: 'Workflow restored successfully',
       };
     } catch (error) {
+      console.error('❌ Error restoring deleted workflow:', error);
       throw new HttpException(
-        `Failed to restore deleted workflow: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        error.message || 'Failed to restore workflow',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get(':id/export-deleted')
+  @UseGuards(JwtAuthGuard, SubscriptionGuard)
+  async exportDeletedWorkflow(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const exportData = await this.workflowService.exportDeletedWorkflow(id, userId);
+      return {
+        success: true,
+        data: exportData,
+        message: 'Workflow data exported successfully',
+      };
+    } catch (error) {
+      console.error('❌ Error exporting deleted workflow:', error);
+      throw new HttpException(
+        error.message || 'Failed to export workflow data',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

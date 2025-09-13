@@ -936,6 +936,15 @@ class ApiService {
       throw error;
     }
   }
+
+  static async exportDeletedWorkflow(workflowId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get(`/workflow/${workflowId}/export-deleted`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export { ApiService };
