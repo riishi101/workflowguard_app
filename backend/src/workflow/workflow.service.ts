@@ -632,9 +632,9 @@ export class WorkflowService {
             const initialVersionData = workflowData || {
               hubspotId,
               name: workflow.name,
-              status: workflowObj?.status?.toLowerCase() || 'unknown',
+              status: (workflowData?.status || workflowObj?.status || 'ACTIVE').toLowerCase(),
               type: 'unknown',
-              enabled: workflowObj?.status === 'ACTIVE',
+              enabled: (workflowData?.status || workflowObj?.status || 'ACTIVE') === 'ACTIVE',
               metadata: {
                 protection: {
                   initialProtection: true,
