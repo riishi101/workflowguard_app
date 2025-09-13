@@ -632,9 +632,9 @@ export class WorkflowService {
             const initialVersionData = workflowData || {
               hubspotId,
               name: workflow.name,
-              status: 'active',
+              status: workflowObj?.status?.toLowerCase() || 'unknown',
               type: 'unknown',
-              enabled: true,
+              enabled: workflowObj?.status === 'ACTIVE',
               metadata: {
                 protection: {
                   initialProtection: true,
@@ -786,7 +786,7 @@ export class WorkflowService {
           id: workflow.hubspotId || workflow.id,
           internalId: workflow.id, // Add internal ID for restore operations
           name: workflow.name,
-          status: workflow.isDeleted ? 'deleted' : (versionCount > 0 ? 'active' : 'inactive'),
+          status: workflow.isDeleted ? 'deleted' : (latestVersion?.data?.status || 'unknown'),
           protectionStatus: versionCount > 0 ? 'protected' : 'unprotected',
           isDeleted: workflow.isDeleted || false,
           deletedAt: workflow.deletedAt,
