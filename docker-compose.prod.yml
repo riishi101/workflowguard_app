@@ -110,8 +110,6 @@ services:
     volumes:
       - ./nginx/sshd_config:/config/sshd/sshd_config
       - ssh_data:/config
-    ports:
-      - "2222:2222"
     networks:
       - workflowguard-network
     cap_add:
