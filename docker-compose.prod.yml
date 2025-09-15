@@ -95,8 +95,31 @@ services:
     networks:
       - workflowguard-network
 
+  ssh-server:
+    image: linuxserver/openssh-server:latest
+    container_name: workflowguard-ssh
+    restart: always
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - USER_NAME=workflowguard
+      - USER_PASSWORD=${SSH_PASSWORD}
+      - PUBLIC_KEY=${SSH_PUBLIC_KEY}
+      - SUDO_ACCESS=true
+    volumes:
+      - ./nginx/sshd_config:/config/sshd/sshd_config
+      - ssh_data:/config
+    ports:
+      - "2222:2222"
+    networks:
+      - workflowguard-network
+    cap_add:
+      - NET_ADMIN
+
 volumes:
   postgres_data:
+  ssh_data:
 
 networks:
   workflowguard-network:
