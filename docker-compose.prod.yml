@@ -59,8 +59,8 @@ services:
       RAZORPAY_PLAN_ID_PROFESSIONAL_CAD: "plan_RBFsD6U2rQb4B6"
       RAZORPAY_PLAN_ID_ENTERPRISE_CAD: "plan_RBFscXaosRIzEc"
       # Twilio WhatsApp Configuration
-      TWILIO_ACCOUNT_SID: "ACbee0672c967962b2212e68bf188771d2"
-      TWILIO_AUTH_TOKEN: "b80c34629dd5c41c26355dc6d60bca88"
+      TWILIO_ACCOUNT_SID: ""
+      TWILIO_AUTH_TOKEN: ""
       # Logging
       LOG_LEVEL: "info"
     ports:
