@@ -12,7 +12,7 @@
     "prebuild": "node -e \"if(require('fs').existsSync('dist')) require('fs').rmSync('dist', { recursive: true })\"",
     "build": "nest build",
     "postbuild": "node -e \"require('fs').cpSync('prisma', 'dist/prisma', { recursive: true })\"",
-    "prestart:prod": "",
+    "prestart:prod": "prisma generate && prisma migrate deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "ts-node-dev --respawn src/main.ts",

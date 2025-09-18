@@ -92,6 +92,19 @@ public
 .out
 .storybook-out
 
+# Deployment configs
+.vercel
+.railway
+
+# SSL certificates (legacy)
+*.pem
+*.key
+*.crt
+*.csr
+
+# SSL certificates
+nginx/ssl/
+
 # Temporary folders
 tmp/
 temp/
@@ -110,9 +123,6 @@ cypress/screenshots/
 
 # Prisma
 prisma/migrations/
-
-# SSL certificates
-nginx/ssl/
 
 # Backup files
 *.bak
