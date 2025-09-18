@@ -5,7 +5,7 @@
     "buildCommand": "npm ci && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run start:prod",
+    "startCommand": "npm start",
     "healthcheckPath": "/api",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",

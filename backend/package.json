@@ -1,7 +1,8 @@
 {
   "name": "backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "WorkflowGuard Backend API",
+  "main": "dist/main.js",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
