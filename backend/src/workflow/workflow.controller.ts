@@ -558,6 +558,87 @@ export class WorkflowController {
     }
   }
 
+  @Get('by-hubspot-id/:hubspotId/versions')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async getWorkflowVersionsByHubspotId(
+    @Param('hubspotId') hubspotId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      // First find the internal workflow ID by HubSpot ID
+      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      const versions = await this.workflowService.getWorkflowVersions(workflow.id, userId);
+      
+      return {
+        success: true,
+        data: versions,
+        message: `Successfully fetched ${versions.length} versions for workflow ${hubspotId}`,
+      };
+    } catch (error) {
+      console.error('Failed to fetch workflow versions by HubSpot ID:', error);
+      throw new HttpException(
+        `Failed to fetch workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('by-hubspot-id/:hubspotId/compare/:versionA/:versionB')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async compareWorkflowVersionsByHubspotId(
+    @Param('hubspotId') hubspotId: string,
+    @Param('versionA') versionA: string,
+    @Param('versionB') versionB: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      // First find the internal workflow ID by HubSpot ID
+      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      const comparison = await this.workflowService.compareWorkflowVersions(
+        workflow.id,
+        versionA,
+        versionB,
+      );
+      return {
+        success: true,
+        data: comparison,
+        message: 'Workflow versions compared successfully',
+      };
+    } catch (error) {
+      console.error('Failed to compare workflow versions by HubSpot ID:', error);
+      throw new HttpException(
+        `Failed to compare workflow versions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Get(':id/versions')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async getWorkflowVersions(

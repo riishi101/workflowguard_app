@@ -248,18 +248,38 @@ class ApiService {
 
   static async compareWorkflowVersions(workflowId: string, versionA: string, versionB: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/compare/${versionA}/${versionB}`);
+      // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
+      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
+      if (error.response?.status === 404) {
+        try {
+          const response = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
+          return response.data;
+        } catch (fallbackError) {
+          throw fallbackError;
+        }
+      }
       throw error;
     }
   }
 
   static async getWorkflowVersionsForComparison(workflowId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/versions`);
+      // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
+      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/versions`);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
+      if (error.response?.status === 404) {
+        try {
+          const response = await apiClient.get(`/api/workflow/${workflowId}/versions`);
+          return response.data;
+        } catch (fallbackError) {
+          throw fallbackError;
+        }
+      }
       throw error;
     }
   }
