@@ -140,6 +140,16 @@ export class SubscriptionService {
               subscription: true,
             },
           });
+          
+          // If refetch failed, return default trial status
+          if (!user) {
+            return {
+              isTrialActive: true,
+              isTrialExpired: false,
+              trialDaysRemaining: 21,
+              trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+            };
+          }
         } catch (subscriptionError) {
           console.warn('Failed to create trial subscription:', subscriptionError.message);
           // Return default trial status if subscription creation fails
