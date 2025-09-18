@@ -1,11 +1,12 @@
 {
-  "name": "fusion-starter",
+  "name": "workflowguard-frontend",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
