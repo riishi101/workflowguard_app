@@ -3,14 +3,15 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-# Install all dependencies (including dev dependencies for ts-node)
+# Install dependencies and build
 RUN npm ci
 
 COPY . .
-# Generate Prisma client
+# Generate Prisma client and build the application
 RUN npx prisma generate
+RUN npm run build
 
 EXPOSE 4000
 
-# Use ts-node to run directly from TypeScript source
-CMD ["npm", "run", "start:dev"]
+# Run production build
+CMD ["npm", "run", "start:prod"]
