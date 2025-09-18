@@ -109,7 +109,7 @@ export class SubscriptionService {
 
   async getTrialStatus(userId: string) {
     try {
-      const user = await this.prisma.user.findUnique({
+      let user = await this.prisma.user.findUnique({
         where: { id: userId },
         include: {
           subscription: true,
@@ -118,6 +118,38 @@ export class SubscriptionService {
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // If user doesn't have a subscription, create a trial subscription
+      if (!user.subscription) {
+        try {
+          await this.prisma.subscription.create({
+            data: {
+              userId: user.id,
+              planId: 'professional',
+              status: 'trial',
+              trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days
+            },
+          });
+          console.log('Trial subscription created for user:', user.id);
+          
+          // Refetch user with subscription
+          user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+              subscription: true,
+            },
+          });
+        } catch (subscriptionError) {
+          console.warn('Failed to create trial subscription:', subscriptionError.message);
+          // Return default trial status if subscription creation fails
+          return {
+            isTrialActive: true,
+            isTrialExpired: false,
+            trialDaysRemaining: 21,
+            trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+        }
       }
 
       const now = new Date();
@@ -159,8 +191,8 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Get plan limits based on user's subscription
-      const planId = user.subscription?.planId || 'starter';
+      // Get plan limits based on user's subscription or default to professional trial
+      const planId = user.subscription?.planId || 'professional';
       let workflowLimit = 5;
       let versionHistoryLimit = 30;
       
