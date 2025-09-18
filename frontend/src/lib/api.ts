@@ -110,7 +110,7 @@ export interface ProtectedWorkflow {
 class ApiService {
   static async login(email: string, password: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/auth/login', { email, password });
+      const response = await apiClient.post('/api/auth/login', { email, password });
       return response.data;
     } catch (error) {
       throw error;
@@ -119,7 +119,7 @@ class ApiService {
 
   static async register(userData: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/auth/register', userData);
+      const response = await apiClient.post('/api/auth/register', userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -128,7 +128,7 @@ class ApiService {
 
   static async getCurrentUser(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/auth/me');
+      const response = await apiClient.get('/api/auth/me');
       return response.data;
     } catch (error) {
       throw error;
@@ -150,7 +150,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.get('/workflow/protected', { headers });
+      const response = await apiClient.get('/api/workflow/protected', { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -160,12 +160,12 @@ class ApiService {
   static async getWorkflowHistory(workflowId: string): Promise<ApiResponse<WorkflowHistoryVersion[]>> {
     try {
       // First try with HubSpot ID endpoint (for workflows from WorkflowSelection)
-      const response = await apiClient.get(`/workflow-version/by-hubspot-id/${workflowId}/history`);
+      const response = await apiClient.get(`/api/workflow-version/by-hubspot-id/${workflowId}/history`);
       return response.data;
     } catch (error: any) {
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       try {
-        const fallbackResponse = await apiClient.get(`/workflow-version/${workflowId}/history`);
+        const fallbackResponse = await apiClient.get(`/api/workflow-version/${workflowId}/history`);
         return fallbackResponse.data;
       } catch (fallbackError: any) {
         // If both fail, throw the original error with more context
@@ -182,12 +182,12 @@ class ApiService {
   static async getWorkflowDetails(workflowId: string): Promise<ApiResponse<any>> {
     try {
       // First try with HubSpot ID endpoint (for workflows from WorkflowSelection)
-      const response = await apiClient.get(`/workflow/by-hubspot-id/${workflowId}`);
+      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}`);
       return response.data;
     } catch (error: any) {
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       try {
-        const fallbackResponse = await apiClient.get(`/workflow/${workflowId}`);
+        const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}`);
         return fallbackResponse.data;
       } catch (fallbackError: any) {
         // If both fail, throw the original error with more context
@@ -203,7 +203,7 @@ class ApiService {
 
   static async rollbackWorkflow(workflowId: string, versionId?: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post(`/workflow/${workflowId}/rollback${versionId ? `/${versionId}` : ''}`);
+      const response = await apiClient.post(`/api/workflow/${workflowId}/rollback${versionId ? `/${versionId}` : ''}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -266,7 +266,7 @@ class ApiService {
 
   static async startWorkflowProtection(selectedWorkflowObjects: any[]): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/workflow/start-protection', {
+      const response = await apiClient.post('/api/workflow/start-protection', {
         workflows: selectedWorkflowObjects
       });
       return response.data;
@@ -277,7 +277,7 @@ class ApiService {
 
   static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/workflow/sync-hubspot');
+      const response = await apiClient.post('/api/workflow/sync-hubspot');
       return response.data;
     } catch (error) {
       throw error;
@@ -286,7 +286,7 @@ class ApiService {
 
   static async getHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/workflow/hubspot');
+      const response = await apiClient.get('/api/workflow/hubspot');
       return response.data;
     } catch (error) {
       throw error;
@@ -377,7 +377,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/diagnose', { description }, { headers });
+      const response = await apiClient.post('/api/support/diagnose', { description }, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -395,7 +395,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/fix-rollback', {}, { headers });
+      const response = await apiClient.post('/api/support/fix-rollback', {}, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -413,7 +413,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/fix-sync', {}, { headers });
+      const response = await apiClient.post('/api/support/fix-sync', {}, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -431,7 +431,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/fix-auth', {}, { headers });
+      const response = await apiClient.post('/api/support/fix-auth', {}, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -449,7 +449,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/fix-data', {}, { headers });
+      const response = await apiClient.post('/api/support/fix-data', {}, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -467,7 +467,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/optimize-performance', {}, { headers });
+      const response = await apiClient.post('/api/support/optimize-performance', {}, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -485,7 +485,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.post('/support/whatsapp', { message, phoneNumber }, { headers });
+      const response = await apiClient.post('/api/support/whatsapp', { message, phoneNumber }, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -494,7 +494,7 @@ class ApiService {
 
   static async getDashboardStats(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/dashboard/stats');
+      const response = await apiClient.get('/api/dashboard/stats');
       return response.data;
     } catch (error) {
       throw error;
@@ -504,7 +504,7 @@ class ApiService {
   // User management
   static async updateProfile(userData: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.put('/user/profile', userData);
+      const response = await apiClient.put('/api/user/profile', userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -513,7 +513,7 @@ class ApiService {
 
   static async updateUserProfile(userData: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.put('/user/profile', userData);
+      const response = await apiClient.put('/api/user/profile', userData);
       return response.data;
     } catch (error) {
       throw error;
@@ -522,7 +522,7 @@ class ApiService {
 
   static async disconnectHubSpot(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/user/disconnect-hubspot');
+      const response = await apiClient.post('/api/user/disconnect-hubspot');
       return response.data;
     } catch (error) {
       throw error;
@@ -531,7 +531,7 @@ class ApiService {
 
   static async deleteAccount(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.delete('/user/account');
+      const response = await apiClient.delete('/api/user/account');
       return response.data;
     } catch (error) {
       throw error;
@@ -540,7 +540,7 @@ class ApiService {
 
   static async getUserProfile(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/user/profile');
+      const response = await apiClient.get('/api/user/profile');
       return response.data;
     } catch (error) {
       throw error;
@@ -549,7 +549,7 @@ class ApiService {
 
   static async getUsers(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/user');
+      const response = await apiClient.get('/api/user');
       return response.data;
     } catch (error) {
       throw error;
@@ -558,7 +558,7 @@ class ApiService {
 
   static async verifyEmail(email: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/user/verify-email', { email });
+      const response = await apiClient.post('/api/user/verify-email', { email });
       return response.data;
     } catch (error) {
       throw error;
@@ -567,7 +567,7 @@ class ApiService {
 
   static async uploadAvatar(formData: FormData): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/user/avatar', formData, {
+      const response = await apiClient.post('/api/user/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -580,7 +580,7 @@ class ApiService {
 
   static async removeAvatar(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.delete('/user/avatar');
+      const response = await apiClient.delete('/api/user/avatar');
       return response.data;
     } catch (error) {
       throw error;
@@ -589,7 +589,7 @@ class ApiService {
 
   static async getNotificationSettings(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/user/notification-settings');
+      const response = await apiClient.get('/api/user/notification-settings');
       return response.data;
     } catch (error) {
       throw error;
@@ -598,7 +598,7 @@ class ApiService {
 
   static async updateNotificationSettings(settings: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.put('/user/notification-settings', settings);
+      const response = await apiClient.put('/api/user/notification-settings', settings);
       return response.data;
     } catch (error) {
       throw error;
@@ -628,7 +628,7 @@ class ApiService {
 
   static async getApiKeys(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/user/api-keys');
+      const response = await apiClient.get('/api/user/api-keys');
       return response.data;
     } catch (error) {
       throw error;
@@ -637,7 +637,7 @@ class ApiService {
 
   static async createApiKey(apiKeyData: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/user/api-keys', apiKeyData);
+      const response = await apiClient.post('/api/user/api-keys', apiKeyData);
       return response.data;
     } catch (error) {
       throw error;
@@ -784,7 +784,7 @@ class ApiService {
   // Support tickets
   static async createSupportTicket(ticketData: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/support/tickets', ticketData);
+      const response = await apiClient.post('/api/support/tickets', ticketData);
       return response.data;
     } catch (error) {
       throw error;
@@ -920,7 +920,7 @@ class ApiService {
 
   static async exportDashboardData(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/dashboard/export');
+      const response = await apiClient.get('/api/dashboard/export');
       return response.data;
     } catch (error) {
       throw error;
