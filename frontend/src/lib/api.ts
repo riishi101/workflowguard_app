@@ -658,7 +658,7 @@ class ApiService {
   // Subscription and billing
   static async getSubscription(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription');
+      const response = await apiClient.get('/api/subscription');
       return response.data;
     } catch (error) {
       throw error;
@@ -667,7 +667,7 @@ class ApiService {
 
   static async getTrialStatus(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/trial-status');
+      const response = await apiClient.get('/api/subscription/trial-status');
       return response.data;
     } catch (error) {
       throw error;
@@ -676,7 +676,7 @@ class ApiService {
 
   static async getExpirationStatus(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/expiration-status');
+      const response = await apiClient.get('/api/subscription/expiration-status');
       return response.data;
     } catch (error) {
       throw error;
@@ -685,7 +685,7 @@ class ApiService {
 
   static async getNextPaymentInfo(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/next-payment');
+      const response = await apiClient.get('/api/subscription/next-payment');
       return response.data;
     } catch (error) {
       throw error;
@@ -694,7 +694,7 @@ class ApiService {
 
   static async getUsageStats(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/usage');
+      const response = await apiClient.get('/api/subscription/usage');
       return response.data;
     } catch (error) {
       throw error;
@@ -703,7 +703,7 @@ class ApiService {
 
   static async updateSubscription(planId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/subscription/update', { planId });
+      const response = await apiClient.post('/api/subscription/update', { planId });
       return response.data;
     } catch (error) {
       throw error;
@@ -736,7 +736,7 @@ class ApiService {
 
   static async cancelSubscription(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/subscription/cancel');
+      const response = await apiClient.post('/api/subscription/cancel');
       return response.data;
     } catch (error) {
       throw error;
@@ -745,7 +745,7 @@ class ApiService {
 
   static async getBillingHistory(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/billing-history');
+      const response = await apiClient.get('/api/subscription/billing-history');
       return response.data;
     } catch (error) {
       throw error;
@@ -754,7 +754,7 @@ class ApiService {
 
   static async downloadBillingHistoryCSV(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/billing-history/export', {
+      const response = await apiClient.get('/api/subscription/billing-history/export', {
         responseType: 'blob'
       });
       return { success: true, data: response.data };
@@ -765,7 +765,7 @@ class ApiService {
 
   static async getPaymentMethodUpdateUrl(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/subscription/payment-method-update-url');
+      const response = await apiClient.get('/api/subscription/payment-method-update-url');
       return response.data;
     } catch (error) {
       throw error;
@@ -774,7 +774,7 @@ class ApiService {
 
   static async getInvoice(invoiceId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/subscription/invoice/${invoiceId}`);
+      const response = await apiClient.get(`/api/subscription/invoice/${invoiceId}`);
       return response.data;
     } catch (error) {
       throw error;
