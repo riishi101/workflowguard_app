@@ -1,26 +1,27 @@
-# 🚀 WorkflowGuard Deployment Checklist
+# 🚀 WorkflowGuard VPS Deployment Checklist
 
 ## ✅ Pre-Deployment Checklist
 
-### Backend (Render Deployment)
-- [x] TypeScript errors fixed
-- [x] Database schema updated for PostgreSQL
-- [x] Environment variables configured
-- [x] Build script working
-- [x] Production start script configured
-- [x] Render.yaml configuration created
-- [x] Dockerfile created
+### VPS Requirements
+- [x] Hostinger VPS (145.79.0.218) - 4GB RAM, 50GB Storage
+- [x] Ubuntu 22.04 LTS installed
+- [x] Firewall configured (Ports 80, 443, 22)
+- [x] SSH access configured
 
-### Frontend (Vercel Deployment)
-- [x] API configuration updated for production
-- [x] Vercel.json configuration created
-- [x] Environment variables configured
-- [x] Build script working
+### Application Files
+- [x] Docker Compose configuration created
+- [x] Backend Dockerfile.production created
+- [x] Frontend Dockerfile.production created
+- [x] Nginx configuration created
+- [x] Environment variables configured (.env.vps)
+- [x] Deployment script created (deploy-vps.sh)
 
-### Database (Neon PostgreSQL)
-- [x] Database URL configured
-- [x] Schema ready for PostgreSQL
-- [x] Prisma client generated
+### Credentials Verified
+- [x] HubSpot Client ID/Secret configured
+- [x] Razorpay Live credentials configured
+- [x] JWT Secret configured
+- [x] Database credentials configured
+- [x] Twilio credentials configured
 
 ## 🚀 Deployment Steps
 
@@ -35,44 +36,37 @@ git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
 git push -u origin main
 ```
 
-### Step 2: Deploy Backend to Render
-1. Go to [Render.com](https://render.com)
-2. Sign up/Login
-3. Click "New +" → "Web Service"
-4. Connect your GitHub repository
-5. Configure:
-   - Name: `workflowguard-backend`
-   - Environment: `Node`
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm run start:prod`
-   - Port: `4000`
-6. Add Environment Variables:
-   ```
-   DATABASE_URL=postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-   DIRECT_URL=postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-   JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==
-   PORT=4000
-   NODE_ENV=production
-   ```
+### Step 2: Configure DNS Records
+Update your domain DNS settings:
+```
+workflowguard.pro        A    145.79.0.218
+www.workflowguard.pro    A    145.79.0.218
+api.workflowguard.pro    A    145.79.0.218
+```
 
-### Step 3: Deploy Frontend to Vercel
-1. Go to [Vercel.com](https://vercel.com)
-2. Sign up/Login
-3. Click "New Project"
-4. Import your GitHub repository
-5. Configure:
-   - Framework Preset: `Vite`
-   - Root Directory: `frontend`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-6. Add Environment Variables:
-   ```
-   VITE_API_URL=https://api.workflowguard.pro/api
-   ```
+### Step 3: SSH into VPS and Deploy
+```bash
+# SSH into your VPS
+ssh root@145.79.0.218
 
-### Step 4: Configure Custom Domain
-1. In Render: Configure custom domain `api.workflowguard.pro`
-2. In Vercel: Configure custom domain `www.workflowguard.pro`
+# Create non-root user
+adduser workflowguard
+usermod -aG sudo workflowguard
+su - workflowguard
+
+# Upload deployment files to VPS
+# Copy all files from your local machine to /home/workflowguard/workflowguard/
+
+# Run deployment script
+chmod +x deploy-vps.sh
+./deploy-vps.sh
+```
+
+### Step 4: Verify Deployment
+Test your endpoints:
+- Frontend: https://workflowguard.pro
+- Backend API: https://api.workflowguard.pro/api/health
+- Backend Status: https://api.workflowguard.pro/api
 
 ## 🔧 Post-Deployment Tasks
 
