@@ -1,21 +1,22 @@
-FROM node:20-alpine as build
+FROM node:20-slim as build
 
 WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies with retry and timeout
-RUN npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm config set fetch-retries 3 && \
-    npm install --legacy-peer-deps
+# Install dependencies with Yarn (more reliable than npm)
+RUN corepack enable && \
+    yarn config set registry https://registry.npmjs.org/ && \
+    yarn config set network-timeout 300000 && \
+    yarn config set network-concurrency 1 && \
+    yarn install --legacy-peer-deps
 
 # Copy the rest of the application
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN yarn build
 
 # Production stage
 FROM nginx:alpine

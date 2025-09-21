@@ -1,15 +1,16 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies with retry and timeout
-RUN npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm config set fetch-retries 3 && \
-    npm install
+# Install dependencies with Yarn (more reliable than npm)
+RUN corepack enable && \
+    yarn config set registry https://registry.npmjs.org/ && \
+    yarn config set network-timeout 300000 && \
+    yarn config set network-concurrency 1 && \
+    yarn install
 
 # Copy prisma schema
 COPY prisma ./prisma/
@@ -21,7 +22,7 @@ RUN npx prisma generate
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN yarn build
 
 # Expose the port the app runs on
 EXPOSE 4000
