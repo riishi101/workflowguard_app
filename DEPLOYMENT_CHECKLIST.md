@@ -3,10 +3,10 @@
 ## ✅ Pre-Deployment Checklist
 
 ### VPS Requirements
-- [x] Hostinger VPS (145.79.0.218) - 4GB RAM, 50GB Storage
-- [x] Ubuntu 22.04 LTS installed
-- [x] Firewall configured (Ports 80, 443, 22)
-- [x] SSH access configured
+- [ ] VPS Server - 4GB RAM, 50GB Storage minimum
+- [ ] Ubuntu 22.04 LTS installed
+- [ ] Firewall configured (Ports 80, 443, 22)
+- [ ] SSH access configured
 
 ### Application Files
 - [x] Docker Compose configuration created
@@ -39,15 +39,15 @@ git push -u origin main
 ### Step 2: Configure DNS Records
 Update your domain DNS settings:
 ```
-workflowguard.pro        A    145.79.0.218
-www.workflowguard.pro    A    145.79.0.218
-api.workflowguard.pro    A    145.79.0.218
+workflowguard.pro        A    YOUR_VPS_IP
+www.workflowguard.pro    A    YOUR_VPS_IP
+api.workflowguard.pro    A    YOUR_VPS_IP
 ```
 
 ### Step 3: SSH into VPS and Deploy
 ```bash
 # SSH into your VPS
-ssh root@145.79.0.218
+ssh root@YOUR_VPS_IP
 
 # Create non-root user
 adduser workflowguard

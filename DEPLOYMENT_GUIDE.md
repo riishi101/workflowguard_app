@@ -12,10 +12,10 @@ Your WorkflowGuard application supports multiple deployment strategies:
 - **Monitoring**: Netdata
 - **Security**: Fail2Ban + UFW Firewall
 
-### **Option 2: Cloud Services**
-- **Frontend**: Vercel (`www.workflowguard.pro`)
-- **Backend**: Render (`api.workflowguard.pro`)
-- **Database**: Neon PostgreSQL
+### **Option 2: Alternative VPS Setup**
+- **Frontend**: Docker + Nginx (`www.workflowguard.pro`)
+- **Backend**: Docker Container (`api.workflowguard.pro`)
+- **Database**: PostgreSQL Container
 - **Authentication**: JWT with secure keys
 - **HubSpot Integration**: Configured and ready
 
@@ -27,8 +27,8 @@ Your app is now optimized for:
 - ✅ **Scalable Architecture** - Microservices with separate frontend/backend
 - ✅ **Secure Authentication** - JWT with production secrets
 - ✅ **Database Optimization** - PostgreSQL with connection pooling
-- ✅ **CDN & Performance** - Vercel's global CDN for frontend
-- ✅ **API Security** - Render with SSL and proper headers
+- ✅ **CDN & Performance** - Nginx with proper caching for frontend
+- ✅ **API Security** - SSL certificates and proper headers
 
 ### **2. Environment Configuration**
 
@@ -53,27 +53,31 @@ VITE_API_URL="https://api.workflowguard.pro/api"
 
 ## 🔧 **Deployment Commands**
 
-### **Vercel (Frontend)**
+### **VPS Deployment**
 ```bash
-# Deploy to Vercel
-vercel --prod
+# Deploy to VPS
+docker-compose -f docker-compose.production.yml up -d
 
-# Or connect to existing project
-vercel link
-vercel deploy --prod
+# Check container status
+docker ps
+
+# View logs
+docker-compose -f docker-compose.production.yml logs
 ```
 
-### **Render (Backend)**
+### **SSL Configuration**
 ```bash
-# Connect to Render dashboard
-# Deploy from GitHub repository
-# Environment variables configured in Render dashboard
+# Generate SSL certificates
+certbot --nginx -d workflowguard.pro -d www.workflowguard.pro -d api.workflowguard.pro
 ```
 
-### **Database (Neon)**
+### **Database Management**
 ```bash
-# Database is already configured and running
-# Connection string: postgresql://neondb_owner:...
+# Database backup
+docker exec postgres_container pg_dump -U postgres workflowguard > backup.sql
+
+# Database restore
+docker exec -i postgres_container psql -U postgres workflowguard < backup.sql
 ```
 
 ## 🛡️ **Security & Performance Optimizations**
@@ -85,9 +89,9 @@ vercel deploy --prod
 - ✅ Rate limiting on API
 
 ### **2. Performance**
-- ✅ Frontend: Vercel's global CDN
-- ✅ Backend: Render's auto-scaling
-- ✅ Database: Neon's connection pooling
+- ✅ Frontend: Nginx caching and compression
+- ✅ Backend: Docker container optimization
+- ✅ Database: PostgreSQL connection pooling
 - ✅ API: Optimized for HubSpot integration
 
 ### **3. Monitoring**
@@ -120,32 +124,31 @@ vercel deploy --prod
 
 ## 🚀 **Next Steps for Production**
 
-### **1. Deploy Backend to Render**
+### **1. Deploy to VPS**
 ```bash
 # Push to GitHub
 git add .
 git commit -m "Production ready"
 git push origin main
 
-# Deploy on Render dashboard
-# Connect GitHub repository
-# Set environment variables
-# Deploy automatically
+# On VPS server
+git pull origin main
+docker-compose -f docker-compose.production.yml up -d --build
 ```
 
-### **2. Deploy Frontend to Vercel**
+### **2. Configure SSL**
 ```bash
-# Install Vercel CLI
-npm i -g vercel
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx
 
-# Deploy
-vercel --prod
+# Generate certificates
+sudo certbot --nginx -d workflowguard.pro -d www.workflowguard.pro -d api.workflowguard.pro
 ```
 
 ### **3. Configure Domains**
-- ✅ `www.workflowguard.pro` → Vercel
-- ✅ `api.workflowguard.pro` → Render
-- ✅ SSL certificates automatic
+- ✅ `workflowguard.pro` → VPS IP
+- ✅ `api.workflowguard.pro` → VPS IP
+- ✅ SSL certificates via Let's Encrypt
 
 ### **4. Test Production**
 1. Visit `https://www.workflowguard.pro`
@@ -156,26 +159,27 @@ vercel --prod
 ## 🔍 **Monitoring & Maintenance**
 
 ### **Health Checks**
-- Frontend: `https://www.workflowguard.pro/health`
+- Frontend: `https://workflowguard.pro/health`
 - Backend: `https://api.workflowguard.pro/health`
-- Database: Neon dashboard
+- Database: PostgreSQL container logs
 
 ### **Logs & Debugging**
-- Vercel: Function logs and analytics
-- Render: Application logs
-- Neon: Query performance
+- Docker: `docker-compose logs [service]`
+- Nginx: `/var/log/nginx/access.log`
+- Application: Container logs via Docker
 
 ### **Backup Strategy**
-- Database: Neon automatic backups
+- Database: Regular PostgreSQL dumps
 - Code: GitHub repository
 - Environment: Version controlled
+- SSL: Let's Encrypt auto-renewal
 
 ## 🎉 **Production Ready!**
 
 Your WorkflowGuard application is now:
 
 ✅ **Fully Integrated** - Frontend + Backend + Database  
-✅ **Production Deployed** - Vercel + Render + Neon  
+✅ **Production Deployed** - VPS + Docker + PostgreSQL  
 ✅ **Secure** - JWT + HTTPS + CORS  
 ✅ **Scalable** - Auto-scaling + CDN + Connection pooling  
 ✅ **Monitored** - Logs + Analytics + Error tracking  

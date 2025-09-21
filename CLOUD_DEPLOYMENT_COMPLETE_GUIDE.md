@@ -1,108 +1,100 @@
-# 🚀 WorkflowGuard Cloud Deployment - Complete Guide
+# 🚀 WorkflowGuard VPS Deployment - Complete Guide
 
-## 🎯 Overview: VPS → Cloud Migration
+## 🎯 Overview: Production VPS Deployment
 
-**Why we switched from Hostinger VPS to Vercel + Railway:**
-- ❌ VPS reliability issues (frequent downtime)
-- ❌ Complex server management (Docker, Caddy, firewall)
-- ❌ Manual SSL certificate management
-- ✅ **Cloud benefits:** 99.9% uptime, automatic scaling, zero maintenance
+**Current deployment architecture on VPS:**
+- ✅ Reliable VPS hosting with full control
+- ✅ Docker containerization for easy management
+- ✅ Nginx reverse proxy with SSL certificates
+- ✅ PostgreSQL database with proper backup
 
 ## 📋 Deployment Architecture
 
 ```
-Frontend (React + Vite) → Vercel
-Backend (NestJS) → Railway
-Database (PostgreSQL) → Railway
+Frontend (React + Vite) → Docker + Nginx
+Backend (NestJS) → Docker Container
+Database (PostgreSQL) → Docker Container
 ```
 
-## 🚀 Step-by-Step Deployment
+## 🚀 Step-by-Step VPS Deployment
 
-### Phase 1: Backend + Database (Railway)
+### Phase 1: Server Setup
 
-1. **Create Railway account:** [railway.app](https://railway.app)
-2. **Deploy database:**
-   - New Project → Add PostgreSQL
-   - Copy `DATABASE_URL` from Variables tab
+1. **Prepare VPS server:**
+   - Ubuntu 22.04 LTS
+   - Docker and Docker Compose installed
+   - Firewall configured (ports 80, 443, 22)
 
-3. **Deploy backend:**
-   - New Service → GitHub Repo → Select your repo
-   - Root directory: `backend`
-   - Add all environment variables from `.env.railway`
-   - Update `DATABASE_URL` with Railway's PostgreSQL URL
-
-4. **Get backend URL:**
-   - Copy public URL (e.g., `https://backend-production-abc123.railway.app`)
-
-### Phase 2: Frontend (Vercel)
-
-1. **Update frontend environment:**
+2. **Clone repository:**
    ```bash
-   cd frontend
-   # Update VITE_API_URL with your Railway backend URL
+   git clone https://github.com/your-username/workflowguard_app.git
+   cd workflowguard_app
    ```
 
-2. **Deploy to Vercel:**
+3. **Configure environment variables:**
    ```bash
-   npm i -g vercel
-   cd frontend
-   vercel
+   cp .env.example .env
+   # Edit .env with your production values
    ```
 
-3. **Configure environment variables in Vercel dashboard:**
-   - `VITE_API_URL`: Your Railway backend URL
-   - `VITE_HUBSPOT_CLIENT_ID`: HubSpot client ID
-   - `VITE_RAZORPAY_KEY_ID`: Razorpay key ID
+### Phase 2: Docker Deployment
 
-### Phase 3: Update OAuth Callbacks
+1. **Build and start containers:**
+   ```bash
+   docker-compose -f docker-compose.production.yml up -d
+   ```
 
-1. **HubSpot App Settings:**
-   - Redirect URI: `https://your-app.vercel.app/auth/callback`
+2. **Configure SSL certificates:**
+   ```bash
+   # SSL certificates via Let's Encrypt
+   certbot --nginx -d workflowguard.pro -d www.workflowguard.pro
+   ```
 
-2. **Railway Backend Environment:**
-   - Update `HUBSPOT_REDIRECT_URI` to match Vercel URL
+### Phase 3: Domain Configuration
+
+1. **DNS Settings:**
+   - A record: workflowguard.pro → VPS IP
+   - A record: www.workflowguard.pro → VPS IP
+   - A record: api.workflowguard.pro → VPS IP
 
 ## 🔗 Final URLs Structure
 
 ```
-Frontend: https://workflowguard-frontend.vercel.app
-Backend:  https://backend-production-abc123.railway.app
-Database: Managed by Railway (internal connection)
+Frontend: https://workflowguard.pro
+Backend:  https://api.workflowguard.pro
+Database: PostgreSQL (Docker container)
 ```
 
-## 🎯 Custom Domains (Optional)
+## 🎯 Production Domains
 
-### Vercel (Frontend)
-1. Vercel Dashboard → Domains
-2. Add: `www.workflowguard.pro`
-3. Update DNS: CNAME → vercel-dns.com
-
-### Railway (Backend)
-1. Railway Service → Settings → Domains
-2. Add: `api.workflowguard.pro`
-3. Update DNS: CNAME → railway.app
+### Main Application
+- Frontend: `https://workflowguard.pro`
+- API: `https://api.workflowguard.pro`
+- SSL: Let's Encrypt certificates
+- Reverse Proxy: Nginx
 
 ## ✅ Deployment Checklist
 
 ### Pre-Deployment
-- [ ] Remove all VPS files (Docker, nginx, scripts)
-- [ ] Update .gitignore for cloud deployment
-- [ ] Create Vercel and Railway configs
+- [ ] Prepare VPS server (Ubuntu 22.04 LTS)
+- [ ] Install Docker and Docker Compose
+- [ ] Configure firewall (ports 80, 443, 22)
+- [ ] Set up domain DNS records
 
-### Railway Backend
-- [ ] PostgreSQL database deployed
+### VPS Backend
+- [ ] PostgreSQL container deployed
 - [ ] Backend service deployed
 - [ ] All environment variables configured
 - [ ] Database migrations successful
 - [ ] API endpoints responding
-- [ ] Custom domain configured (optional)
+- [ ] SSL certificates configured
 
-### Vercel Frontend
-- [ ] Frontend deployed successfully
-- [ ] Environment variables configured
-- [ ] API calls working
+### VPS Frontend
+- [ ] Frontend container deployed successfully
+- [ ] Nginx reverse proxy configured
+- [ ] Static files serving correctly
 - [ ] HubSpot OAuth working
-- [ ] Custom domain configured (optional)
+- [ ] SSL certificates working
 
 ### Final Testing
 - [ ] Frontend loads correctly
@@ -114,49 +106,51 @@ Database: Managed by Railway (internal connection)
 
 ## 🔧 Environment Variables Summary
 
-### Vercel Frontend (.env.production)
+### Frontend Environment (.env)
 ```bash
-VITE_API_URL=https://your-backend.railway.app
+VITE_API_URL=https://api.workflowguard.pro
 VITE_HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6
 VITE_RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y
 ```
 
-### Railway Backend (Environment Variables)
+### Backend Environment (.env)
 ```bash
-DATABASE_URL=postgresql://postgres:password@host:port/database
-HUBSPOT_REDIRECT_URI=https://your-frontend.vercel.app/auth/callback
-# ... (all other variables from .env.railway)
+DATABASE_URL=postgresql://postgres:password@db:5432/workflowguard
+HUBSPOT_REDIRECT_URI=https://workflowguard.pro/auth/callback
+JWT_SECRET=your-secure-jwt-secret
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+# ... (all other production variables)
 ```
 
-## 🎉 Benefits of New Architecture
+## 🎉 Benefits of VPS Architecture
 
 ### Reliability
-- ✅ 99.9% uptime SLA (vs VPS downtime issues)
-- ✅ Automatic failover and redundancy
-- ✅ Global CDN for fast loading
+- ✅ Full control over server resources
+- ✅ Predictable performance
+- ✅ No vendor lock-in
 
 ### Maintenance
-- ✅ Zero server management
-- ✅ Automatic security updates
-- ✅ Automatic SSL certificates
-- ✅ No Docker/container management
+- ✅ Complete server control
+- ✅ Custom security configurations
+- ✅ Let's Encrypt SSL certificates
+- ✅ Docker containerization for easy management
 
 ### Scalability
-- ✅ Automatic scaling based on traffic
-- ✅ Pay-per-use pricing
-- ✅ Easy to add more services
+- ✅ Vertical scaling by upgrading VPS
+- ✅ Horizontal scaling by adding servers
+- ✅ Load balancing capabilities
 
 ### Developer Experience
-- ✅ Automatic deployments on git push
-- ✅ Preview deployments for testing
-- ✅ Built-in monitoring and logs
-- ✅ Easy rollbacks
+- ✅ Direct server access for debugging
+- ✅ Custom deployment scripts
+- ✅ Full log access
+- ✅ Easy rollbacks via Docker
 
-## 🚨 Migration Complete!
+## 🚨 VPS Deployment Complete!
 
-Your WorkflowGuard app is now running on enterprise-grade cloud infrastructure with:
-- **Frontend:** Vercel (automatic HTTPS, global CDN)
-- **Backend:** Railway (managed containers, auto-scaling)
-- **Database:** Railway PostgreSQL (managed, backed up)
+Your WorkflowGuard app is now running on reliable VPS infrastructure with:
+- **Frontend:** Docker + Nginx (HTTPS, caching, compression)
+- **Backend:** Docker Container (NestJS, auto-restart)
+- **Database:** PostgreSQL Container (persistent storage, backups)
 
-**No more VPS headaches! 🎉**
+**Full control over your infrastructure! 🎉**

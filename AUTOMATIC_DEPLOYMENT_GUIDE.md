@@ -1,30 +1,30 @@
-# 🚀 Automatic Deployment Guide
+# 🚀 VPS Deployment Guide
 
 ## ✅ **Production Ready Configuration**
 
-Your application is now configured for automatic deployment to:
-- **Backend**: Render (with PostgreSQL database)
-- **Frontend**: Vercel (with automatic builds)
+Your application is now configured for VPS deployment with:
+- **Backend**: Docker Container (with PostgreSQL database)
+- **Frontend**: Docker + Nginx (with static file serving)
 
 ## 📋 **Deployment Files Created**
 
-### 1. **render.yaml** - Backend Deployment Configuration
-- ✅ PostgreSQL database connection
+### 1. **docker-compose.production.yml** - Container Configuration
+- ✅ PostgreSQL database container
 - ✅ Environment variables configured
 - ✅ Build and start commands set
 - ✅ Production security settings
 
-### 2. **vercel.json** - Frontend Deployment Configuration
-- ✅ Static build configuration
-- ✅ API route proxying
+### 2. **nginx/nginx.conf** - Web Server Configuration
+- ✅ Static file serving
+- ✅ API reverse proxy
 - ✅ Security headers
-- ✅ SPA routing support
+- ✅ SSL configuration
 
-### 3. **.github/workflows/deploy.yml** - GitHub Actions
-- ✅ Automatic testing on push
-- ✅ Backend deployment to Render
-- ✅ Frontend deployment to Vercel
-- ✅ Branch protection (main only)
+### 3. **deploy-production.sh** - Deployment Script
+- ✅ Automatic container building
+- ✅ Database migrations
+- ✅ SSL certificate management
+- ✅ Service health checks
 
 ## 🚀 **Step-by-Step Deployment Setup**
 
@@ -41,72 +41,80 @@ git commit -m "🚀 Production Ready: PostgreSQL database, security features, an
 git push origin main
 ```
 
-### **Step 2: Set Up Render (Backend)**
+### **Step 2: Set Up VPS Server**
 
-1. **Go to [Render Dashboard](https://dashboard.render.com)**
-2. **Click "New +" → "Web Service"**
-3. **Connect your GitHub repository**
-4. **Configure the service:**
-   - **Name**: `workflowguard-backend`
-   - **Root Directory**: `backend`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm run start:prod`
-   - **Environment**: `Node`
+1. **Connect to your VPS server:**
+   ```bash
+   ssh root@your-server-ip
+   ```
 
-5. **Add Environment Variables:**
+2. **Install Docker and Docker Compose:**
+   ```bash
+   # Install Docker
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   
+   # Install Docker Compose
+   sudo apt install docker-compose
+   ```
+
+3. **Clone your repository:**
+   ```bash
+   git clone https://github.com/your-username/workflowguard_app.git
+   cd workflowguard_app
+   ```
+
+4. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your production values:
+   nano .env
+   ```
+
+   **Required environment variables:**
    ```
    NODE_ENV=production
-   DATABASE_URL=postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-   DIRECT_URL=postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   DATABASE_URL=postgresql://postgres:password@db:5432/workflowguard
    JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==
    JWT_EXPIRES_IN=7d
-   HUBSPOT_CLIENT_ID=<set-in-render-secrets>
-   HUBSPOT_CLIENT_SECRET=<set-in-render-secrets>
+   HUBSPOT_CLIENT_ID=your-hubspot-client-id
+   HUBSPOT_CLIENT_SECRET=your-hubspot-client-secret
    HUBSPOT_REDIRECT_URI=https://api.workflowguard.pro/api/auth/hubspot/callback
    VITE_API_URL=https://api.workflowguard.pro/api
-   DOMAIN=www.workflowguard.pro
-   RENDER_URL=api.workflowguard.pro
-   VERCEL_URL=www.workflowguard.pro
-   ENABLE_ANALYTICS=true
+   DOMAIN=workflowguard.pro
    ```
 
-6. **Click "Create Web Service"**
+### **Step 3: Deploy with Docker**
 
-### **Step 3: Set Up Vercel (Frontend)**
-
-1. **Go to [Vercel Dashboard](https://vercel.com/dashboard)**
-2. **Click "New Project"**
-3. **Import your GitHub repository**
-4. **Configure the project:**
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-5. **Add Environment Variables:**
-   ```
-   VITE_API_URL=https://api.workflowguard.pro/api
-   DOMAIN=www.workflowguard.pro
+1. **Build and start containers:**
+   ```bash
+   docker-compose -f docker-compose.production.yml up -d --build
    ```
 
-6. **Click "Deploy"**
+2. **Check container status:**
+   ```bash
+   docker ps
+   ```
 
-### **Step 4: Configure GitHub Secrets (Optional - for automatic deployment)**
+3. **Configure SSL certificates:**
+   ```bash
+   sudo certbot --nginx -d workflowguard.pro -d www.workflowguard.pro -d api.workflowguard.pro
+   ```
 
-If you want automatic deployment via GitHub Actions, add these secrets to your repository:
+### **Step 4: Configure Domain DNS**
 
-1. **Go to your GitHub repository**
-2. **Settings → Secrets and variables → Actions**
-3. **Add the following secrets:**
+1. **Add DNS A records for your domain:**
+   - `workflowguard.pro` → `your-server-ip`
+   - `www.workflowguard.pro` → `your-server-ip`
+   - `api.workflowguard.pro` → `your-server-ip`
 
-   **For Render:**
-   - `RENDER_SERVICE_ID`: Your Render service ID
-   - `RENDER_API_KEY`: Your Render API key
+2. **Wait for DNS propagation (5-60 minutes)**
 
-   **For Vercel:**
-   - `VERCEL_TOKEN`: Your Vercel API token
-   - `VERCEL_ORG_ID`: Your Vercel organization ID
-   - `VERCEL_PROJECT_ID`: Your Vercel project ID
+3. **Test DNS resolution:**
+   ```bash
+   nslookup workflowguard.pro
+   nslookup api.workflowguard.pro
+   ```
 
 ## 🔗 **Production URLs**
 
@@ -116,30 +124,30 @@ After deployment, your application will be available at:
 
 ## ✅ **Production Features Enabled**
 
-### **Backend (Render):**
-- ✅ PostgreSQL database with Neon
+### **Backend (Docker Container):**
+- ✅ PostgreSQL database container
 - ✅ JWT authentication
 - ✅ HubSpot integration
 - ✅ Security headers
 - ✅ Rate limiting
 - ✅ Input validation
-- ✅ Automatic backups
+- ✅ Database backups
 - ✅ SSL encryption
 
-### **Frontend (Vercel):**
+### **Frontend (Nginx + Docker):**
 - ✅ Static file serving
-- ✅ API route proxying
+- ✅ API reverse proxy
 - ✅ Security headers
 - ✅ SPA routing
-- ✅ CDN optimization
-- ✅ Automatic builds
+- ✅ Gzip compression
+- ✅ Caching optimization
 
-### **Automatic Deployment:**
-- ✅ GitHub Actions workflow
-- ✅ Testing on every push
-- ✅ Automatic deployment to production
-- ✅ Branch protection
-- ✅ Build verification
+### **VPS Deployment:**
+- ✅ Docker containerization
+- ✅ Automated deployment scripts
+- ✅ SSL certificate management
+- ✅ Health monitoring
+- ✅ Log management
 
 ## 🧪 **Testing Your Deployment**
 
@@ -150,33 +158,39 @@ curl https://api.workflowguard.pro/api
 
 ### **2. Frontend Access:**
 ```bash
-curl https://www.workflowguard.pro
+curl https://workflowguard.pro
 ```
 
-### **3. Database Connection:**
+### **3. Container Status:**
 ```bash
-curl https://api.workflowguard.pro/api/workflow/debug/state
+docker ps
+docker-compose -f docker-compose.production.yml logs
+```
+
+### **4. Database Connection:**
+```bash
+docker exec -it postgres_container psql -U postgres -d workflowguard
 ```
 
 ## 🔧 **Troubleshooting**
 
-### **If Backend Deployment Fails:**
-1. Check Render logs for build errors
-2. Verify environment variables are set
-3. Ensure database connection is working
+### **If Backend Container Fails:**
+1. Check Docker logs: `docker logs backend_container`
+2. Verify environment variables are set in .env
+3. Ensure database container is running
 4. Check Node.js version compatibility
 
-### **If Frontend Deployment Fails:**
-1. Check Vercel build logs
-2. Verify API URL is correct
+### **If Frontend Container Fails:**
+1. Check nginx logs: `docker logs nginx_container`
+2. Verify API proxy configuration
 3. Ensure all dependencies are installed
-4. Check for TypeScript compilation errors
+4. Check for build errors in container logs
 
 ### **If Database Connection Fails:**
-1. Verify Neon database credentials
-2. Check SSL connection settings
-3. Ensure database schema is pushed
-4. Verify network connectivity
+1. Verify PostgreSQL container is running
+2. Check database credentials in .env
+3. Ensure database schema is migrated
+4. Verify container networking
 
 ## 🎉 **Success Indicators**
 
@@ -190,27 +204,27 @@ Your deployment is successful when:
 
 ## 📊 **Monitoring**
 
-### **Render Monitoring:**
-- Automatic health checks
-- Performance metrics
-- Error logging
-- Resource usage
+### **VPS Monitoring:**
+- Docker container health checks
+- System resource monitoring
+- Application logs via Docker
+- SSL certificate expiry monitoring
 
-### **Vercel Monitoring:**
-- Build status
-- Performance analytics
-- Error tracking
-- User analytics
+### **Application Monitoring:**
+- Container status monitoring
+- Database performance metrics
+- Error logging and tracking
+- User access analytics
 
 ---
 
 ## 🚀 **Ready for Production!**
 
-Your application is now configured for automatic deployment with:
-- ✅ **PostgreSQL database** with Neon
+Your application is now configured for VPS deployment with:
+- ✅ **PostgreSQL database** in Docker container
 - ✅ **Security features** enabled
-- ✅ **Automatic deployment** via GitHub Actions
+- ✅ **Docker containerization** for easy management
 - ✅ **Production monitoring** and logging
-- ✅ **SSL encryption** and security headers
+- ✅ **SSL encryption** via Let's Encrypt
 
 **Push your changes and watch the magic happen!** 🎉 
