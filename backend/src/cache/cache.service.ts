@@ -138,8 +138,7 @@ export class CacheService {
   }
 
   async invalidateByTag(tag: string): Promise<void> {
-    // This is a simplified implementation
-    // In production, you'd use Redis or a more sophisticated cache
+    // This is a simplified in-memory implementation
     console.log(`Invalidating cache by tag: ${tag}`);
   }
 

@@ -47,5 +47,3 @@ echo 2. Start the backend: cd ../backend ^&^& npm run start:dev
 echo 3. Start the frontend: npm run dev
 echo 4. Visit http://localhost:3000 to test the integration
 echo.
-echo For Docker deployment:
-echo docker-compose up 

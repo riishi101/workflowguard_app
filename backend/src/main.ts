@@ -67,10 +67,10 @@ async function bootstrap() {
   );
   app.use(compression());
 
-  // Production-grade rate limiting
+  // Rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'production' ? 300 : 1000, // Stricter limit for production
+    max: 1000, // Request limit
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -107,8 +107,7 @@ async function bootstrap() {
   app.enableCors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
-        process.env.FRONTEND_URL?.replace('www.', '') || 'https://workflowguard.pro',
+        process.env.FRONTEND_URL || 'http://localhost:5173',
         'http://localhost:5173',
         'http://localhost:3000',
         'http://127.0.0.1:5173',
@@ -156,7 +155,7 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // Enable ValidationPipe for production
+  // Enable ValidationPipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

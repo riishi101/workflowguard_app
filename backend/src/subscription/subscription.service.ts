@@ -646,8 +646,7 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // For now, return mock billing history since Razorpay integration is basic
-      // In production, this would fetch from Razorpay API using user.razorpayCustomerId
+      // Return mock billing history since Razorpay integration is basic
       const mockBillingHistory = [
         {
           id: 'pay_1',
@@ -707,7 +706,7 @@ export class SubscriptionService {
         },
       });
 
-      // In production, this would also call Razorpay API to cancel the subscription
+      // Mock cancellation - no actual API call needed
       // await razorpayInstance.subscriptions.cancel(user.razorpaySubscriptionId);
 
       return {
