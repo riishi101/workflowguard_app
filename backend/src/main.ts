@@ -19,7 +19,7 @@ if (!global.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: false, // We'll configure CORS manually below
+    cors: false, // CORS handled by nginx
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
   // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
@@ -103,54 +103,8 @@ async function bootstrap() {
   });
   app.use('/api/auth/hubspot', oauthLimiter);
 
-  // Configure CORS properly to handle credentials
-  app.enableCors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:3000',
-        'https://app.hubspot.com',
-        'https://developers.hubspot.com',
-        'https://marketplace.hubspot.com',
-      ];
-
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log(`CORS blocked origin: ${origin}`);
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'x-user-id',
-      'x-hubspot-signature',
-      'x-hubspot-request-timestamp',
-      'x-hubspot-portal-id',
-      'Accept',
-      'Origin',
-      'X-Requested-With',
-    ],
-    exposedHeaders: [
-      'Content-Length',
-      'X-Requested-With',
-      'X-Marketplace-App',
-      'X-Marketplace-Version',
-    ],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  // CORS is handled by nginx - no backend CORS needed
+  // nginx.hostinger.conf handles all CORS headers for production
 
   // Global prefix
   app.setGlobalPrefix('api');

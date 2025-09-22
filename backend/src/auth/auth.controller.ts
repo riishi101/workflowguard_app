@@ -93,9 +93,7 @@ export class AuthController {
     @Query('state') state: string,
     @Res() res: Response,
   ) {
-    // Set CORS headers for the OAuth callback
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'https://www.workflowguard.pro');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    // CORS headers handled by nginx
     try {
       console.log('HubSpot callback received with code:', code);
 
