@@ -19,7 +19,7 @@ if (!global.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: false, // CORS handled by nginx
+    cors: false, // CORS completely disabled - nginx handles all CORS
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
   // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
