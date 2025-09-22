@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: workflowguard_postgres
+    environment:
+      POSTGRES_DB: workflowguard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - workflowguard-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: workflowguard_backend
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/workflowguard
+      - DIRECT_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/workflowguard
+      - JWT_SECRET=${JWT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - HUBSPOT_CLIENT_ID=${HUBSPOT_CLIENT_ID}
+      - HUBSPOT_CLIENT_SECRET=${HUBSPOT_CLIENT_SECRET}
+      - HUBSPOT_REDIRECT_URI=https://api.workflowguard.pro/api/auth/hubspot/callback
+      - HUBSPOT_SCOPES=automation oauth
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_PLAN_ID_USD_MONTHLY=${RAZORPAY_PLAN_ID_USD_MONTHLY}
+      - RAZORPAY_PLAN_ID_USD_YEARLY=${RAZORPAY_PLAN_ID_USD_YEARLY}
+      - RAZORPAY_PLAN_ID_GBP_MONTHLY=${RAZORPAY_PLAN_ID_GBP_MONTHLY}
+      - RAZORPAY_PLAN_ID_GBP_YEARLY=${RAZORPAY_PLAN_ID_GBP_YEARLY}
+      - RAZORPAY_PLAN_ID_EUR_MONTHLY=${RAZORPAY_PLAN_ID_EUR_MONTHLY}
+      - RAZORPAY_PLAN_ID_EUR_YEARLY=${RAZORPAY_PLAN_ID_EUR_YEARLY}
+      - RAZORPAY_PLAN_ID_CAD_MONTHLY=${RAZORPAY_PLAN_ID_CAD_MONTHLY}
+      - RAZORPAY_PLAN_ID_CAD_YEARLY=${RAZORPAY_PLAN_ID_CAD_YEARLY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_NUMBER=${TWILIO_WHATSAPP_NUMBER}
+      - FRONTEND_URL=https://workflowguard.pro
+      - ALLOWED_ORIGINS=https://workflowguard.pro
+      - JWT_EXPIRES_IN=7d
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - workflowguard-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workflowguard_frontend
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=https://api.workflowguard.pro
+      - VITE_HUBSPOT_CLIENT_ID=${HUBSPOT_CLIENT_ID}
+    ports:
+      - "3000:80"
+    networks:
+      - workflowguard-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: workflowguard_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - workflowguard-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  workflowguard-network:
+    driver: bridge
