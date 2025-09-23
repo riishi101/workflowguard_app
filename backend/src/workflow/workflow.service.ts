@@ -787,7 +787,7 @@ export class WorkflowService {
           id: workflow.hubspotId || workflow.id,
           internalId: workflow.id, // Add internal ID for restore operations
           name: workflow.name,
-          status: workflow.isDeleted ? 'deleted' : (workflow.status || 'inactive'),
+          status: workflow.isDeleted ? 'deleted' : (workflow.status || 'active'),
           protectionStatus: versionCount > 0 ? 'protected' : 'unprotected',
           isDeleted: workflow.isDeleted || false,
           deletedAt: workflow.deletedAt,
