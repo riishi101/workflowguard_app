@@ -606,25 +606,26 @@ export class WorkflowService {
             },
             update: {
               name: workflowObj?.name || 'Unnamed Workflow',
+              status: (workflowObj?.status || 'ACTIVE').toLowerCase(),
               ownerId: userId,
               updatedAt: new Date(),
             },
             create: {
               hubspotId: hubspotId,
               name: workflowObj?.name || 'Unnamed Workflow',
+              status: (workflowObj?.status || 'ACTIVE').toLowerCase(),
               ownerId: userId,
-            },
-            include: {
-              owner: true,
-              versions: {
-                orderBy: { versionNumber: 'desc' },
-                take: 1,
-              },
             },
           });
 
-          // ALWAYS ensure workflow has at least one version
-          if (!workflow?.versions?.length) {
+          // Get the workflow with versions to check if any exist
+          const workflowWithVersions = await tx.workflow.findUnique({
+            where: { id: workflow.id },
+            include: { versions: true }
+          });
+
+          // Ensure workflow has at least one version (only create if none exist)
+          if (!workflowWithVersions?.versions?.length) {
             // Use pre-fetched HubSpot data (outside transaction)
             const workflowData = hubspotWorkflows.find((w) => String(w.id) === hubspotId);
 
@@ -672,8 +673,8 @@ export class WorkflowService {
               },
             });
 
-            // Add version to workflow object
-            workflow.versions = [initialVersion];
+            // Add version to workflow object (for TypeScript compatibility)
+            (workflow as any).versions = [initialVersion];
 
             console.log('✅ Created initial version for workflow:', {
               workflowId: workflow.id,
