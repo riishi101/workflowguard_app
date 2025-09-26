@@ -1,217 +1,267 @@
-# 🗄️ Database Production Readiness Analysis
+# Database Schema Analysis
 
-## ✅ **DATABASE IS PRODUCTION READY**
+## 1. Overview
 
-### 🔧 **Current Configuration:**
+The database schema is defined using Prisma and is designed to support the core features of the WorkflowGuard application. It uses a PostgreSQL database and includes tables for managing users, workflows, subscriptions, and other application-related data.
 
-#### **1. Database Provider: PostgreSQL ✅**
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+## 2. ERD Diagram
+
+```mermaid
+erDiagram
+    User {
+        String id PK
+        String email UK
+        String name
+        String password
+        String jobTitle
+        String timezone
+        String language
+        DateTime createdAt
+        DateTime updatedAt
+        String hubspotPortalId UK
+        String hubspotAccessToken
+        String hubspotRefreshToken
+        DateTime hubspotTokenExpiresAt
+    }
+
+    Workflow {
+        String id PK
+        String hubspotId UK
+        String name
+        String status
+        String ownerId FK
+        DateTime createdAt
+        DateTime updatedAt
+        DateTime deletedAt
+        Boolean isDeleted
+        DateTime restoredAt
+    }
+
+    WorkflowVersion {
+        String id PK
+        String workflowId FK
+        Int versionNumber
+        String snapshotType
+        String createdBy
+        DateTime createdAt
+        Json data
+    }
+
+    AuditLog {
+        String id PK
+        String userId FK
+        String action
+        String entityType
+        String entityId
+        Json oldValue
+        Json newValue
+        DateTime timestamp
+        String ipAddress
+    }
+
+    Subscription {
+        String id PK
+        String userId UK, FK
+        String planId
+        String status
+        DateTime trialEndDate
+        DateTime nextBillingDate
+        DateTime createdAt
+        DateTime updatedAt
+        String razorpayCustomerId
+        String razorpaySubscriptionId
+    }
+
+    Webhook {
+        String id PK
+        String userId FK
+        String name
+        String endpointUrl
+        String secret
+        String events
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    Plan {
+        String id PK
+        String name
+        String description
+        Float price
+        String interval
+        Boolean isActive
+        DateTime createdAt
+        DateTime updatedAt
+        Json features
+    }
+
+    Overage {
+        String id PK
+        String userId FK
+        String planId
+        Float amount
+        String description
+        Boolean isBilled
+        DateTime billedAt
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    NotificationSettings {
+        String id PK
+        String userId UK, FK
+        Boolean enabled
+        String email
+        Boolean workflowDeleted
+        Boolean enrollmentTriggerModified
+        Boolean workflowRolledBack
+        Boolean criticalActionModified
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    ApiKey {
+        String id PK
+        String userId FK
+        String name
+        String description
+        String key UK
+        Boolean isActive
+        DateTime lastUsed
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    SsoConfig {
+        String id PK
+        String provider UK
+        String clientId
+        String clientSecret
+        String redirectUri
+        Boolean isEnabled
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    SupportTicket {
+        String id PK
+        String userId FK
+        String subject
+        String description
+        String status
+        String priority
+        String category
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    SupportReply {
+        String id PK
+        String ticketId FK
+        String userId FK
+        String message
+        Boolean isInternal
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    User ||--o{ Workflow : "owns"
+    User ||--o{ AuditLog : "performs"
+    User ||--o{ Subscription : "has"
+    User ||--o{ Webhook : "configures"
+    User ||--o{ Overage : "incurs"
+    User ||--o{ NotificationSettings : "has"
+    User ||--o{ ApiKey : "creates"
+    User ||--o{ SupportTicket : "creates"
+    User ||--o{ SupportReply : "writes"
+    Workflow ||--o{ WorkflowVersion : "has"
+    Subscription }|..|| Plan : "subscribes to"
+    SupportTicket ||--o{ SupportReply : "has"
 ```
 
-#### **2. Production Database: Neon PostgreSQL ✅**
-- **Host**: `ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech`
-- **Database**: `neondb`
-- **User**: `neondb_owner`
-- **SSL**: Required and configured
-- **Connection Pooling**: Enabled
+## 3. Table Descriptions
 
-### 📊 **Schema Analysis:**
+### `User`
+- **Purpose:** Stores user account information, including authentication details and HubSpot integration credentials.
+- **Key Columns:**
+  - `id`: Unique identifier for the user.
+  - `email`: User's email address (unique).
+  - `hubspotPortalId`: HubSpot portal ID associated with the user's account.
 
-#### **✅ All Tables Properly Configured:**
+### `Workflow`
+- **Purpose:** Represents a HubSpot workflow being monitored by the application.
+- **Key Columns:**
+  - `id`: Unique identifier for the workflow.
+  - `hubspotId`: The ID of the workflow in HubSpot (unique).
+  - `ownerId`: Foreign key linking to the `User` who owns the workflow.
 
-1. **User Table** ✅
-   - UUID primary key
-   - Email unique constraint
-   - HubSpot integration fields
-   - Proper relationships
+### `WorkflowVersion`
+- **Purpose:** Stores snapshots of a workflow at different points in time.
+- **Key Columns:**
+  - `id`: Unique identifier for the version.
+  - `workflowId`: Foreign key linking to the `Workflow`.
+  - `versionNumber`: Sequential version number for each workflow.
+  - `data`: JSON object containing the workflow snapshot.
 
-2. **Workflow Table** ✅
-   - UUID primary key
-   - HubSpot ID unique constraint
-   - Owner relationship
-   - Version tracking
+### `AuditLog`
+- **Purpose:** Tracks significant actions performed by users within the application.
+- **Key Columns:**
+  - `id`: Unique identifier for the log entry.
+  - `userId`: Foreign key linking to the `User` who performed the action.
+  - `action`: The action that was performed (e.g., "workflow.create").
+  - `newValue`: JSON object representing the state of the entity after the change.
 
-3. **WorkflowVersion Table** ✅
-   - JSON data storage (PostgreSQL compatible)
-   - Version numbering
-   - Snapshot tracking
+### `Subscription`
+- **Purpose:** Manages user subscriptions and billing information.
+- **Key Columns:**
+  - `id`: Unique identifier for the subscription.
+  - `userId`: Foreign key linking to the `User`.
+  - `planId`: The ID of the subscription plan.
+  - `razorpaySubscriptionId`: The subscription ID from Razorpay.
 
-4. **AuditLog Table** ✅
-   - JSON old/new values
-   - User tracking
-   - IP address logging
+### `Webhook`
+- **Purpose:** Stores configurations for webhooks that send notifications to external services.
+- **Key Columns:**
+  - `id`: Unique identifier for the webhook.
+  - `userId`: Foreign key linking to the `User`.
+  - `endpointUrl`: The URL where the webhook payload will be sent.
 
-5. **Subscription Table** ✅
-   - Plan management
-   - Trial tracking
-   - Billing dates
+### `Plan`
+- **Purpose:** Defines the available subscription plans.
+- **Key Columns:**
+  - `id`: Unique identifier for the plan.
+  - `name`: The name of the plan (e.g., "Basic", "Pro").
+  - `price`: The price of the plan.
 
-6. **Webhook Table** ✅
-   - Endpoint configuration
-   - Secret management
-   - Event filtering
+### `Overage`
+- **Purpose:** Tracks any usage that exceeds the limits of a user's subscription plan.
+- **Key Columns:**
+  - `id`: Unique identifier for the overage record.
+  - `userId`: Foreign key linking to the `User`.
+  - `amount`: The overage amount to be billed.
 
-7. **Plan Table** ✅
-   - Pricing configuration
-   - Feature management
-   - Active status
+### `NotificationSettings`
+- **Purpose:** Stores user preferences for receiving notifications.
+- **Key Columns:**
+  - `id`: Unique identifier for the settings.
+  - `userId`: Foreign key linking to the `User`.
+  - `workflowDeleted`: Boolean flag to enable/disable notifications for workflow deletions.
 
-8. **Overage Table** ✅
-   - Usage tracking
-   - Billing status
-   - Amount calculation
+### `ApiKey`
+- **Purpose:** Manages API keys for programmatic access to the application.
+- **Key Columns:**
+  - `id`: Unique identifier for the API key.
+  - `userId`: Foreign key linking to the `User`.
+  - `key`: The API key string (unique).
 
-9. **NotificationSettings Table** ✅
-   - Email preferences
-   - Event subscriptions
-   - User customization
+### `SsoConfig`
+- **Purpose:** Stores configurations for Single Sign-On (SSO) providers.
+- **Key Columns:**
+  - `id`: Unique identifier for the SSO configuration.
+  - `provider`: The SSO provider (e.g., "google", "okta").
 
-10. **ApiKey Table** ✅
-    - Key management
-    - Usage tracking
-    - Active status
-
-11. **SsoConfig Table** ✅
-    - Provider configuration
-    - OAuth settings
-    - Active status
-
-12. **SupportTicket Table** ✅
-    - Ticket management
-    - Priority levels
-    - Status tracking
-
-13. **SupportReply Table** ✅
-    - Reply threading
-    - Internal notes
-    - User tracking
-
-### 🔒 **Security Features:**
-
-#### **✅ Data Protection:**
-- **UUID Primary Keys**: Secure, non-sequential IDs
-- **Foreign Key Constraints**: Data integrity
-- **Unique Constraints**: Prevent duplicates
-- **SSL Connection**: Encrypted data transfer
-- **Connection Pooling**: Efficient resource management
-
-#### **✅ Data Types:**
-- **JSON Fields**: Proper PostgreSQL JSON type
-- **DateTime**: Timestamp tracking
-- **String**: Proper length constraints
-- **Boolean**: True/false flags
-- **Float**: Decimal precision for pricing
-
-### 📈 **Scalability Features:**
-
-#### **✅ Performance Optimizations:**
-- **Indexed Fields**: Primary keys, foreign keys, unique constraints
-- **Connection Pooling**: Neon's built-in pooling
-- **JSON Storage**: Efficient JSON operations
-- **Proper Relationships**: Optimized queries
-
-#### **✅ Production Features:**
-- **Backup**: Neon automatic backups
-- **Monitoring**: Database metrics
-- **Scaling**: Auto-scaling capabilities
-- **High Availability**: Neon's distributed architecture
-
-### 🧪 **Database Tests:**
-
-#### **✅ Connection Test:**
-```bash
-npx prisma db push
-npx prisma generate
-```
-
-#### **✅ Schema Validation:**
-- All tables accessible
-- All relationships working
-- All constraints enforced
-- All data types compatible
-
-#### **✅ Data Operations:**
-- CRUD operations working
-- JSON operations functional
-- Relationship queries optimized
-- Transaction support enabled
-
-### 🚀 **Production Deployment:**
-
-#### **✅ Environment Variables:**
-```bash
-DATABASE_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-DIRECT_URL="postgresql://neondb_owner:npg_oPpKhNtTR20d@ep-dry-resonance-afgqyybz.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-```
-
-#### **✅ Migration Strategy:**
-1. **Schema Push**: `npx prisma db push`
-2. **Client Generation**: `npx prisma generate`
-3. **Seed Data**: `npm run seed`
-4. **Verification**: Database connection test
-
-### 📊 **Database Statistics:**
-
-#### **✅ Current State:**
-- **Tables**: 13 production tables
-- **Relationships**: 15+ foreign key relationships
-- **Indexes**: Optimized for queries
-- **Constraints**: Data integrity enforced
-- **Data Types**: PostgreSQL compatible
-
-#### **✅ Capacity:**
-- **Storage**: Neon's scalable storage
-- **Connections**: Connection pooling enabled
-- **Performance**: Optimized for production load
-- **Backup**: Automatic daily backups
-
-### 🎯 **Production Checklist:**
-
-#### **✅ Database Configuration:**
-- [x] PostgreSQL provider configured
-- [x] Neon database credentials set
-- [x] SSL connection enabled
-- [x] Connection pooling configured
-
-#### **✅ Schema Design:**
-- [x] All tables properly defined
-- [x] Relationships correctly mapped
-- [x] Data types PostgreSQL compatible
-- [x] Constraints and indexes optimized
-
-#### **✅ Security:**
-- [x] UUID primary keys
-- [x] Foreign key constraints
-- [x] Unique constraints
-- [x] SSL encryption
-
-#### **✅ Performance:**
-- [x] Indexed fields
-- [x] Optimized queries
-- [x] Connection pooling
-- [x] JSON operations
-
-#### **✅ Scalability:**
-- [x] Auto-scaling capable
-- [x] Backup strategy
-- [x] Monitoring enabled
-- [x] High availability
-
----
-
-## 🎉 **CONCLUSION: DATABASE IS 100% PRODUCTION READY**
-
-Your database is fully configured for production with:
-- ✅ **PostgreSQL** with Neon hosting
-- ✅ **Complete schema** with all required tables
-- ✅ **Security features** enabled
-- ✅ **Performance optimizations** in place
-- ✅ **Scalability features** configured
-- ✅ **Backup and monitoring** active
-
-**Your database is ready to handle production traffic, user data, and all application features!** 🚀 
+### `SupportTicket` & `SupportReply`
+- **Purpose:** A simple support ticket system to manage user inquiries.
+- **Key Columns:**
+  - `SupportTicket`: Stores the main ticket information.
+  - `SupportReply`: Stores replies to a support ticket.
