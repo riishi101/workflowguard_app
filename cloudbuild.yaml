@@ -38,6 +38,12 @@ steps:
       - '--max-instances=10'
       - '--set-env-vars=NODE_ENV=production'
       - '--env-vars-file=.env.backend'
+      - '--set-env-vars=DATABASE_URL=postgresql://postgres:postgres123@db:5432/workflowguard'
+      - '--set-env-vars=HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6'
+      - '--set-env-vars=HUBSPOT_CLIENT_SECRET=07f931e2-bc75-4686-a9cf-c1d464c55019'
+      - '--set-env-vars=JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw=='
+      - '--set-env-vars=RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y'
+      - '--set-env-vars=RAZORPAY_KEY_SECRET=O5McpwbAgoiSNMJDQetruaTK'
     id: 'deploy-backend'
     waitFor: ['push-backend']
 
@@ -56,6 +62,7 @@ steps:
       - '--cpu=1'
       - '--max-instances=10'
       - '--env-vars-file=.env.frontend'
+      - '--set-env-vars=VITE_API_URL=https://workflowguard.pro'
     id: 'deploy-frontend'
     waitFor: ['push-frontend']
 

@@ -21,11 +21,19 @@ RUN npx prisma generate
 # Copy the rest of the application
 COPY . .
 
+# Copy environment files
+COPY .env* ./
+
 # Build the application
 RUN yarn build
 
 # Expose the port the app runs on
 EXPOSE 4000
 
-# Start the application
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Start the application with entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]

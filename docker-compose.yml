@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Database
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: workflowguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/workflowguard
+      - DIRECT_URL=postgresql://postgres:postgres123@db:5432/workflowguard
+      - NODE_ENV=production
+      - PORT=4000
+      - HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6
+      - HUBSPOT_CLIENT_SECRET=07f931e2-bc75-4686-a9cf-c1d464c55019
+      - HUBSPOT_REDIRECT_URI=https://workflowguard.pro/api/auth/hubspot/callback
+      - JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==
+      - RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y
+      - RAZORPAY_KEY_SECRET=O5McpwbAgoiSNMJDQetruaTK
+      - TWILIO_ACCOUNT_SID=ACbee0672c967962b2212e68bf188771d2
+      - TWILIO_AUTH_TOKEN=b80c34629dd5c41c26355dc6d60bca88
+      - FRONTEND_URL=https://workflowguard.pro
+      - API_URL=https://workflowguard.pro
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && npm run start:prod"]
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=https://workflowguard.pro
+      - VITE_APP_URL=https://workflowguard.pro
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
