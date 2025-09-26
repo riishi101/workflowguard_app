@@ -1,4 +1,5 @@
 # Google Cloud Build configuration for WorkflowGuard
+# Service Account: workflowguard-build@$PROJECT_ID.iam.gserviceaccount.com
 steps:
   # Build Backend
   - name: 'gcr.io/cloud-builders/docker'
