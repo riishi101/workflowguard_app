@@ -1,85 +1,161 @@
-# WorkflowGuard Deployment Guide
+# WorkflowGuard - Google Cloud Deployment Guide
 
-## Environment Configuration
+## 🚀 **Deployment Status**
 
-The application is now configured with production credentials and ready for deployment.
+### ✅ **Production URLs**
+- **Frontend**: https://www.workflowguard.pro
+- **Backend API**: https://api.workflowguard.pro
 
-### Environment Files
+### 🏗️ **Infrastructure**
+- **Google Cloud Project**: `continual-mind-473007-h8`
+- **Region**: `us-central1` (Global access enabled)
+- **Artifact Registry**: `workflowguard-containers`
+- **Database**: Cloud SQL PostgreSQL 15
+- **Services**: Auto-scaling Cloud Run
 
-- `.env.backend` - Backend environment variables for Cloud Run
-- `.env.frontend` - Frontend environment variables for Cloud Run  
-- `.env.production` - Complete production configuration
-- `docker-compose.yml` - Local development with production credentials
+## 🔐 **Security & Environment Setup**
 
-### Credentials Implemented
+### **Environment Variables Setup**
 
-✅ **Database**: PostgreSQL connection configured
-✅ **HubSpot OAuth**: Client ID, Secret, and Redirect URI set
-✅ **Security**: JWT and Session secrets configured
-✅ **Payment**: Razorpay live credentials with multi-currency support
-✅ **Support**: Twilio/WhatsApp integration configured
-✅ **URLs**: Production domain configured (workflowguard.pro)
+1. **Copy the template file:**
+   ```bash
+   cp .env.backend.template .env.backend
+   ```
 
-### Multi-Currency Support
+2. **Fill in your actual credentials** in `.env.backend`:
+   - Replace all `YOUR_*` placeholders with real values
+   - Update database password, API keys, etc.
 
-The application supports 5 currencies with dedicated Razorpay plans:
-- 🇮🇳 INR (Indian Rupee)
-- 🇺🇸 USD (US Dollar) 
-- 🇬🇧 GBP (British Pound)
-- 🇪🇺 EUR (Euro)
-- 🇨🇦 CAD (Canadian Dollar)
+3. **Cloud Build Environment Variables:**
+   The following variables need to be set in Google Cloud Build:
+   ```bash
+   # Set these in Google Cloud Console > Cloud Build > Settings > Environment Variables
+   DATABASE_PASSWORD=your_db_password
+   HUBSPOT_CLIENT_ID=your_hubspot_client_id
+   HUBSPOT_CLIENT_SECRET=your_hubspot_client_secret
+   JWT_SECRET=your_jwt_secret
+   RAZORPAY_KEY_ID=your_razorpay_key_id
+   RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+   TWILIO_ACCOUNT_SID=your_twilio_account_sid
+   TWILIO_AUTH_TOKEN=your_twilio_auth_token
+   TWILIO_WHATSAPP_NUMBER=your_twilio_whatsapp_number
+   ```
 
-## Deployment Options
+## 🌐 **Domain Configuration**
 
-### 1. Google Cloud Run (Recommended)
+### **DNS Records** (Hostinger)
+```
+Type: TXT
+Name: @
+Value: google-site-verification=XTrm37Nu2sbnSRXVUTWnfUtxNJ9fJixUt8TlxnbakCI
 
+Type: CNAME
+Name: www
+Value: ghs.googlehosted.com
+
+Type: CNAME
+Name: api
+Value: ghs.googlehosted.com
+```
+
+### **Domain Mappings**
+- ✅ `www.workflowguard.pro` → `workflowguard-frontend`
+- ✅ `api.workflowguard.pro` → `workflowguard-backend`
+
+## 🔧 **Deployment Commands**
+
+### **Manual Deployment**
 ```bash
-# Deploy using Cloud Build
+# Deploy with Cloud Build
 gcloud builds submit --config=cloudbuild.yaml
 
-# Or with specific build ID
-gcloud builds submit --config=cloudbuild.yaml --substitutions=_BUILD_ID=v1.0.0
+# Deploy backend only
+gcloud run deploy workflowguard-backend \
+  --image=us-central1-docker.pkg.dev/continual-mind-473007-h8/workflowguard-containers/workflowguard-backend:latest \
+  --region=us-central1
 ```
 
-### 2. Local Docker Development
-
+### **Local Development**
 ```bash
-# Start all services
-docker-compose up -d
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+# Backend
+cd backend
+npm install
+npm run start:dev
+```
+
+## 📊 **Monitoring & Logs**
+
+### **Google Cloud Console URLs**
+- **Services**: https://console.cloud.google.com/run?project=continual-mind-473007-h8
+- **Build History**: https://console.cloud.google.com/cloud-build/builds?project=continual-mind-473007-h8
+- **Database**: https://console.cloud.google.com/sql/instances?project=continual-mind-473007-h8
+- **Logs**: https://console.cloud.google.com/logs/query?project=continual-mind-473007-h8
+
+### **Quick Status Check**
+```bash
+# Check services
+gcloud run services list --region=us-central1
+
+# Check domain mappings
+gcloud beta run domain-mappings list --region=us-central1
 
 # View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+gcloud logging read "resource.type=cloud_run_revision" --limit=10
 ```
 
-### 3. Manual Environment Setup
+## 🏗️ **Architecture Overview**
 
-Copy the credentials from `.env.production` to your deployment platform's environment variables.
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   User Traffic  │───▶│  Google Cloud    │───▶│  Cloud Run      │
+│   (Global)      │    │  Load Balancer   │    │  Services       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │                        │
+                                ▼                        ▼
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │  Custom Domains  │    │  Cloud SQL      │
+                       │  SSL Certificates│    │  PostgreSQL     │
+                       └──────────────────┘    └─────────────────┘
+```
 
-## Configuration Fixes Applied
+## 🔍 **Troubleshooting**
 
-1. ✅ **NODE_ENV**: Corrected from "PORT=4000" to "production"
-2. ✅ **HUBSPOT_REDIRECT_URI**: Fixed domain structure
-3. ✅ **Multi-currency Plans**: All Razorpay plan IDs configured
-4. ✅ **Cloud Build**: Updated with proper environment variables
+### **Common Issues**
+1. **SSL Certificate Issues**: Wait 5-15 minutes for provisioning
+2. **Domain Not Working**: Check DNS propagation with `nslookup`
+3. **Backend Errors**: Check Cloud SQL connection and environment variables
 
-## Security Notes
+### **Useful Commands**
+```bash
+# Check DNS
+nslookup www.workflowguard.pro
+nslookup api.workflowguard.pro
 
-- All credentials are production-ready
-- JWT secret is cryptographically secure
-- Razorpay keys are live (not test) credentials
-- Database uses secure connection strings
+# Test endpoints
+curl -I https://www.workflowguard.pro
+curl -I https://api.workflowguard.pro/api/health
+```
 
-## Next Steps
+## 📝 **Development Notes**
 
-1. Ensure Google Cloud project is properly configured
-2. Set up Cloud SQL PostgreSQL instance if needed
-3. Configure domain DNS to point to Cloud Run services
-4. Test HubSpot OAuth flow with production redirect URI
-5. Verify Razorpay webhook endpoints are accessible
+- **Build System**: Multi-stage Docker builds with Cloud Build
+- **Database**: Cloud SQL with connection pooling
+- **Security**: Environment variables for secrets, no hardcoded credentials
+- **Scaling**: Auto-scaling based on traffic with 0-10 instances
+- **Global Access**: Single region deployment with global edge network
 
-## Support
+## 🚀 **Next Steps**
 
-The application includes WhatsApp support via Twilio for customer assistance.
+1. **Set up CI/CD**: Automatic deployments on git push
+2. **Add Monitoring**: Set up alerting and metrics
+3. **Performance Optimization**: Enable Cloud CDN
+4. **Security Hardening**: Add WAF and additional security layers
+
+---
+
+**For support or questions, check the logs or contact the development team.**

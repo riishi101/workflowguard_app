@@ -5,18 +5,14 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies with Yarn (more reliable than npm)
-RUN corepack enable && \
-    yarn config set registry https://registry.npmjs.org/ && \
-    yarn config set network-timeout 300000 && \
-    yarn config set network-concurrency 1 && \
-    yarn install --legacy-peer-deps
+# Install dependencies with npm
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine

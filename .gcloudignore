@@ -1,0 +1,30 @@
+# Exclude development files
+node_modules/
+npm-debug.log*
+.git/
+.gitignore
+README.md
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Exclude build artifacts
+dist/
+build/
+coverage/
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Exclude logs
+logs/
+*.log
