@@ -1,5 +1,8 @@
 FROM node:20-slim
 
+# Install OpenSSL to fix Prisma warnings
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy package.json and package-lock.json
@@ -29,4 +32,4 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["npm", "run", "start:prod"]
