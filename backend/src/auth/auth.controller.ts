@@ -93,7 +93,6 @@ export class AuthController {
     @Query('state') state: string,
     @Res() res: Response,
   ) {
-    // CORS headers handled by nginx
     try {
       console.log('HubSpot callback received with code:', code);
 

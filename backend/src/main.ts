@@ -19,7 +19,17 @@ if (!global.crypto) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: false, // CORS completely disabled - nginx handles all CORS
+    cors: {
+      origin: [
+        'https://www.workflowguard.pro',
+        'https://workflowguard-frontend-248924108278.us-central1.run.app',
+        'http://localhost:3000', // for development
+        'http://localhost:5173', // for Vite development
+      ],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    },
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
   });
   // Trust proxy for correct client IP and rate limiting behind Render/Cloudflare
@@ -102,9 +112,6 @@ async function bootstrap() {
     },
   });
   app.use('/api/auth/hubspot', oauthLimiter);
-
-  // CORS is handled by nginx - no backend CORS needed
-  // nginx.hostinger.conf handles all CORS headers for production
 
   // Global prefix
   app.setGlobalPrefix('api');
