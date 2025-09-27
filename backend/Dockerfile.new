@@ -1,0 +1,40 @@
+# Single stage build
+FROM node:20-slim
+
+# Install OpenSSL to fix Prisma warnings
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies using npm
+RUN npm ci
+
+# Copy prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy the rest of the application
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Verify that the dist directory exists and has the main.js file
+RUN echo "Checking dist directory contents:" && ls -la dist/
+RUN echo "Finding main.js file:" && find dist -name "main.js" -type f
+
+# Expose the port the app runs on
+EXPOSE 4000
+
+# Create a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Start the application
+CMD ["node", "--max-old-space-size=400", "dist/main.js"]
