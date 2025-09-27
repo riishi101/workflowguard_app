@@ -170,11 +170,21 @@ export class AuthController {
 
       // Try different possible email fields
       let email =
-        userRes.data.user || userRes.data.email || userRes.data.userEmail;
+        userRes.data.user || 
+        userRes.data.email || 
+        userRes.data.userEmail ||
+        userRes.data.user_email;
 
-      // If no email found, use portalId as email (convert to string)
-      if (!email && userRes.data.portalId) {
-        email = `portal-${userRes.data.portalId}@hubspot.test`;
+      // If no email found, try to extract from user object if it exists
+      if (!email && userRes.data.user && typeof userRes.data.user === 'object') {
+        email = userRes.data.user.email || userRes.data.user.userEmail;
+      }
+
+      // If still no email found, use portalId as email (convert to string)
+      if (!email && (userRes.data.portalId || userRes.data.hub_id || hub_id)) {
+        const portalId = userRes.data.portalId || userRes.data.hub_id || hub_id;
+        email = `portal-${portalId}@hubspot.workflowguard.app`;
+        console.log('No email found, using generated email based on portal ID:', email);
       }
 
       console.log('User email from HubSpot:', email);
@@ -189,25 +199,33 @@ export class AuthController {
       console.log('Creating/updating user in database...');
       let user;
       try {
-        // First try to find existing user
-        user = await this.prisma.user.findUnique({
-          where: { email },
+        // First try to find existing user by hubspotPortalId or email
+        user = await this.prisma.user.findFirst({
+          where: {
+            OR: [
+              { email },
+              { hubspotPortalId: String(hub_id) }
+            ]
+          },
         });
 
         if (user) {
           // Update existing user
+          console.log('Updating existing user:', user.id);
           user = await this.prisma.user.update({
             where: { id: user.id },
             data: {
+              email, // Update email in case it changed
               hubspotPortalId: String(hub_id),
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+              hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
             },
           });
           console.log('User updated successfully:', user.id);
         } else {
           // Create new user
+          console.log('Creating new user with email:', email);
           user = await this.prisma.user.create({
             data: {
               email,
@@ -215,7 +233,7 @@ export class AuthController {
               hubspotPortalId: String(hub_id),
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + tokenRes.data.expires_in * 1000),
+              hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
             },
           });
           console.log('User created successfully:', user.id);
@@ -241,10 +259,44 @@ export class AuthController {
           message: dbError.message,
           code: dbError.code,
           meta: dbError.meta,
+          stack: dbError.stack,
         });
-        return res.redirect(
-          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_creation_failed`,
-        );
+        
+        // Try to provide more specific error handling
+        if (dbError.code === 'P2002') {
+          console.error('Unique constraint violation - user may already exist');
+          // Try to find and return existing user
+          try {
+            user = await this.prisma.user.findFirst({
+              where: {
+                OR: [
+                  { email },
+                  { hubspotPortalId: String(hub_id) }
+                ]
+              },
+            });
+            if (user) {
+              console.log('Found existing user after constraint violation:', user.id);
+              // Update the existing user's tokens
+              user = await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  hubspotAccessToken: access_token,
+                  hubspotRefreshToken: refresh_token,
+                  hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
+                },
+              });
+            }
+          } catch (recoveryError) {
+            console.error('Failed to recover from constraint violation:', recoveryError);
+          }
+        }
+        
+        if (!user) {
+          return res.redirect(
+            `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_creation_failed`,
+          );
+        }
       }
 
       // 4. Generate JWT token for the user
