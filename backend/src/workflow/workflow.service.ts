@@ -956,7 +956,17 @@ export class WorkflowService {
     const currentString = JSON.stringify(currentCore);
     const previousString = JSON.stringify(previousCore);
     
-    return currentString !== previousString;
+    const hasChanges = currentString !== previousString;
+    
+    console.log(`🔍 Structure comparison for workflow:`, {
+      hasChanges,
+      currentLength: currentString.length,
+      previousLength: previousString.length,
+      currentKeys: Object.keys(currentCore),
+      previousKeys: Object.keys(previousCore)
+    });
+    
+    return hasChanges;
   }
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
@@ -1043,9 +1053,18 @@ export class WorkflowService {
               
               const fullDataChanged = currentDataString !== latestDataString;
               
+              console.log(`🔍 Full data comparison for workflow ${hubspotWorkflow.id}:`, {
+                structureChanged: shouldCreateVersion,
+                fullDataChanged,
+                currentLength: currentDataString.length,
+                latestLength: latestDataString.length
+              });
+
               if (fullDataChanged) {
-                console.log(`⚠️ Workflow ${hubspotWorkflow.id}: Structure unchanged but metadata differs - SKIPPING version creation`);
+                console.log(`⚠️ Workflow ${hubspotWorkflow.id}: Structure unchanged but metadata differs - will CREATE version`);
                 console.log(`Current data length: ${currentDataString.length}, Latest data length: ${latestDataString.length}`);
+                // Set shouldCreateVersion to true since there are differences
+                shouldCreateVersion = true;
               }
             }
             

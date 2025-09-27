@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Twilio } from 'twilio';
+import Twilio from 'twilio';
 
 @Injectable()
 export class WhatsAppService {
   private readonly logger = new Logger(WhatsAppService.name);
-  private twilioClient: Twilio;
+  private twilioClient: Twilio.Twilio;
   private readonly fromNumber: string;
 
   constructor(private configService: ConfigService) {
@@ -25,7 +25,7 @@ export class WhatsAppService {
     }
 
     try {
-      this.twilioClient = new Twilio(accountSid, authToken);
+      this.twilioClient = Twilio(accountSid, authToken);
       this.logger.log('WhatsApp service initialized with Twilio Sandbox');
     } catch (error) {
       this.logger.error('Failed to initialize Twilio client:', error);
@@ -82,7 +82,7 @@ export class WhatsAppService {
           templateMessage = `Hi! 👋 Welcome to WorkflowGuard support. How can we help you today?`;
           break;
         default:
-          templateMessage = `Thank you for contacting WorkflowGuard support. We'll get back to you shortly.`;
+          templateMessage = `Thank you for contacting WorkflowGuard support. We'll get back to you as soon as possible.`;
       }
 
       const messageResponse = await this.twilioClient.messages.create({
