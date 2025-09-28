@@ -12,7 +12,7 @@ const path = require('path');
 const REQUIRED_VARS_BACKEND = {
   // Database
   'DATABASE_URL': 'PostgreSQL database connection string',
-  'DIRECT_URL': 'Direct PostgreSQL connection string',
+  //'DIRECT_URL': 'Direct PostgreSQL connection string',  // Removed as it causes issues in Cloud Run
   
   // Application
   'NODE_ENV': 'Application environment (production/development)',

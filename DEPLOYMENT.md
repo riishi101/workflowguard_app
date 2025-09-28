@@ -129,6 +129,7 @@ gcloud logging read "resource.type=cloud_run_revision" --limit=10
 1. **SSL Certificate Issues**: Wait 5-15 minutes for provisioning
 2. **Domain Not Working**: Check DNS propagation with `nslookup`
 3. **Backend Errors**: Check Cloud SQL connection and environment variables
+4. **Build Issues**: See backend/FIXES_SUMMARY.md for recent build process fixes
 
 ### **Useful Commands**
 ```bash
@@ -148,6 +149,18 @@ curl -I https://api.workflowguard.pro/api/health
 - **Security**: Environment variables for secrets, no hardcoded credentials
 - **Scaling**: Auto-scaling based on traffic with 0-10 instances
 - **Global Access**: Single region deployment with global edge network
+
+## 🚀 **Recent Fixes**
+
+### Backend Build and Environment Issues (September 2025)
+See [backend/FIXES_SUMMARY.md](backend/FIXES_SUMMARY.md) for details on recent fixes:
+
+1. **Duplicate Keys in tsconfig.json**: Removed duplicate `emitDecoratorMetadata` and `experimentalDecorators` properties
+2. **Environment Variable Loading**: Fixed .env file encoding issues that prevented Razorpay credentials from loading
+3. **Build Process**: Verified TypeScript compilation and dist folder generation
+4. **Application Startup**: Confirmed successful application startup with Razorpay service initialization
+
+These fixes resolved the "Cannot find module '/app/dist/main.js'" error and the "Razorpay credentials not found in environment variables" error.
 
 ## 🚀 **Next Steps**
 

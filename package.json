@@ -4,7 +4,8 @@
     "deploy": "npm run validate-env && gcloud builds submit --config=cloudbuild.yaml",
     "dev": "docker-compose up -d",
     "dev-logs": "docker-compose logs -f",
-    "dev-stop": "docker-compose down"
+    "dev-stop": "docker-compose down",
+    "build:backend": "cd backend && npm run build"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.3",
