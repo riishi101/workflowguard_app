@@ -29,7 +29,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error('Unhandled exception', exception as any);
+    this.logger.error(
+      'Unhandled exception',
+      (exception as any).stack,
+      'AllExceptionsFilter',
+    );
     response.status(500).json({
       statusCode: 500,
       timestamp: new Date().toISOString(),

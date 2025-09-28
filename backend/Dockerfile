@@ -21,6 +21,10 @@ COPY . .
 # Build the application with tsc
 RUN npx tsc -p tsconfig.build.json --outDir dist
 
+# Debug: List files in dist directory
+RUN ls -la dist/
+RUN find dist -name "*.js" | head -10
+
 # Copy prisma files to dist
 RUN mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/ && cp -r prisma/migrations dist/prisma/
 
@@ -37,6 +41,10 @@ RUN npm ci --only=production
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
+
+# Debug: List files in dist directory
+RUN ls -la dist/
+RUN find dist -name "*.js" | head -10
 
 # Copy prisma files
 COPY --from=builder /app/prisma ./prisma

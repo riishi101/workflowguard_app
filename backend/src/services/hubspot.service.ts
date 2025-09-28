@@ -1,4 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { retry } from '../decorators/retry.decorator';
+import { circuitBreaker } from '../decorators/circuit-breaker.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   HubSpotWorkflow,
@@ -185,8 +187,10 @@ export class HubSpotService {
       });
 
       if (response.status === 404) {
-        console.warn(`⚠️ Workflow with ID ${workflowId} not found in HubSpot.`);
-        return null;
+        throw new HttpException(
+          `Workflow with ID ${workflowId} not found in HubSpot.`,
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       if (!response.ok) {
@@ -207,11 +211,26 @@ export class HubSpotService {
         `❌ Error in getWorkflowById for workflow ${workflowId}:`,
         error,
       );
-      // Return null to prevent webhook retries for processing errors
-      return null;
+      throw new HttpException(
+        `Failed to fetch workflow ${workflowId} from HubSpot: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
+  @circuitBreaker({
+    failureThreshold: 3,
+    successThreshold: 2,
+    timeout: 10000,
+  })
+  @retry({
+    retries: 3,
+    factor: 2,
+    minTimeout: 1000,
+    onRetry: (error, attempt) => {
+      console.log(`Attempt ${attempt} failed. Retrying...`, error);
+    },
+  })
   private async fetchWorkflowsFromHubSpot(
     accessToken: string,
     portalId: string,
@@ -220,201 +239,44 @@ export class HubSpotService {
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
     try {
-      // Try multiple HubSpot API endpoints for workflows
-      const endpoints = [
-        // Use v3 endpoints first (v4 returns 404 errors)
-        `https://api.hubapi.com/automation/v3/workflows`,
-        `https://api.hubapi.com/automation/v3/workflows?limit=100`,
-        `https://api.hubapi.com/automation/v3/workflows?properties=id,name,description,enabled,createdAt,updatedAt`,
-        `https://api.hubapi.com/automation/v3/workflows?limit=50&properties=id,name,description,enabled`,
-        // Alternative endpoints as fallback
-        `https://api.hubapi.com/marketing/v3/workflows`,
-        `https://api.hubapi.com/workflows/v1/workflows`,
-      ];
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows`;
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
 
-      let workflows: any[] = [];
-      let successfulEndpoint = '';
-
-      for (const endpoint of endpoints) {
-        try {
-          console.log('🔍 HubSpotService - Trying endpoint:', endpoint);
-
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          });
-
-          console.log('🔍 HubSpotService - Response status:', response.status);
-
-          if (response.ok) {
-            const data = (await response.json()) as
-              | HubSpotApiResponse
-              | HubSpotWorkflow[];
-            console.log(
-              '🔍 HubSpotService - Raw API response from',
-              endpoint,
-              ':',
-              JSON.stringify(data, null, 2),
-            );
-
-            // Handle different response formats
-            let workflowList: HubSpotWorkflow[] = [];
-            if (Array.isArray(data)) {
-              workflowList = data;
-            } else {
-              workflowList =
-                data.results ||
-                data.workflows ||
-                data.data ||
-                data.objects ||
-                data.value ||
-                data.items ||
-                data.workflowList ||
-                [];
-            }
-
-            console.log(
-              '🔍 HubSpotService - Extracted workflow list from',
-              endpoint,
-              ':',
-              workflowList.length,
-            );
-
-            if (workflowList.length > 0) {
-              // Transform HubSpot workflows to our format
-              workflows = workflowList.map(
-                (workflow: HubSpotWorkflow): WorkflowResponse => ({
-                  id:
-                    workflow.id ||
-                    workflow.workflowId ||
-                    workflow.objectId ||
-                    'unknown',
-                  name:
-                    workflow.name ||
-                    workflow.workflowName ||
-                    workflow.label ||
-                    'Unnamed Workflow',
-                  description:
-                    workflow.description || workflow.meta?.description || '',
-                  type: 'workflow',
-                  status:
-                    workflow.enabled !== undefined
-                      ? workflow.enabled
-                        ? 'active'
-                        : 'inactive'
-                      : workflow.status || workflow.meta?.status || 'active',
-                  hubspotData: workflow, // Keep original data for reference
-                }),
-              );
-
-              successfulEndpoint = endpoint;
-              console.log(
-                '🔍 HubSpotService - Successfully fetched workflows from:',
-                endpoint,
-              );
-              console.log(
-                '🔍 HubSpotService - Transformed workflows:',
-                workflows.length,
-              );
-              break;
-            } else {
-              console.log(
-                '🔍 HubSpotService - No workflows found in response from:',
-                endpoint,
-              );
-            }
-          } else {
-            const errorText = await response.text();
-            console.log(
-              '🔍 HubSpotService - Endpoint failed:',
-              endpoint,
-              'Status:',
-              response.status,
-              'Error:',
-              errorText,
-            );
-
-            // Log specific error details
-            if (response.status === 401) {
-              console.log(
-                '🔍 HubSpotService - 401 Unauthorized - Token might be invalid or expired',
-              );
-            } else if (response.status === 403) {
-              console.log(
-                '🔍 HubSpotService - 403 Forbidden - Token might not have required permissions',
-              );
-            } else if (response.status === 404) {
-              console.log(
-                '🔍 HubSpotService - 404 Not Found - Endpoint might not exist',
-              );
-            } else if (response.status === 429) {
-              console.log(
-                '🔍 HubSpotService - 429 Rate Limited - Too many requests',
-              );
-            } else {
-              console.log(
-                '🔍 HubSpotService - Other error status:',
-                response.status,
-              );
-            }
-          }
-        } catch (endpointError: any) {
-          console.log(
-            '🔍 HubSpotService - Endpoint error:',
-            endpoint,
-            endpointError.message,
-          );
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `HubSpot API error: ${response.status} ${errorText}`,
+        );
       }
 
-      if (workflows.length === 0) {
-        console.log('🔍 HubSpotService - No workflows found from any endpoint');
-        // Return mock data for testing purposes
-        return [
-          {
-            id: 'mock-workflow-1',
-            name: 'Lead Nurturing Campaign',
-            description: 'Automated lead nurturing workflow',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: {
-              id: 'mock-workflow-1',
-              name: 'Lead Nurturing Campaign',
-            },
-          },
-          {
-            id: 'mock-workflow-2',
-            name: 'Welcome Series',
-            description: 'New contact welcome automation',
-            type: 'workflow',
-            status: 'active',
-            hubspotData: { id: 'mock-workflow-2', name: 'Welcome Series' },
-          },
-          {
-            id: 'mock-workflow-3',
-            name: 'Re-engagement Campaign',
-            description: 'Re-engage inactive contacts',
-            type: 'workflow',
-            status: 'inactive',
-            hubspotData: {
-              id: 'mock-workflow-3',
-              name: 'Re-engagement Campaign',
-            },
-          },
-        ];
+      const data = (await response.json()) as HubSpotApiResponse;
+      const workflowList = data.results || [];
+
+      if (workflowList.length === 0) {
+        return [];
       }
+
+      const workflows = workflowList.map(
+        (workflow: HubSpotWorkflow): WorkflowResponse => ({
+          id: workflow.id || 'unknown',
+          name: workflow.name || 'Unnamed Workflow',
+          description: workflow.description || '',
+          type: 'workflow',
+          status: workflow.enabled ? 'active' : 'inactive',
+          hubspotData: workflow,
+        }),
+      );
 
       console.log(
         '🔍 HubSpotService - Final transformed workflows:',
         workflows.length,
-      );
-      console.log(
-        '🔍 HubSpotService - Successful endpoint:',
-        successfulEndpoint,
       );
       return workflows;
     } catch (error: any) {

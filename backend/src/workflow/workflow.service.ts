@@ -517,24 +517,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any[]> {
     try {
-      // First, try to find the workflow by internal ID
-      let workflow = await this.prisma.workflow.findFirst({
-        where: {
-          id: workflowId,
-          ownerId: userId,
-        },
-      });
-
-      // If not found by internal ID, try by HubSpot ID
-      if (!workflow) {
-        workflow = await this.prisma.workflow.findFirst({
-          where: {
-            hubspotId: workflowId,
-            ownerId: userId,
-          },
-        });
-      }
-
+      const workflow = await this._findWorkflowById(workflowId, userId);
       if (!workflow) {
         throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
       }
@@ -570,16 +553,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      // First, find the workflow by internal ID or HubSpot ID
-      const workflow = await this.prisma.workflow.findFirst({
-        where: {
-          OR: [
-            { id: workflowId, ownerId: userId },
-            { hubspotId: workflowId, ownerId: userId },
-          ],
-        },
-      });
-
+      const workflow = await this._findWorkflowById(workflowId, userId);
       if (!workflow) {
         throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
       }
@@ -1021,8 +995,8 @@ export class WorkflowService {
         include: {
           owner: true,
           versions: {
-            orderBy: { versionNumber: 'desc' },
-            take: 1, // Only get latest version for performance
+            orderBy: { createdAt: 'desc' },
+            take: 1,
           },
           _count: {
             select: { versions: true },
@@ -1227,11 +1201,9 @@ export class WorkflowService {
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
       console.log(`🔄 SYNC STARTED for user: ${userId}`);
-      const { HubSpotService } = await import('../services/hubspot.service');
-      const hubspotService = new HubSpotService(this.prisma);
-
+      
       console.log(`📡 Fetching HubSpot workflows for user: ${userId}`);
-      const hubspotWorkflows = await hubspotService.getWorkflows(userId);
+      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
       console.log(`📊 Found ${hubspotWorkflows.length} HubSpot workflows`);
 
       const syncedWorkflows = [];
@@ -1239,36 +1211,7 @@ export class WorkflowService {
         `🔄 Starting sync loop for ${hubspotWorkflows.length} workflows`,
       );
 
-      // Get all protected workflows for this user to check for deletions
-      const allProtectedWorkflows = await this.prisma.workflow.findMany({
-        where: { ownerId: userId },
-        include: { versions: true },
-      });
-
-      // Create a set of HubSpot workflow IDs that still exist
-      const existingHubSpotIds = new Set(
-        hubspotWorkflows.map((w) => String(w.id)),
-      );
-
-      // Mark workflows as deleted if they're no longer in HubSpot
-      for (const protectedWorkflow of allProtectedWorkflows) {
-        if (
-          !existingHubSpotIds.has(protectedWorkflow.hubspotId) &&
-          !protectedWorkflow.isDeleted
-        ) {
-          console.log(
-            `🗑️ Workflow ${protectedWorkflow.hubspotId} (${protectedWorkflow.name}) no longer exists in HubSpot - marking as deleted`,
-          );
-          await this.prisma.workflow.update({
-            where: { id: protectedWorkflow.id },
-            data: {
-              isDeleted: true,
-              deletedAt: new Date(),
-              updatedAt: new Date(),
-            },
-          });
-        }
-      }
+      await this._handleDeletedWorkflows(userId, hubspotWorkflows);
 
       for (const hubspotWorkflow of hubspotWorkflows) {
         console.log(
@@ -1295,7 +1238,7 @@ export class WorkflowService {
           console.log(
             `Fetching current data for workflow ${hubspotWorkflow.id}...`,
           );
-          const currentWorkflowData = await hubspotService.getWorkflowById(
+          const currentWorkflowData = await this.hubspotService.getWorkflowById(
             userId,
             String(hubspotWorkflow.id),
           );
@@ -1464,12 +1407,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const backup = await workflowVersionService.createAutomatedBackup(
+      const backup = await this.workflowVersionService.createAutomatedBackup(
         workflowId,
         userId,
       );
@@ -1488,12 +1426,7 @@ export class WorkflowService {
     changes: any,
   ): Promise<void> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      await workflowVersionService.createChangeNotification(
+      await this.workflowVersionService.createChangeNotification(
         workflowId,
         userId,
         changes,
@@ -1512,13 +1445,8 @@ export class WorkflowService {
     requestedChanges: any,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
       const approvalRequest =
-        await workflowVersionService.createApprovalWorkflow(
+        await this.workflowVersionService.createApprovalWorkflow(
           workflowId,
           userId,
           requestedChanges,
@@ -1538,12 +1466,7 @@ export class WorkflowService {
     endDate: Date,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const report = await workflowVersionService.generateComplianceReport(
+      const report = await this.workflowVersionService.generateComplianceReport(
         workflowId,
         startDate,
         endDate,
@@ -1563,12 +1486,7 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const result = await workflowVersionService.restoreWorkflowVersion(
+      const result = await this.workflowVersionService.restoreWorkflowVersion(
         workflowId,
         versionId,
         userId,
@@ -1623,12 +1541,7 @@ export class WorkflowService {
     versionId: string,
   ): Promise<any> {
     try {
-      const { WorkflowVersionService } = await import(
-        '../workflow-version/workflow-version.service'
-      );
-      const workflowVersionService = new WorkflowVersionService(this.prisma);
-
-      const version = await workflowVersionService.findOne(versionId);
+      const version = await this.workflowVersionService.findOne(versionId);
       return version;
     } catch (error) {
       throw new HttpException(
@@ -1688,92 +1601,6 @@ export class WorkflowService {
     }
   }
 
-  async getDashboardStats(userId: string): Promise<any> {
-    try {
-      // Get user with subscription for plan limits
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        include: { subscription: true },
-      });
-
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-
-      // Get protected workflows with optimized query
-      const protectedWorkflows = await this.prisma.workflow.findMany({
-        where: { ownerId: userId },
-        include: {
-          versions: {
-            orderBy: { createdAt: 'desc' },
-            take: 1, // Only get latest version for count
-          },
-        },
-      });
-
-      // Calculate stats efficiently
-      const totalWorkflows = protectedWorkflows.length;
-      const activeWorkflows = protectedWorkflows.filter(
-        (w: any) => w.versions.length > 0,
-      ).length;
-      const totalVersions = protectedWorkflows.reduce(
-        (sum: number, w: any) => sum + w.versions.length,
-        0,
-      );
-
-      // Get recent activity (last 7 days)
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const recentActivity = await this.prisma.auditLog.count({
-        where: {
-          userId: userId,
-          timestamp: { gte: sevenDaysAgo },
-        },
-      });
-
-      // Calculate plan usage
-      const planCapacity =
-        user.subscription?.planId === 'professional'
-          ? 25
-          : user.subscription?.planId === 'enterprise'
-            ? 999999
-            : 5;
-      const planUsed = totalWorkflows;
-
-      // Uptime calculation should be implemented if available, else omit or set to null
-      const uptime = null;
-
-      // Get last snapshot time
-      const lastSnapshot =
-        protectedWorkflows.length > 0
-          ? Math.max(
-              ...protectedWorkflows.map((w: any) =>
-                w.versions.length > 0
-                  ? new Date(w.versions[0].createdAt).getTime()
-                  : 0,
-              ),
-            )
-          : Date.now();
-
-      return {
-        totalWorkflows,
-        activeWorkflows,
-        protectedWorkflows: totalWorkflows,
-        totalVersions,
-        uptime,
-        lastSnapshot: new Date(lastSnapshot).toISOString(),
-        planCapacity,
-        planUsed,
-        recentActivity,
-        planId: user.subscription?.planId || 'starter',
-        planStatus: user.subscription?.status || 'active',
-      };
-    } catch (error) {
-      throw new HttpException(
-        `Failed to get dashboard stats: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
   async exportWorkflow(workflowId: string): Promise<any> {
     try {
@@ -2393,5 +2220,68 @@ export class WorkflowService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+    
   }
+
+  private async _handleDeletedWorkflows(
+    userId: string,
+    hubspotWorkflows: any[],
+  ): Promise<void> {
+    // Get all protected workflows for this user to check for deletions
+    const allProtectedWorkflows = await this.prisma.workflow.findMany({
+      where: { ownerId: userId },
+      include: { versions: true },
+    });
+
+    // Create a set of HubSpot workflow IDs that still exist
+    const existingHubSpotIds = new Set(
+      hubspotWorkflows.map((w) => String(w.id)),
+    );
+
+    // Mark workflows as deleted if they're no longer in HubSpot
+    for (const protectedWorkflow of allProtectedWorkflows) {
+      if (
+        !existingHubSpotIds.has(protectedWorkflow.hubspotId) &&
+        !protectedWorkflow.isDeleted
+      ) {
+        console.log(
+          `🗑️ Workflow ${protectedWorkflow.hubspotId} (${protectedWorkflow.name}) no longer exists in HubSpot - marking as deleted`,
+        );
+        await this.prisma.workflow.update({
+          where: { id: protectedWorkflow.id },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      }
+    }
+  }
+  
+    private async _findWorkflowById(
+      workflowId: string,
+      userId: string,
+    ): Promise<any | null> {
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          workflowId,
+        );
+  
+      if (isUUID) {
+        return this.prisma.workflow.findFirst({
+          where: {
+            id: workflowId,
+            ownerId: userId,
+          },
+        });
+      } else {
+        return this.prisma.workflow.findFirst({
+          where: {
+            hubspotId: workflowId,
+            ownerId: userId,
+          },
+        });
+      }
+    }
 }

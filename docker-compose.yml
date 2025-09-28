@@ -25,21 +25,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/workflowguard
-      - DIRECT_URL=postgresql://postgres:postgres123@db:5432/workflowguard
-      - NODE_ENV=production
-      - PORT=4000
-      - HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6
-      - HUBSPOT_CLIENT_SECRET=07f931e2-bc75-4686-a9cf-c1d464c55019
-      - HUBSPOT_REDIRECT_URI=https://workflowguard.pro/api/auth/hubspot/callback
-      - JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==
-      - RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y
-      - RAZORPAY_KEY_SECRET=O5McpwbAgoiSNMJDQetruaTK
-      - TWILIO_ACCOUNT_SID=ACbee0672c967962b2212e68bf188771d2
-      - TWILIO_AUTH_TOKEN=b80c34629dd5c41c26355dc6d60bca88
-      - FRONTEND_URL=https://workflowguard.pro
-      - API_URL=https://workflowguard.pro
+    env_file:
+      - .env.backend
     depends_on:
       db:
         condition: service_healthy
