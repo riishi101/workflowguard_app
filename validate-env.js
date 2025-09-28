@@ -8,8 +8,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Required environment variables
-const REQUIRED_VARS = {
+// Required environment variables for backend
+const REQUIRED_VARS_BACKEND = {
   // Database
   'DATABASE_URL': 'PostgreSQL database connection string',
   'DIRECT_URL': 'Direct PostgreSQL connection string',
@@ -39,6 +39,19 @@ const REQUIRED_VARS = {
   'TWILIO_ACCOUNT_SID': 'Twilio account SID',
   'TWILIO_AUTH_TOKEN': 'Twilio authentication token',
 };
+
+// Required environment variables for frontend
+const REQUIRED_VARS_FRONTEND = {
+  // Application
+  'NODE_ENV': 'Application environment (production/development)',
+  
+  // Vite environment variables (prefixed with VITE_)
+  'VITE_API_URL': 'API base URL for frontend requests',
+  'VITE_APP_URL': 'Frontend application URL',
+};
+
+// Default required variables (for production environment)
+const REQUIRED_VARS = REQUIRED_VARS_BACKEND;
 
 // Optional but recommended variables
 const OPTIONAL_VARS = {
@@ -77,8 +90,16 @@ function validateEnvironment(env, envName) {
   const missing = [];
   const invalid = [];
   
+  // Determine which required variables to check based on environment name
+  let requiredVars = REQUIRED_VARS;
+  if (envName.includes('Frontend')) {
+    requiredVars = REQUIRED_VARS_FRONTEND;
+  } else if (envName.includes('Backend')) {
+    requiredVars = REQUIRED_VARS_BACKEND;
+  }
+  
   // Check required variables
-  Object.entries(REQUIRED_VARS).forEach(([key, description]) => {
+  Object.entries(requiredVars).forEach(([key, description]) => {
     if (!env[key]) {
       missing.push({ key, description });
     } else {
