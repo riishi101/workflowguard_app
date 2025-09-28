@@ -25,46 +25,38 @@ steps:
 
   # Deploy Backend to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
     args:
-      - '-c'
-      - |
-        gcloud run services update workflowguard-backend \
-          --region=us-central1 \
-          --platform=managed \
-          --image=us-central1-docker.pkg.dev/continual-mind-473007-h8/workflowguard-containers/workflowguard-backend:$BUILD_ID \
-          --port=4000 \
-          --memory=1Gi \
-          --cpu=1 \
-          --max-instances=10 \
-          --timeout=300 \
-          --set-env-vars=DATABASE_URL=postgresql://postgres:postgres123@34.68.222.13:5432/workflowguard,NODE_ENV=production,HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6,HUBSPOT_CLIENT_SECRET=07f931e2-bc75-4686-a9cf-c1d464c55019,HUBSPOT_REDIRECT_URI=https://api.workflowguard.pro/api/auth/hubspot/callback,JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==,RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y,RAZORPAY_KEY_SECRET=O5McpwbAgoiSNMJDQetruaTK,RAZORPAY_WEBHOOK_SECRET=Liverpoolisthebest@1998,RAZORPAY_PLAN_ID_STARTER_INR=plan_R6RI02CsUCUlDz,RAZORPAY_PLAN_ID_PROFESSIONAL_INR=plan_R6RKEg5mqJK6Ky,RAZORPAY_PLAN_ID_ENTERPRISE_INR=plan_R6RKnjqXu0BZsH,TWILIO_ACCOUNT_SID=ACbee0672c967962b2212e68bf188771d2,TWILIO_AUTH_TOKEN=b80c34629dd5c41c26355dc6d60bca88 && \
-        gcloud run services add-iam-policy-binding workflowguard-backend \
-          --region=us-central1 \
-          --member=allUsers \
-          --role=roles/run.invoker
+      - 'run'
+      - 'services'
+      - 'update'
+      - 'workflowguard-backend'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--image=us-central1-docker.pkg.dev/continual-mind-473007-h8/workflowguard-containers/workflowguard-backend:$BUILD_ID'
+      - '--port=4000'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--timeout=300'
+      - '--set-env-vars=DATABASE_URL=postgresql://postgres:postgres123@34.68.222.13:5432/workflowguard,NODE_ENV=production,HUBSPOT_CLIENT_ID=5e6a6429-8317-4e2a-a9b5-46e8669f72f6,HUBSPOT_CLIENT_SECRET=07f931e2-bc75-4686-a9cf-c1d464c55019,HUBSPOT_REDIRECT_URI=https://api.workflowguard.pro/api/auth/hubspot/callback,JWT_SECRET=xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw==,RAZORPAY_KEY_ID=rzp_live_R6PjXR1FYupO0Y,RAZORPAY_KEY_SECRET=O5McpwbAgoiSNMJDQetruaTK,RAZORPAY_WEBHOOK_SECRET=Liverpoolisthebest@1998,RAZORPAY_PLAN_ID_STARTER_INR=plan_R6RI02CsUCUlDz,RAZORPAY_PLAN_ID_PROFESSIONAL_INR=plan_R6RKEg5mqJK6Ky,RAZORPAY_PLAN_ID_ENTERPRISE_INR=plan_R6RKnjqXu0BZsH,TWILIO_ACCOUNT_SID=ACbee0672c967962b2212e68bf188771d2,TWILIO_AUTH_TOKEN=b80c34629dd5c41c26355dc6d60bca88'
     id: 'deploy-backend'
     waitFor: ['push-backend']
 
   # Deploy Frontend to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
     args:
-      - '-c'
-      - |
-        gcloud run services update workflowguard-frontend \
-          --region=us-central1 \
-          --platform=managed \
-          --image=us-central1-docker.pkg.dev/continual-mind-473007-h8/workflowguard-containers/workflowguard-frontend:$BUILD_ID \
-          --port=80 \
-          --memory=512Mi \
-          --cpu=1 \
-          --max-instances=10 \
-          --set-env-vars=VITE_API_URL=https://api.workflowguard.pro/api,VITE_APP_URL=https://www.workflowguard.pro && \
-        gcloud run services add-iam-policy-binding workflowguard-frontend \
-          --region=us-central1 \
-          --member=allUsers \
-          --role=roles/run.invoker
+      - 'run'
+      - 'services'
+      - 'update'
+      - 'workflowguard-frontend'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--image=us-central1-docker.pkg.dev/continual-mind-473007-h8/workflowguard-containers/workflowguard-frontend:$BUILD_ID'
+      - '--port=80'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--set-env-vars=VITE_API_URL=https://api.workflowguard.pro/api,VITE_APP_URL=https://www.workflowguard.pro'
     id: 'deploy-frontend'
     waitFor: ['push-frontend']
 
