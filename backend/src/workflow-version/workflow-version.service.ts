@@ -477,15 +477,18 @@ export class WorkflowVersionService {
         typeof version.data === 'string'
           ? JSON.parse(version.data)
           : version.data;
-      
+
       // Get previous version data for comparison
-      const previousVersion = index < versions.length - 1 ? versions[index + 1] : null;
-      const previousData = previousVersion ? 
-        (typeof previousVersion.data === 'string' ? JSON.parse(previousVersion.data) : previousVersion.data) 
+      const previousVersion =
+        index < versions.length - 1 ? versions[index + 1] : null;
+      const previousData = previousVersion
+        ? typeof previousVersion.data === 'string'
+          ? JSON.parse(previousVersion.data)
+          : previousVersion.data
         : null;
-      
+
       const changes = this.calculateChanges(data, previousData);
-      
+
       return {
         id: version.id,
         workflowId: version.workflowId,
@@ -505,7 +508,7 @@ export class WorkflowVersionService {
     if (!data) {
       return { added: 0, modified: 0, removed: 0 };
     }
-    
+
     // If no previous data to compare, treat as initial version
     if (!previousData) {
       const steps = this.extractStepsFromWorkflowData(data);
@@ -515,32 +518,35 @@ export class WorkflowVersionService {
         removed: 0,
       };
     }
-    
+
     const currentSteps = this.extractStepsFromWorkflowData(data);
     const previousSteps = this.extractStepsFromWorkflowData(previousData);
-    
+
     // Calculate differences
-    const added = currentSteps.filter(step => 
-      !previousSteps.find(prevStep => this.stepsEqual(step, prevStep))
+    const added = currentSteps.filter(
+      (step) =>
+        !previousSteps.find((prevStep) => this.stepsEqual(step, prevStep)),
     ).length;
-    
-    const removed = previousSteps.filter(step => 
-      !currentSteps.find(currStep => this.stepsEqual(step, currStep))
+
+    const removed = previousSteps.filter(
+      (step) =>
+        !currentSteps.find((currStep) => this.stepsEqual(step, currStep)),
     ).length;
-    
-    const modified = currentSteps.filter(step => {
-      const prevStep = previousSteps.find(prevStep => 
-        prevStep.id === step.id || prevStep.actionId === step.actionId
+
+    const modified = currentSteps.filter((step) => {
+      const prevStep = previousSteps.find(
+        (prevStep) =>
+          prevStep.id === step.id || prevStep.actionId === step.actionId,
       );
       return prevStep && !this.stepsEqual(step, prevStep);
     }).length;
-    
+
     return { added, modified, removed };
   }
-  
+
   private extractStepsFromWorkflowData(data: any): any[] {
     if (!data) return [];
-    
+
     // Handle different HubSpot workflow data structures
     if (data.actions && Array.isArray(data.actions)) {
       return data.actions;
@@ -551,27 +557,30 @@ export class WorkflowVersionService {
     if (data.workflowActions && Array.isArray(data.workflowActions)) {
       return data.workflowActions;
     }
-    
+
     return [];
   }
-  
+
   private stepsEqual(step1: any, step2: any): boolean {
     if (!step1 || !step2) return false;
-    
+
     // Compare by ID first
     if (step1.id && step2.id) {
       return step1.id === step2.id;
     }
-    
+
     // Compare by actionId
     if (step1.actionId && step2.actionId) {
       return step1.actionId === step2.actionId;
     }
-    
+
     // Compare by type and basic properties
-    return step1.type === step2.type && 
-           step1.actionType === step2.actionType &&
-           JSON.stringify(step1.settings || {}) === JSON.stringify(step2.settings || {});
+    return (
+      step1.type === step2.type &&
+      step1.actionType === step2.actionType &&
+      JSON.stringify(step1.settings || {}) ===
+        JSON.stringify(step2.settings || {})
+    );
   }
 
   private generateChangeSummary(changes: any, data: any): string {

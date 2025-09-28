@@ -141,12 +141,18 @@ export interface RazorpayInstance {
   customers: {
     create(data: Partial<RazorpayCustomer>): Promise<RazorpayCustomer>;
     fetch(customerId: string): Promise<RazorpayCustomer>;
-    edit(customerId: string, data: Partial<RazorpayCustomer>): Promise<RazorpayCustomer>;
+    edit(
+      customerId: string,
+      data: Partial<RazorpayCustomer>,
+    ): Promise<RazorpayCustomer>;
   };
   subscriptions: {
     create(data: any): Promise<RazorpaySubscription>;
     fetch(subscriptionId: string): Promise<RazorpaySubscription>;
-    cancel(subscriptionId: string, cancelAtCycleEnd?: boolean): Promise<RazorpaySubscription>;
+    cancel(
+      subscriptionId: string,
+      cancelAtCycleEnd?: boolean,
+    ): Promise<RazorpaySubscription>;
     pause(subscriptionId: string, data?: any): Promise<RazorpaySubscription>;
     resume(subscriptionId: string, data?: any): Promise<RazorpaySubscription>;
     update(subscriptionId: string, data: any): Promise<RazorpaySubscription>;
@@ -172,7 +178,11 @@ declare class Razorpay {
   payments: RazorpayInstance['payments'];
   plans: RazorpayInstance['plans'];
   orders: RazorpayInstance['orders'];
-  static validateWebhookSignature(body: string, signature: string, secret: string): boolean;
+  static validateWebhookSignature(
+    body: string,
+    signature: string,
+    secret: string,
+  ): boolean;
 }
 
 export default Razorpay;

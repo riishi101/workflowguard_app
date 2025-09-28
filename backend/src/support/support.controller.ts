@@ -178,10 +178,7 @@ export class SupportController {
     }
 
     if (!body.message) {
-      throw new HttpException(
-        'Message is required',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Message is required', HttpStatus.BAD_REQUEST);
     }
 
     try {

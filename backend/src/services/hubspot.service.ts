@@ -487,7 +487,10 @@ export class HubSpotService {
    * This is used to restore deleted workflows.
    */
   async createWorkflow(userId: string, workflowData: any): Promise<any> {
-    console.log('🔧 HubSpotService - createWorkflow called for userId:', userId);
+    console.log(
+      '🔧 HubSpotService - createWorkflow called for userId:',
+      userId,
+    );
 
     try {
       // Get user with HubSpot tokens
@@ -517,16 +520,21 @@ export class HubSpotService {
             isEnabled: false,
             flowType: 'WORKFLOW',
             name: workflowData.name || 'Restored Workflow',
-            type: workflowData.objectTypeId === '0-2' ? 'PLATFORM_FLOW' : 'CONTACT_FLOW',
+            type:
+              workflowData.objectTypeId === '0-2'
+                ? 'PLATFORM_FLOW'
+                : 'CONTACT_FLOW',
             objectTypeId: workflowData.objectTypeId || '0-1',
             actions: workflowData.actions || [],
-            enrollmentCriteria: workflowData.enrollmentCriteria || workflowData.triggers || {},
+            enrollmentCriteria:
+              workflowData.enrollmentCriteria || workflowData.triggers || {},
             timeWindows: workflowData.timeWindows || [],
             blockedDates: workflowData.blockedDates || [],
             customProperties: workflowData.customProperties || {},
             suppressionListIds: workflowData.suppressionListIds || [],
-            canEnrollFromSalesforce: workflowData.canEnrollFromSalesforce || false,
-          }
+            canEnrollFromSalesforce:
+              workflowData.canEnrollFromSalesforce || false,
+          },
         },
         // Approach 2: v3 API with full complex data
         {
@@ -535,13 +543,15 @@ export class HubSpotService {
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
-            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            description:
+              workflowData.description ||
+              `Restored by WorkflowGuard on ${new Date().toISOString()}`,
             type: workflowData.type || 'DRIP_DELAY',
             actions: workflowData.actions || [],
             triggers: workflowData.triggers || [],
             goals: workflowData.goals || [],
             settings: workflowData.settings || {},
-          }
+          },
         },
         // Approach 3: v3 API with actions only
         {
@@ -550,10 +560,12 @@ export class HubSpotService {
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
-            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            description:
+              workflowData.description ||
+              `Restored by WorkflowGuard on ${new Date().toISOString()}`,
             type: workflowData.type || 'DRIP_DELAY',
             actions: workflowData.actions || [],
-          }
+          },
         },
         // Approach 4: v3 API basic workflow only (fallback)
         {
@@ -562,16 +574,20 @@ export class HubSpotService {
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
-            description: workflowData.description || `Restored by WorkflowGuard on ${new Date().toISOString()}`,
+            description:
+              workflowData.description ||
+              `Restored by WorkflowGuard on ${new Date().toISOString()}`,
             type: workflowData.type || 'DRIP_DELAY',
-          }
-        }
+          },
+        },
       ];
 
       for (const approach of approaches) {
         try {
-          console.log(`🔧 HubSpotService - Trying ${approach.name} approach...`);
-          
+          console.log(
+            `🔧 HubSpotService - Trying ${approach.name} approach...`,
+          );
+
           const response = await fetch(approach.endpoint, {
             method: 'POST',
             headers: {
@@ -582,18 +598,28 @@ export class HubSpotService {
           });
 
           if (response.ok) {
-            const createdWorkflow = await response.json() as any;
-            console.log(`🔧 HubSpotService - SUCCESS with ${approach.name} approach:`, {
-              id: createdWorkflow.id || createdWorkflow.flowId,
-              name: createdWorkflow.name,
-            });
+            const createdWorkflow = (await response.json()) as any;
+            console.log(
+              `🔧 HubSpotService - SUCCESS with ${approach.name} approach:`,
+              {
+                id: createdWorkflow.id || createdWorkflow.flowId,
+                name: createdWorkflow.name,
+              },
+            );
             return createdWorkflow;
           } else {
             const errorText = await response.text();
-            console.log(`🔧 HubSpotService - ${approach.name} approach failed:`, response.status, errorText);
+            console.log(
+              `🔧 HubSpotService - ${approach.name} approach failed:`,
+              response.status,
+              errorText,
+            );
           }
         } catch (error) {
-          console.log(`🔧 HubSpotService - ${approach.name} approach error:`, error);
+          console.log(
+            `🔧 HubSpotService - ${approach.name} approach error:`,
+            error,
+          );
         }
       }
 
@@ -606,5 +632,4 @@ export class HubSpotService {
       );
     }
   }
-
 }

@@ -9,11 +9,11 @@ import { WorkflowVersionModule } from '../workflow-version/workflow-version.modu
 
 @Module({
   imports: [
-    PrismaModule, 
-    UserModule, 
-    SubscriptionModule, 
+    PrismaModule,
+    UserModule,
+    SubscriptionModule,
     HubSpotModule,
-    forwardRef(() => WorkflowVersionModule)
+    forwardRef(() => WorkflowVersionModule),
   ],
   controllers: [WorkflowController],
   providers: [WorkflowService],

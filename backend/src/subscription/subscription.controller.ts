@@ -142,7 +142,8 @@ export class SubscriptionController {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const billingHistory = await this.subscriptionService.getBillingHistory(userId);
+      const billingHistory =
+        await this.subscriptionService.getBillingHistory(userId);
       return {
         success: true,
         data: billingHistory,
@@ -194,7 +195,8 @@ export class SubscriptionController {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const csvData = await this.subscriptionService.exportBillingHistoryCSV(userId);
+      const csvData =
+        await this.subscriptionService.exportBillingHistoryCSV(userId);
       return {
         success: true,
         data: csvData,
@@ -220,7 +222,8 @@ export class SubscriptionController {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
 
-      const updateUrl = await this.subscriptionService.getPaymentMethodUpdateUrl(userId);
+      const updateUrl =
+        await this.subscriptionService.getPaymentMethodUpdateUrl(userId);
       return {
         success: true,
         data: { updateUrl },
@@ -247,7 +250,10 @@ export class SubscriptionController {
       }
 
       const invoiceId = req.params.invoiceId;
-      const invoiceUrl = await this.subscriptionService.getInvoice(userId, invoiceId);
+      const invoiceUrl = await this.subscriptionService.getInvoice(
+        userId,
+        invoiceId,
+      );
       return {
         success: true,
         data: { invoiceUrl },

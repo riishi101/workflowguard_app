@@ -1,0 +1,31 @@
+# Test Dockerfile to verify build process
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies using npm
+RUN npm ci
+
+# Copy prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy the rest of the application
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# List files to verify build output
+RUN echo "Build completed. Listing dist directory contents:" && \
+    ls -la dist/ && \
+    echo "Finding main.js file:" && \
+    find dist -name "main.js" -type f
+
+# Keep container running for inspection
+CMD ["tail", "-f", "/dev/null"]

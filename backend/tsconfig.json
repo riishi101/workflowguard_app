@@ -7,7 +7,7 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "target": "ES2021",
+    "target": "ES2022",
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
@@ -19,11 +19,18 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "lib": [
-      "ES2021"
+      "ES2021",
+      "ES2022",
+      "ES2023"
     ],
     "types": [
       "node"
-    ]
+    ],
+    "useDefineForClassFields": false,
+    "downlevelIteration": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "strictPropertyInitialization": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts", "**/*.test.ts"]

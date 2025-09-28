@@ -25,16 +25,21 @@ export class AuditLogController {
     const pageSizeNum = parseInt(pageSize || '20') || 20;
     const skip = (pageNum - 1) * pageSizeNum;
 
-    const auditLogs = await this.auditLogService.getAuditLogs(user.id, filters, skip, pageSizeNum);
-    
+    const auditLogs = await this.auditLogService.getAuditLogs(
+      user.id,
+      filters,
+      skip,
+      pageSizeNum,
+    );
+
     return {
       success: true,
       data: auditLogs,
       pagination: {
         page: pageNum,
         pageSize: pageSizeNum,
-        total: auditLogs.length
-      }
+        total: auditLogs.length,
+      },
     };
   }
 }

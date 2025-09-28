@@ -11,8 +11,8 @@
   },
   "scripts": {
     "prebuild": "node -e \"if(require('fs').existsSync('dist')) require('fs').rmSync('dist', { recursive: true })\"",
-    "build": "nest build",
-    "postbuild": "node -e \"require('fs').cpSync('prisma', 'dist/prisma', { recursive: true })\"",
+    "build": "tsc -p tsconfig.build.json --outDir dist",
+    "postbuild": "node -e \"require('fs').mkdirSync('dist/prisma', { recursive: true }); require('fs').cpSync('prisma/schema.prisma', 'dist/prisma/schema.prisma'); require('fs').cpSync('prisma/migrations', 'dist/prisma/migrations', { recursive: true });\"",
     "prestart:prod": "prisma generate && prisma migrate deploy",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "npm run build && npm run start:prod",

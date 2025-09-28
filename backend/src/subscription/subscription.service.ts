@@ -1,4 +1,11 @@
-import { Injectable, Logger, HttpException, HttpStatus, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RazorpaySubscription } from '../razorpay/razorpay.service';
 
@@ -78,14 +85,17 @@ export class SubscriptionService {
         price,
         status: user.subscription?.status || 'active',
         currentPeriodStart:
-          user.subscription?.createdAt?.toISOString() || new Date().toISOString(),
+          user.subscription?.createdAt?.toISOString() ||
+          new Date().toISOString(),
         currentPeriodEnd:
           user.subscription?.trialEndDate?.toISOString() ||
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         trialEndDate: user.subscription?.trialEndDate?.toISOString(),
         nextBillingDate: user.subscription?.nextBillingDate?.toISOString(),
-        razorpayCustomerId: (user.subscription as any)?.razorpayCustomerId || undefined,
-        razorpaySubscriptionId: (user.subscription as any)?.razorpaySubscriptionId || undefined,
+        razorpayCustomerId:
+          (user.subscription as any)?.razorpayCustomerId || undefined,
+        razorpaySubscriptionId:
+          (user.subscription as any)?.razorpaySubscriptionId || undefined,
         features,
         limits,
         usage: {
@@ -132,7 +142,7 @@ export class SubscriptionService {
             },
           });
           console.log('Trial subscription created for user:', user.id);
-          
+
           // Refetch user with subscription
           user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -140,24 +150,31 @@ export class SubscriptionService {
               subscription: true,
             },
           });
-          
+
           // If refetch failed, return default trial status
           if (!user) {
             return {
               isTrialActive: true,
               isTrialExpired: false,
               trialDaysRemaining: 21,
-              trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+              trialEndDate: new Date(
+                Date.now() + 21 * 24 * 60 * 60 * 1000,
+              ).toISOString(),
             };
           }
         } catch (subscriptionError) {
-          console.warn('Failed to create trial subscription:', subscriptionError.message);
+          console.warn(
+            'Failed to create trial subscription:',
+            subscriptionError.message,
+          );
           // Return default trial status if subscription creation fails
           return {
             isTrialActive: true,
             isTrialExpired: false,
             trialDaysRemaining: 21,
-            trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+            trialEndDate: new Date(
+              Date.now() + 21 * 24 * 60 * 60 * 1000,
+            ).toISOString(),
           };
         }
       }
@@ -205,7 +222,7 @@ export class SubscriptionService {
       const planId = user.subscription?.planId || 'professional';
       let workflowLimit = 5;
       let versionHistoryLimit = 30;
-      
+
       if (planId === 'professional') {
         workflowLimit = 25;
         versionHistoryLimit = 90;
@@ -215,7 +232,7 @@ export class SubscriptionService {
       }
 
       const workflowsUsed = user.workflows?.length || 0;
-      
+
       // Return real usage stats from database
       return {
         workflows: {
@@ -358,14 +375,20 @@ export class SubscriptionService {
   }
 
   // Razorpay Integration Methods
-  async updateSubscriptionFromRazorpay(userId: string, razorpaySubscription: RazorpaySubscription) {
+  async updateSubscriptionFromRazorpay(
+    userId: string,
+    razorpaySubscription: RazorpaySubscription,
+  ) {
     try {
-      this.logger.log(`Updating subscription from Razorpay for user: ${userId}`);
-      
+      this.logger.log(
+        `Updating subscription from Razorpay for user: ${userId}`,
+      );
+
       const subscription = await this.prisma.subscription.upsert({
         where: { userId },
         update: {
-          ...(razorpaySubscription.id && { razorpaySubscriptionId: razorpaySubscription.id } as any),
+          ...(razorpaySubscription.id &&
+            ({ razorpaySubscriptionId: razorpaySubscription.id } as any)),
           status: this.mapRazorpayStatus(razorpaySubscription.status),
           nextBillingDate: new Date(razorpaySubscription.current_end * 1000),
         },
@@ -373,7 +396,8 @@ export class SubscriptionService {
           userId,
           planId: this.mapRazorpayPlanToLocal(razorpaySubscription.plan_id),
           status: this.mapRazorpayStatus(razorpaySubscription.status),
-          ...(razorpaySubscription.id && { razorpaySubscriptionId: razorpaySubscription.id } as any),
+          ...(razorpaySubscription.id &&
+            ({ razorpaySubscriptionId: razorpaySubscription.id } as any)),
           nextBillingDate: new Date(razorpaySubscription.current_end * 1000),
         },
       });
@@ -381,7 +405,10 @@ export class SubscriptionService {
       this.logger.log(`Subscription updated successfully: ${subscription.id}`);
       return subscription;
     } catch (error) {
-      this.logger.error(`Failed to update subscription from Razorpay: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update subscription from Razorpay: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         'Failed to update subscription',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -389,10 +416,13 @@ export class SubscriptionService {
     }
   }
 
-  async handleSubscriptionCancellation(userId: string, razorpaySubscriptionId: string) {
+  async handleSubscriptionCancellation(
+    userId: string,
+    razorpaySubscriptionId: string,
+  ) {
     try {
       this.logger.log(`Handling subscription cancellation for user: ${userId}`);
-      
+
       const subscription = await this.prisma.subscription.update({
         where: { userId },
         data: {
@@ -400,10 +430,15 @@ export class SubscriptionService {
         },
       });
 
-      this.logger.log(`Subscription cancelled successfully: ${subscription.id}`);
+      this.logger.log(
+        `Subscription cancelled successfully: ${subscription.id}`,
+      );
       return subscription;
     } catch (error) {
-      this.logger.error(`Failed to handle subscription cancellation: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to handle subscription cancellation: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         'Failed to cancel subscription',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -411,10 +446,15 @@ export class SubscriptionService {
     }
   }
 
-  async updateSubscriptionStatus(razorpaySubscriptionId: string, status: string) {
+  async updateSubscriptionStatus(
+    razorpaySubscriptionId: string,
+    status: string,
+  ) {
     try {
-      this.logger.log(`Updating subscription status: ${razorpaySubscriptionId} to ${status}`);
-      
+      this.logger.log(
+        `Updating subscription status: ${razorpaySubscriptionId} to ${status}`,
+      );
+
       const subscription = await this.prisma.subscription.findFirst({
         where: { razorpaySubscriptionId } as any,
       });
@@ -430,10 +470,15 @@ export class SubscriptionService {
         },
       });
 
-      this.logger.log(`Subscription status updated successfully: ${updatedSubscription.id}`);
+      this.logger.log(
+        `Subscription status updated successfully: ${updatedSubscription.id}`,
+      );
       return updatedSubscription;
     } catch (error) {
-      this.logger.error(`Failed to update subscription status: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to update subscription status: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         'Failed to update subscription status',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -443,8 +488,10 @@ export class SubscriptionService {
 
   async recordPayment(razorpaySubscriptionId: string, paymentData: any) {
     try {
-      this.logger.log(`Recording payment for subscription: ${razorpaySubscriptionId}`);
-      
+      this.logger.log(
+        `Recording payment for subscription: ${razorpaySubscriptionId}`,
+      );
+
       const subscription = await this.prisma.subscription.findFirst({
         where: { razorpaySubscriptionId } as any,
       });
@@ -468,7 +515,10 @@ export class SubscriptionService {
       this.logger.log(`Payment recorded successfully: ${payment.id}`);
       return payment;
     } catch (error) {
-      this.logger.error(`Failed to record payment: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to record payment: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         'Failed to record payment',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -479,17 +529,22 @@ export class SubscriptionService {
   async handleFailedPayment(paymentData: any) {
     try {
       this.logger.log(`Handling failed payment: ${paymentData.id}`);
-      
+
       // You can implement logic here to:
       // 1. Send notification to user
       // 2. Update subscription status if needed
       // 3. Log the failure for analytics
-      
-      this.logger.warn(`Payment failed: ${paymentData.id}, reason: ${paymentData.error_description}`);
-      
+
+      this.logger.warn(
+        `Payment failed: ${paymentData.id}, reason: ${paymentData.error_description}`,
+      );
+
       return { success: true, message: 'Failed payment handled' };
     } catch (error) {
-      this.logger.error(`Failed to handle failed payment: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to handle failed payment: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         'Failed to handle failed payment',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -498,9 +553,9 @@ export class SubscriptionService {
   }
 
   async upgradeUserPlan(
-    userId: string, 
-    planId: string, 
-    paymentDetails: { razorpayPaymentId: string; razorpayOrderId: string }
+    userId: string,
+    planId: string,
+    paymentDetails: { razorpayPaymentId: string; razorpayOrderId: string },
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -550,16 +605,16 @@ export class SubscriptionService {
 
   private mapRazorpayStatus(razorpayStatus: string): string {
     const statusMap = {
-      'created': 'pending',
-      'authenticated': 'active',
-      'active': 'active',
-      'pending': 'pending',
-      'halted': 'paused',
-      'cancelled': 'cancelled',
-      'completed': 'completed',
-      'expired': 'expired',
+      created: 'pending',
+      authenticated: 'active',
+      active: 'active',
+      pending: 'pending',
+      halted: 'paused',
+      cancelled: 'cancelled',
+      completed: 'completed',
+      expired: 'expired',
     };
-    
+
     return statusMap[razorpayStatus as keyof typeof statusMap] || 'pending';
   }
 
@@ -567,31 +622,31 @@ export class SubscriptionService {
     // Map Razorpay plan IDs to local plan IDs (Multi-currency support)
     const planMap: Record<string, string> = {
       // INR Plans (Active)
-      'plan_R6RI02CsUCUlDz': 'starter',
-      'plan_R6RKEg5mqJK6Ky': 'professional', 
-      'plan_R6RKnjqXu0BZsH': 'enterprise',
-      
+      plan_R6RI02CsUCUlDz: 'starter',
+      plan_R6RKEg5mqJK6Ky: 'professional',
+      plan_R6RKnjqXu0BZsH: 'enterprise',
+
       // USD Plans (Active)
-      'plan_RBDqWapKHZfPU7': 'starter',
-      'plan_RBDrKWI81HS1FZ': 'professional',
-      'plan_RBDrX9dGapWrTe': 'enterprise',
-      
+      plan_RBDqWapKHZfPU7: 'starter',
+      plan_RBDrKWI81HS1FZ: 'professional',
+      plan_RBDrX9dGapWrTe: 'enterprise',
+
       // GBP Plans (Active)
-      'plan_RBFxk81S3ySXxj': 'starter',
-      'plan_RBFy8LsuW36jIj': 'professional',
-      'plan_RBFyJlB5jxwxB9': 'enterprise',
-      
+      plan_RBFxk81S3ySXxj: 'starter',
+      plan_RBFy8LsuW36jIj: 'professional',
+      plan_RBFyJlB5jxwxB9: 'enterprise',
+
       // EUR Plans (Active)
-      'plan_RBFjbYhAtD3snL': 'starter',
-      'plan_RBFjqo5wE0d4jz': 'professional',
-      'plan_RBFovOUIUXISBE': 'enterprise',
-      
+      plan_RBFjbYhAtD3snL: 'starter',
+      plan_RBFjqo5wE0d4jz: 'professional',
+      plan_RBFovOUIUXISBE: 'enterprise',
+
       // CAD Plans (Active)
-      'plan_RBFrtufmxmxwi8': 'starter',
-      'plan_RBFsD6U2rQb4B6': 'professional',
-      'plan_RBFscXaosRIzEc': 'enterprise',
+      plan_RBFrtufmxmxwi8: 'starter',
+      plan_RBFsD6U2rQb4B6: 'professional',
+      plan_RBFscXaosRIzEc: 'enterprise',
     };
-    
+
     return planMap[razorpayPlanId] || 'starter';
   }
 
@@ -602,31 +657,31 @@ export class SubscriptionService {
     // Map actual Razorpay plan IDs to currencies
     const currencyMap: Record<string, string> = {
       // USD Plans
-      'plan_RBDqWapKHZfPU7': 'USD',
-      'plan_RBDrKWI81HS1FZ': 'USD',
-      'plan_RBDrX9dGapWrTe': 'USD',
-      
+      plan_RBDqWapKHZfPU7: 'USD',
+      plan_RBDrKWI81HS1FZ: 'USD',
+      plan_RBDrX9dGapWrTe: 'USD',
+
       // GBP Plans
-      'plan_RBFxk81S3ySXxj': 'GBP',
-      'plan_RBFy8LsuW36jIj': 'GBP',
-      'plan_RBFyJlB5jxwxB9': 'GBP',
-      
+      plan_RBFxk81S3ySXxj: 'GBP',
+      plan_RBFy8LsuW36jIj: 'GBP',
+      plan_RBFyJlB5jxwxB9: 'GBP',
+
       // EUR Plans
-      'plan_RBFjbYhAtD3snL': 'EUR',
-      'plan_RBFjqo5wE0d4jz': 'EUR',
-      'plan_RBFovOUIUXISBE': 'EUR',
-      
+      plan_RBFjbYhAtD3snL: 'EUR',
+      plan_RBFjqo5wE0d4jz: 'EUR',
+      plan_RBFovOUIUXISBE: 'EUR',
+
       // CAD Plans
-      'plan_RBFrtufmxmxwi8': 'CAD',
-      'plan_RBFsD6U2rQb4B6': 'CAD',
-      'plan_RBFscXaosRIzEc': 'CAD',
-      
+      plan_RBFrtufmxmxwi8: 'CAD',
+      plan_RBFsD6U2rQb4B6: 'CAD',
+      plan_RBFscXaosRIzEc: 'CAD',
+
       // INR Plans (existing)
-      'plan_R6RI02CsUCUlDz': 'INR',
-      'plan_R6RKEg5mqJK6Ky': 'INR',
-      'plan_R6RKnjqXu0BZsH': 'INR',
+      plan_R6RI02CsUCUlDz: 'INR',
+      plan_R6RKEg5mqJK6Ky: 'INR',
+      plan_R6RKnjqXu0BZsH: 'INR',
     };
-    
+
     return currencyMap[razorpayPlanId] || 'INR';
   }
 
@@ -651,26 +706,49 @@ export class SubscriptionService {
         {
           id: 'pay_1',
           date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          amount:
+            user.subscription?.planId === 'professional'
+              ? 49
+              : user.subscription?.planId === 'enterprise'
+                ? 99
+                : 19,
           currency: 'USD',
           status: 'paid',
-          planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
+          planName:
+            user.subscription?.planId === 'professional'
+              ? 'Professional Plan'
+              : user.subscription?.planId === 'enterprise'
+                ? 'Enterprise Plan'
+                : 'Starter Plan',
           description: 'Monthly subscription payment',
         },
         {
           id: 'pay_2',
           date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
-          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          amount:
+            user.subscription?.planId === 'professional'
+              ? 49
+              : user.subscription?.planId === 'enterprise'
+                ? 99
+                : 19,
           currency: 'USD',
           status: 'paid',
-          planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
+          planName:
+            user.subscription?.planId === 'professional'
+              ? 'Professional Plan'
+              : user.subscription?.planId === 'enterprise'
+                ? 'Enterprise Plan'
+                : 'Starter Plan',
           description: 'Monthly subscription payment',
         },
       ];
 
       return mockBillingHistory;
     } catch (error) {
-      this.logger.error(`Failed to get billing history for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to get billing history for user ${userId}:`,
+        error,
+      );
       throw new HttpException(
         'Failed to retrieve billing history',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -695,7 +773,10 @@ export class SubscriptionService {
       }
 
       if (!user.subscription) {
-        throw new HttpException('No active subscription found', HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          'No active subscription found',
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       // Update subscription to cancelled status
@@ -714,7 +795,10 @@ export class SubscriptionService {
         subscription: updatedSubscription,
       };
     } catch (error) {
-      this.logger.error(`Failed to cancel subscription for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to cancel subscription for user ${userId}:`,
+        error,
+      );
       throw new HttpException(
         'Failed to cancel subscription',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -728,18 +812,24 @@ export class SubscriptionService {
   async exportBillingHistoryCSV(userId: string): Promise<string> {
     try {
       const billingHistory = await this.getBillingHistory(userId);
-      
+
       // Create CSV header
       const csvHeader = 'Date,Amount,Currency,Status,Plan Name,Description\n';
-      
+
       // Create CSV rows
-      const csvRows = billingHistory.map(item => 
-        `${item.date},${item.amount},${item.currency},${item.status},"${item.planName}","${item.description}"`
-      ).join('\n');
-      
+      const csvRows = billingHistory
+        .map(
+          (item) =>
+            `${item.date},${item.amount},${item.currency},${item.status},"${item.planName}","${item.description}"`,
+        )
+        .join('\n');
+
       return csvHeader + csvRows;
     } catch (error) {
-      this.logger.error(`Failed to export billing history for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to export billing history for user ${userId}:`,
+        error,
+      );
       throw new HttpException(
         'Failed to export billing history',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -767,12 +857,15 @@ export class SubscriptionService {
       if (!user.subscription?.razorpayCustomerId) {
         throw new BadRequestException('No active subscription found');
       }
-      
+
       const updateUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/subscriptions/${user.subscription.razorpayCustomerId}/update-payment-method`;
-      
+
       return updateUrl;
     } catch (error) {
-      this.logger.error(`Failed to get payment method update URL for user ${userId}:`, error);
+      this.logger.error(
+        `Failed to get payment method update URL for user ${userId}:`,
+        error,
+      );
       throw new HttpException(
         'Failed to get payment method update URL',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -795,10 +888,13 @@ export class SubscriptionService {
 
       // Generate Razorpay invoice download URL
       const invoiceUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/invoices/${invoiceId}/download`;
-      
+
       return invoiceUrl;
     } catch (error) {
-      this.logger.error(`Failed to get invoice for user ${userId}, invoice ${invoiceId}:`, error);
+      this.logger.error(
+        `Failed to get invoice for user ${userId}, invoice ${invoiceId}:`,
+        error,
+      );
       throw new HttpException(
         'Failed to get invoice',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -812,12 +908,16 @@ export class SubscriptionService {
   getRazorpayPlanId(planType: string, currency: string = 'INR'): string {
     const envKey = `RAZORPAY_PLAN_ID_${planType.toUpperCase()}_${currency}`;
     const planId = process.env[envKey];
-    
+
     if (!planId) {
-      this.logger.warn(`No Razorpay plan ID found for ${planType} in ${currency}, falling back to INR`);
-      return process.env[`RAZORPAY_PLAN_ID_${planType.toUpperCase()}_INR`] || '';
+      this.logger.warn(
+        `No Razorpay plan ID found for ${planType} in ${currency}, falling back to INR`,
+      );
+      return (
+        process.env[`RAZORPAY_PLAN_ID_${planType.toUpperCase()}_INR`] || ''
+      );
     }
-    
+
     return planId;
   }
 }

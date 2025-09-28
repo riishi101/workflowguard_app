@@ -23,7 +23,12 @@ export class AuditLogService {
     });
   }
 
-  async getAuditLogs(userId?: string, filters?: any, skip?: number, take?: number) {
+  async getAuditLogs(
+    userId?: string,
+    filters?: any,
+    skip?: number,
+    take?: number,
+  ) {
     return this.prisma.auditLog.findMany({
       where: {
         userId,

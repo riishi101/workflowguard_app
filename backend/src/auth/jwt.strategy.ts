@@ -7,8 +7,11 @@ import { AuthService } from './auth.service';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     const jwtSecret = process.env.JWT_SECRET || 'supersecretkey';
-    console.log('🔑 JwtStrategy - Initializing with secret:', jwtSecret.substring(0, 10) + '...');
-    
+    console.log(
+      '🔑 JwtStrategy - Initializing with secret:',
+      jwtSecret.substring(0, 10) + '...',
+    );
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,

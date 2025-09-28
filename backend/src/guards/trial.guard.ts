@@ -30,8 +30,13 @@ export class TrialGuard implements CanActivate {
     try {
       // Check trial status
       const trialStatus = await this.subscriptionService.getTrialStatus(userId);
-      
-      console.log('TrialGuard - Trial status for user', userId, ':', trialStatus);
+
+      console.log(
+        'TrialGuard - Trial status for user',
+        userId,
+        ':',
+        trialStatus,
+      );
 
       // If trial has expired, block access
       if (trialStatus.isTrialExpired) {
@@ -49,11 +54,19 @@ export class TrialGuard implements CanActivate {
         throw error;
       }
 
-      console.error('TrialGuard - Error checking trial status for user', userId, ':', error);
-      
+      console.error(
+        'TrialGuard - Error checking trial status for user',
+        userId,
+        ':',
+        error,
+      );
+
       // Be more permissive - if we can't check trial status, allow access
       // This prevents blocking users due to temporary service issues
-      console.log('TrialGuard - Allowing access due to service error for user:', userId);
+      console.log(
+        'TrialGuard - Allowing access due to service error for user:',
+        userId,
+      );
       return true;
     }
   }

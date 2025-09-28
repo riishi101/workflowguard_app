@@ -98,7 +98,9 @@ export class AuthController {
 
       if (!code) {
         console.error('No authorization code provided');
-        return res.redirect(`${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=no_code`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=no_code`,
+        );
       }
 
       // Parse state to check if this is a marketplace installation
@@ -127,7 +129,9 @@ export class AuthController {
 
       if (!clientId || !clientSecret) {
         console.error('HUBSPOT_CLIENT_SECRET is not set');
-        return res.redirect(`${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=config_error`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=config_error`,
+        );
       }
 
       // 1. Exchange code for tokens
@@ -153,7 +157,9 @@ export class AuthController {
 
       if (!access_token) {
         console.error('No access token received from HubSpot');
-        return res.redirect(`${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=token_error`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=token_error`,
+        );
       }
 
       // 2. Fetch user email from HubSpot
@@ -170,13 +176,17 @@ export class AuthController {
 
       // Try different possible email fields
       let email =
-        userRes.data.user || 
-        userRes.data.email || 
+        userRes.data.user ||
+        userRes.data.email ||
         userRes.data.userEmail ||
         userRes.data.user_email;
 
       // If no email found, try to extract from user object if it exists
-      if (!email && userRes.data.user && typeof userRes.data.user === 'object') {
+      if (
+        !email &&
+        userRes.data.user &&
+        typeof userRes.data.user === 'object'
+      ) {
         email = userRes.data.user.email || userRes.data.user.userEmail;
       }
 
@@ -184,7 +194,10 @@ export class AuthController {
       if (!email && (userRes.data.portalId || userRes.data.hub_id || hub_id)) {
         const portalId = userRes.data.portalId || userRes.data.hub_id || hub_id;
         email = `portal-${portalId}@hubspot.workflowguard.app`;
-        console.log('No email found, using generated email based on portal ID:', email);
+        console.log(
+          'No email found, using generated email based on portal ID:',
+          email,
+        );
       }
 
       console.log('User email from HubSpot:', email);
@@ -192,7 +205,9 @@ export class AuthController {
       if (!email) {
         console.error('No email found in HubSpot user response');
         console.error('Available fields:', Object.keys(userRes.data));
-        return res.redirect(`${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_error`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_error`,
+        );
       }
 
       // 3. Create or update user in your DB with hubspotPortalId and tokens
@@ -202,10 +217,7 @@ export class AuthController {
         // First try to find existing user by hubspotPortalId or email
         user = await this.prisma.user.findFirst({
           where: {
-            OR: [
-              { email },
-              { hubspotPortalId: String(hub_id) }
-            ]
+            OR: [{ email }, { hubspotPortalId: String(hub_id) }],
           },
         });
 
@@ -219,7 +231,9 @@ export class AuthController {
               hubspotPortalId: String(hub_id),
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
+              hubspotTokenExpiresAt: new Date(
+                Date.now() + (tokenRes.data.expires_in || 3600) * 1000,
+              ),
             },
           });
           console.log('User updated successfully:', user.id);
@@ -233,7 +247,9 @@ export class AuthController {
               hubspotPortalId: String(hub_id),
               hubspotAccessToken: access_token,
               hubspotRefreshToken: refresh_token,
-              hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
+              hubspotTokenExpiresAt: new Date(
+                Date.now() + (tokenRes.data.expires_in || 3600) * 1000,
+              ),
             },
           });
           console.log('User created successfully:', user.id);
@@ -250,7 +266,10 @@ export class AuthController {
             });
             console.log('Trial subscription created for user:', user.id);
           } catch (subscriptionError) {
-            console.warn('Failed to create trial subscription, but continuing:', subscriptionError.message);
+            console.warn(
+              'Failed to create trial subscription, but continuing:',
+              subscriptionError.message,
+            );
           }
         }
       } catch (dbError) {
@@ -261,7 +280,7 @@ export class AuthController {
           meta: dbError.meta,
           stack: dbError.stack,
         });
-        
+
         // Try to provide more specific error handling
         if (dbError.code === 'P2002') {
           console.error('Unique constraint violation - user may already exist');
@@ -269,29 +288,34 @@ export class AuthController {
           try {
             user = await this.prisma.user.findFirst({
               where: {
-                OR: [
-                  { email },
-                  { hubspotPortalId: String(hub_id) }
-                ]
+                OR: [{ email }, { hubspotPortalId: String(hub_id) }],
               },
             });
             if (user) {
-              console.log('Found existing user after constraint violation:', user.id);
+              console.log(
+                'Found existing user after constraint violation:',
+                user.id,
+              );
               // Update the existing user's tokens
               user = await this.prisma.user.update({
                 where: { id: user.id },
                 data: {
                   hubspotAccessToken: access_token,
                   hubspotRefreshToken: refresh_token,
-                  hubspotTokenExpiresAt: new Date(Date.now() + (tokenRes.data.expires_in || 3600) * 1000),
+                  hubspotTokenExpiresAt: new Date(
+                    Date.now() + (tokenRes.data.expires_in || 3600) * 1000,
+                  ),
                 },
               });
             }
           } catch (recoveryError) {
-            console.error('Failed to recover from constraint violation:', recoveryError);
+            console.error(
+              'Failed to recover from constraint violation:',
+              recoveryError,
+            );
           }
         }
-        
+
         if (!user) {
           return res.redirect(
             `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=user_creation_failed`,
@@ -339,7 +363,9 @@ export class AuthController {
       console.error('Error message:', error.message);
       console.error('Error name:', error.name);
 
-      return res.redirect(`${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=oauth_failed`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL || 'https://www.workflowguard.pro'}?error=oauth_failed`,
+      );
     }
   }
 
@@ -400,12 +426,15 @@ export class AuthController {
         authorization: req.headers.authorization,
         'content-type': req.headers['content-type'],
         origin: req.headers.origin,
-        'user-agent': req.headers['user-agent']?.substring(0, 50) + '...'
+        'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
       });
-      
+
       const userId = (req.user as any)?.sub || (req.user as any)?.id;
-      console.log('🔍 /api/auth/me - User from JWT:', { userId, user: req.user });
-      
+      console.log('🔍 /api/auth/me - User from JWT:', {
+        userId,
+        user: req.user,
+      });
+
       if (!userId) {
         console.log('❌ /api/auth/me - No userId found in JWT payload');
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);

@@ -405,7 +405,10 @@ export class WorkflowController {
     }
 
     try {
-      const result = await this.workflowService.restoreDeletedWorkflow(id, userId);
+      const result = await this.workflowService.restoreDeletedWorkflow(
+        id,
+        userId,
+      );
       return {
         success: true,
         data: result,
@@ -429,7 +432,10 @@ export class WorkflowController {
     }
 
     try {
-      const exportData = await this.workflowService.exportDeletedWorkflow(id, userId);
+      const exportData = await this.workflowService.exportDeletedWorkflow(
+        id,
+        userId,
+      );
       return {
         success: true,
         data: exportData,
@@ -575,13 +581,19 @@ export class WorkflowController {
 
     try {
       // First find the internal workflow ID by HubSpot ID
-      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      const workflow = await this.workflowService.findByHubspotId(
+        hubspotId,
+        userId,
+      );
       if (!workflow) {
         throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
       }
 
-      const versions = await this.workflowService.getWorkflowVersions(workflow.id, userId);
-      
+      const versions = await this.workflowService.getWorkflowVersions(
+        workflow.id,
+        userId,
+      );
+
       return {
         success: true,
         data: versions,
@@ -615,7 +627,10 @@ export class WorkflowController {
 
     try {
       // First find the internal workflow ID by HubSpot ID
-      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      const workflow = await this.workflowService.findByHubspotId(
+        hubspotId,
+        userId,
+      );
       if (!workflow) {
         throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
       }
@@ -631,7 +646,10 @@ export class WorkflowController {
         message: 'Workflow versions compared successfully',
       };
     } catch (error) {
-      console.error('Failed to compare workflow versions by HubSpot ID:', error);
+      console.error(
+        'Failed to compare workflow versions by HubSpot ID:',
+        error,
+      );
       throw new HttpException(
         `Failed to compare workflow versions: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -641,10 +659,7 @@ export class WorkflowController {
 
   @Get(':id/versions')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
-  async getWorkflowVersions(
-    @Param('id') workflowId: string,
-    @Req() req: any,
-  ) {
+  async getWorkflowVersions(@Param('id') workflowId: string, @Req() req: any) {
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];
@@ -655,20 +670,29 @@ export class WorkflowController {
     }
 
     try {
-      const versions = await this.workflowService.getWorkflowVersions(workflowId, userId);
-      
+      const versions = await this.workflowService.getWorkflowVersions(
+        workflowId,
+        userId,
+      );
+
       // If no versions found, try to create an initial version
       if (versions.length === 0) {
-        await this.workflowService.createInitialVersionIfMissing(workflowId, userId);
+        await this.workflowService.createInitialVersionIfMissing(
+          workflowId,
+          userId,
+        );
         // Retry getting versions after creating initial version
-        const newVersions = await this.workflowService.getWorkflowVersions(workflowId, userId);
+        const newVersions = await this.workflowService.getWorkflowVersions(
+          workflowId,
+          userId,
+        );
         return {
           success: true,
           data: newVersions,
           message: 'Initial version created and retrieved successfully',
         };
       }
-      
+
       return {
         success: true,
         data: versions,

@@ -28,9 +28,14 @@ export class SupportService {
 
       // Send WhatsApp notification for critical issues
       if (severity === 'critical' && this.whatsappService.isConfigured()) {
-        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+        });
         if (user?.email) {
-          await this.whatsappService.sendAutoReplyMessage('+916000576799', issueType);
+          await this.whatsappService.sendAutoReplyMessage(
+            '+916000576799',
+            issueType,
+          );
         }
       }
 
@@ -355,7 +360,10 @@ export class SupportService {
       if (success) {
         // Send auto-reply to user if they provided their phone number
         if (phoneNumber) {
-          await this.whatsappService.sendWelcomeMessage(phoneNumber, user.name || undefined);
+          await this.whatsappService.sendWelcomeMessage(
+            phoneNumber,
+            user.name || undefined,
+          );
         }
 
         return {

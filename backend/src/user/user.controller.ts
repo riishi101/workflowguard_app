@@ -64,19 +64,21 @@ export class UserController {
       if (!userId) {
         throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
       }
-      
+
       const user = await this.userService.findOne(userId);
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-      
+
       return {
         success: true,
-        data: [{
-          id: user.id,
-          name: user.name || user.email,
-          email: user.email
-        }]
+        data: [
+          {
+            id: user.id,
+            name: user.name || user.email,
+            email: user.email,
+          },
+        ],
       };
     } catch (error) {
       throw new HttpException(

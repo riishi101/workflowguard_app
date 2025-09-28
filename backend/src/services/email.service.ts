@@ -2,8 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class EmailService {
-  async sendEmail(to: string, subject: string, content?: string): Promise<void> {
-    console.log(`Email sent to ${to}: ${subject}${content ? ` - ${content}` : ''}`);
+  async sendEmail(
+    to: string,
+    subject: string,
+    content?: string,
+  ): Promise<void> {
+    console.log(
+      `Email sent to ${to}: ${subject}${content ? ` - ${content}` : ''}`,
+    );
   }
 
   async sendWelcomeEmail(to: string, name: string) {

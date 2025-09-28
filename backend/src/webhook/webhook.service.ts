@@ -166,7 +166,10 @@ export class WebhookService {
           entityType: 'webhook',
           entityId: webhook.id,
           oldValue: undefined,
-          newValue: JSON.stringify({ endpointUrl: webhook.endpointUrl, error: error.message }),
+          newValue: JSON.stringify({
+            endpointUrl: webhook.endpointUrl,
+            error: error.message,
+          }),
         },
       });
     }

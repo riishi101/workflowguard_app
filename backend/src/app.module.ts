@@ -26,6 +26,7 @@ import { BillingController } from './controllers/hubspot-billing.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     PrismaModule,
     HubSpotModule,
