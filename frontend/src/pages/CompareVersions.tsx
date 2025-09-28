@@ -29,6 +29,7 @@ import {
   RefreshCw,
   Eye,
   Download,
+  Target
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -199,6 +200,97 @@ const CompareVersions = () => {
   const handleRefresh = () => {
     fetchVersions();
   };
+
+  // New component to display detailed action information
+  const ActionDetails = ({ action }: { action: any }) => {
+    if (!action || !action.details) return null;
+    
+    const details = action.details;
+    
+    return (
+      <div className="mt-2 text-sm text-gray-600">
+        {details.type && (
+          <div className="mb-1">
+            <span className="font-medium">Type:</span> {details.type}
+          </div>
+        )}
+        
+        {details.delayMillis && (
+          <div className="mb-1">
+            <span className="font-medium">Delay:</span> {Math.round(details.delayMillis / 60000)} minutes
+          </div>
+        )}
+        
+        {details.propertyName && (
+          <div className="mb-1">
+            <span className="font-medium">Property:</span> {details.propertyName}
+            {details.propertyValue && (
+              <span> = {details.propertyValue}</span>
+            )}
+          </div>
+        )}
+        
+        {details.subject && (
+          <div className="mb-1">
+            <span className="font-medium">Subject:</span> {details.subject}
+          </div>
+        )}
+        
+        {details.to && (
+          <div className="mb-1">
+            <span className="font-medium">To:</span> {details.to}
+          </div>
+        )}
+        
+        {details.from && (
+          <div className="mb-1">
+            <span className="font-medium">From:</span> {details.from}
+          </div>
+        )}
+        
+        {details.filters && Array.isArray(details.filters) && details.filters.length > 0 && (
+          <div className="mb-1">
+            <span className="font-medium">Filters:</span>
+            <ul className="list-disc list-inside ml-2">
+              {details.filters.map((filter: any, idx: number) => (
+                <li key={idx}>{JSON.stringify(filter)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {details.conditions && Array.isArray(details.conditions) && details.conditions.length > 0 && (
+          <div className="mb-1">
+            <span className="font-medium">Conditions:</span>
+            <ul className="list-disc list-inside ml-2">
+              {details.conditions.map((condition: any, idx: number) => (
+                <li key={idx}>{JSON.stringify(condition)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // New component to display differences
+  const DifferenceDetails = ({ differences }: { differences: any[] }) => {
+    if (!differences || differences.length === 0) return null;
+    
+    return (
+      <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+        <h4 className="font-medium text-yellow-800 mb-1">Changes:</h4>
+        <ul className="list-disc list-inside text-sm">
+          {differences.map((diff: any, idx: number) => (
+            <li key={idx} className="text-yellow-700">
+              {diff.property}: {JSON.stringify(diff.oldValue)} → {JSON.stringify(diff.newValue)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
 
   const handleRestoreVersion = async (versionId: string, versionLabel: string) => {
     if (!workflowId) return;
@@ -446,20 +538,30 @@ const CompareVersions = () => {
                   return (
                     <div
                       key={step.id || index}
-                      className={`p-3 rounded-lg border flex items-center justify-between ${getStepColor(step)}`}
+                      className={`p-3 rounded-lg border ${getStepColor(step)}`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <IconComponent
-                          className={`w-5 h-5 ${getStepTextColor(step)}`}
-                        />
-                        <span className={`font-medium ${getStepTextColor(step)}`}>
-                          {step.title}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <IconComponent
+                            className={`w-5 h-5 ${getStepTextColor(step)}`}
+                          />
+                          <span className={`font-medium ${getStepTextColor(step)}`}>
+                            {step.title}
+                          </span>
+                        </div>
+                        {step.isRemoved && (
+                          <Badge variant="destructive" className="text-xs">
+                            Removed
+                          </Badge>
+                        )}
                       </div>
-                      {step.isRemoved && (
-                        <Badge variant="destructive" className="text-xs">
-                          Removed
-                        </Badge>
+                      {step.description && (
+                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                      )}
+                      <ActionDetails action={step} />
+                      {/* Show differences if this step was modified */}
+                      {step.differences && (
+                        <DifferenceDetails differences={step.differences} />
                       )}
                     </div>
                   );
@@ -483,25 +585,35 @@ const CompareVersions = () => {
                   return (
                     <div
                       key={step.id || index}
-                      className={`p-3 rounded-lg border flex items-center justify-between ${getStepColor(step)}`}
+                      className={`p-3 rounded-lg border ${getStepColor(step)}`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <IconComponent
-                          className={`w-5 h-5 ${getStepTextColor(step)}`}
-                        />
-                        <span className={`font-medium ${getStepTextColor(step)}`}>
-                          {step.title}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <IconComponent
+                            className={`w-5 h-5 ${getStepTextColor(step)}`}
+                          />
+                          <span className={`font-medium ${getStepTextColor(step)}`}>
+                            {step.title}
+                          </span>
+                        </div>
+                        {step.isNew && (
+                          <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                            New
+                          </Badge>
+                        )}
+                        {step.isModified && (
+                          <Badge variant="default" className="text-xs bg-yellow-100 text-yellow-800">
+                            Modified
+                          </Badge>
+                        )}
                       </div>
-                      {step.isNew && (
-                        <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                          New
-                        </Badge>
+                      {step.description && (
+                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
                       )}
-                      {step.isModified && (
-                        <Badge variant="default" className="text-xs bg-yellow-100 text-yellow-800">
-                          Modified
-                        </Badge>
+                      <ActionDetails action={step} />
+                      {/* Show differences if this step was modified */}
+                      {step.differences && (
+                        <DifferenceDetails differences={step.differences} />
                       )}
                     </div>
                   );

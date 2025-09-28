@@ -160,27 +160,72 @@ export class WorkflowService {
         });
       }
 
-      // Compare actions array
+      // Compare actions array with detailed comparison
       if (dataA.actions && dataB.actions) {
-        if (dataA.actions.length !== dataB.actions.length) {
-          differences.push({
-            field: 'actions',
-            oldValue: `${dataA.actions.length} actions`,
-            newValue: `${dataB.actions.length} actions`,
-            type: 'changed'
-          });
-        } else {
-          // Compare individual actions
-          for (let i = 0; i < dataA.actions.length; i++) {
-            const actionA = dataA.actions[i];
-            const actionB = dataB.actions[i];
-            
-            if (JSON.stringify(actionA) !== JSON.stringify(actionB)) {
+        // Create maps for easier lookup
+        const actionsMapA = new Map();
+        const actionsMapB = new Map();
+        
+        dataA.actions.forEach((action: any) => {
+          const key = action.id || action.actionId || JSON.stringify(action);
+          actionsMapA.set(key, action);
+        });
+        
+        dataB.actions.forEach((action: any) => {
+          const key = action.id || action.actionId || JSON.stringify(action);
+          actionsMapB.set(key, action);
+        });
+        
+        // Find added actions
+        for (const [key, actionB] of actionsMapB) {
+          if (!actionsMapA.has(key)) {
+            differences.push({
+              field: 'actions.added',
+              oldValue: null,
+              newValue: actionB,
+              type: 'added',
+              details: {
+                action: actionB,
+                description: `Added ${actionB.type || 'action'}`
+              }
+            });
+          }
+        }
+        
+        // Find removed actions
+        for (const [key, actionA] of actionsMapA) {
+          if (!actionsMapB.has(key)) {
+            differences.push({
+              field: 'actions.removed',
+              oldValue: actionA,
+              newValue: null,
+              type: 'removed',
+              details: {
+                action: actionA,
+                description: `Removed ${actionA.type || 'action'}`
+              }
+            });
+          }
+        }
+        
+        // Find modified actions
+        for (const [key, actionB] of actionsMapB) {
+          if (actionsMapA.has(key)) {
+            const actionA = actionsMapA.get(key);
+            // Compare action properties
+            const actionDifferences = this.compareActionProperties(actionA, actionB);
+            if (actionDifferences.length > 0) {
               differences.push({
-                field: `actions[${i}]`,
-                oldValue: actionA.type || 'Unknown action',
-                newValue: actionB.type || 'Unknown action',
-                type: 'changed'
+                field: 'actions.modified',
+                oldValue: actionA,
+                newValue: actionB,
+                type: 'changed',
+                details: {
+                  actionA: actionA,
+                  actionB: actionB,
+                  changes: actionDifferences,
+                  description: `Modified ${actionB.type || 'action'}`
+                }
               });
             }
           }
@@ -192,9 +237,31 @@ export class WorkflowService {
         if (JSON.stringify(dataA.enrollmentTriggers) !== JSON.stringify(dataB.enrollmentTriggers)) {
           differences.push({
             field: 'enrollmentTriggers',
-            oldValue: 'Previous triggers',
-            newValue: 'Updated triggers',
-            type: 'changed'
+            oldValue: dataA.enrollmentTriggers,
+            newValue: dataB.enrollmentTriggers,
+            type: 'changed',
+            details: {
+              triggersA: dataA.enrollmentTriggers,
+              triggersB: dataB.enrollmentTriggers,
+              description: 'Enrollment triggers changed'
+            }
+          });
+        }
+      }
+
+      // Compare goals
+      if (dataA.goals && dataB.goals) {
+        if (JSON.stringify(dataA.goals) !== JSON.stringify(dataB.goals)) {
+          differences.push({
+            field: 'goals',
+            oldValue: dataA.goals,
+            newValue: dataB.goals,
+            type: 'changed',
+            details: {
+              goalsA: dataA.goals,
+              goalsB: dataB.goals,
+              description: 'Workflow goals changed'
+            }
           });
         }
       }
@@ -205,10 +272,63 @@ export class WorkflowService {
         field: 'comparison',
         oldValue: 'Error comparing',
         newValue: 'Error comparing',
-        type: 'error'
+        type: 'error',
+        details: {
+          error: error.message
+        }
       });
     }
 
+    return differences;
+  }
+
+  private compareActionProperties(actionA: any, actionB: any): any[] {
+    const differences = [];
+    
+    // Compare key properties that might change
+    const propertiesToCompare = [
+      'type', 'actionType', 'delayMillis', 'propertyName', 'propertyValue',
+      'subject', 'body', 'to', 'from', 'settings', 'filters', 'conditions'
+    ];
+    
+    propertiesToCompare.forEach(prop => {
+      if (actionA[prop] !== actionB[prop]) {
+        differences.push({
+          property: prop,
+          oldValue: actionA[prop],
+          newValue: actionB[prop]
+        });
+      }
+    });
+    
+    // Deep compare settings if they exist
+    if (actionA.settings && actionB.settings) {
+      const settingsStringA = JSON.stringify(actionA.settings);
+      const settingsStringB = JSON.stringify(actionB.settings);
+      if (settingsStringA !== settingsStringB) {
+        differences.push({
+          property: 'settings',
+          oldValue: actionA.settings,
+          newValue: actionB.settings,
+          details: 'Settings configuration changed'
+        });
+      }
+    }
+    
+    // Deep compare filters if they exist
+    if (actionA.filters && actionB.filters) {
+      const filtersStringA = JSON.stringify(actionA.filters);
+      const filtersStringB = JSON.stringify(actionB.filters);
+      if (filtersStringA !== filtersStringB) {
+        differences.push({
+          property: 'filters',
+          oldValue: actionA.filters,
+          newValue: actionB.filters,
+          details: 'Filter conditions changed'
+        });
+      }
+    }
+    
     return differences;
   }
 
@@ -216,17 +336,78 @@ export class WorkflowService {
     const steps = [];
     
     try {
-      // If workflow has actions, transform them to steps
+      // If workflow has actions, transform them to steps with full details
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
         workflowData.actions.forEach((action: any, index: number) => {
           steps.push({
-            id: action.id || `action-${index}`,
+            id: action.id || action.actionId || `action-${index}`,
             title: action.type || action.actionType || `Action ${index + 1}`,
             type: this.getStepType(action),
             description: action.description || action.subject || '',
             isNew: false,
             isModified: false,
-            isRemoved: false
+            isRemoved: false,
+            // Add full action details for detailed display
+            details: {
+              type: action.type || action.actionType,
+              actionId: action.actionId,
+              stepId: action.stepId,
+              delayMillis: action.delayMillis,
+              propertyName: action.propertyName,
+              propertyValue: action.propertyValue,
+              subject: action.subject,
+              body: action.body,
+              to: action.to,
+              from: action.from,
+              settings: action.settings,
+              filters: action.filters,
+              conditions: action.conditions,
+              // Include any other relevant action properties
+              ...action
+            }
+          });
+        });
+      }
+
+      // If workflow has enrollment triggers, include them
+      if (workflowData?.enrollmentTriggers && Array.isArray(workflowData.enrollmentTriggers)) {
+        workflowData.enrollmentTriggers.forEach((trigger: any, index: number) => {
+          steps.push({
+            id: trigger.id || `trigger-${index}`,
+            title: 'Enrollment Trigger',
+            type: 'trigger',
+            description: 'Workflow enrollment conditions',
+            isNew: false,
+            isModified: false,
+            isRemoved: false,
+            details: {
+              type: 'enrollmentTrigger',
+              filters: trigger.filters,
+              settings: trigger.settings,
+              ...trigger
+            }
+          });
+        });
+      }
+
+      // If workflow has goals, include them
+      if (workflowData?.goals && Array.isArray(workflowData.goals)) {
+        workflowData.goals.forEach((goal: any, index: number) => {
+          steps.push({
+            id: goal.id || `goal-${index}`,
+            title: 'Goal',
+            type: 'goal',
+            description: goal.name || 'Workflow goal',
+            isNew: false,
+            isModified: false,
+            isRemoved: false,
+            details: {
+              type: 'goal',
+              name: goal.name,
+              filters: goal.filters,
+              settings: goal.settings,
+              ...goal
+            }
           });
         });
       }
@@ -240,7 +421,11 @@ export class WorkflowService {
           description: 'Workflow enrollment conditions',
           isNew: false,
           isModified: false,
-          isRemoved: false
+          isRemoved: false,
+          details: {
+            type: 'enrollmentTrigger',
+            triggers: workflowData.enrollmentTriggers
+          }
         });
       }
 
@@ -253,13 +438,19 @@ export class WorkflowService {
           description: `Status: ${workflowData?.enabled ? 'Active' : 'Inactive'}`,
           isNew: false,
           isModified: false,
-          isRemoved: false
+          isRemoved: false,
+          details: {
+            type: 'workflow',
+            name: workflowData?.name,
+            enabled: workflowData?.enabled,
+            description: workflowData?.description
+          }
         });
       }
 
     } catch (error) {
       console.error('Error transforming workflow data to steps:', error);
-      // Return a fallback step
+      // Return a fallback step with error details
       steps.push({
         id: 'fallback-step',
         title: 'Workflow Step',
@@ -267,7 +458,11 @@ export class WorkflowService {
         description: 'Unable to parse workflow details',
         isNew: false,
         isModified: false,
-        isRemoved: false
+        isRemoved: false,
+        details: {
+          type: 'error',
+          errorMessage: error.message
+        }
       });
     }
 
