@@ -19,7 +19,7 @@ RUN npx prisma generate
 COPY . .
 
 # Build the application with tsc
-RUN npx tsc -p tsconfig.build.json --outDir dist
+RUN npm run build
 
 # Debug: List files in dist directory
 RUN ls -la dist/
@@ -40,7 +40,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist* ./dist/
 
 # Debug: List files in dist directory
 RUN ls -la dist/
