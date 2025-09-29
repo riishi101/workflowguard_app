@@ -182,6 +182,7 @@ export class HubSpotService {
       ];
 
       let workflowData: HubSpotWorkflow | null = null;
+      let lastError: any = null;
 
       for (const endpoint of endpoints) {
         try {
@@ -209,11 +210,14 @@ export class HubSpotService {
               break;
             }
           } else if (response.status !== 404) {
+            const errorText = await response.text();
+            lastError = new Error(`HTTP ${response.status}: ${errorText}`);
             console.log(
               `⚠️ Endpoint ${endpoint} returned ${response.status}, trying next...`,
             );
           }
         } catch (endpointError) {
+          lastError = endpointError;
           console.log(
             `⚠️ Error with endpoint ${endpoint}, trying next...`,
             endpointError,
@@ -225,6 +229,14 @@ export class HubSpotService {
         console.log(
           `⚠️ Could not fetch detailed workflow data for ${workflowId}, returning basic info`,
         );
+
+        // If we have detailed error info, include it in the response
+        const errorInfo = lastError ? {
+          error: lastError.message,
+          errorType: 'API_ERROR',
+          fallback: true
+        } : {};
+
         // Return basic workflow info if detailed data is not available
         workflowData = {
           id: workflowId,
@@ -232,6 +244,21 @@ export class HubSpotService {
           description: 'Detailed workflow information could not be retrieved from HubSpot API',
           enabled: false,
           type: 'unknown',
+          ...errorInfo,
+          _metadata: {
+            fetchedAt: new Date().toISOString(),
+            source: 'fallback',
+            apiError: lastError?.message || 'Unknown API error'
+          }
+        };
+      }
+
+      // Ensure we always return complete workflow data structure
+      if (workflowData && !workflowData._metadata) {
+        workflowData._metadata = {
+          fetchedAt: new Date().toISOString(),
+          source: 'hubspot_api',
+          completeData: !!(workflowData.actions || workflowData.steps)
         };
       }
 

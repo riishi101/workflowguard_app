@@ -117,10 +117,10 @@ export class WorkflowService {
       }
 
       // Simple comparison logic - compare the workflow data
-      const dataA = versionAData.data;
-      const dataB = versionBData.data;
+      const originalDataA = versionAData.data;
+      const originalDataB = versionBData.data;
 
-      const differences = this.findWorkflowDifferences(dataA, dataB);
+      const differences = this.findWorkflowDifferences(originalDataA, originalDataB);
 
       // Transform version data for frontend display
       const transformedVersionA = {
@@ -133,7 +133,11 @@ export class WorkflowService {
         steps: this.transformWorkflowDataToSteps(versionBData.data),
       };
 
-      return {
+      // Enhanced comparison with detailed workflow structure analysis
+      const workflowDataA = originalDataA as any;
+      const workflowDataB = originalDataB as any;
+
+      const enhancedComparison = {
         versionA: transformedVersionA,
         versionB: transformedVersionB,
         differences: {
@@ -141,7 +145,29 @@ export class WorkflowService {
           modified: differences.filter((d) => d.type === 'changed'),
           removed: differences.filter((d) => d.type === 'removed'),
         },
+        // Add workflow-level metadata comparison
+        workflowMetadata: {
+          versionA: {
+            name: workflowDataA?.name,
+            enabled: workflowDataA?.enabled,
+            type: workflowDataA?.type,
+            createdAt: versionAData.createdAt,
+            versionNumber: versionAData.versionNumber,
+          },
+          versionB: {
+            name: workflowDataB?.name,
+            enabled: workflowDataB?.enabled,
+            type: workflowDataB?.type,
+            createdAt: versionBData.createdAt,
+            versionNumber: versionBData.versionNumber,
+          },
+          changes: this.compareWorkflowMetadata(workflowDataA, workflowDataB),
+        },
+        // Add detailed step-by-step comparison
+        stepComparison: this.createDetailedStepComparison(workflowDataA, workflowDataB),
       };
+
+      return enhancedComparison;
     } catch (error) {
       throw new HttpException(
         `Failed to compare workflow versions: ${error.message}`,
@@ -298,6 +324,103 @@ export class WorkflowService {
     }
 
     return differences;
+  }
+
+  private compareWorkflowMetadata(dataA: any, dataB: any): Array<{
+    property: string;
+    oldValue: any;
+    newValue: any;
+    changeType: string;
+  }> {
+    const metadataChanges: Array<{
+      property: string;
+      oldValue: any;
+      newValue: any;
+      changeType: string;
+    }> = [];
+
+    if (!dataA || !dataB) {
+      return metadataChanges;
+    }
+
+    // Compare basic workflow properties
+    const propertiesToCompare = ['name', 'enabled', 'type', 'description'];
+
+    propertiesToCompare.forEach(prop => {
+      if (dataA[prop] !== dataB[prop]) {
+        metadataChanges.push({
+          property: prop,
+          oldValue: dataA[prop],
+          newValue: dataB[prop],
+          changeType: 'modified'
+        });
+      }
+    });
+
+    return metadataChanges;
+  }
+
+  private createDetailedStepComparison(dataA: any, dataB: any): any {
+    if (!dataA || !dataB) {
+      return { steps: [], changes: [] };
+    }
+
+    const stepsA = this.transformWorkflowDataToSteps(dataA);
+    const stepsB = this.transformWorkflowDataToSteps(dataB);
+
+    // Create step comparison with detailed change tracking
+    const stepComparison = {
+      steps: {
+        versionA: stepsA,
+        versionB: stepsB
+      },
+      changes: this.identifyStepChanges(stepsA, stepsB),
+      summary: {
+        totalStepsA: stepsA.length,
+        totalStepsB: stepsB.length,
+        added: stepsB.filter(s => s.isNew).length,
+        removed: stepsA.filter(s => s.isRemoved).length,
+        modified: stepsA.filter(s => s.isModified).length
+      }
+    };
+
+    return stepComparison;
+  }
+
+  private identifyStepChanges(stepsA: any[], stepsB: any[]): any[] {
+    const changes = [];
+
+    // This is a simplified version - in a real implementation,
+    // you would use a more sophisticated diffing algorithm
+    const maxSteps = Math.max(stepsA.length, stepsB.length);
+
+    for (let i = 0; i < maxSteps; i++) {
+      const stepA = stepsA[i];
+      const stepB = stepsB[i];
+
+      if (!stepA && stepB) {
+        changes.push({
+          type: 'added',
+          step: stepB,
+          position: i
+        });
+      } else if (stepA && !stepB) {
+        changes.push({
+          type: 'removed',
+          step: stepA,
+          position: i
+        });
+      } else if (stepA && stepB && stepA.title !== stepB.title) {
+        changes.push({
+          type: 'modified',
+          oldStep: stepA,
+          newStep: stepB,
+          position: i
+        });
+      }
+    }
+
+    return changes;
   }
 
   private compareActionProperties(actionA: any, actionB: any): any[] {
@@ -1322,12 +1445,21 @@ export class WorkflowService {
 
           // Fetch current workflow data from HubSpot for comparison
           console.log(
-            `Fetching current data for workflow ${hubspotWorkflow.id}...`,
+            `Fetching complete workflow data for ${hubspotWorkflow.id}...`,
           );
           const currentWorkflowData = await this.hubspotService.getWorkflowById(
             userId,
             String(hubspotWorkflow.id),
           );
+
+          // Ensure we have complete workflow data with metadata
+          if (currentWorkflowData && !currentWorkflowData._metadata) {
+            currentWorkflowData._metadata = {
+              fetchedAt: new Date().toISOString(),
+              source: 'hubspot_sync',
+              completeData: !!(currentWorkflowData.actions || currentWorkflowData.steps)
+            };
+          }
 
           let shouldCreateVersion = false;
 

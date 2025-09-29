@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +31,15 @@ import {
   RefreshCw,
   Eye,
   Download,
-  Target
+  Target,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Filter,
+  Workflow,
+  Settings,
+  Users,
+  Calendar as CalendarIcon
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -72,8 +82,25 @@ const CompareVersions = () => {
       modified: any[];
       removed: any[];
     };
+    workflowMetadata?: {
+      versionA: any;
+      versionB: any;
+      changes: any[];
+    };
+    stepComparison?: {
+      steps: {
+        versionA: any[];
+        versionB: any[];
+      };
+      changes: any[];
+      summary: any;
+    };
   } | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (workflowId) {
@@ -457,6 +484,50 @@ const CompareVersions = () => {
     }
   };
 
+  const toggleStepExpansion = (stepId: string) => {
+    const newExpanded = new Set(expandedSteps);
+    if (newExpanded.has(stepId)) {
+      newExpanded.delete(stepId);
+    } else {
+      newExpanded.add(stepId);
+    }
+    setExpandedSteps(newExpanded);
+  };
+
+  const getFilteredSteps = () => {
+    if (!comparisonData) return [];
+
+    const allSteps = [
+      ...(comparisonData.versionA?.steps || []).map(step => ({ ...step, source: 'A' })),
+      ...(comparisonData.versionB?.steps || []).map(step => ({ ...step, source: 'B' }))
+    ];
+
+    let filtered = allSteps;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(step =>
+        step.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        step.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        step.type?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply type filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(step => step.type === filterType);
+    }
+
+    return filtered;
+  };
+
+  const getChangeTypeForStep = (step: any) => {
+    if (step.isNew) return 'added';
+    if (step.isModified) return 'modified';
+    if (step.isRemoved) return 'removed';
+    return 'unchanged';
+  };
+
   if (loading && !comparisonData) {
     return (
       <MainAppLayout title="Compare Workflow Versions">
@@ -516,6 +587,45 @@ const CompareVersions = () => {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      {/* Search and Filter Controls */}
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            placeholder="Search steps..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-64"
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="w-4 h-4 mr-2" />
+          Filters
+        </Button>
+
+        {showFilters && (
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="delay">Delay</SelectItem>
+              <SelectItem value="task">Task</SelectItem>
+              <SelectItem value="webhook">Webhook</SelectItem>
+              <SelectItem value="trigger">Trigger</SelectItem>
+              <SelectItem value="condition">Condition</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
       <Button
         variant="outline"
         size="sm"
@@ -581,109 +691,198 @@ const CompareVersions = () => {
       </ContentSection>
 
 
-      {/* Comparison Content */}
+      {/* Enhanced Comparison Content */}
       <ContentSection>
         {comparisonData ? (
-          <div className="grid grid-cols-2 gap-6">
-            {/* Version A */}
-            <div className="border border-gray-200 rounded-lg">
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="font-semibold text-gray-900">
-                  Version A - {versionAData?.versionNumber}
+          <>
+            {/* Workflow Metadata Comparison */}
+            {comparisonData.workflowMetadata && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+                  <Workflow className="w-5 h-5 mr-2" />
+                  Workflow Configuration Changes
                 </h3>
-                <p className="text-sm text-gray-600">
-                  {versionAData?.dateTime && new Date(versionAData.dateTime).toLocaleString()}
-                </p>
-              </div>
-              <div className="p-4 space-y-3">
-                {comparisonData.versionA?.steps?.map((step, index) => {
-                  const IconComponent = getStepIcon(step);
-                  return (
-                    <div
-                      key={step.id || index}
-                      className={`p-3 rounded-lg border ${getStepColor(step)}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <IconComponent
-                            className={`w-5 h-5 ${getStepTextColor(step)}`}
-                          />
-                          <span className={`font-medium ${getStepTextColor(step)}`}>
-                            {step.title}
-                          </span>
-                        </div>
-                        {step.isRemoved && (
-                          <Badge variant="destructive" className="text-xs">
-                            Removed
-                          </Badge>
-                        )}
-                      </div>
-                      {step.description && (
-                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
-                      )}
-                      <ActionDetails action={step} />
-                      {/* Show differences if this step was modified */}
-                      {step.differences && (
-                        <DifferenceDetails differences={step.differences} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-blue-700">Version A:</span>
+                    <div className="mt-1 space-y-1">
+                      <div>Name: {comparisonData.workflowMetadata.versionA.name || 'N/A'}</div>
+                      <div>Status: {comparisonData.workflowMetadata.versionA.enabled ? 'Enabled' : 'Disabled'}</div>
+                      <div>Type: {comparisonData.workflowMetadata.versionA.type || 'N/A'}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-blue-700">Version B:</span>
+                    <div className="mt-1 space-y-1">
+                      <div>Name: {comparisonData.workflowMetadata.versionB.name || 'N/A'}</div>
+                      <div>Status: {comparisonData.workflowMetadata.versionB.enabled ? 'Enabled' : 'Disabled'}</div>
+                      <div>Type: {comparisonData.workflowMetadata.versionB.type || 'N/A'}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-blue-700">Changes:</span>
+                    <div className="mt-1">
+                      {comparisonData.workflowMetadata.changes.length > 0 ? (
+                        <ul className="list-disc list-inside text-blue-600">
+                          {comparisonData.workflowMetadata.changes.map((change, idx) => (
+                            <li key={idx}>{change.property}: {String(change.oldValue)} → {String(change.newValue)}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-green-600">No configuration changes</span>
                       )}
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Version B */}
+            {/* Unified Scrollable Comparison List */}
             <div className="border border-gray-200 rounded-lg">
               <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h3 className="font-semibold text-gray-900">
-                  Version B - {versionBData?.versionNumber}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {versionBData?.dateTime && new Date(versionBData.dateTime).toLocaleString()}
-                </p>
+                <h3 className="font-semibold text-gray-900 mb-2">Step-by-Step Comparison</h3>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>Total Steps: {getFilteredSteps().length}</span>
+                  <span className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    Added: {comparisonData.differences.added.length}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    Modified: {comparisonData.differences.modified.length}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    Removed: {comparisonData.differences.removed.length}
+                  </span>
+                </div>
               </div>
-              <div className="p-4 space-y-3">
-                {comparisonData.versionB?.steps?.map((step, index) => {
-                  const IconComponent = getStepIcon(step);
-                  return (
-                    <div
-                      key={step.id || index}
-                      className={`p-3 rounded-lg border ${getStepColor(step)}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <IconComponent
-                            className={`w-5 h-5 ${getStepTextColor(step)}`}
-                          />
-                          <span className={`font-medium ${getStepTextColor(step)}`}>
-                            {step.title}
-                          </span>
-                        </div>
-                        {step.isNew && (
-                          <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                            New
-                          </Badge>
-                        )}
-                        {step.isModified && (
-                          <Badge variant="default" className="text-xs bg-yellow-100 text-yellow-800">
-                            Modified
-                          </Badge>
-                        )}
-                      </div>
-                      {step.description && (
-                        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
-                      )}
-                      <ActionDetails action={step} />
-                      {/* Show differences if this step was modified */}
-                      {step.differences && (
-                        <DifferenceDetails differences={step.differences} />
-                      )}
-                    </div>
-                  );
-                })}
+
+              <div className="p-4">
+                {getFilteredSteps().length > 0 ? (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {getFilteredSteps().map((step, index) => {
+                      const IconComponent = getStepIcon(step);
+                      const changeType = getChangeTypeForStep(step);
+                      const isExpanded = expandedSteps.has(step.id || `step-${index}`);
+
+                      return (
+                        <Collapsible key={step.id || `step-${index}`}>
+                          <div className={`border rounded-lg transition-colors ${
+                            changeType === 'added' ? 'border-green-300 bg-green-50' :
+                            changeType === 'removed' ? 'border-red-300 bg-red-50' :
+                            changeType === 'modified' ? 'border-yellow-300 bg-yellow-50' :
+                            'border-gray-200 bg-white'
+                          }`}>
+                            <CollapsibleTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-between p-4 hover:bg-transparent"
+                                onClick={() => toggleStepExpansion(step.id || `step-${index}`)}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                                  )}
+                                  <IconComponent className={`w-5 h-5 ${
+                                    changeType === 'added' ? 'text-green-600' :
+                                    changeType === 'removed' ? 'text-red-600' :
+                                    changeType === 'modified' ? 'text-yellow-600' :
+                                    'text-gray-600'
+                                  }`} />
+                                  <div className="text-left">
+                                    <div className={`font-medium ${
+                                      changeType === 'added' ? 'text-green-800' :
+                                      changeType === 'removed' ? 'text-red-800' :
+                                      changeType === 'modified' ? 'text-yellow-800' :
+                                      'text-gray-800'
+                                    }`}>
+                                      {step.title}
+                                      {changeType !== 'unchanged' && (
+                                        <Badge
+                                          variant="outline"
+                                          className={`ml-2 text-xs ${
+                                            changeType === 'added' ? 'border-green-300 text-green-700' :
+                                            changeType === 'removed' ? 'border-red-300 text-red-700' :
+                                            'border-yellow-300 text-yellow-700'
+                                          }`}
+                                        >
+                                          {changeType === 'added' ? 'NEW' :
+                                           changeType === 'removed' ? 'REMOVED' :
+                                           'MODIFIED'}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {step.description && (
+                                      <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Version {step.source}
+                                </div>
+                              </Button>
+                            </CollapsibleTrigger>
+
+                            <CollapsibleContent>
+                              <div className="px-4 pb-4 border-t border-gray-100">
+                                <div className="mt-3 space-y-2">
+                                  {step.details && (
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <h5 className="font-medium text-gray-700 mb-2">Configuration Details</h5>
+                                        {step.details.type && (
+                                          <div><span className="font-medium">Type:</span> {step.details.type}</div>
+                                        )}
+                                        {step.details.delayMillis && (
+                                          <div><span className="font-medium">Duration:</span> {Math.round(step.details.delayMillis / 60000)} minutes</div>
+                                        )}
+                                        {step.details.propertyName && (
+                                          <div><span className="font-medium">Property:</span> {step.details.propertyName}</div>
+                                        )}
+                                        {step.details.subject && (
+                                          <div><span className="font-medium">Subject:</span> {step.details.subject}</div>
+                                        )}
+                                      </div>
+                                      <div>
+                                        <h5 className="font-medium text-gray-700 mb-2">Raw Data</h5>
+                                        <details className="text-xs">
+                                          <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                            View JSON
+                                          </summary>
+                                          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
+                                            {JSON.stringify(step.details, null, 2)}
+                                          </pre>
+                                        </details>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Steps Found
+                    </h3>
+                    <p className="text-gray-600">
+                      {searchTerm || filterType !== 'all'
+                        ? 'Try adjusting your search or filter criteria.'
+                        : 'No workflow steps available for comparison.'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          </>
         ) : (
           <div className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />

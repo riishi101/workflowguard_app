@@ -13,6 +13,14 @@ export interface HubSpotWorkflow {
     status?: string;
   };
 
+  // Enhanced metadata for WorkflowGuard
+  _metadata?: {
+    fetchedAt: string;
+    source: string;
+    completeData?: boolean;
+    apiError?: string;
+  };
+
   // Detailed workflow structure from HubSpot API
   actions?: HubSpotAction[];
   enrollmentTriggers?: HubSpotTrigger[];
