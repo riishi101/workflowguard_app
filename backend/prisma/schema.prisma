@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -43,7 +43,11 @@ model Workflow {
   id        String            @id @default(uuid())
   hubspotId String            @unique
   name      String
+  status    String            @default("inactive")
   ownerId   String
+  isDeleted Boolean           @default(false)
+  deletedAt DateTime?
+  restoredAt DateTime?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   owner     User              @relation(fields: [ownerId], references: [id])
@@ -77,15 +81,17 @@ model AuditLog {
 }
 
 model Subscription {
-  id              String    @id @default(uuid())
-  userId          String    @unique
-  planId          String
-  status          String
-  trialEndDate    DateTime?
-  nextBillingDate DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  user            User      @relation(fields: [userId], references: [id])
+  id                     String    @id @default(uuid())
+  userId                 String    @unique
+  planId                 String
+  status                 String
+  trialEndDate           DateTime?
+  nextBillingDate        DateTime?
+  razorpayCustomerId     String?
+  razorpaySubscriptionId String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id])
 }
 
 model Webhook {

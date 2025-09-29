@@ -21,12 +21,8 @@ COPY . .
 # Build the application with tsc
 RUN npm run build
 
-# Debug: List files in dist directory
-RUN ls -la dist/
-RUN find dist -name "*.js" | head -10
-
-# Copy prisma files to dist (SQLite doesn't need migrations)
-RUN mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/ && cp prisma/schema-sqlite.prisma dist/prisma/
+# Copy prisma files to dist
+RUN mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/ && cp -r prisma/migrations dist/prisma/
 
 # Production stage
 FROM node:20-slim AS production
@@ -42,19 +38,15 @@ RUN npm ci --only=production
 # Copy built application from builder stage
 COPY --from=builder /app/dist* ./dist/
 
-# Create SQLite database file if it doesn't exist
-RUN touch dev.db && chmod 666 dev.db
-
-# Debug: List files in dist directory
-RUN ls -la dist/
-RUN find dist -name "*.js" | head -10
+# Copy generated Prisma client from builder stage
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy prisma files
 COPY --from=builder /app/prisma ./prisma
 
-# Copy environment files and SQLite database
+# Copy environment files
 COPY --from=builder /app/.env* ./
-COPY --from=builder /app/dev.db* ./
 
 # Expose the port the app runs on
 EXPOSE 4000
