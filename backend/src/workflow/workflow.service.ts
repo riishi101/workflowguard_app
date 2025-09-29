@@ -364,18 +364,30 @@ export class WorkflowService {
     const steps = [];
 
     try {
-      // If workflow has actions, transform them to steps with full details
+      console.log('🔍 Transforming workflow data to steps:', {
+        hasActions: !!workflowData?.actions,
+        hasSteps: !!workflowData?.steps,
+        hasTriggers: !!workflowData?.enrollmentTriggers,
+        hasGoals: !!workflowData?.goals,
+        workflowName: workflowData?.name,
+      });
+
+      // Handle HubSpot workflow actions (primary data source)
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
+        console.log(`📝 Processing ${workflowData.actions.length} actions`);
         workflowData.actions.forEach((action: any, index: number) => {
+          const stepType = this.getStepType(action);
+          const stepTitle = this.getActionTitle(action);
+
           steps.push({
             id: action.id || action.actionId || `action-${index}`,
-            title: action.type || action.actionType || `Action ${index + 1}`,
-            type: this.getStepType(action),
-            description: action.description || action.subject || '',
+            title: stepTitle,
+            type: stepType,
+            description: this.getActionDescription(action),
             isNew: false,
             isModified: false,
             isRemoved: false,
-            // Add full action details for detailed display
+            // Add comprehensive action details
             details: {
               type: action.type || action.actionType,
               actionId: action.actionId,
@@ -390,25 +402,50 @@ export class WorkflowService {
               settings: action.settings,
               filters: action.filters,
               conditions: action.conditions,
-              // Include any other relevant action properties
-              ...action,
+              metadata: action.metadata,
+              // Include all action properties for debugging
+              rawAction: action,
             },
           });
         });
       }
 
-      // If workflow has enrollment triggers, include them
+      // Handle alternative step structure
+      else if (workflowData?.steps && Array.isArray(workflowData.steps)) {
+        console.log(`📝 Processing ${workflowData.steps.length} steps`);
+        workflowData.steps.forEach((step: any, index: number) => {
+          steps.push({
+            id: step.id || `step-${index}`,
+            title: step.name || step.type || `Step ${index + 1}`,
+            type: this.getStepType(step),
+            description: step.description || '',
+            isNew: false,
+            isModified: false,
+            isRemoved: false,
+            details: {
+              ...step,
+              filters: step.filters,
+              conditions: step.conditions,
+              rawStep: step,
+            },
+          });
+        });
+      }
+
+      // Handle enrollment triggers as separate steps
       if (
         workflowData?.enrollmentTriggers &&
         Array.isArray(workflowData.enrollmentTriggers)
       ) {
+        console.log(`📝 Processing ${workflowData.enrollmentTriggers.length} triggers`);
         workflowData.enrollmentTriggers.forEach(
           (trigger: any, index: number) => {
-            steps.push({
+            steps.unshift({
+              // Add at beginning (triggers come first)
               id: trigger.id || `trigger-${index}`,
               title: 'Enrollment Trigger',
               type: 'trigger',
-              description: 'Workflow enrollment conditions',
+              description: this.getTriggerDescription(trigger),
               isNew: false,
               isModified: false,
               isRemoved: false,
@@ -416,15 +453,17 @@ export class WorkflowService {
                 type: 'enrollmentTrigger',
                 filters: trigger.filters,
                 settings: trigger.settings,
-                ...trigger,
+                conditions: trigger.conditions,
+                rawTrigger: trigger,
               },
             });
           },
         );
       }
 
-      // If workflow has goals, include them
+      // Handle goals as final steps
       if (workflowData?.goals && Array.isArray(workflowData.goals)) {
+        console.log(`📝 Processing ${workflowData.goals.length} goals`);
         workflowData.goals.forEach((goal: any, index: number) => {
           steps.push({
             id: goal.id || `goal-${index}`,
@@ -439,54 +478,60 @@ export class WorkflowService {
               name: goal.name,
               filters: goal.filters,
               settings: goal.settings,
-              ...goal,
+              rawGoal: goal,
             },
           });
         });
       }
 
-      // If no actions but has enrollment triggers, show them
-      if (steps.length === 0 && workflowData?.enrollmentTriggers) {
-        steps.push({
-          id: 'enrollment-trigger',
-          title: 'Enrollment Trigger',
-          type: 'condition',
-          description: 'Workflow enrollment conditions',
-          isNew: false,
-          isModified: false,
-          isRemoved: false,
-          details: {
-            type: 'enrollmentTrigger',
-            triggers: workflowData.enrollmentTriggers,
-          },
-        });
-      }
-
-      // If still no steps, create a basic workflow step
-      if (steps.length === 0) {
+      // If no detailed steps found but we have basic workflow info
+      if (steps.length === 0 && workflowData?.name) {
+        console.log('📝 Creating basic workflow step from metadata');
         steps.push({
           id: 'workflow-basic',
-          title: workflowData?.name || 'Workflow',
-          type: 'email',
-          description: `Status: ${workflowData?.enabled ? 'Active' : 'Inactive'}`,
+          title: workflowData.name,
+          type: 'workflow',
+          description: `Status: ${workflowData.enabled ? 'Active' : 'Inactive'}`,
           isNew: false,
           isModified: false,
           isRemoved: false,
           details: {
             type: 'workflow',
-            name: workflowData?.name,
-            enabled: workflowData?.enabled,
-            description: workflowData?.description,
+            name: workflowData.name,
+            enabled: workflowData.enabled,
+            description: workflowData.description,
+            rawWorkflowData: workflowData,
           },
         });
       }
+
+      // Final fallback for completely unknown data
+      if (steps.length === 0) {
+        console.log('📝 Creating fallback step for unknown workflow data');
+        steps.push({
+          id: 'unsupported-workflow',
+          title: 'Workflow Details Unavailable',
+          type: 'unsupported',
+          description: 'This workflow type is not yet supported or data is unavailable',
+          isNew: false,
+          isModified: false,
+          isRemoved: false,
+          details: {
+            type: 'UNSUPPORTED_WORKFLOW',
+            errorMessage: 'Workflow data structure not recognized',
+            rawData: workflowData,
+          },
+        });
+      }
+
+      console.log(`✅ Transformation complete. Created ${steps.length} steps`);
     } catch (error) {
-      console.error('Error transforming workflow data to steps:', error);
+      console.error('❌ Error transforming workflow data to steps:', error);
       // Return a fallback step with error details
       steps.push({
-        id: 'fallback-step',
-        title: 'Workflow Step',
-        type: 'email',
+        id: 'error-step',
+        title: 'Error Loading Workflow',
+        type: 'error',
         description: 'Unable to parse workflow details',
         isNew: false,
         isModified: false,
@@ -494,6 +539,7 @@ export class WorkflowService {
         details: {
           type: 'error',
           errorMessage: error.message,
+          rawData: workflowData,
         },
       });
     }
@@ -508,9 +554,49 @@ export class WorkflowService {
     if (actionType.toLowerCase().includes('delay')) return 'delay';
     if (actionType.toLowerCase().includes('meeting')) return 'meeting';
     if (actionType.toLowerCase().includes('condition')) return 'condition';
+    if (actionType.toLowerCase().includes('webhook')) return 'webhook';
+    if (actionType.toLowerCase().includes('task')) return 'task';
+    if (actionType.toLowerCase().includes('list')) return 'list';
 
-    return 'email'; // default
+    return 'action'; // default
   }
+
+  private getActionTitle(action: any): string {
+    const actionType = action.type || action.actionType || '';
+
+    if (actionType === 'DELAY') {
+      const delayMinutes = Math.round((action.delayMillis || 0) / 60000);
+      return `Wait ${delayMinutes} minutes`;
+    }
+    if (actionType === 'EMAIL') return `Send Email: ${action.subject || 'No Subject'}`;
+    if (actionType === 'SET_CONTACT_PROPERTY') return `Set Property: ${action.propertyName}`;
+    if (actionType === 'WEBHOOK') return `Send Webhook`;
+    if (actionType === 'TASK') return `Create Task: ${action.subject || 'Task'}`;
+    if (actionType === 'LIST') return `Add to List`;
+
+    return actionType || 'Unknown Action';
+  }
+
+  private getTriggerDescription(trigger: any): string {
+    if (!trigger) return 'No trigger information';
+
+    const triggerType = trigger.type || 'unknown';
+    const filters = trigger.filters || [];
+
+    if (filters.length === 0) {
+      return `${triggerType} trigger`;
+    }
+
+    const filterDescriptions = filters.map((filter: any) => {
+      if (filter.property && filter.operator && filter.value !== undefined) {
+        return `${filter.property} ${filter.operator} ${filter.value}`;
+      }
+      return 'Custom filter';
+    });
+
+    return `${triggerType} trigger: ${filterDescriptions.join(', ')}`;
+  }
+
 
   async getWorkflowVersions(
     workflowId: string,

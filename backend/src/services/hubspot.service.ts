@@ -175,36 +175,66 @@ export class HubSpotService {
         }
       }
 
-      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
-      console.log(`🔍 HubSpotService - Calling endpoint: ${endpoint}`);
+      // Try multiple API endpoints to get detailed workflow data
+      const endpoints = [
+        `https://api.hubapi.com/automation/v3/workflows/${workflowId}`,
+        `https://api.hubapi.com/automation/v4/flows/${workflowId}`,
+      ];
 
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      let workflowData: HubSpotWorkflow | null = null;
 
-      if (response.status === 404) {
-        throw new HttpException(
-          `Workflow with ID ${workflowId} not found in HubSpot.`,
-          HttpStatus.NOT_FOUND,
-        );
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`🔍 HubSpotService - Trying endpoint: ${endpoint}`);
+
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            workflowData = (await response.json()) as HubSpotWorkflow;
+            console.log(
+              `✅ Successfully fetched workflow ${workflowId} from ${endpoint}`,
+            );
+
+            // If this endpoint returned detailed data, use it
+            if (workflowData.actions || workflowData.steps) {
+              console.log(
+                `✅ Found detailed workflow data with actions/steps`,
+              );
+              break;
+            }
+          } else if (response.status !== 404) {
+            console.log(
+              `⚠️ Endpoint ${endpoint} returned ${response.status}, trying next...`,
+            );
+          }
+        } catch (endpointError) {
+          console.log(
+            `⚠️ Error with endpoint ${endpoint}, trying next...`,
+            endpointError,
+          );
+        }
       }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          `❌ HubSpot API error fetching workflow ${workflowId}: ${response.status} ${errorText}`,
+      if (!workflowData) {
+        console.log(
+          `⚠️ Could not fetch detailed workflow data for ${workflowId}, returning basic info`,
         );
-        throw new Error(`HubSpot API error: ${response.status}`);
+        // Return basic workflow info if detailed data is not available
+        workflowData = {
+          id: workflowId,
+          name: 'Workflow Details Unavailable',
+          description: 'Detailed workflow information could not be retrieved from HubSpot API',
+          enabled: false,
+          type: 'unknown',
+        };
       }
 
-      const workflowData = (await response.json()) as HubSpotWorkflow;
-      console.log(
-        `✅ Successfully fetched workflow ${workflowId} from HubSpot.`,
-      );
       return workflowData;
     } catch (error) {
       console.error(

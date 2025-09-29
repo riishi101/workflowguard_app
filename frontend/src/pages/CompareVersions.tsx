@@ -201,72 +201,76 @@ const CompareVersions = () => {
     fetchVersions();
   };
 
-  // New component to display detailed action information
+  // Enhanced component to display detailed action information
   const ActionDetails = ({ action }: { action: any }) => {
     if (!action || !action.details) return null;
-    
+
     const details = action.details;
-    
+
     return (
-      <div className="mt-2 text-sm text-gray-600">
+      <div className="mt-2 text-sm text-gray-600 border-t border-gray-100 pt-2">
         {details.type && (
           <div className="mb-1">
-            <span className="font-medium">Type:</span> {details.type}
+            <span className="font-medium text-blue-700">Type:</span> {details.type}
           </div>
         )}
-        
-        {details.delayMillis && (
+
+        {details.type === 'DELAY' && details.delayMillis && (
           <div className="mb-1">
-            <span className="font-medium">Delay:</span> {Math.round(details.delayMillis / 60000)} minutes
+            <span className="font-medium text-purple-700">Duration:</span> {Math.round(details.delayMillis / 60000)} minutes
           </div>
         )}
-        
-        {details.propertyName && (
+
+        {details.type === 'EMAIL' && details.subject && (
           <div className="mb-1">
-            <span className="font-medium">Property:</span> {details.propertyName}
+            <span className="font-medium text-blue-700">Subject:</span> {details.subject}
+          </div>
+        )}
+
+        {details.type === 'SET_CONTACT_PROPERTY' && details.propertyName && (
+          <div className="mb-1">
+            <span className="font-medium text-green-700">Property:</span> {details.propertyName}
             {details.propertyValue && (
-              <span> = {details.propertyValue}</span>
+              <span className="text-gray-600"> = {String(details.propertyValue)}</span>
             )}
           </div>
         )}
-        
-        {details.subject && (
+
+        {details.type === 'WEBHOOK' && (
           <div className="mb-1">
-            <span className="font-medium">Subject:</span> {details.subject}
+            <span className="font-medium text-orange-700">Integration:</span> External webhook
           </div>
         )}
-        
-        {details.to && (
+
+        {details.type === 'TASK' && details.subject && (
           <div className="mb-1">
-            <span className="font-medium">To:</span> {details.to}
+            <span className="font-medium text-indigo-700">Task:</span> {details.subject}
           </div>
         )}
-        
-        {details.from && (
-          <div className="mb-1">
-            <span className="font-medium">From:</span> {details.from}
+
+        {/* Display raw data for debugging if needed */}
+        {details.rawAction && (
+          <details className="mt-2">
+            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+              Debug: Raw Action Data
+            </summary>
+            <pre className="text-xs bg-gray-50 p-2 mt-1 rounded overflow-auto max-h-32">
+              {JSON.stringify(details.rawAction, null, 2)}
+            </pre>
+          </details>
+        )}
+
+        {/* Display error information if present */}
+        {details.type === 'error' && details.errorMessage && (
+          <div className="mb-1 text-red-600">
+            <span className="font-medium">Error:</span> {details.errorMessage}
           </div>
         )}
-        
-        {details.filters && Array.isArray(details.filters) && details.filters.length > 0 && (
-          <div className="mb-1">
-            <span className="font-medium">Filters:</span>
-            <ul className="list-disc list-inside ml-2">
-              {details.filters.map((filter: any, idx: number) => (
-                <li key={idx}>{JSON.stringify(filter)}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        
-        {details.conditions && Array.isArray(details.conditions) && details.conditions.length > 0 && (
-          <div className="mb-1">
-            <span className="font-medium">Conditions:</span>
-            <ul className="list-disc list-inside ml-2">
-              {details.conditions.map((condition: any, idx: number) => (
-                <li key={idx}>{JSON.stringify(condition)}</li>
-              ))}
-            </ul>
+
+        {/* Display unsupported workflow message */}
+        {details.type === 'UNSUPPORTED_WORKFLOW' && (
+          <div className="mb-1 text-amber-600">
+            <span className="font-medium">Note:</span> This workflow type is not yet supported or data is unavailable
           </div>
         )}
       </div>
@@ -363,22 +367,70 @@ const CompareVersions = () => {
     if (step?.isNew) return "bg-green-50 border-green-200";
     if (step?.isModified) return "bg-yellow-50 border-yellow-200";
     if (step?.isRemoved) return "bg-red-50 border-red-200";
-    if (step?.type === "email") return "bg-blue-50 border-blue-200";
-    if (step?.type === "delay") return "bg-purple-50 border-purple-200";
-    if (step?.type === "meeting") return "bg-indigo-50 border-indigo-200";
-    if (step?.type === "condition") return "bg-orange-50 border-orange-200";
-    return "bg-gray-50 border-gray-200";
+
+    // Enhanced color coding for different action types
+    switch (step?.type) {
+      case "email":
+        return "bg-blue-50 border-blue-200";
+      case "delay":
+        return "bg-purple-50 border-purple-200";
+      case "meeting":
+        return "bg-indigo-50 border-indigo-200";
+      case "task":
+        return "bg-teal-50 border-teal-200";
+      case "webhook":
+        return "bg-orange-50 border-orange-200";
+      case "condition":
+      case "trigger":
+        return "bg-amber-50 border-amber-200";
+      case "list":
+        return "bg-cyan-50 border-cyan-200";
+      case "goal":
+        return "bg-pink-50 border-pink-200";
+      case "workflow":
+        return "bg-slate-50 border-slate-200";
+      case "unsupported":
+        return "bg-gray-50 border-gray-200";
+      case "error":
+        return "bg-red-50 border-red-200";
+      default:
+        return "bg-gray-50 border-gray-200";
+    }
   };
 
   const getStepTextColor = (step: any) => {
     if (step?.isNew) return "text-green-800";
     if (step?.isModified) return "text-yellow-800";
     if (step?.isRemoved) return "text-red-800";
-    if (step?.type === "email") return "text-blue-800";
-    if (step?.type === "delay") return "text-purple-800";
-    if (step?.type === "meeting") return "text-indigo-800";
-    if (step?.type === "condition") return "text-orange-800";
-    return "text-gray-800";
+
+    // Enhanced text colors for different action types
+    switch (step?.type) {
+      case "email":
+        return "text-blue-800";
+      case "delay":
+        return "text-purple-800";
+      case "meeting":
+        return "text-indigo-800";
+      case "task":
+        return "text-teal-800";
+      case "webhook":
+        return "text-orange-800";
+      case "condition":
+      case "trigger":
+        return "text-amber-800";
+      case "list":
+        return "text-cyan-800";
+      case "goal":
+        return "text-pink-800";
+      case "workflow":
+        return "text-slate-800";
+      case "unsupported":
+        return "text-gray-600";
+      case "error":
+        return "text-red-800";
+      default:
+        return "text-gray-800";
+    }
   };
 
   const getStepIcon = (step: any) => {
@@ -389,6 +441,17 @@ const CompareVersions = () => {
         return Clock;
       case "meeting":
         return Calendar;
+      case "task":
+        return Target;
+      case "webhook":
+        return RotateCcw;
+      case "condition":
+      case "trigger":
+        return AlertCircle;
+      case "list":
+        return Plus;
+      case "goal":
+        return Target;
       default:
         return Mail;
     }
