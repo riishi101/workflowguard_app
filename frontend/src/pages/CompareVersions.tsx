@@ -93,7 +93,13 @@ const CompareVersions = () => {
         versionB: any[];
       };
       changes: any[];
-      summary: any;
+      summary: {
+        totalStepsA: number;
+        totalStepsB: number;
+        added: number;
+        removed: number;
+        modified: number;
+      };
     };
   } | null>(null);
   const [restoring, setRestoring] = useState(false);
@@ -502,6 +508,14 @@ const CompareVersions = () => {
       ...(comparisonData.versionB?.steps || []).map(step => ({ ...step, source: 'B' }))
     ];
 
+    console.log('🔍 All steps for comparison:', {
+      totalSteps: allSteps.length,
+      versionA: comparisonData.versionA?.steps?.length || 0,
+      versionB: comparisonData.versionB?.steps?.length || 0,
+      searchTerm,
+      filterType,
+    });
+
     let filtered = allSteps;
 
     // Apply search filter
@@ -509,7 +523,8 @@ const CompareVersions = () => {
       filtered = filtered.filter(step =>
         step.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         step.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        step.type?.toLowerCase().includes(searchTerm.toLowerCase())
+        step.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        step.details?.summary?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -518,6 +533,7 @@ const CompareVersions = () => {
       filtered = filtered.filter(step => step.type === filterType);
     }
 
+    console.log('🔍 Filtered steps:', filtered.length);
     return filtered;
   };
 
@@ -706,23 +722,25 @@ const CompareVersions = () => {
                   <div>
                     <span className="font-medium text-blue-700">Version A:</span>
                     <div className="mt-1 space-y-1">
-                      <div>Name: {comparisonData.workflowMetadata.versionA.name || 'N/A'}</div>
+                      <div>Name: {comparisonData.workflowMetadata.versionA.name || versionAData?.notes || 'N/A'}</div>
                       <div>Status: {comparisonData.workflowMetadata.versionA.enabled ? 'Enabled' : 'Disabled'}</div>
                       <div>Type: {comparisonData.workflowMetadata.versionA.type || 'N/A'}</div>
+                      <div>Created: {new Date(comparisonData.workflowMetadata.versionA.createdAt).toLocaleString()}</div>
                     </div>
                   </div>
                   <div>
                     <span className="font-medium text-blue-700">Version B:</span>
                     <div className="mt-1 space-y-1">
-                      <div>Name: {comparisonData.workflowMetadata.versionB.name || 'N/A'}</div>
+                      <div>Name: {comparisonData.workflowMetadata.versionB.name || versionBData?.notes || 'N/A'}</div>
                       <div>Status: {comparisonData.workflowMetadata.versionB.enabled ? 'Enabled' : 'Disabled'}</div>
                       <div>Type: {comparisonData.workflowMetadata.versionB.type || 'N/A'}</div>
+                      <div>Created: {new Date(comparisonData.workflowMetadata.versionB.createdAt).toLocaleString()}</div>
                     </div>
                   </div>
                   <div>
                     <span className="font-medium text-blue-700">Changes:</span>
                     <div className="mt-1">
-                      {comparisonData.workflowMetadata.changes.length > 0 ? (
+                      {comparisonData.workflowMetadata.changes && comparisonData.workflowMetadata.changes.length > 0 ? (
                         <ul className="list-disc list-inside text-blue-600">
                           {comparisonData.workflowMetadata.changes.map((change, idx) => (
                             <li key={idx}>{change.property}: {String(change.oldValue)} → {String(change.newValue)}</li>
@@ -745,15 +763,15 @@ const CompareVersions = () => {
                   <span>Total Steps: {getFilteredSteps().length}</span>
                   <span className="flex items-center gap-1">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    Added: {comparisonData.differences.added.length}
+                    Added: {comparisonData.stepComparison?.summary?.added || comparisonData.differences.added.length}
                   </span>
                   <span className="flex items-center gap-1">
                     <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    Modified: {comparisonData.differences.modified.length}
+                    Modified: {comparisonData.stepComparison?.summary?.modified || comparisonData.differences.modified.length}
                   </span>
                   <span className="flex items-center gap-1">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    Removed: {comparisonData.differences.removed.length}
+                    Removed: {comparisonData.stepComparison?.summary?.removed || comparisonData.differences.removed.length}
                   </span>
                 </div>
               </div>
@@ -765,6 +783,15 @@ const CompareVersions = () => {
                       const IconComponent = getStepIcon(step);
                       const changeType = getChangeTypeForStep(step);
                       const isExpanded = expandedSteps.has(step.id || `step-${index}`);
+
+                      console.log('🔍 Rendering step:', {
+                        id: step.id,
+                        title: step.title,
+                        changeType,
+                        source: step.source,
+                        hasDetails: !!step.details,
+                        detailsKeys: step.details ? Object.keys(step.details) : [],
+                      });
 
                       return (
                         <Collapsible key={step.id || `step-${index}`}>
@@ -792,14 +819,14 @@ const CompareVersions = () => {
                                     changeType === 'modified' ? 'text-yellow-600' :
                                     'text-gray-600'
                                   }`} />
-                                  <div className="text-left">
+                                  <div className="text-left flex-1">
                                     <div className={`font-medium ${
                                       changeType === 'added' ? 'text-green-800' :
                                       changeType === 'removed' ? 'text-red-800' :
                                       changeType === 'modified' ? 'text-yellow-800' :
                                       'text-gray-800'
                                     }`}>
-                                      {step.title}
+                                      {step.title || step.details?.summary || 'Unknown Step'}
                                       {changeType !== 'unchanged' && (
                                         <Badge
                                           variant="outline"
@@ -815,48 +842,81 @@ const CompareVersions = () => {
                                         </Badge>
                                       )}
                                     </div>
-                                    {step.description && (
-                                      <p className="text-sm text-gray-600 mt-1">{step.description}</p>
-                                    )}
+                                    <div className="text-sm text-gray-600 mt-1">
+                                      {step.details?.summary && (
+                                        <span>{step.details.summary}</span>
+                                      )}
+                                      {step.details?.type && (
+                                        <span className="ml-2 text-blue-600">({step.details.type})</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  Version {step.source}
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-xs text-gray-500">
+                                    Version {step.source}
+                                  </div>
+                                  {step.details && (
+                                    <div className="text-xs text-blue-600">
+                                      Details →
+                                    </div>
+                                  )}
                                 </div>
                               </Button>
                             </CollapsibleTrigger>
 
                             <CollapsibleContent>
                               <div className="px-4 pb-4 border-t border-gray-100">
-                                <div className="mt-3 space-y-2">
+                                <div className="mt-3 space-y-3">
                                   {step.details && (
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
-                                      <div>
-                                        <h5 className="font-medium text-gray-700 mb-2">Configuration Details</h5>
-                                        {step.details.type && (
-                                          <div><span className="font-medium">Type:</span> {step.details.type}</div>
-                                        )}
-                                        {step.details.delayMillis && (
-                                          <div><span className="font-medium">Duration:</span> {Math.round(step.details.delayMillis / 60000)} minutes</div>
-                                        )}
-                                        {step.details.propertyName && (
-                                          <div><span className="font-medium">Property:</span> {step.details.propertyName}</div>
-                                        )}
-                                        {step.details.subject && (
-                                          <div><span className="font-medium">Subject:</span> {step.details.subject}</div>
-                                        )}
+                                    <>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                          <h5 className="font-medium text-gray-700 mb-2">Configuration Details</h5>
+                                          {step.details.type && (
+                                            <div><span className="font-medium">Type:</span> {step.details.type}</div>
+                                          )}
+                                          {step.details.delayMillis && (
+                                            <div><span className="font-medium">Duration:</span> {Math.round(step.details.delayMillis / 60000)} minutes</div>
+                                          )}
+                                          {step.details.propertyName && (
+                                            <div><span className="font-medium">Property:</span> {step.details.propertyName}</div>
+                                          )}
+                                          {step.details.propertyValue && (
+                                            <div><span className="font-medium">Value:</span> {String(step.details.propertyValue)}</div>
+                                          )}
+                                          {step.details.subject && (
+                                            <div><span className="font-medium">Subject:</span> {step.details.subject}</div>
+                                          )}
+                                          {step.details.configuration && Object.keys(step.details.configuration).length > 0 && (
+                                            <div className="mt-2">
+                                              <span className="font-medium">Settings:</span>
+                                              <div className="mt-1 p-2 bg-gray-50 rounded text-xs">
+                                                {Object.entries(step.details.configuration).map(([key, value]) => (
+                                                  <div key={key}>{key}: {String(value)}</div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div>
+                                          <h5 className="font-medium text-gray-700 mb-2">Raw Data</h5>
+                                          <details className="text-xs">
+                                            <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                              View Complete JSON
+                                            </summary>
+                                            <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
+                                              {JSON.stringify(step.details, null, 2)}
+                                            </pre>
+                                          </details>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <h5 className="font-medium text-gray-700 mb-2">Raw Data</h5>
-                                        <details className="text-xs">
-                                          <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
-                                            View JSON
-                                          </summary>
-                                          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
-                                            {JSON.stringify(step.details, null, 2)}
-                                          </pre>
-                                        </details>
-                                      </div>
+                                    </>
+                                  )}
+
+                                  {!step.details && (
+                                    <div className="text-sm text-gray-500 italic">
+                                      No additional details available for this step.
                                     </div>
                                   )}
                                 </div>

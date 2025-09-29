@@ -116,30 +116,64 @@ export class WorkflowService {
         );
       }
 
-      // Simple comparison logic - compare the workflow data
+      // Enhanced comparison logic with complete workflow data
       const originalDataA = versionAData.data;
       const originalDataB = versionBData.data;
 
+      console.log('🔍 Comparing workflow versions:', {
+        versionAId: versionAData.id,
+        versionBId: versionBData.id,
+        dataAKeys: originalDataA ? Object.keys(originalDataA) : 'No data',
+        dataBKeys: originalDataB ? Object.keys(originalDataB) : 'No data',
+      });
+
       const differences = this.findWorkflowDifferences(originalDataA, originalDataB);
 
-      // Transform version data for frontend display
+      // Transform version data for frontend display with enhanced details
       const transformedVersionA = {
         ...versionAData,
-        steps: this.transformWorkflowDataToSteps(versionAData.data),
+        steps: this.transformWorkflowDataToSteps(originalDataA, 'A'),
       };
 
       const transformedVersionB = {
         ...versionBData,
-        steps: this.transformWorkflowDataToSteps(versionBData.data),
+        steps: this.transformWorkflowDataToSteps(originalDataB, 'B'),
       };
 
-      // Enhanced comparison with detailed workflow structure analysis
+      console.log('🔍 Transformed versions:', {
+        versionA: { id: transformedVersionA.id, stepsCount: transformedVersionA.steps?.length },
+        versionB: { id: transformedVersionB.id, stepsCount: transformedVersionB.steps?.length },
+        differencesCount: differences.length,
+      });
+
+      // Enhanced comparison with proper change detection
       const workflowDataA = originalDataA as any;
       const workflowDataB = originalDataB as any;
 
+      // Create enhanced step comparison with proper change marking
+      const stepsA = this.transformWorkflowDataToSteps(workflowDataA, 'A');
+      const stepsB = this.transformWorkflowDataToSteps(workflowDataB, 'B');
+
+      // Mark changes between versions
+      const { markedStepsA, markedStepsB, changeSummary } = this.markStepChanges(stepsA, stepsB);
+
+      console.log('🔍 Change detection results:', {
+        stepsA: markedStepsA.length,
+        stepsB: markedStepsB.length,
+        added: changeSummary.added,
+        removed: changeSummary.removed,
+        modified: changeSummary.modified,
+      });
+
       const enhancedComparison = {
-        versionA: transformedVersionA,
-        versionB: transformedVersionB,
+        versionA: {
+          ...versionAData,
+          steps: markedStepsA,
+        },
+        versionB: {
+          ...versionBData,
+          steps: markedStepsB,
+        },
         differences: {
           added: differences.filter((d) => d.type === 'added'),
           modified: differences.filter((d) => d.type === 'changed'),
@@ -164,7 +198,14 @@ export class WorkflowService {
           changes: this.compareWorkflowMetadata(workflowDataA, workflowDataB),
         },
         // Add detailed step-by-step comparison
-        stepComparison: this.createDetailedStepComparison(workflowDataA, workflowDataB),
+        stepComparison: {
+          steps: {
+            versionA: markedStepsA,
+            versionB: markedStepsB,
+          },
+          changes: this.createDetailedStepComparison(workflowDataA, workflowDataB),
+          summary: changeSummary,
+        },
       };
 
       return enhancedComparison;
@@ -360,6 +401,76 @@ export class WorkflowService {
     return metadataChanges;
   }
 
+  private markStepChanges(stepsA: any[], stepsB: any[]): {
+    markedStepsA: any[];
+    markedStepsB: any[];
+    changeSummary: {
+      added: number;
+      removed: number;
+      modified: number;
+    };
+  } {
+    const markedStepsA = stepsA.map(step => ({ ...step, isRemoved: false, isModified: false, isNew: false }));
+    const markedStepsB = stepsB.map(step => ({ ...step, isRemoved: false, isModified: false, isNew: false }));
+
+    let added = 0, removed = 0, modified = 0;
+
+    // Mark removed steps (in A but not in B)
+    markedStepsA.forEach(stepA => {
+      const matchingStepB = markedStepsB.find(stepB =>
+        stepB.title === stepA.title && stepB.type === stepA.type
+      );
+      if (!matchingStepB) {
+        stepA.isRemoved = true;
+        removed++;
+      }
+    });
+
+    // Mark added and modified steps (in B)
+    markedStepsB.forEach(stepB => {
+      const matchingStepA = markedStepsA.find(stepA =>
+        stepA.title === stepB.title && stepA.type === stepB.type
+      );
+
+      if (!matchingStepA) {
+        stepB.isNew = true;
+        added++;
+      } else {
+        // Check if step was modified
+        const hasChanges = this.hasStepChanged(matchingStepA, stepB);
+        if (hasChanges) {
+          stepB.isModified = true;
+          matchingStepA.isModified = true;
+          modified++;
+        }
+      }
+    });
+
+    return {
+      markedStepsA,
+      markedStepsB,
+      changeSummary: { added, removed, modified }
+    };
+  }
+
+  private hasStepChanged(stepA: any, stepB: any): boolean {
+    if (!stepA.details || !stepB.details) return false;
+
+    // Compare key properties that indicate changes
+    const propertiesToCompare = [
+      'type', 'delayMillis', 'propertyName', 'propertyValue',
+      'subject', 'body', 'settings'
+    ];
+
+    for (const prop of propertiesToCompare) {
+      if (JSON.stringify(stepA.details[prop]) !== JSON.stringify(stepB.details[prop])) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private createDetailedStepComparison(dataA: any, dataB: any): any {
     if (!dataA || !dataB) {
       return { steps: [], changes: [] };
@@ -483,7 +594,7 @@ export class WorkflowService {
     return differences;
   }
 
-  private transformWorkflowDataToSteps(workflowData: any): any[] {
+  private transformWorkflowDataToSteps(workflowData: any, version: string = 'A'): any[] {
     const steps = [];
 
     try {
@@ -497,16 +608,18 @@ export class WorkflowService {
 
       // Handle HubSpot workflow actions (primary data source)
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
-        console.log(`📝 Processing ${workflowData.actions.length} actions`);
+        console.log(`📝 Processing ${workflowData.actions.length} actions for version ${version}`);
         workflowData.actions.forEach((action: any, index: number) => {
           const stepType = this.getStepType(action);
           const stepTitle = this.getActionTitle(action);
+          const stepDescription = this.getActionDescription(action);
 
           steps.push({
-            id: action.id || action.actionId || `action-${index}`,
+            id: action.id || action.actionId || `${version}-action-${index}`,
             title: stepTitle,
             type: stepType,
-            description: this.getActionDescription(action),
+            description: stepDescription,
+            version: version,
             isNew: false,
             isModified: false,
             isRemoved: false,
@@ -526,6 +639,9 @@ export class WorkflowService {
               filters: action.filters,
               conditions: action.conditions,
               metadata: action.metadata,
+              // Enhanced details for better display
+              configuration: this.getActionConfiguration(action),
+              summary: this.getActionSummary(action),
               // Include all action properties for debugging
               rawAction: action,
             },
@@ -2104,6 +2220,28 @@ export class WorkflowService {
     delete config.stepId;
     delete config.actionId;
     return config;
+  }
+
+  private getActionSummary(action: any): string {
+    switch (action.type || action.actionType) {
+      case 'DELAY':
+        const delayMinutes = Math.round((action.delayMillis || 0) / 60000);
+        return `Wait ${delayMinutes} minutes`;
+      case 'EMAIL':
+        return `Send email${action.subject ? ': ' + action.subject : ''}`;
+      case 'SET_CONTACT_PROPERTY':
+        return `Set ${action.propertyName || 'property'}${action.propertyValue ? ' to ' + action.propertyValue : ''}`;
+      case 'WEBHOOK':
+        return 'Send webhook notification';
+      case 'TASK':
+        return `Create task${action.subject ? ': ' + action.subject : ''}`;
+      case 'BRANCH':
+        return 'Conditional branch';
+      case 'TRIGGER':
+        return 'Workflow trigger';
+      default:
+        return action.type || action.actionType || 'Unknown action';
+    }
   }
 
   private calculateWorkflowSteps(workflowData: any): number {
