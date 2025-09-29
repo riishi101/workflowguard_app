@@ -599,14 +599,45 @@ export class WorkflowService {
 
     try {
       console.log('🔍 Transforming workflow data to steps:', {
-        hasActions: !!workflowData?.actions,
-        hasSteps: !!workflowData?.steps,
-        hasTriggers: !!workflowData?.enrollmentTriggers,
-        hasGoals: !!workflowData?.goals,
+        workflowData: workflowData ? 'Present' : 'Null',
+        hasActions: !!workflowData?.actions?.length,
+        hasEnrollmentTriggers: !!workflowData?.enrollmentTriggers?.length,
+        hasGoals: !!workflowData?.goals?.length,
         workflowName: workflowData?.name,
+        workflowId: workflowData?.id,
       });
 
-      // Handle HubSpot workflow actions (primary data source)
+      // Handle enrollment triggers first (they appear at the beginning)
+      if (workflowData?.enrollmentTriggers && Array.isArray(workflowData.enrollmentTriggers)) {
+        console.log(`📝 Processing ${workflowData.enrollmentTriggers.length} enrollment triggers for version ${version}`);
+        workflowData.enrollmentTriggers.forEach((trigger: any, index: number) => {
+          const triggerTitle = this.getTriggerTitle(trigger);
+          const triggerDescription = this.getTriggerDescription(trigger);
+
+          steps.push({
+            id: trigger.id || `${version}-trigger-${index}`,
+            title: triggerTitle,
+            type: 'trigger',
+            description: triggerDescription,
+            version: version,
+            isNew: false,
+            isModified: false,
+            isRemoved: false,
+            details: {
+              type: 'enrollmentTrigger',
+              triggerType: trigger.eventId || trigger.type,
+              filters: trigger.filters || [],
+              conditions: trigger.conditions || [],
+              settings: trigger.settings || {},
+              summary: triggerTitle,
+              configuration: trigger,
+              rawTrigger: trigger,
+            },
+          });
+        });
+      }
+
+      // Handle workflow actions (main workflow steps)
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
         console.log(`📝 Processing ${workflowData.actions.length} actions for version ${version}`);
         workflowData.actions.forEach((action: any, index: number) => {
@@ -641,7 +672,8 @@ export class WorkflowService {
               metadata: action.metadata,
               // Enhanced details for better display
               configuration: this.getActionConfiguration(action),
-              summary: this.getActionSummary(action),
+              summary: stepTitle,
+              description: stepDescription,
               // Include all action properties for debugging
               rawAction: action,
             },
@@ -803,15 +835,44 @@ export class WorkflowService {
   private getActionTitle(action: any): string {
     const actionType = action.type || action.actionType || '';
 
+    // Handle specific HubSpot action types with detailed titles
     if (actionType === 'DELAY') {
       const delayMinutes = Math.round((action.delayMillis || 0) / 60000);
       return `Wait ${delayMinutes} minutes`;
     }
-    if (actionType === 'EMAIL') return `Send Email: ${action.subject || 'No Subject'}`;
-    if (actionType === 'SET_CONTACT_PROPERTY') return `Set Property: ${action.propertyName}`;
-    if (actionType === 'WEBHOOK') return `Send Webhook`;
-    if (actionType === 'TASK') return `Create Task: ${action.subject || 'Task'}`;
-    if (actionType === 'LIST') return `Add to List`;
+
+    if (actionType === 'SET_CONTACT_PROPERTY' || actionType === 'SET_PROPERTY') {
+      return `Set ${action.propertyName || 'property'}${action.propertyValue ? ` to ${action.propertyValue}` : ''}`;
+    }
+
+    if (actionType === 'EMAIL') {
+      return `Send email${action.subject ? `: ${action.subject}` : ''}`;
+    }
+
+    if (actionType === 'WEBHOOK') {
+      return 'Send webhook notification';
+    }
+
+    if (actionType === 'TASK' || actionType === 'CREATE_TASK') {
+      return `Create task${action.subject ? `: ${action.subject}` : ''}`;
+    }
+
+    if (actionType === 'BRANCH') {
+      return 'Conditional branch';
+    }
+
+    if (actionType === 'LIST' || actionType === 'ADD_TO_LIST') {
+      return 'Add to list';
+    }
+
+    // Handle specific action types based on the workflow structure
+    if (actionType.includes('PROPERTY')) {
+      return `Update property: ${action.propertyName || 'Unknown'}`;
+    }
+
+    if (actionType.includes('EMAIL')) {
+      return `Send email notification`;
+    }
 
     return actionType || 'Unknown Action';
   }
@@ -819,7 +880,7 @@ export class WorkflowService {
   private getTriggerDescription(trigger: any): string {
     if (!trigger) return 'No trigger information';
 
-    const triggerType = trigger.type || 'unknown';
+    const triggerType = trigger.eventId || trigger.type || 'unknown';
     const filters = trigger.filters || [];
 
     if (filters.length === 0) {
@@ -834,6 +895,29 @@ export class WorkflowService {
     });
 
     return `${triggerType} trigger: ${filterDescriptions.join(', ')}`;
+  }
+
+  private getTriggerTitle(trigger: any): string {
+    if (!trigger) return 'Unknown Trigger';
+
+    const triggerType = trigger.eventId || trigger.type || 'unknown';
+    const filters = trigger.filters || [];
+
+    if (filters.length === 0) {
+      return `${triggerType} trigger`;
+    }
+
+    // Handle specific trigger types based on HubSpot workflow structure
+    if (triggerType === 'contact_property_change') {
+      const propertyFilter = filters.find((f: any) => f.property);
+      return `Property ${propertyFilter?.property || 'value'} changed`;
+    }
+
+    if (triggerType === 'contact_list_membership') {
+      return 'Contact added to list';
+    }
+
+    return `${triggerType} trigger`;
   }
 
 
@@ -2194,26 +2278,6 @@ export class WorkflowService {
     }));
   }
 
-  private getActionDescription(action: any): string {
-    switch (action.type) {
-      case 'SET_CONTACT_PROPERTY':
-        return `Set contact property: ${action.propertyName}`;
-      case 'DELAY':
-        return `Delay for ${Math.round(action.delayMillis / 60000)} minutes`;
-      case 'TASK':
-        return `Create task: ${action.subject}`;
-      case 'EMAIL':
-        return `Send email: ${action.subject}`;
-      case 'DEAL':
-        return `Create deal: ${action.dealName}`;
-      case 'BRANCH':
-        return `Branch based on conditions`;
-      case 'UNSUPPORTED_ACTION':
-        return `Custom action (may need manual configuration)`;
-      default:
-        return `${action.type} action`;
-    }
-  }
 
   private getActionConfiguration(action: any): any {
     const config: any = { ...action };
@@ -2241,6 +2305,27 @@ export class WorkflowService {
         return 'Workflow trigger';
       default:
         return action.type || action.actionType || 'Unknown action';
+    }
+  }
+
+  private getActionDescription(action: any): string {
+    switch (action.type) {
+      case 'SET_CONTACT_PROPERTY':
+        return `Set contact property: ${action.propertyName}`;
+      case 'DELAY':
+        return `Delay for ${Math.round(action.delayMillis / 60000)} minutes`;
+      case 'TASK':
+        return `Create task: ${action.subject}`;
+      case 'EMAIL':
+        return `Send email: ${action.subject}`;
+      case 'DEAL':
+        return `Create deal: ${action.dealName}`;
+      case 'BRANCH':
+        return `Branch based on conditions`;
+      case 'UNSUPPORTED_ACTION':
+        return `Custom action (may need manual configuration)`;
+      default:
+        return `${action.type} action`;
     }
   }
 
