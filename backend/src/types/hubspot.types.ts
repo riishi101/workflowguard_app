@@ -19,6 +19,7 @@ export interface HubSpotWorkflow {
     source: string;
     completeData?: boolean;
     apiError?: string;
+    warning?: string;
   };
 
   // Detailed workflow structure from HubSpot API
