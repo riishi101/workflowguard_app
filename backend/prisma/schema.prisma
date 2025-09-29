@@ -61,7 +61,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          String   // JSON as string for SQLite
+  data          Json     // JSON data for PostgreSQL
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
