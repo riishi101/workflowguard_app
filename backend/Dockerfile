@@ -25,8 +25,8 @@ RUN npm run build
 RUN ls -la dist/
 RUN find dist -name "*.js" | head -10
 
-# Copy prisma files to dist
-RUN mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/ && cp -r prisma/migrations dist/prisma/
+# Copy prisma files to dist (SQLite doesn't need migrations)
+RUN mkdir -p dist/prisma && cp prisma/schema.prisma dist/prisma/ && cp prisma/schema-sqlite.prisma dist/prisma/
 
 # Production stage
 FROM node:20-slim AS production
@@ -42,6 +42,9 @@ RUN npm ci --only=production
 # Copy built application from builder stage
 COPY --from=builder /app/dist* ./dist/
 
+# Create SQLite database file if it doesn't exist
+RUN touch dev.db && chmod 666 dev.db
+
 # Debug: List files in dist directory
 RUN ls -la dist/
 RUN find dist -name "*.js" | head -10
@@ -49,11 +52,9 @@ RUN find dist -name "*.js" | head -10
 # Copy prisma files
 COPY --from=builder /app/prisma ./prisma
 
-# Copy environment files
+# Copy environment files and SQLite database
 COPY --from=builder /app/.env* ./
-
-# Generate Prisma client in production
-RUN npx prisma generate
+COPY --from=builder /app/dev.db* ./
 
 # Expose the port the app runs on
 EXPOSE 4000
