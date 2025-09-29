@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
-import { WorkflowComparison } from "@/components/WorkflowComparison";
+import { WorkflowComparison, ComparisonWorkflowVersion } from "@/components/WorkflowComparison";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
 import {
@@ -48,6 +48,8 @@ interface WorkflowVersion {
   versionNumber: string;
   dateTime: string;
   notes: string;
+  name?: string;
+  author?: string;
   changes: {
     added: number;
     modified: number;
@@ -545,7 +547,7 @@ const CompareVersions = () => {
     return 'unchanged';
   };
 
-  const transformComparisonDataForUI = (): { versionA: WorkflowVersion; versionB: WorkflowVersion } | null => {
+  const transformComparisonDataForUI = (): { versionA: ComparisonWorkflowVersion; versionB: ComparisonWorkflowVersion } | null => {
     if (!comparisonData) return null;
 
     const versionAData = comparisonData.versionA;
@@ -554,7 +556,7 @@ const CompareVersions = () => {
     if (!versionAData || !versionBData) return null;
 
     // Transform version A data
-    const transformedVersionA: WorkflowVersion = {
+    const transformedVersionA: ComparisonWorkflowVersion = {
       id: versionAData.id || 'version-a',
       name: `Version ${versionAData.versionNumber || 'A'}`,
       date: versionAData.dateTime ?
@@ -576,7 +578,7 @@ const CompareVersions = () => {
     };
 
     // Transform version B data
-    const transformedVersionB: WorkflowVersion = {
+    const transformedVersionB: ComparisonWorkflowVersion = {
       id: versionBData.id || 'version-b',
       name: `Version ${versionBData.versionNumber || 'B'}`,
       date: versionBData.dateTime ?

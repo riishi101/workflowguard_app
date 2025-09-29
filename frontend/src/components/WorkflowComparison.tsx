@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { WorkflowStep } from "@/components/WorkflowStep";
 
-interface WorkflowVersion {
+export interface ComparisonWorkflowVersion {
   id: string;
   name: string;
   date: string;
@@ -25,8 +25,8 @@ interface StepData {
 }
 
 interface WorkflowComparisonProps {
-  versionA: WorkflowVersion;
-  versionB: WorkflowVersion;
+  versionA: ComparisonWorkflowVersion;
+  versionB: ComparisonWorkflowVersion;
 }
 
 export function WorkflowComparison({ versionA, versionB }: WorkflowComparisonProps) {
