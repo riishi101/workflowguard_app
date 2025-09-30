@@ -21,6 +21,7 @@ import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { HubSpotModule } from './services/hubspot.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { BillingController } from './controllers/hubspot-billing.controller';
     AppCacheModule,
     RazorpayModule,
     WhatsAppModule,
+    HealthModule,
   ],
   controllers: [AppController, HubSpotMarketplaceController, BillingController],
   providers: [AppService],
