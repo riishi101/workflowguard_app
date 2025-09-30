@@ -1,8 +1,8 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import * as helmet from 'helmet';
-import * as rateLimit from 'express-rate-limit';
-import * as compression from 'compression';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import { logger } from '../config/logger.config';
 
 @Injectable()
@@ -26,19 +26,23 @@ export const createRateLimiter = () => {
     // Custom key generator for authenticated users
     keyGenerator: (req: Request) => {
       // Use user ID if authenticated, otherwise IP
-      return req.user?.['id'] || req.ip;
+      return (req.user as any)?.id || req.ip;
     },
     // Skip rate limiting for health checks
     skip: (req: Request) => {
       return req.path === '/health' || req.path === '/metrics';
     },
     // Log rate limit hits
-    onLimitReached: (req: Request) => {
+    handler: (req: Request, res: Response) => {
       logger.warn('Rate limit exceeded', {
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         path: req.path,
-        userId: req.user?.['id']
+        userId: (req.user as any)?.id
+      });
+      res.status(429).json({
+        error: 'Too many requests from this IP, please try again later.',
+        retryAfter: '15 minutes'
       });
     }
   });
@@ -110,7 +114,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       duration: `${duration}ms`,
       userAgent: req.get('User-Agent'),
       ip: req.ip,
-      userId: req.user?.['id']
+      userId: (req.user as any)?.id
     });
   });
   

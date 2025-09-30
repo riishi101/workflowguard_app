@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
 
 export function initializeSentry() {
   Sentry.init({
@@ -10,8 +9,6 @@ export function initializeSentry() {
       new Sentry.Integrations.Http({ tracing: true }),
       // Enable Express.js middleware tracing
       new Sentry.Integrations.Express({ app: undefined }),
-      // Enable profiling
-      new ProfilingIntegration(),
     ],
     // Performance Monitoring
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
