@@ -668,6 +668,19 @@ export class WorkflowService {
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
         console.log(`📝 Processing ${workflowData.actions.length} actions for version ${version}`);
         console.log('🔍 DEBUG: First action data:', JSON.stringify(workflowData.actions[0], null, 2));
+      console.log('🔍 DEBUG: Complete workflow data structure:', {
+        workflowKeys: Object.keys(workflowData),
+        actionsStructure: workflowData.actions?.map((action: any, i: number) => ({
+          index: i,
+          type: action.type,
+          actionType: action.actionType,
+          hasPropertyName: !!action.propertyName,
+          hasPropertyValue: !!action.propertyValue,
+          hasConditions: !!action.conditions,
+          hasFilters: !!action.filters,
+          allKeys: Object.keys(action)
+        }))
+      });
         workflowData.actions.forEach((action: any, index: number) => {
           console.log(`🔍 DEBUG: Action ${index}:`, {
             type: action.type,
@@ -683,6 +696,13 @@ export class WorkflowService {
           const stepType = this.getStepType(action);
           const stepTitle = this.getActionTitle(action);
           const stepDescription = this.getActionDescription(action);
+          
+          console.log(`🔍 DEBUG: Generated titles for action ${index}:`, {
+            originalType: action.type || action.actionType,
+            generatedTitle: stepTitle,
+            generatedDescription: stepDescription,
+            stepType: stepType
+          });
 
           steps.push({
             id: action.id || action.actionId || `${version}-action-${index}`,
