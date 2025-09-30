@@ -58,6 +58,31 @@ export class WorkflowService {
     versionB: string,
   ): Promise<any> {
     console.log('🚨 COMPARE VERSIONS CALLED:', { workflowId, versionA, versionB });
+    
+    // CRITICAL DEBUG: Let's see what's actually in the database
+    const debugVersionA = await this.prisma.workflowVersion.findUnique({
+      where: { id: versionA }
+    });
+    const debugVersionB = await this.prisma.workflowVersion.findUnique({
+      where: { id: versionB }
+    });
+    
+    console.log('🚨 DATABASE VERSION A DATA:', {
+      id: debugVersionA?.id,
+      hasData: !!debugVersionA?.data,
+      dataType: typeof debugVersionA?.data,
+      dataKeys: debugVersionA?.data ? Object.keys(debugVersionA.data as any) : 'no data',
+      sampleData: debugVersionA?.data ? JSON.stringify(debugVersionA.data).substring(0, 200) + '...' : 'no data'
+    });
+    
+    console.log('🚨 DATABASE VERSION B DATA:', {
+      id: debugVersionB?.id,
+      hasData: !!debugVersionB?.data,
+      dataType: typeof debugVersionB?.data,
+      dataKeys: debugVersionB?.data ? Object.keys(debugVersionB.data as any) : 'no data',
+      sampleData: debugVersionB?.data ? JSON.stringify(debugVersionB.data).substring(0, 200) + '...' : 'no data'
+    });
+    
     try {
       // First, resolve the workflowId - it might be a HubSpot ID or WorkflowGuard UUID
       let actualWorkflowId = workflowId;
