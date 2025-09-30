@@ -152,7 +152,14 @@ export class WorkflowService {
       });
       const userId = workflow?.ownerId;
       
-      if (userId && (!originalDataA || !(originalDataA as any)?.actions || (originalDataA as any)?.actions?.length === 0)) {
+      // CRITICAL FIX: If stored data is incomplete, fetch fresh detailed data from HubSpot
+      // Check if data is incomplete (no actions OR actions lack detailed properties)
+      const dataAIncomplete = !originalDataA || 
+                             !(originalDataA as any)?.actions || 
+                             (originalDataA as any)?.actions?.length === 0 ||
+                             this.hasIncompleteActionData((originalDataA as any)?.actions);
+      
+      if (userId && dataAIncomplete) {
         console.log('🔧 Version A has incomplete data, fetching fresh from HubSpot...');
         try {
           const freshDataA = await this.hubspotService.getWorkflowById(userId, workflowId);
@@ -167,7 +174,13 @@ export class WorkflowService {
         }
       }
       
-      if (userId && (!originalDataB || !(originalDataB as any)?.actions || (originalDataB as any)?.actions?.length === 0)) {
+      // Check if Version B data is incomplete
+      const dataBIncomplete = !originalDataB || 
+                             !(originalDataB as any)?.actions || 
+                             (originalDataB as any)?.actions?.length === 0 ||
+                             this.hasIncompleteActionData((originalDataB as any)?.actions);
+      
+      if (userId && dataBIncomplete) {
         console.log('🔧 Version B has incomplete data, fetching fresh from HubSpot...');
         try {
           const freshDataB = await this.hubspotService.getWorkflowById(userId, workflowId);
@@ -1025,7 +1038,28 @@ export class WorkflowService {
       return `Log call`;
     }
 
-    return actionType || 'Unknown Action';
+    // If we get here, try to provide a more user-friendly description
+    if (actionType === 'UNSUPPORTED_ACTION') {
+      // Try to extract meaningful info from the action object
+      if (action.propertyName && action.propertyValue) {
+        return `Set ${action.propertyName} to ${action.propertyValue}`;
+      }
+      if (action.subject) {
+        return `Action: ${action.subject}`;
+      }
+      if (action.name) {
+        return `Action: ${action.name}`;
+      }
+      return 'Workflow Action';
+    }
+    
+    // Convert technical action types to user-friendly names
+    const friendlyName = actionType
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (l: string) => l.toUpperCase());
+    
+    return friendlyName || 'Unknown Action';
   }
 
 
@@ -3062,4 +3096,29 @@ export class WorkflowService {
         });
       }
     }
+
+  /**
+   * Check if action data is incomplete (missing detailed properties)
+   */
+  private hasIncompleteActionData(actions: any[]): boolean {
+    if (!actions || actions.length === 0) return true;
+    
+    // Check if actions have minimal data (indicating incomplete sync)
+    const sampleAction = actions[0];
+    
+    // If action only has basic properties, it's likely incomplete
+    const basicProperties = ['type', 'actionType', 'id'];
+    const actionKeys = Object.keys(sampleAction || {});
+    
+    // If action has only basic properties and no detailed ones, it's incomplete
+    const hasOnlyBasicProps = actionKeys.length <= 3 && 
+                             actionKeys.every(key => basicProperties.includes(key));
+    
+    if (hasOnlyBasicProps) {
+      console.log('🔍 Detected incomplete action data - only basic properties:', actionKeys);
+      return true;
+    }
+    
+    return false;
+  }
 }
