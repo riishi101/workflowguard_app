@@ -127,6 +127,33 @@ export class WorkflowService {
         dataBKeys: originalDataB ? Object.keys(originalDataB) : 'No data',
       });
 
+      const dataA = originalDataA as any;
+      const dataB = originalDataB as any;
+
+      console.log('🔍 DEBUG: Version A data structure:', {
+        hasActions: !!dataA?.actions,
+        actionsLength: dataA?.actions?.length || 0,
+        hasEnrollmentTriggers: !!dataA?.enrollmentTriggers,
+        triggersLength: dataA?.enrollmentTriggers?.length || 0,
+        sampleAction: dataA?.actions?.[0] ? {
+          type: dataA.actions[0].type,
+          actionType: dataA.actions[0].actionType,
+          keys: Object.keys(dataA.actions[0])
+        } : 'No actions'
+      });
+
+      console.log('🔍 DEBUG: Version B data structure:', {
+        hasActions: !!dataB?.actions,
+        actionsLength: dataB?.actions?.length || 0,
+        hasEnrollmentTriggers: !!dataB?.enrollmentTriggers,
+        triggersLength: dataB?.enrollmentTriggers?.length || 0,
+        sampleAction: dataB?.actions?.[0] ? {
+          type: dataB.actions[0].type,
+          actionType: dataB.actions[0].actionType,
+          keys: Object.keys(dataB.actions[0])
+        } : 'No actions'
+      });
+
       const differences = this.findWorkflowDifferences(originalDataA, originalDataB);
 
       // Transform version data for frontend display with enhanced details
@@ -640,7 +667,19 @@ export class WorkflowService {
       // Handle workflow actions (main workflow steps)
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
         console.log(`📝 Processing ${workflowData.actions.length} actions for version ${version}`);
+        console.log('🔍 DEBUG: First action data:', JSON.stringify(workflowData.actions[0], null, 2));
         workflowData.actions.forEach((action: any, index: number) => {
+          console.log(`🔍 DEBUG: Action ${index}:`, {
+            type: action.type,
+            actionType: action.actionType,
+            propertyName: action.propertyName,
+            propertyValue: action.propertyValue,
+            subject: action.subject,
+            delayMillis: action.delayMillis,
+            operation: action.operation,
+            conditions: action.conditions,
+            rawActionKeys: Object.keys(action)
+          });
           const stepType = this.getStepType(action);
           const stepTitle = this.getActionTitle(action);
           const stepDescription = this.getActionDescription(action);
