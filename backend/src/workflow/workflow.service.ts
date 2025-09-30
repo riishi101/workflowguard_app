@@ -816,6 +816,20 @@ export class WorkflowService {
       return `Set ${action.propertyName || 'property'}${action.propertyValue ? ` to ${action.propertyValue}` : ''}`;
     }
 
+    if (actionType === 'ADD_SUBTRACT_PROPERTY') {
+      const propertyName = action.propertyName || action.property || 'property';
+      const operation = action.operation || action.operator || 'modify';
+      const value = action.propertyValue || action.value || action.amount;
+      
+      if (operation === 'ADD' || operation === 'INCREASE') {
+        return `Increase ${propertyName}${value ? ` by ${value}` : ''}`;
+      } else if (operation === 'SUBTRACT' || operation === 'DECREASE') {
+        return `Decrease ${propertyName}${value ? ` by ${value}` : ''}`;
+      } else {
+        return `Update ${propertyName}${value ? ` to ${value}` : ''}`;
+      }
+    }
+
     if (actionType === 'EMAIL') {
       return `Send email${action.subject ? `: ${action.subject}` : ''}`;
     }
@@ -829,6 +843,15 @@ export class WorkflowService {
     }
 
     if (actionType === 'BRANCH') {
+      const conditions = action.conditions || action.criteria || action.filters || [];
+      if (conditions.length > 0) {
+        const condition = conditions[0];
+        const property = condition.property || condition.propertyName || 'property';
+        const operator = condition.operator || 'equals';
+        const value = condition.value || condition.propertyValue || 'value';
+        
+        return `Branch: If ${property} ${operator} ${value}`;
+      }
       return 'Conditional branch';
     }
 
