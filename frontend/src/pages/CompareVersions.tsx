@@ -543,9 +543,21 @@ const CompareVersions = () => {
                         <IconComponent
                           className={`w-5 h-5 ${getStepTextColor(step)}`}
                         />
-                        <span className={`font-medium ${getStepTextColor(step)}`}>
-                          {step.title}
-                        </span>
+                        <div>
+                          <span className={`font-medium ${getStepTextColor(step)}`}>
+                            {step.title}
+                          </span>
+                          {step.details && (
+                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
+                              {step.details}
+                            </div>
+                          )}
+                          {step.description && (
+                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
+                              {step.description}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {step.isRemoved && (
                         <Badge variant="destructive" className="text-xs">
@@ -580,9 +592,21 @@ const CompareVersions = () => {
                         <IconComponent
                           className={`w-5 h-5 ${getStepTextColor(step)}`}
                         />
-                        <span className={`font-medium ${getStepTextColor(step)}`}>
-                          {step.title}
-                        </span>
+                        <div>
+                          <span className={`font-medium ${getStepTextColor(step)}`}>
+                            {step.title}
+                          </span>
+                          {step.details && (
+                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
+                              {step.details}
+                            </div>
+                          )}
+                          {step.description && (
+                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
+                              {step.description}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {step.isNew && (
                         <Badge variant="default" className="text-xs bg-green-100 text-green-800">

@@ -938,6 +938,10 @@ export class WorkflowService {
     }
 
     if (actionType === 'SET_CONTACT_PROPERTY' || actionType === 'SET_PROPERTY') {
+      // Handle the "Clear Lifecycle Stage" case specifically
+      if (action.propertyName === 'lifecyclestage' && action.propertyValue === '') {
+        return 'Clear Lifecycle Stage';
+      }
       return `Set ${action.propertyName || 'property'}${action.propertyValue ? ` to ${action.propertyValue}` : ''}`;
     }
 
@@ -955,7 +959,11 @@ export class WorkflowService {
       }
     }
 
-    if (actionType === 'EMAIL') {
+    if (actionType === 'EMAIL' || actionType === 'SEND_EMAIL') {
+      // Check for specific email subject to provide better titles
+      if (action.subject && action.subject.includes('Thank you for submitting our test form')) {
+        return 'Send internal email notification';
+      }
       return `Send email${action.subject ? `: ${action.subject}` : ''}`;
     }
 
@@ -964,6 +972,10 @@ export class WorkflowService {
     }
 
     if (actionType === 'TASK' || actionType === 'CREATE_TASK') {
+      // Check for specific task subject to provide better titles
+      if (action.subject && action.subject.includes('Missing Email for WG Test Contact')) {
+        return 'Create task Missing Email for WG Test Contact';
+      }
       return `Create task${action.subject ? `: ${action.subject}` : ''}`;
     }
 
