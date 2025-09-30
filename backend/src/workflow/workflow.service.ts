@@ -962,13 +962,13 @@ export class WorkflowService {
       }
     }
 
-    // Handle specific HubSpot action types with detailed titles
     // Handle EMAIL_NOTIFICATION specifically (from contextJson)
     if (actionType === 'EMAIL_NOTIFICATION') {
       const subject = actionData.subject || 'notification';
       return `Send internal notification: ${subject}`;
     }
 
+    // Handle specific HubSpot action types with detailed titles
     if (actionType === 'DELAY') {
       const delayMinutes = Math.round((actionData.delayMillis || 0) / 60000);
       return `Wait ${delayMinutes} minutes`;
