@@ -230,7 +230,7 @@ class ApiService {
 
   static async downloadWorkflowVersion(workflowId: string, versionId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/version/${versionId}/download`);
+      const response = await apiClient.get(`/api/workflow/${workflowId}/version/${versionId}/download`);
       return response.data;
     } catch (error) {
       throw error;
