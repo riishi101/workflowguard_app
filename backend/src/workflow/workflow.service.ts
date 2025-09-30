@@ -271,6 +271,22 @@ export class WorkflowService {
         modified: changeSummary.modified,
       });
 
+      // CRITICAL DEBUG: Log what we're about to return to frontend
+      console.log('🚨 STEPS DATA BEFORE RETURN:', {
+        versionA: {
+          stepsCount: markedStepsA.length,
+          firstStepTitle: markedStepsA[0]?.title,
+          firstStepType: markedStepsA[0]?.type,
+          sampleStep: markedStepsA[0] ? JSON.stringify(markedStepsA[0]).substring(0, 200) : 'no steps'
+        },
+        versionB: {
+          stepsCount: markedStepsB.length,
+          firstStepTitle: markedStepsB[0]?.title,
+          firstStepType: markedStepsB[0]?.type,
+          sampleStep: markedStepsB[0] ? JSON.stringify(markedStepsB[0]).substring(0, 200) : 'no steps'
+        }
+      });
+
       const enhancedComparison = {
         versionA: {
           ...versionAData,
