@@ -251,6 +251,44 @@ export class HubSpotService {
     }
   }
 
+  /**
+   * Get workflow by ID with retry logic for better reliability
+   */
+  async getWorkflowByIdWithRetry(userId: string, workflowId: string, maxRetries: number = 3): Promise<HubSpotWorkflow | null> {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const workflow = await this.getWorkflowById(userId, workflowId);
+        if (workflow && this.validateWorkflowData(workflow)) {
+          return workflow;
+        }
+        console.log(`⚠️ Attempt ${attempt}: Incomplete workflow data for ${workflowId}`);
+      } catch (error) {
+        console.warn(`⚠️ Attempt ${attempt} failed for workflow ${workflowId}:`, error.message);
+      }
+
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Validate workflow data completeness
+   */
+  private validateWorkflowData(data: any): boolean {
+    if (!data || typeof data !== 'object') return false;
+
+    // Must have at least a name and some form of steps/actions
+    if (!data.name) return false;
+
+    const hasContent = data.actions?.length > 0 ||
+                      data.steps?.length > 0 ||
+                      data.enrollmentTriggers?.length > 0;
+
+    return hasContent;
+  }
+
   @circuitBreaker({
     failureThreshold: 3,
     successThreshold: 2,

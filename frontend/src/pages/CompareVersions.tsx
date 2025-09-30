@@ -167,6 +167,15 @@ const CompareVersions = () => {
         throw new Error("No comparison data received from server");
       }
 
+      // Validate that we have actual step data
+      const versionASteps = response.data.versionA?.steps;
+      const versionBSteps = response.data.versionB?.steps;
+
+      if ((!versionASteps || versionASteps.length === 0) &&
+          (!versionBSteps || versionBSteps.length === 0)) {
+        throw new Error("No workflow steps available for comparison. The workflow data may be incomplete.");
+      }
+
       // Safely set comparison data with validation
       const safeComparisonData = {
         versionA: response.data.versionA && typeof response.data.versionA === "object" ? response.data.versionA : null,
@@ -186,10 +195,22 @@ const CompareVersions = () => {
       setComparisonData(safeComparisonData);
     } catch (err: any) {
       console.error("Failed to fetch comparison data:", err);
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to compare workflow versions. Please try again.";
+
+      if (err.message?.includes("incomplete")) {
+        errorMessage = "Workflow data is incomplete. Please try refreshing the page or contact support.";
+      } else if (err.message?.includes("token")) {
+        errorMessage = "HubSpot connection issue. Please reconnect your HubSpot account.";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+
       setComparisonData(null);
       toast({
         title: "Comparison Failed",
-        description: err.response?.data?.message || err.message || "Failed to compare workflow versions. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

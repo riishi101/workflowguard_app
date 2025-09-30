@@ -153,47 +153,50 @@ export class WorkflowService {
       const userId = workflow?.ownerId;
       
       // CRITICAL FIX: If stored data is incomplete, fetch fresh detailed data from HubSpot
-      // Check if data is incomplete (no actions OR actions lack detailed properties)
-      const dataAIncomplete = !originalDataA || 
-                             !(originalDataA as any)?.actions || 
-                             (originalDataA as any)?.actions?.length === 0 ||
-                             this.hasIncompleteActionData((originalDataA as any)?.actions);
-      
-      if (userId && dataAIncomplete) {
+      // Use the enhanced validation method
+      if (userId && !this.validateWorkflowDataCompleteness(originalDataA)) {
         console.log('🔧 Version A has incomplete data, fetching fresh from HubSpot...');
         try {
-          const freshDataA = await this.hubspotService.getWorkflowById(userId, workflowId);
-          if (freshDataA && freshDataA.actions) {
+          const freshDataA = await this.hubspotService.getWorkflowByIdWithRetry(userId, workflowId);
+          if (freshDataA && this.validateWorkflowDataCompleteness(freshDataA)) {
             originalDataA = freshDataA as any;
-            console.log('✅ Fetched fresh Version A data with', freshDataA.actions.length, 'actions');
+            console.log('✅ Successfully fetched complete Version A data');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version A data: No actions found');
+            console.warn('⚠️ Could not fetch fresh Version A data: Incomplete or no data returned');
           }
         } catch (error) {
           console.warn('⚠️ Could not fetch fresh Version A data:', error.message);
         }
       }
-      
+
       // Check if Version B data is incomplete
-      const dataBIncomplete = !originalDataB || 
-                             !(originalDataB as any)?.actions || 
-                             (originalDataB as any)?.actions?.length === 0 ||
-                             this.hasIncompleteActionData((originalDataB as any)?.actions);
-      
-      if (userId && dataBIncomplete) {
+      if (userId && !this.validateWorkflowDataCompleteness(originalDataB)) {
         console.log('🔧 Version B has incomplete data, fetching fresh from HubSpot...');
         try {
-          const freshDataB = await this.hubspotService.getWorkflowById(userId, workflowId);
-          if (freshDataB && freshDataB.actions) {
+          const freshDataB = await this.hubspotService.getWorkflowByIdWithRetry(userId, workflowId);
+          if (freshDataB && this.validateWorkflowDataCompleteness(freshDataB)) {
             originalDataB = freshDataB as any;
-            console.log('✅ Fetched fresh Version B data with', freshDataB.actions.length, 'actions');
+            console.log('✅ Successfully fetched complete Version B data');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version B data: No actions found');
+            console.warn('⚠️ Could not fetch fresh Version B data: Incomplete or no data returned');
           }
         } catch (error) {
           console.warn('⚠️ Could not fetch fresh Version B data:', error.message);
         }
       }
+
+      // Enhanced logging for debugging
+      console.log('🔍 Workflow comparison debug info:', {
+        workflowId,
+        versionA,
+        versionB,
+        userId,
+        hasStoredDataA: !!originalDataA,
+        hasStoredDataB: !!originalDataB,
+        dataACompleteness: this.validateWorkflowDataCompleteness(originalDataA),
+        dataBCompleteness: this.validateWorkflowDataCompleteness(originalDataB),
+        willFetchFreshData: !this.validateWorkflowDataCompleteness(originalDataA) || !this.validateWorkflowDataCompleteness(originalDataB)
+      });
 
       console.log('🔍 Comparing workflow versions:', {
         versionAId: versionAData.id,
@@ -3160,27 +3163,73 @@ export class WorkflowService {
     }
 
   /**
+   * Enhanced workflow data completeness validation
+   */
+  private validateWorkflowDataCompleteness(data: any): boolean {
+    if (!data) return false;
+
+    // Check for essential workflow properties
+    const requiredFields = ['name', 'id'];
+    const hasRequiredFields = requiredFields.every(field => data[field]);
+
+    if (!hasRequiredFields) return false;
+
+    // Check for actions or steps
+    const hasActions = data.actions && Array.isArray(data.actions) && data.actions.length > 0;
+    const hasSteps = data.steps && Array.isArray(data.steps) && data.steps.length > 0;
+    const hasEnrollmentTriggers = data.enrollmentTriggers && Array.isArray(data.enrollmentTriggers) && data.enrollmentTriggers.length > 0;
+
+    if (!hasActions && !hasSteps && !hasEnrollmentTriggers) return false;
+
+    // Validate action completeness
+    if (hasActions) {
+      return data.actions.every((action: any) =>
+        action && (action.type || action.actionType) &&
+        (action.id || action.actionId || action.stepId)
+      );
+    }
+
+    return true;
+  }
+
+  /**
    * Check if action data is incomplete (missing detailed properties)
    */
   private hasIncompleteActionData(actions: any[]): boolean {
     if (!actions || actions.length === 0) return true;
-    
+
     // Check if actions have minimal data (indicating incomplete sync)
     const sampleAction = actions[0];
-    
+
     // If action only has basic properties, it's likely incomplete
     const basicProperties = ['type', 'actionType', 'id'];
     const actionKeys = Object.keys(sampleAction || {});
-    
+
     // If action has only basic properties and no detailed ones, it's incomplete
-    const hasOnlyBasicProps = actionKeys.length <= 3 && 
+    const hasOnlyBasicProps = actionKeys.length <= 3 &&
                              actionKeys.every(key => basicProperties.includes(key));
-    
+
     if (hasOnlyBasicProps) {
       console.log('🔍 Detected incomplete action data - only basic properties:', actionKeys);
       return true;
     }
-    
+
     return false;
+  }
+
+  /**
+   * Add validation utility method
+   */
+  private validateWorkflowData(data: any): boolean {
+    if (!data || typeof data !== 'object') return false;
+
+    // Must have at least a name and some form of steps/actions
+    if (!data.name) return false;
+
+    const hasContent = data.actions?.length > 0 ||
+                      data.steps?.length > 0 ||
+                      data.enrollmentTriggers?.length > 0;
+
+    return hasContent;
   }
 }
