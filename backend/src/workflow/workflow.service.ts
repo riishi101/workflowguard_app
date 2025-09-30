@@ -160,7 +160,7 @@ export class WorkflowService {
             originalDataA = freshDataA as any;
             console.log('✅ Fetched fresh Version A data with', freshDataA.actions.length, 'actions');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version A data:', freshDataA ? freshDataA.message : 'No data');
+            console.warn('⚠️ Could not fetch fresh Version A data: No actions found');
           }
         } catch (error) {
           console.warn('⚠️ Could not fetch fresh Version A data:', error.message);
@@ -175,7 +175,7 @@ export class WorkflowService {
             originalDataB = freshDataB as any;
             console.log('✅ Fetched fresh Version B data with', freshDataB.actions.length, 'actions');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version B data:', freshDataB ? freshDataB.message : 'No data');
+            console.warn('⚠️ Could not fetch fresh Version B data: No actions found');
           }
         } catch (error) {
           console.warn('⚠️ Could not fetch fresh Version B data:', error.message);
