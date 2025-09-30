@@ -868,53 +868,6 @@ export class WorkflowService {
     return actionType || 'Unknown Action';
   }
 
-  private getTriggerDescription(trigger: any): string {
-    if (!trigger) return 'No trigger information';
-
-    const triggerType = trigger.eventId || trigger.type || 'unknown';
-    const filters = trigger.filters || [];
-
-    if (filters.length === 0) {
-      return `${triggerType} trigger`;
-    }
-
-    const filterDescriptions = filters.map((filter: any) => {
-      if (filter.property && filter.operator && filter.value !== undefined) {
-        // Handle different operators
-        switch (filter.operator) {
-          case 'EQ':
-            return `${filter.property} equals ${filter.value}`;
-          case 'NEQ':
-            return `${filter.property} not equals ${filter.value}`;
-          case 'GT':
-            return `${filter.property} greater than ${filter.value}`;
-          case 'LT':
-            return `${filter.property} less than ${filter.value}`;
-          case 'GTE':
-            return `${filter.property} greater than or equals ${filter.value}`;
-          case 'LTE':
-            return `${filter.property} less than or equals ${filter.value}`;
-          case 'CONTAINS':
-            return `${filter.property} contains ${filter.value}`;
-          case 'NOT_CONTAINS':
-            return `${filter.property} does not contain ${filter.value}`;
-          case 'STARTS_WITH':
-            return `${filter.property} starts with ${filter.value}`;
-          case 'ENDS_WITH':
-            return `${filter.property} ends with ${filter.value}`;
-          case 'IS_EMPTY':
-            return `${filter.property} is empty`;
-          case 'NOT_EMPTY':
-            return `${filter.property} is not empty`;
-          default:
-            return `${filter.property} ${filter.operator} ${filter.value}`;
-        }
-      }
-      return 'Custom filter';
-    });
-
-    return `${triggerType} trigger: ${filterDescriptions.join(', ')}`;
-  }
 
   private getTriggerTitle(trigger: any): string {
     if (!trigger) return 'Unknown Trigger';
@@ -2315,10 +2268,56 @@ export class WorkflowService {
 
 
   private getActionConfiguration(action: any): any {
+    if (!action) return {};
+    
+    // Create a clean configuration object without internal IDs
     const config: any = { ...action };
-    delete config.stepId;
-    delete config.actionId;
+    
+    // Remove internal/system fields that aren't relevant for display
+    const fieldsToRemove = [
+      'stepId', 'actionId', 'id', 'portalId', 'createdAt', 'updatedAt',
+      'hubspotCreatedAt', 'hubspotUpdatedAt', 'migrationStatus'
+    ];
+    
+    fieldsToRemove.forEach(field => delete config[field]);
+    
+    // Add enhanced configuration details
+    if (action.type === 'DELAY' && action.delayMillis) {
+      config.delayFormatted = this.formatDelay(action.delayMillis);
+    }
+    
+    if (action.type === 'EMAIL' && action.emailId) {
+      config.emailType = action.emailType || 'marketing';
+      config.recipientType = action.recipientType || 'contact';
+    }
+    
+    if (action.type === 'BRANCH' && action.criteria) {
+      config.branchLogic = this.formatBranchCriteria(action.criteria);
+    }
+    
     return config;
+  }
+
+  private formatDelay(delayMillis: number): string {
+    const minutes = Math.round(delayMillis / 60000);
+    const hours = Math.round(delayMillis / 3600000);
+    const days = Math.round(delayMillis / 86400000);
+    
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  }
+
+  private formatBranchCriteria(criteria: any[]): string {
+    if (!criteria || criteria.length === 0) return 'No criteria specified';
+    
+    return criteria.map((criterion: any) => {
+      const property = criterion.property || criterion.propertyName || 'property';
+      const operator = criterion.operator || 'equals';
+      const value = criterion.value || criterion.propertyValue || 'value';
+      
+      return `${property} ${operator} ${value}`;
+    }).join(' AND ');
   }
 
   private getActionSummary(action: any): string {
@@ -2344,38 +2343,166 @@ export class WorkflowService {
   }
 
   private getActionDescription(action: any): string {
-    switch (action.type || action.actionType) {
-      case 'SET_CONTACT_PROPERTY':
-        return `Set contact property: ${action.propertyName}${action.propertyValue ? ` = ${action.propertyValue}` : ''}`;
-      case 'DELAY':
-        const minutes = Math.round((action.delayMillis || 0) / 60000);
-        return `Delay for ${minutes} minute${minutes !== 1 ? 's' : ''}`;
-      case 'TASK':
-        return `Create task: ${action.subject || 'Untitled task'}`;
-      case 'EMAIL':
-        return `Send email: ${action.subject || 'No subject'}`;
-      case 'WEBHOOK':
-        return `Send webhook to ${action.url || 'external service'}`;
-      case 'CREATE_DEAL':
-        return `Create deal: ${action.dealName || 'Untitled deal'}`;
-      case 'BRANCH':
-        return `Branch based on conditions`;
-      case 'ADD_TO_LIST':
-        return `Add contact to list`;
-      case 'REMOVE_FROM_LIST':
-        return `Remove contact from list`;
-      case 'ASSIGN_OWNER':
-        return `Assign owner: ${action.newValue || 'Unspecified owner'}`;
-      case 'UNSUPPORTED_ACTION':
-        return `Custom action (may need manual configuration)`;
-      default:
-        if (action.type) {
-          return `${action.type} action`;
-        } else if (action.actionType) {
-          return `${action.actionType} action`;
+    const actionType = action.type || action.actionType || '';
+    
+    try {
+      // Handle specific HubSpot action types with detailed descriptions
+      if (actionType === 'DELAY') {
+        const delayMillis = action.delayMillis || 0;
+        const delayMinutes = Math.round(delayMillis / 60000);
+        const delayHours = Math.round(delayMillis / 3600000);
+        const delayDays = Math.round(delayMillis / 86400000);
+        
+        if (delayDays > 0) {
+          return `Wait ${delayDays} day${delayDays > 1 ? 's' : ''}`;
+        } else if (delayHours > 0) {
+          return `Wait ${delayHours} hour${delayHours > 1 ? 's' : ''}`;
         } else {
-          return 'Unknown action type';
+          return `Wait ${delayMinutes} minute${delayMinutes > 1 ? 's' : ''}`;
         }
+      }
+
+      if (actionType === 'SET_CONTACT_PROPERTY' || actionType === 'SET_PROPERTY') {
+        const propertyName = action.propertyName || action.property || 'property';
+        const propertyValue = action.propertyValue || action.value || action.newValue;
+        
+        return `Set contact ${propertyName} to ${propertyValue || 'specified value'}`;
+      }
+
+      if (actionType === 'EMAIL' || actionType === 'SEND_EMAIL') {
+        const subject = action.subject || action.emailSubject || '';
+        const recipient = action.to || action.recipient || 'contact';
+        
+        return `Send email to ${recipient}${subject ? ` with subject: "${subject}"` : ''}`;
+      }
+
+      if (actionType === 'BRANCH' || actionType === 'IF_THEN_BRANCH') {
+        const criteria = action.criteria || action.conditions || action.filters;
+        if (criteria && criteria.length > 0) {
+          const condition = criteria[0];
+          const property = condition.property || condition.propertyName || 'property';
+          const operator = condition.operator || 'equals';
+          const value = condition.value || condition.propertyValue || 'value';
+          
+          return `Branch if ${property} ${operator} ${value}`;
+        }
+        return 'Conditional branch based on contact properties';
+      }
+
+      if (actionType === 'WEBHOOK') {
+        const url = action.webhookUrl || action.url || 'specified endpoint';
+        return `Send webhook to ${url}`;
+      }
+
+      if (actionType === 'TASK' || actionType === 'CREATE_TASK') {
+        const taskTitle = action.subject || action.title || action.taskTitle || 'task';
+        const assignee = action.assignedTo || action.owner || 'team member';
+        
+        return `Create task "${taskTitle}" assigned to ${assignee}`;
+      }
+
+      if (actionType === 'ADD_TO_LIST' || actionType === 'LIST') {
+        const listName = action.listName || action.listId || 'specified list';
+        return `Add contact to list: ${listName}`;
+      }
+
+      if (actionType === 'REMOVE_FROM_LIST') {
+        const listName = action.listName || action.listId || 'specified list';
+        return `Remove contact from list: ${listName}`;
+      }
+
+      if (actionType === 'CREATE_DEAL') {
+        const dealName = action.dealName || action.name || 'new deal';
+        const pipeline = action.pipeline || action.pipelineId || 'default pipeline';
+        
+        return `Create deal "${dealName}" in ${pipeline}`;
+      }
+
+      // Generic fallback with available details
+      const details = [];
+      if (action.propertyName) details.push(`Property: ${action.propertyName}`);
+      if (action.propertyValue) details.push(`Value: ${action.propertyValue}`);
+      if (action.subject) details.push(`Subject: ${action.subject}`);
+      
+      if (details.length > 0) {
+        return `${actionType}: ${details.join(', ')}`;
+      }
+
+      return `${actionType} action`;
+      
+    } catch (error) {
+      console.error('Error generating action description:', error);
+      return `${actionType} action (details unavailable)`;
+    }
+  }
+
+  private getTriggerDescription(trigger: any): string {
+    if (!trigger) return 'Unknown trigger condition';
+    
+    try {
+      const triggerType = trigger.eventId || trigger.type || trigger.triggerType || 'unknown';
+      const filters = trigger.filters || trigger.conditions || [];
+      
+      // Handle specific trigger types based on HubSpot workflow structure
+      if (triggerType === 'contact_property_change' || triggerType === 'PROPERTY_CHANGE') {
+        const propertyFilter = filters.find((f: any) => f.property || f.propertyName);
+        if (propertyFilter) {
+          const property = propertyFilter.property || propertyFilter.propertyName;
+          const operator = propertyFilter.operator || 'changed to';
+          const value = propertyFilter.value || propertyFilter.propertyValue;
+          
+          if (value) {
+            return `When ${property} ${operator} ${value}`;
+          } else {
+            return `When ${property} value changes`;
+          }
+        }
+        return 'When contact property value changes';
+      }
+
+      if (triggerType === 'contact_list_membership' || triggerType === 'LIST_MEMBERSHIP') {
+        const listFilter = filters.find((f: any) => f.listId || f.list);
+        const listName = listFilter?.listName || listFilter?.list || 'specified list';
+        return `When contact is added to list: ${listName}`;
+      }
+
+      if (triggerType === 'form_submission' || triggerType === 'FORM_SUBMISSION') {
+        const formFilter = filters.find((f: any) => f.formId || f.form);
+        const formName = formFilter?.formName || formFilter?.form || 'any form';
+        return `When contact submits form: ${formName}`;
+      }
+
+      if (triggerType === 'page_view' || triggerType === 'PAGE_VIEW') {
+        const pageFilter = filters.find((f: any) => f.pageUrl || f.url);
+        const pageUrl = pageFilter?.pageUrl || pageFilter?.url || 'specified page';
+        return `When contact views page: ${pageUrl}`;
+      }
+
+      if (triggerType === 'email_open' || triggerType === 'EMAIL_OPEN') {
+        const emailFilter = filters.find((f: any) => f.emailId || f.email);
+        const emailName = emailFilter?.emailName || emailFilter?.email || 'marketing email';
+        return `When contact opens email: ${emailName}`;
+      }
+
+      // Generic trigger with filter details
+      if (filters.length > 0) {
+        const filterDescriptions = filters.map((filter: any) => {
+          const property = filter.property || filter.propertyName || 'property';
+          const operator = filter.operator || 'equals';
+          const value = filter.value || filter.propertyValue || 'specified value';
+          
+          return `${property} ${operator} ${value}`;
+        });
+        
+        return `When ${filterDescriptions.join(' AND ')}`;
+      }
+
+      // Fallback description
+      return `${triggerType.replace(/_/g, ' ')} trigger`;
+      
+    } catch (error) {
+      console.error('Error generating trigger description:', error);
+      return 'Trigger condition (details unavailable)';
     }
   }
 
