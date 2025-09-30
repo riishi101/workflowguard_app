@@ -16,6 +16,7 @@ import MainAppLayout from "@/components/MainAppLayout";
 import ContentSection from "@/components/ContentSection";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from "@/lib/api";
+import { renderHtmlContent, stripHtml } from "@/lib/utils";
 import {
   ArrowLeft,
   Plus,
@@ -548,14 +549,16 @@ const CompareVersions = () => {
                             {step.title}
                           </span>
                           {step.details && typeof step.details === 'string' && (
-                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.details}
-                            </div>
+                            <div
+                              className={`text-xs mt-1 ${getStepTextColor(step)}`}
+                              dangerouslySetInnerHTML={renderHtmlContent(step.details)}
+                            />
                           )}
                           {step.description && typeof step.description === 'string' && (
-                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.description}
-                            </div>
+                            <div
+                              className={`text-xs mt-1 ${getStepTextColor(step)}`}
+                              dangerouslySetInnerHTML={renderHtmlContent(step.description)}
+                            />
                           )}
                         </div>
                       </div>
@@ -597,14 +600,16 @@ const CompareVersions = () => {
                             {step.title}
                           </span>
                           {step.details && typeof step.details === 'string' && (
-                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.details}
-                            </div>
+                            <div
+                              className={`text-xs mt-1 ${getStepTextColor(step)}`}
+                              dangerouslySetInnerHTML={renderHtmlContent(step.details)}
+                            />
                           )}
                           {step.description && typeof step.description === 'string' && (
-                            <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.description}
-                            </div>
+                            <div
+                              className={`text-xs mt-1 ${getStepTextColor(step)}`}
+                              dangerouslySetInnerHTML={renderHtmlContent(step.description)}
+                            />
                           )}
                         </div>
                       </div>
