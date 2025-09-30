@@ -57,6 +57,7 @@ export class WorkflowService {
     versionA: string,
     versionB: string,
   ): Promise<any> {
+    console.log('🚨 COMPARE VERSIONS CALLED:', { workflowId, versionA, versionB });
     try {
       // First, resolve the workflowId - it might be a HubSpot ID or WorkflowGuard UUID
       let actualWorkflowId = workflowId;
@@ -157,6 +158,10 @@ export class WorkflowService {
       const differences = this.findWorkflowDifferences(originalDataA, originalDataB);
 
       // Transform version data for frontend display with enhanced details
+      console.log('🚨 ABOUT TO TRANSFORM WORKFLOW DATA TO STEPS');
+      console.log('🚨 originalDataA type:', typeof originalDataA, 'keys:', originalDataA ? Object.keys(originalDataA) : 'null');
+      console.log('🚨 originalDataB type:', typeof originalDataB, 'keys:', originalDataB ? Object.keys(originalDataB) : 'null');
+      
       const transformedVersionA = {
         ...versionAData,
         steps: this.transformWorkflowDataToSteps(originalDataA, 'A'),
