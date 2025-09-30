@@ -549,12 +549,20 @@ const CompareVersions = () => {
                           </span>
                           {step.details && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.details}
+                              {typeof step.details === 'string' 
+                                ? step.details 
+                                : typeof step.details === 'object' 
+                                  ? JSON.stringify(step.details, null, 2)
+                                  : String(step.details)}
                             </div>
                           )}
                           {step.description && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.description}
+                              {typeof step.description === 'string' 
+                                ? step.description 
+                                : typeof step.description === 'object' 
+                                  ? JSON.stringify(step.description, null, 2)
+                                  : String(step.description)}
                             </div>
                           )}
                         </div>
@@ -598,12 +606,20 @@ const CompareVersions = () => {
                           </span>
                           {step.details && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.details}
+                              {typeof step.details === 'string' 
+                                ? step.details 
+                                : typeof step.details === 'object' 
+                                  ? JSON.stringify(step.details, null, 2)
+                                  : String(step.details)}
                             </div>
                           )}
                           {step.description && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {step.description}
+                              {typeof step.description === 'string' 
+                                ? step.description 
+                                : typeof step.description === 'object' 
+                                  ? JSON.stringify(step.description, null, 2)
+                                  : String(step.description)}
                             </div>
                           )}
                         </div>

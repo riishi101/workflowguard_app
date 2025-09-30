@@ -74,7 +74,15 @@ export function WorkflowStep({ type, title, status, details, summary, className 
         {(summary || details) && (
           <div className="text-xs opacity-75 mt-1">
             {summary && <div className="font-medium">{summary}</div>}
-            {details && <div>{details}</div>}
+            {details && (
+              <div>
+                {typeof details === 'string' 
+                  ? details 
+                  : typeof details === 'object' 
+                    ? JSON.stringify(details, null, 2)
+                    : String(details)}
+              </div>
+            )}
           </div>
         )}
       </div>
