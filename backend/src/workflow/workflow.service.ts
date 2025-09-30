@@ -2242,8 +2242,27 @@ export class WorkflowService {
   ): Promise<any> {
     try {
       const version = await this.workflowVersionService.findOne(versionId);
-      return version;
+
+      // Return only the workflow data, not the entire version object
+      if (!version || !version.data) {
+        throw new HttpException(
+          'Version not found or no workflow data available',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      console.log('🔍 Download request:', {
+        workflowId,
+        versionId,
+        hasData: !!version.data,
+        dataType: typeof version.data,
+        dataKeys: version.data ? Object.keys(version.data as any) : 'no data',
+      });
+
+      // Return the actual workflow data for download
+      return version.data;
     } catch (error) {
+      console.error('❌ Error downloading workflow version:', error);
       throw new HttpException(
         `Failed to download workflow version: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
