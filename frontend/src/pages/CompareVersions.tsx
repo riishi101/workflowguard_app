@@ -547,22 +547,14 @@ const CompareVersions = () => {
                           <span className={`font-medium ${getStepTextColor(step)}`}>
                             {step.title}
                           </span>
-                          {step.details && (
+                          {step.details && typeof step.details === 'string' && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {typeof step.details === 'string' 
-                                ? step.details 
-                                : typeof step.details === 'object' 
-                                  ? JSON.stringify(step.details, null, 2)
-                                  : String(step.details)}
+                              {step.details}
                             </div>
                           )}
-                          {step.description && (
+                          {step.description && typeof step.description === 'string' && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {typeof step.description === 'string' 
-                                ? step.description 
-                                : typeof step.description === 'object' 
-                                  ? JSON.stringify(step.description, null, 2)
-                                  : String(step.description)}
+                              {step.description}
                             </div>
                           )}
                         </div>
@@ -604,22 +596,14 @@ const CompareVersions = () => {
                           <span className={`font-medium ${getStepTextColor(step)}`}>
                             {step.title}
                           </span>
-                          {step.details && (
+                          {step.details && typeof step.details === 'string' && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {typeof step.details === 'string' 
-                                ? step.details 
-                                : typeof step.details === 'object' 
-                                  ? JSON.stringify(step.details, null, 2)
-                                  : String(step.details)}
+                              {step.details}
                             </div>
                           )}
-                          {step.description && (
+                          {step.description && typeof step.description === 'string' && (
                             <div className={`text-xs mt-1 ${getStepTextColor(step)}`}>
-                              {typeof step.description === 'string' 
-                                ? step.description 
-                                : typeof step.description === 'object' 
-                                  ? JSON.stringify(step.description, null, 2)
-                                  : String(step.description)}
+                              {step.description}
                             </div>
                           )}
                         </div>
