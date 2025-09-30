@@ -296,16 +296,41 @@ export class HubSpotService {
         return [];
       }
 
-      const workflows = workflowList.map(
-        (workflow: HubSpotWorkflow): WorkflowResponse => ({
-          id: workflow.id || 'unknown',
-          name: workflow.name || 'Unnamed Workflow',
-          description: workflow.description || '',
-          type: 'workflow',
-          status: workflow.enabled ? 'active' : 'inactive',
-          hubspotData: workflow,
-        }),
-      );
+      // Fetch detailed data for each workflow
+      const workflows: WorkflowResponse[] = [];
+      
+      for (const workflow of workflowList) {
+        try {
+          console.log(`🔍 Fetching detailed data for workflow ${workflow.id}`);
+          
+          // Get complete workflow details including actions and triggers
+          const detailedWorkflow = await this.getWorkflowDetailsFromHubSpot(
+            accessToken,
+            workflow.id
+          );
+          
+          workflows.push({
+            id: workflow.id || 'unknown',
+            name: workflow.name || 'Unnamed Workflow',
+            description: workflow.description || '',
+            type: 'workflow',
+            status: workflow.enabled ? 'active' : 'inactive',
+            hubspotData: detailedWorkflow || workflow, // Use detailed data if available
+          });
+        } catch (error) {
+          console.warn(`⚠️ Failed to fetch details for workflow ${workflow.id}, using basic data:`, error);
+          
+          // Fallback to basic workflow data
+          workflows.push({
+            id: workflow.id || 'unknown',
+            name: workflow.name || 'Unnamed Workflow',
+            description: workflow.description || '',
+            type: 'workflow',
+            status: workflow.enabled ? 'active' : 'inactive',
+            hubspotData: workflow,
+          });
+        }
+      }
 
       console.log(
         '🔍 HubSpotService - Final transformed workflows:',
@@ -317,6 +342,47 @@ export class HubSpotService {
       throw new Error(
         `Failed to fetch workflows from HubSpot: ${error.message}`,
       );
+    }
+  }
+
+  /**
+   * Fetch complete workflow details including actions and triggers
+   */
+  private async getWorkflowDetailsFromHubSpot(
+    accessToken: string,
+    workflowId: string
+  ): Promise<HubSpotWorkflow | null> {
+    try {
+      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
+      
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`⚠️ Failed to fetch detailed workflow ${workflowId}: ${response.status} ${errorText}`);
+        return null;
+      }
+
+      const workflowData = (await response.json()) as HubSpotWorkflow;
+      
+      console.log(`✅ Fetched detailed workflow ${workflowId}:`, {
+        name: workflowData.name,
+        hasActions: !!workflowData.actions?.length,
+        actionsCount: workflowData.actions?.length || 0,
+        hasEnrollmentTriggers: !!workflowData.enrollmentTriggers?.length,
+        triggersCount: workflowData.enrollmentTriggers?.length || 0,
+      });
+
+      return workflowData;
+    } catch (error) {
+      console.error(`❌ Error fetching detailed workflow ${workflowId}:`, error);
+      return null;
     }
   }
 
