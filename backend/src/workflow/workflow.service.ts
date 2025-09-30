@@ -942,26 +942,50 @@ export class WorkflowService {
   }
 
   private getActionTitle(action: any): string {
-    const actionType = action.type || action.actionType || '';
+    let actionType = action.type || action.actionType || '';
+    let actionData = action;
+
+    // CRITICAL FIX: Parse contextJson if action type is UNSUPPORTED_ACTION
+    if (actionType === 'UNSUPPORTED_ACTION' && action.contextJson) {
+      try {
+        const contextData = JSON.parse(action.contextJson);
+        actionType = contextData.actionType || actionType;
+        actionData = { ...action, ...contextData }; // Merge context data with action
+        console.log('🔧 Parsed UNSUPPORTED_ACTION contextJson:', {
+          originalType: action.type,
+          parsedType: actionType,
+          subject: contextData.subject,
+          body: contextData.body
+        });
+      } catch (error) {
+        console.warn('⚠️ Failed to parse contextJson:', error);
+      }
+    }
 
     // Handle specific HubSpot action types with detailed titles
+    // Handle EMAIL_NOTIFICATION specifically (from contextJson)
+    if (actionType === 'EMAIL_NOTIFICATION') {
+      const subject = actionData.subject || 'notification';
+      return `Send internal notification: ${subject}`;
+    }
+
     if (actionType === 'DELAY') {
-      const delayMinutes = Math.round((action.delayMillis || 0) / 60000);
+      const delayMinutes = Math.round((actionData.delayMillis || 0) / 60000);
       return `Wait ${delayMinutes} minutes`;
     }
 
     if (actionType === 'SET_CONTACT_PROPERTY' || actionType === 'SET_PROPERTY') {
       // Handle the "Clear Lifecycle Stage" case specifically
-      if (action.propertyName === 'lifecyclestage' && action.propertyValue === '') {
+      if (actionData.propertyName === 'lifecyclestage' && actionData.propertyValue === '') {
         return 'Clear Lifecycle Stage';
       }
-      return `Set ${action.propertyName || 'property'}${action.propertyValue ? ` to ${action.propertyValue}` : ''}`;
+      return `Set ${actionData.propertyName || 'property'}${actionData.propertyValue ? ` to ${actionData.propertyValue}` : ''}`;
     }
 
     if (actionType === 'ADD_SUBTRACT_PROPERTY') {
-      const propertyName = action.propertyName || action.property || 'property';
-      const operation = action.operation || action.operator || 'modify';
-      const value = action.propertyValue || action.value || action.amount;
+      const propertyName = actionData.propertyName || actionData.property || 'property';
+      const operation = actionData.operation || actionData.operator || 'modify';
+      const value = actionData.propertyValue || actionData.value || actionData.amount;
       
       if (operation === 'ADD' || operation === 'INCREASE') {
         return `Increase ${propertyName}${value ? ` by ${value}` : ''}`;
@@ -974,10 +998,10 @@ export class WorkflowService {
 
     if (actionType === 'EMAIL' || actionType === 'SEND_EMAIL') {
       // Check for specific email subject to provide better titles
-      if (action.subject && action.subject.includes('Thank you for submitting our test form')) {
+      if (actionData.subject && actionData.subject.includes('Thank you for submitting our test form')) {
         return 'Send internal email notification';
       }
-      return `Send email${action.subject ? `: ${action.subject}` : ''}`;
+      return `Send email${actionData.subject ? `: ${actionData.subject}` : ''}`;
     }
 
     if (actionType === 'WEBHOOK') {
@@ -986,14 +1010,14 @@ export class WorkflowService {
 
     if (actionType === 'TASK' || actionType === 'CREATE_TASK') {
       // Check for specific task subject to provide better titles
-      if (action.subject && action.subject.includes('Missing Email for WG Test Contact')) {
+      if (actionData.subject && actionData.subject.includes('Missing Email for WG Test Contact')) {
         return 'Create task Missing Email for WG Test Contact';
       }
-      return `Create task${action.subject ? `: ${action.subject}` : ''}`;
+      return `Create task${actionData.subject ? `: ${actionData.subject}` : ''}`;
     }
 
     if (actionType === 'BRANCH') {
-      const conditions = action.conditions || action.criteria || action.filters || [];
+      const conditions = actionData.conditions || actionData.criteria || actionData.filters || [];
       if (conditions.length > 0) {
         const condition = conditions[0];
         const property = condition.property || condition.propertyName || 'property';
@@ -1014,16 +1038,16 @@ export class WorkflowService {
     }
 
     if (actionType === 'CREATE_DEAL') {
-      return `Create deal${action.dealName ? `: ${action.dealName}` : ''}`;
+      return `Create deal${actionData.dealName ? `: ${actionData.dealName}` : ''}`;
     }
 
     if (actionType === 'ASSIGN_OWNER') {
-      return `Assign owner${action.newValue ? `: ${action.newValue}` : ''}`;
+      return `Assign owner${actionData.newValue ? `: ${actionData.newValue}` : ''}`;
     }
 
     // Handle specific action types based on the workflow structure
     if (actionType.includes('PROPERTY')) {
-      return `Update property: ${action.propertyName || 'Unknown'}`;
+      return `Update property: ${actionData.propertyName || 'Unknown'}`;
     }
 
     if (actionType.includes('EMAIL')) {
@@ -1041,14 +1065,14 @@ export class WorkflowService {
     // If we get here, try to provide a more user-friendly description
     if (actionType === 'UNSUPPORTED_ACTION') {
       // Try to extract meaningful info from the action object
-      if (action.propertyName && action.propertyValue) {
-        return `Set ${action.propertyName} to ${action.propertyValue}`;
+      if (actionData.propertyName && actionData.propertyValue) {
+        return `Set ${actionData.propertyName} to ${actionData.propertyValue}`;
       }
-      if (action.subject) {
-        return `Action: ${action.subject}`;
+      if (actionData.subject) {
+        return `Action: ${actionData.subject}`;
       }
-      if (action.name) {
-        return `Action: ${action.name}`;
+      if (actionData.name) {
+        return `Action: ${actionData.name}`;
       }
       return 'Workflow Action';
     }
