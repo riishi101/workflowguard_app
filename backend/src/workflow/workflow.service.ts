@@ -786,8 +786,30 @@ export class WorkflowService {
             delayMillis: action.delayMillis,
             operation: action.operation,
             conditions: action.conditions,
+            hasContextJson: !!action.contextJson,
+            contextJsonLength: action.contextJson ? action.contextJson.length : 0,
             rawActionKeys: Object.keys(action)
           });
+          
+          // CRITICAL: Test contextJson parsing specifically
+          if (action.type === 'UNSUPPORTED_ACTION' && action.contextJson) {
+            console.log('🚨 UNSUPPORTED_ACTION with contextJson detected:', {
+              originalType: action.type,
+              contextJson: action.contextJson,
+              contextJsonType: typeof action.contextJson
+            });
+            try {
+              const parsedContext = JSON.parse(action.contextJson);
+              console.log('🚨 Parsed contextJson successfully:', {
+                parsedActionType: parsedContext.actionType,
+                parsedSubject: parsedContext.subject,
+                parsedBody: parsedContext.body
+              });
+            } catch (error) {
+              console.error('🚨 Failed to parse contextJson:', error);
+            }
+          }
+          
           const stepType = this.getStepType(action);
           const stepTitle = this.getActionTitle(action);
           const stepDescription = this.getActionDescription(action);
@@ -887,7 +909,7 @@ export class WorkflowService {
           id: 'workflow-basic',
           title: workflowData.name,
           type: 'workflow',
-          description: `Status: ${workflowData.enabled ? 'Active' : 'Inactive'}`,
+          description: workflowData.description || 'Workflow configuration',  // Remove "Status: Inactive"
           isNew: false,
           isModified: false,
           isRemoved: false,
