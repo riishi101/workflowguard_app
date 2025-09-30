@@ -143,8 +143,44 @@ export class WorkflowService {
       }
 
       // Enhanced comparison logic with complete workflow data
-      const originalDataA = versionAData.data;
-      const originalDataB = versionBData.data;
+      let originalDataA = versionAData.data;
+      let originalDataB = versionBData.data;
+      
+      // Get userId from the workflow owner
+      const workflow = await this.prisma.workflow.findFirst({
+        where: { id: actualWorkflowId }
+      });
+      const userId = workflow?.ownerId;
+      
+      if (userId && (!originalDataA || !(originalDataA as any)?.actions || (originalDataA as any)?.actions?.length === 0)) {
+        console.log('🔧 Version A has incomplete data, fetching fresh from HubSpot...');
+        try {
+          const freshDataA = await this.hubspotService.getWorkflowById(userId, workflowId);
+          if (freshDataA && freshDataA.actions) {
+            originalDataA = freshDataA as any;
+            console.log('✅ Fetched fresh Version A data with', freshDataA.actions.length, 'actions');
+          } else {
+            console.warn('⚠️ Could not fetch fresh Version A data:', freshDataA ? freshDataA.message : 'No data');
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not fetch fresh Version A data:', error.message);
+        }
+      }
+      
+      if (userId && (!originalDataB || !(originalDataB as any)?.actions || (originalDataB as any)?.actions?.length === 0)) {
+        console.log('🔧 Version B has incomplete data, fetching fresh from HubSpot...');
+        try {
+          const freshDataB = await this.hubspotService.getWorkflowById(userId, workflowId);
+          if (freshDataB && freshDataB.actions) {
+            originalDataB = freshDataB as any;
+            console.log('✅ Fetched fresh Version B data with', freshDataB.actions.length, 'actions');
+          } else {
+            console.warn('⚠️ Could not fetch fresh Version B data:', freshDataB ? freshDataB.message : 'No data');
+          }
+        } catch (error) {
+          console.warn('⚠️ Could not fetch fresh Version B data:', error.message);
+        }
+      }
 
       console.log('🔍 Comparing workflow versions:', {
         versionAId: versionAData.id,
