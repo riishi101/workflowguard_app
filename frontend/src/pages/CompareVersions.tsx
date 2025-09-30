@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
+import { useSearchParams, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -40,7 +40,37 @@ import {
   Workflow,
   Settings,
   Users,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Edit,
+  ArrowLeftRight,
+  GitCompare,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Zap,
+  TrendingUp,
+  Activity,
+  Layers,
+  Share2,
+  Bookmark,
+  BookmarkCheck,
+  Copy,
+  ExternalLink,
+  Maximize,
+  Minimize,
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  Lightbulb,
+  Timer,
+  Database,
+  Cpu,
+  HardDrive,
+  Wifi,
+  WifiOff,
+  ZapOff,
+  Star,
+  StarOff
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -64,10 +94,41 @@ interface WorkflowVersion {
 
 interface WorkflowHistoryVersion extends WorkflowVersion {}
 
+// HubSpot-style design system
+const hubspotTheme = {
+  colors: {
+    primary: {
+      50: '#FCE8E6',
+      500: '#FF7A59',
+      600: '#FF6B47',
+      700: '#E85D3F'
+    },
+    success: {
+      50: '#E8F5E8',
+      500: '#2EA44F',
+      600: '#2C974B'
+    },
+    warning: {
+      50: '#FFF8E1',
+      500: '#FFBA08',
+      600: '#FF9F00'
+    },
+    danger: {
+      50: '#F8D7DA',
+      500: '#D73A49',
+      600: '#CB2431'
+    }
+  }
+};
+
+// Enhanced comparison cache
+const comparisonCache = new Map();
+
 const CompareVersions = () => {
   const { workflowId } = useParams<{ workflowId: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -111,6 +172,31 @@ const CompareVersions = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
+  // Advanced state management for 100% perfection
+  const [isHubSpotContext, setIsHubSpotContext] = useState(false);
+  const [showFloatingPanel, setShowFloatingPanel] = useState(true);
+  const [comparisonHistory, setComparisonHistory] = useState<string[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [bookmarkedComparisons, setBookmarkedComparisons] = useState<Set<string>>(new Set());
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    renderTime: 0,
+    apiCalls: 0,
+    cacheHits: 0,
+    memoryUsage: 0
+  });
+  const [showPerformanceStats, setShowPerformanceStats] = useState(false);
+  const [realTimeSync, setRealTimeSync] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [personalizedTips, setPersonalizedTips] = useState<string[]>([]);
+
+  // Performance optimization refs
+  const cacheRef = useRef<Map<string, any>>(new Map());
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const renderStartTime = useRef<number>(0);
+  const performanceObserverRef = useRef<PerformanceObserver | null>(null);
+
+  // Enhanced URL state management
   useEffect(() => {
     if (workflowId) {
       // Allow both UUID and HubSpot ID formats for comparison
@@ -123,6 +209,116 @@ const CompareVersions = () => {
       fetchComparisonData();
     }
   }, [versionA, versionB, workflowId]);
+
+  // HubSpot context detection
+  useEffect(() => {
+    setIsHubSpotContext(window.self !== window.top);
+
+    // Listen for HubSpot theme changes
+    const handleThemeChange = (event: any) => {
+      if (event.detail?.theme) {
+        document.documentElement.setAttribute('data-theme', event.detail.theme);
+      }
+    };
+
+    window.addEventListener('hubspot:theme-change', handleThemeChange);
+    return () => window.removeEventListener('hubspot:theme-change', handleThemeChange);
+  }, []);
+
+  // Debounced search for better performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== "") {
+        const params = new URLSearchParams();
+        if (versionA) params.set('versionA', versionA);
+        if (versionB) params.set('versionB', versionB);
+        if (searchTerm) params.set('search', searchTerm);
+        if (filterType !== 'all') params.set('filter', filterType);
+
+        const newUrl = `${location.pathname}?${params.toString()}`;
+        if (newUrl !== `${location.pathname}${location.search}`) {
+          navigate(newUrl, { replace: true });
+        }
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, filterType, versionA, versionB, location.pathname, location.search, navigate]);
+
+  // Enhanced URL state synchronization for version changes (immediate)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (versionA) params.set('versionA', versionA);
+    if (versionB) params.set('versionB', versionB);
+    if (filterType !== 'all') params.set('filter', filterType);
+
+    const newUrl = `${location.pathname}?${params.toString()}`;
+    if (newUrl !== `${location.pathname}${location.search}`) {
+      navigate(newUrl, { replace: true });
+    }
+  }, [versionA, versionB, filterType, location.pathname, location.search, navigate]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle if not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'k': // Ctrl+K to go back to workflow history
+            e.preventDefault();
+            navigate(`/workflow-history/${workflowId}`);
+            break;
+          case 's': // Ctrl+S to swap versions
+            e.preventDefault();
+            if (versionA && versionB) {
+              setVersionA(versionB);
+              setVersionB(versionA);
+              toast({
+                title: "Versions Swapped",
+                description: "Version A and Version B have been swapped",
+              });
+            }
+            break;
+          case 'r': // Ctrl+R to refresh
+            e.preventDefault();
+            handleRefresh();
+            break;
+          case 'f': // Ctrl+F to focus search
+            e.preventDefault();
+            const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+            searchInput?.focus();
+            break;
+        }
+      }
+
+      // Single key shortcuts
+      switch (e.key) {
+        case 'Escape':
+          if (showFilters) setShowFilters(false);
+          break;
+        case 'F1':
+          e.preventDefault();
+          navigate('/help/feature-spotlights');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [versionA, versionB, workflowId, searchTerm, showFilters, navigate, toast]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const fetchVersions = async () => {
     if (!workflowId) return;
@@ -434,6 +630,58 @@ const CompareVersions = () => {
     }
   };
 
+  // Helper function to get detailed step information
+  const getStepDetails = (step: any): string => {
+    if (!step || !step.details) return '';
+
+    // For triggers, show filter information
+    if (step.type === 'trigger' && step.details.filters) {
+      const filters = step.details.filters;
+      if (filters.length > 0) {
+        return filters.map((filter: any) => {
+          if (filter.property && filter.operator && filter.value !== undefined) {
+            return `${filter.property} ${filter.operator} ${filter.value}`;
+          }
+          return 'Custom filter';
+        }).join(', ');
+      }
+    }
+
+    // For actions, show relevant details
+    if (step.details.type === 'EMAIL' && step.details.subject) {
+      return step.details.subject;
+    }
+
+    if (step.details.type === 'SET_CONTACT_PROPERTY' && step.details.propertyName) {
+      return `${step.details.propertyName}: ${step.details.propertyValue || ''}`;
+    }
+
+    if (step.details.type === 'DELAY' && step.details.delayMillis) {
+      const minutes = Math.round(step.details.delayMillis / 60000);
+      return `Wait ${minutes} minutes`;
+    }
+
+    // Fallback to description
+    return step.description || '';
+  };
+
+  // Helper function to get step summary
+  const getStepSummary = (step: any): string => {
+    if (!step || !step.details) return '';
+
+    // Return the summary from details if available
+    if (step.details.summary) {
+      return step.details.summary;
+    }
+
+    // Fallback to type
+    if (step.details.type) {
+      return step.details.type;
+    }
+
+    return '';
+  };
+
   const getStepTextColor = (step: any) => {
     if (step?.isNew) return "text-green-800";
     if (step?.isModified) return "text-yellow-800";
@@ -493,61 +741,151 @@ const CompareVersions = () => {
     }
   };
 
-  const toggleStepExpansion = (stepId: string) => {
-    const newExpanded = new Set(expandedSteps);
-    if (newExpanded.has(stepId)) {
-      newExpanded.delete(stepId);
-    } else {
-      newExpanded.add(stepId);
-    }
-    setExpandedSteps(newExpanded);
-  };
+  // Enhanced utility functions for better performance and UX
 
-  const getFilteredSteps = () => {
-    if (!comparisonData) return [];
+  // Memoized comparison data calculation
+  const comparisonKey = useMemo(() => {
+    return `${versionA}-${versionB}-${workflowId}`;
+  }, [versionA, versionB, workflowId]);
 
-    const allSteps = [
-      ...(comparisonData.versionA?.steps || []).map(step => ({ ...step, source: 'A' })),
-      ...(comparisonData.versionB?.steps || []).map(step => ({ ...step, source: 'B' }))
-    ];
+  // Cached comparison data
+  const cachedComparison = useMemo(() => {
+    return cacheRef.current.get(comparisonKey);
+  }, [comparisonKey]);
 
-    console.log('🔍 All steps for comparison:', {
-      totalSteps: allSteps.length,
-      versionA: comparisonData.versionA?.steps?.length || 0,
-      versionB: comparisonData.versionB?.steps?.length || 0,
-      searchTerm,
-      filterType,
-    });
+  // Enhanced step highlighting with better visual indicators
+  const getStepHighlightClass = useCallback((step: any) => {
+    const baseClasses = "transition-all duration-200 rounded-md";
 
-    let filtered = allSteps;
+    if (step?.isNew) return `${baseClasses} ring-2 ring-green-300 bg-green-50 border-green-200`;
+    if (step?.isModified) return `${baseClasses} ring-2 ring-yellow-300 bg-yellow-50 border-yellow-200`;
+    if (step?.isRemoved) return `${baseClasses} opacity-60 bg-red-50 border-red-200`;
 
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(step =>
-        step.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        step.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        step.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        step.details?.summary?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    return `${baseClasses} hover:bg-gray-50`;
+  }, []);
 
-    // Apply type filter
-    if (filterType !== 'all') {
-      filtered = filtered.filter(step => step.type === filterType);
-    }
+  // HubSpot-style alert component
+  const HubSpotAlert = useCallback(({ type, title, message }: {
+    type: 'success' | 'warning' | 'error' | 'info',
+    title: string,
+    message: string
+  }) => {
+    const styles = {
+      success: 'border-l-4 border-green-400 bg-green-50 text-green-800',
+      warning: 'border-l-4 border-yellow-400 bg-yellow-50 text-yellow-800',
+      error: 'border-l-4 border-red-400 bg-red-50 text-red-800',
+      info: 'border-l-4 border-blue-400 bg-blue-50 text-blue-800'
+    };
 
-    console.log('🔍 Filtered steps:', filtered.length);
-    return filtered;
-  };
+    const icons = {
+      success: CheckCircle,
+      warning: AlertTriangle,
+      error: XCircle,
+      info: AlertCircle
+    };
 
-  const getChangeTypeForStep = (step: any) => {
-    if (step.isNew) return 'added';
-    if (step.isModified) return 'modified';
-    if (step.isRemoved) return 'removed';
-    return 'unchanged';
-  };
+    const Icon = icons[type];
 
-  const transformComparisonDataForUI = (): { versionA: ComparisonWorkflowVersion; versionB: ComparisonWorkflowVersion } | null => {
+    return (
+      <div className={`p-4 rounded-md ${styles[type]}`}>
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <Icon className={`w-5 h-5 ${
+              type === 'success' ? 'text-green-600' :
+              type === 'warning' ? 'text-yellow-600' :
+              type === 'error' ? 'text-red-600' : 'text-blue-600'
+            }`} />
+          </div>
+          <div className="ml-3 flex-1">
+            <h3 className="text-sm font-medium">{title}</h3>
+            <div className="mt-1 text-sm">{message}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }, []);
+
+  // Enhanced diff indicator component
+  const DiffIndicator = useCallback(({ type, size = "md" }: {
+    type: 'added' | 'modified' | 'removed',
+    size?: 'sm' | 'md' | 'lg'
+  }) => {
+    const indicators = {
+      added: { icon: Plus, color: 'text-green-600', bg: 'bg-green-100', hoverBg: 'hover:bg-green-200' },
+      modified: { icon: Edit, color: 'text-yellow-600', bg: 'bg-yellow-100', hoverBg: 'hover:bg-yellow-200' },
+      removed: { icon: Minus, color: 'text-red-600', bg: 'bg-red-100', hoverBg: 'hover:bg-red-200' }
+    };
+
+    const indicator = indicators[type];
+    const Icon = indicator.icon;
+
+    const sizeClasses = {
+      sm: 'w-4 h-4',
+      md: 'w-5 h-5',
+      lg: 'w-6 h-6'
+    };
+
+    return (
+      <div className={`inline-flex items-center justify-center rounded-full ${indicator.bg} ${indicator.hoverBg} transition-colors cursor-help ${sizeClasses[size]}`}>
+        <Icon className={`w-3 h-3 ${indicator.color}`} />
+      </div>
+    );
+  }, []);
+
+  // Floating action panel component
+  const FloatingActionPanel = useCallback(() => (
+    <div className="fixed bottom-6 right-6 bg-white border border-gray-200 rounded-lg shadow-lg p-3 space-y-2 z-50">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          if (versionA && versionB) {
+            setVersionA(versionB);
+            setVersionB(versionA);
+            toast({
+              title: "Versions Swapped",
+              description: "Version A and Version B have been swapped",
+            });
+          }
+        }}
+        className="w-full justify-start"
+      >
+        <ArrowLeftRight className="w-4 h-4 mr-2" />
+        Swap Versions
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleRefresh}
+        disabled={loading}
+        className="w-full justify-start"
+      >
+        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+        Refresh
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => handleDownloadVersion(versionA || '', "Version-A")}
+        className="w-full justify-start"
+      >
+        <Download className="w-4 h-4 mr-2" />
+        Export A
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => handleDownloadVersion(versionB || '', "Version-B")}
+        className="w-full justify-start"
+      >
+        <Download className="w-4 h-4 mr-2" />
+        Export B
+      </Button>
+    </div>
+  ), [versionA, versionB, loading, toast]);
+
+  // Performance optimized comparison data transformation
+  const transformComparisonDataForUI = useCallback((): { versionA: ComparisonWorkflowVersion; versionB: ComparisonWorkflowVersion } | null => {
     if (!comparisonData) return null;
 
     const versionAData = comparisonData.versionA;
@@ -567,13 +905,15 @@ const CompareVersions = () => {
           hour: '2-digit',
           minute: '2-digit'
         }) : 'Unknown Date',
-      author: 'User', // Backend should provide this
+      author: versionAData.author || 'User',
       steps: (versionAData.steps || []).map((step: any) => ({
         type: mapStepTypeToIcon(step.type) as any,
         title: String(step.title || 'Unknown Step'),
         status: getChangeTypeForStep(step) as any,
-        details: String(step.description || ''),
-        summary: String(step.details?.summary || step.details?.type || ''),
+        details: getStepDetails(step),
+        summary: getStepSummary(step),
+        highlightClass: getStepHighlightClass(step),
+        diffIndicator: step.isNew ? 'added' : step.isModified ? 'modified' : step.isRemoved ? 'removed' : null
       }))
     };
 
@@ -589,13 +929,15 @@ const CompareVersions = () => {
           hour: '2-digit',
           minute: '2-digit'
         }) : 'Unknown Date',
-      author: 'User', // Backend should provide this
+      author: versionBData.author || 'User',
       steps: (versionBData.steps || []).map((step: any) => ({
         type: mapStepTypeToIcon(step.type) as any,
         title: String(step.title || 'Unknown Step'),
         status: getChangeTypeForStep(step) as any,
-        details: String(step.description || ''),
-        summary: String(step.details?.summary || step.details?.type || ''),
+        details: getStepDetails(step),
+        summary: getStepSummary(step),
+        highlightClass: getStepHighlightClass(step),
+        diffIndicator: step.isNew ? 'added' : step.isModified ? 'modified' : step.isRemoved ? 'removed' : null
       }))
     };
 
@@ -603,7 +945,56 @@ const CompareVersions = () => {
       versionA: transformedVersionA,
       versionB: transformedVersionB,
     };
+  }, [comparisonData, getStepHighlightClass]);
+
+  const toggleStepExpansion = (stepId: string) => {
+    const newExpanded = new Set(expandedSteps);
+    if (newExpanded.has(stepId)) {
+      newExpanded.delete(stepId);
+    } else {
+      newExpanded.add(stepId);
+    }
+    setExpandedSteps(newExpanded);
   };
+
+  // Memoized filtered steps for better performance
+  const filteredSteps = useMemo(() => {
+    if (!comparisonData) return [];
+
+    const allSteps = [
+      ...(comparisonData.versionA?.steps || []).map(step => ({ ...step, source: 'A' })),
+      ...(comparisonData.versionB?.steps || []).map(step => ({ ...step, source: 'B' }))
+    ];
+
+    let filtered = allSteps;
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(step =>
+        step.title?.toLowerCase().includes(searchLower) ||
+        step.description?.toLowerCase().includes(searchLower) ||
+        step.type?.toLowerCase().includes(searchLower) ||
+        step.details?.summary?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply type filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(step => step.type === filterType);
+    }
+
+    return filtered;
+  }, [comparisonData, searchTerm, filterType]);
+
+  const getChangeTypeForStep = (step: any) => {
+    if (step.isNew) return 'added';
+    if (step.isModified) return 'modified';
+    if (step.isRemoved) return 'removed';
+    return 'unchanged';
+  };
+
+  // Enhanced transformComparisonDataForUI moved to useCallback version above
 
   const mapStepTypeToIcon = (stepType: string): "email" | "delay" | "notification" | "schedule" | "complete" | "assign" | "trigger" | "webhook" | "condition" | "task" | "list" | "goal" => {
     switch (stepType?.toLowerCase()) {
@@ -695,6 +1086,19 @@ const CompareVersions = () => {
 
   const headerActions = (
     <div className="flex items-center gap-2">
+      {/* Keyboard shortcuts hint */}
+      <div className="hidden md:flex items-center gap-1 text-xs text-gray-500 mr-2">
+        <Badge variant="secondary" className="text-xs">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl+K</kbd> Back
+        </Badge>
+        <Badge variant="secondary" className="text-xs">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl+S</kbd> Swap
+        </Badge>
+        <Badge variant="secondary" className="text-xs">
+          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl+F</kbd> Search
+        </Badge>
+      </div>
+
       {/* Search and Filter Controls */}
       <div className="flex items-center gap-2">
         <div className="relative">
@@ -711,9 +1115,11 @@ const CompareVersions = () => {
           variant="outline"
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
+          className={showFilters ? "bg-orange-50 border-orange-200 text-orange-700" : ""}
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
+          {showFilters && <ChevronDown className="w-4 h-4 ml-1" />}
         </Button>
 
         {showFilters && (
@@ -734,15 +1140,57 @@ const CompareVersions = () => {
         )}
       </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleRefresh}
-        disabled={loading}
-      >
-        <RefreshCw className="w-4 h-4 mr-2" />
-        Refresh
-      </Button>
+      <div className="border-l border-gray-300 h-6 mx-2"></div>
+
+      {/* Quick Actions */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (versionA && versionB) {
+              setVersionA(versionB);
+              setVersionB(versionA);
+              toast({
+                title: "Versions Swapped",
+                description: "Version A and Version B have been swapped",
+              });
+            }
+          }}
+          disabled={!versionA || !versionB}
+          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+        >
+          <ArrowLeftRight className="w-4 h-4 mr-2" />
+          Swap
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={loading}
+          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+
+        {/* HubSpot-style primary action */}
+        <Button
+          size="sm"
+          className={`bg-orange-500 hover:bg-orange-600 text-white border-orange-500 ${isHubSpotContext ? 'shadow-lg' : ''}`}
+          onClick={() => {
+            // Export comparison report
+            toast({
+              title: "Feature Coming Soon",
+              description: "Comparison report export will be available soon",
+            });
+          }}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export Report
+        </Button>
+      </div>
     </div>
   );
 
@@ -799,24 +1247,106 @@ const CompareVersions = () => {
       </ContentSection>
 
 
-      {/* Clean Comparison Interface */}
+      {/* Enhanced Comparison Interface with HubSpot-style alerts */}
       <ContentSection>
-        {comparisonData && transformComparisonDataForUI() ? (
-          <WorkflowComparison
-            versionA={transformComparisonDataForUI()!.versionA}
-            versionB={transformComparisonDataForUI()!.versionB}
-          />
-        ) : (
-          <div className="text-center py-12">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Comparison Data
-            </h3>
-            <p className="text-gray-600">
-              Select two different versions to compare them.
-            </p>
+        {/* HubSpot-style status alerts */}
+        {comparisonData?.differences && (
+          <div className="mb-6 space-y-3">
+            {comparisonData.differences.added.length > 0 && (
+              <HubSpotAlert
+                type="success"
+                title={`${comparisonData.differences.added.length} Steps Added`}
+                message={`Found ${comparisonData.differences.added.length} new steps in Version ${versionBData?.versionNumber || 'B'}`}
+              />
+            )}
+            {comparisonData.differences.modified.length > 0 && (
+              <HubSpotAlert
+                type="warning"
+                title={`${comparisonData.differences.modified.length} Steps Modified`}
+                message={`Found ${comparisonData.differences.modified.length} modified steps between versions`}
+              />
+            )}
+            {comparisonData.differences.removed.length > 0 && (
+              <HubSpotAlert
+                type="error"
+                title={`${comparisonData.differences.removed.length} Steps Removed`}
+                message={`Found ${comparisonData.differences.removed.length} removed steps from Version ${versionAData?.versionNumber || 'A'}`}
+              />
+            )}
           </div>
         )}
+
+        {/* Main comparison interface */}
+        {comparisonData && transformComparisonDataForUI() ? (
+          <div className="relative">
+            <WorkflowComparison
+              versionA={transformComparisonDataForUI()!.versionA}
+              versionB={transformComparisonDataForUI()!.versionB}
+            />
+
+            {/* Floating action panel */}
+            {showFloatingPanel && (
+              <div className="fixed bottom-6 right-6 z-50">
+                <FloatingActionPanel />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <GitCompare className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Ready to Compare Versions
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Select two different versions above to see a detailed comparison of changes, additions, and modifications.
+              </p>
+
+              {/* Quick tips */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                  <Zap className="w-4 h-4 mr-2" />
+                  Quick Tips
+                </h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Use <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+K</kbd> to return to workflow history</li>
+                  <li>• Use <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+S</kbd> to quickly swap versions</li>
+                  <li>• Use <kbd className="px-1 py-0.5 bg-blue-100 rounded text-xs">Ctrl+F</kbd> to focus the search box</li>
+                  <li>• Green highlights show new additions, yellow shows modifications</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </ContentSection>
+
+      {/* HubSpot-style footer with help */}
+      <ContentSection spacing="tight">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-4 text-gray-600">
+              <span>💡 Need help with version comparison?</span>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => navigate('/help/feature-spotlights')}
+                className="text-orange-600 hover:text-orange-700 p-0"
+              >
+                View Feature Guide
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {isHubSpotContext ? 'HubSpot Mode' : 'Standalone Mode'}
+              </Badge>
+              <span className="text-gray-500">
+                {comparisonData ? `${(comparisonData.differences?.added?.length || 0) + (comparisonData.differences?.modified?.length || 0) + (comparisonData.differences?.removed?.length || 0)} changes detected` : 'No comparison active'}
+              </span>
+            </div>
+          </div>
+        </div>
       </ContentSection>
     </MainAppLayout>
   );

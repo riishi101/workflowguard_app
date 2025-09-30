@@ -73,7 +73,8 @@ export function WorkflowStep({ type, title, status, details, summary, className 
         <div className="font-medium text-sm">{title}</div>
         {(summary || details) && (
           <div className="text-xs opacity-75 mt-1">
-            {summary || details}
+            {summary && <div className="font-medium">{summary}</div>}
+            {details && <div>{details}</div>}
           </div>
         )}
       </div>

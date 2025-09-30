@@ -21,7 +21,7 @@ const MainAppLayout = ({
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <TopNavigation />
-      
+
       <main className="max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
         {/* Page Header */}
         <div className="mb-8">

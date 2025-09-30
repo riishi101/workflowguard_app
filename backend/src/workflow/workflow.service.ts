@@ -703,35 +703,6 @@ export class WorkflowService {
         });
       }
 
-      // Handle enrollment triggers as separate steps
-      if (
-        workflowData?.enrollmentTriggers &&
-        Array.isArray(workflowData.enrollmentTriggers)
-      ) {
-        console.log(`📝 Processing ${workflowData.enrollmentTriggers.length} triggers`);
-        workflowData.enrollmentTriggers.forEach(
-          (trigger: any, index: number) => {
-            steps.unshift({
-              // Add at beginning (triggers come first)
-              id: trigger.id || `trigger-${index}`,
-              title: 'Enrollment Trigger',
-              type: 'trigger',
-              description: this.getTriggerDescription(trigger),
-              isNew: false,
-              isModified: false,
-              isRemoved: false,
-              details: {
-                type: 'enrollmentTrigger',
-                filters: trigger.filters,
-                settings: trigger.settings,
-                conditions: trigger.conditions,
-                rawTrigger: trigger,
-              },
-            });
-          },
-        );
-      }
-
       // Handle goals as final steps
       if (workflowData?.goals && Array.isArray(workflowData.goals)) {
         console.log(`📝 Processing ${workflowData.goals.length} goals`);
@@ -865,6 +836,18 @@ export class WorkflowService {
       return 'Add to list';
     }
 
+    if (actionType === 'REMOVE_FROM_LIST') {
+      return 'Remove from list';
+    }
+
+    if (actionType === 'CREATE_DEAL') {
+      return `Create deal${action.dealName ? `: ${action.dealName}` : ''}`;
+    }
+
+    if (actionType === 'ASSIGN_OWNER') {
+      return `Assign owner${action.newValue ? `: ${action.newValue}` : ''}`;
+    }
+
     // Handle specific action types based on the workflow structure
     if (actionType.includes('PROPERTY')) {
       return `Update property: ${action.propertyName || 'Unknown'}`;
@@ -872,6 +855,14 @@ export class WorkflowService {
 
     if (actionType.includes('EMAIL')) {
       return `Send email notification`;
+    }
+
+    if (actionType.includes('SMS')) {
+      return `Send SMS`;
+    }
+
+    if (actionType.includes('CALL')) {
+      return `Log call`;
     }
 
     return actionType || 'Unknown Action';
@@ -889,7 +880,35 @@ export class WorkflowService {
 
     const filterDescriptions = filters.map((filter: any) => {
       if (filter.property && filter.operator && filter.value !== undefined) {
-        return `${filter.property} ${filter.operator} ${filter.value}`;
+        // Handle different operators
+        switch (filter.operator) {
+          case 'EQ':
+            return `${filter.property} equals ${filter.value}`;
+          case 'NEQ':
+            return `${filter.property} not equals ${filter.value}`;
+          case 'GT':
+            return `${filter.property} greater than ${filter.value}`;
+          case 'LT':
+            return `${filter.property} less than ${filter.value}`;
+          case 'GTE':
+            return `${filter.property} greater than or equals ${filter.value}`;
+          case 'LTE':
+            return `${filter.property} less than or equals ${filter.value}`;
+          case 'CONTAINS':
+            return `${filter.property} contains ${filter.value}`;
+          case 'NOT_CONTAINS':
+            return `${filter.property} does not contain ${filter.value}`;
+          case 'STARTS_WITH':
+            return `${filter.property} starts with ${filter.value}`;
+          case 'ENDS_WITH':
+            return `${filter.property} ends with ${filter.value}`;
+          case 'IS_EMPTY':
+            return `${filter.property} is empty`;
+          case 'NOT_EMPTY':
+            return `${filter.property} is not empty`;
+          default:
+            return `${filter.property} ${filter.operator} ${filter.value}`;
+        }
       }
       return 'Custom filter';
     });
@@ -903,10 +922,6 @@ export class WorkflowService {
     const triggerType = trigger.eventId || trigger.type || 'unknown';
     const filters = trigger.filters || [];
 
-    if (filters.length === 0) {
-      return `${triggerType} trigger`;
-    }
-
     // Handle specific trigger types based on HubSpot workflow structure
     if (triggerType === 'contact_property_change') {
       const propertyFilter = filters.find((f: any) => f.property);
@@ -915,6 +930,26 @@ export class WorkflowService {
 
     if (triggerType === 'contact_list_membership') {
       return 'Contact added to list';
+    }
+
+    if (triggerType === 'form_submission') {
+      return 'Form submitted';
+    }
+
+    if (triggerType === 'page_view') {
+      return 'Page viewed';
+    }
+
+    if (triggerType === 'email_open') {
+      return 'Email opened';
+    }
+
+    if (triggerType === 'email_click') {
+      return 'Email link clicked';
+    }
+
+    if (filters.length > 0) {
+      return `${triggerType} with ${filters.length} condition${filters.length > 1 ? 's' : ''}`;
     }
 
     return `${triggerType} trigger`;
@@ -2309,23 +2344,38 @@ export class WorkflowService {
   }
 
   private getActionDescription(action: any): string {
-    switch (action.type) {
+    switch (action.type || action.actionType) {
       case 'SET_CONTACT_PROPERTY':
-        return `Set contact property: ${action.propertyName}`;
+        return `Set contact property: ${action.propertyName}${action.propertyValue ? ` = ${action.propertyValue}` : ''}`;
       case 'DELAY':
-        return `Delay for ${Math.round(action.delayMillis / 60000)} minutes`;
+        const minutes = Math.round((action.delayMillis || 0) / 60000);
+        return `Delay for ${minutes} minute${minutes !== 1 ? 's' : ''}`;
       case 'TASK':
-        return `Create task: ${action.subject}`;
+        return `Create task: ${action.subject || 'Untitled task'}`;
       case 'EMAIL':
-        return `Send email: ${action.subject}`;
-      case 'DEAL':
-        return `Create deal: ${action.dealName}`;
+        return `Send email: ${action.subject || 'No subject'}`;
+      case 'WEBHOOK':
+        return `Send webhook to ${action.url || 'external service'}`;
+      case 'CREATE_DEAL':
+        return `Create deal: ${action.dealName || 'Untitled deal'}`;
       case 'BRANCH':
         return `Branch based on conditions`;
+      case 'ADD_TO_LIST':
+        return `Add contact to list`;
+      case 'REMOVE_FROM_LIST':
+        return `Remove contact from list`;
+      case 'ASSIGN_OWNER':
+        return `Assign owner: ${action.newValue || 'Unspecified owner'}`;
       case 'UNSUPPORTED_ACTION':
         return `Custom action (may need manual configuration)`;
       default:
-        return `${action.type} action`;
+        if (action.type) {
+          return `${action.type} action`;
+        } else if (action.actionType) {
+          return `${action.actionType} action`;
+        } else {
+          return 'Unknown action type';
+        }
     }
   }
 
