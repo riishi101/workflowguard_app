@@ -986,17 +986,25 @@ export class WorkflowService {
     let actionType = action.type || action.actionType || '';
     let actionData = action;
 
-    // CRITICAL FIX: Parse contextJson if action type is UNSUPPORTED_ACTION
-    if (actionType === 'UNSUPPORTED_ACTION' && action.contextJson) {
+    // CRITICAL FIX: Parse contextJson for better action descriptions
+    if (action.contextJson) {
       try {
         const contextData = JSON.parse(action.contextJson);
-        actionType = contextData.actionType || actionType;
-        actionData = { ...action, ...contextData }; // Merge context data with action
-        console.log('🔧 Parsed UNSUPPORTED_ACTION contextJson:', {
+        
+        // If action type is UNSUPPORTED_ACTION, try to get the real type from context
+        if (actionType === 'UNSUPPORTED_ACTION') {
+          actionType = contextData.actionType || actionType;
+        }
+        
+        // Merge context data with action for better parsing
+        actionData = { ...action, ...contextData };
+        
+        console.log('🔧 Parsed contextJson:', {
           originalType: action.type,
           parsedType: actionType,
-          subject: contextData.subject,
-          body: contextData.body
+          hasSubject: !!contextData.subject,
+          hasPropertyName: !!contextData.propertyName,
+          hasConditions: !!(contextData.conditions && contextData.conditions.length > 0)
         });
       } catch (error) {
         console.warn('⚠️ Failed to parse contextJson:', error);
@@ -1028,12 +1036,18 @@ export class WorkflowService {
       const operation = actionData.operation || actionData.operator || 'modify';
       const value = actionData.propertyValue || actionData.value || actionData.amount;
       
+      // Make property names more user-friendly
+      const friendlyPropertyName = propertyName
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str: string) => str.toUpperCase())
+        .replace('_', ' ');
+      
       if (operation === 'ADD' || operation === 'INCREASE') {
-        return `Increase ${propertyName}${value ? ` by ${value}` : ''}`;
+        return `Increase ${friendlyPropertyName}${value ? ` by ${value}` : ''}`;
       } else if (operation === 'SUBTRACT' || operation === 'DECREASE') {
-        return `Decrease ${propertyName}${value ? ` by ${value}` : ''}`;
+        return `Decrease ${friendlyPropertyName}${value ? ` by ${value}` : ''}`;
       } else {
-        return `Update ${propertyName}${value ? ` to ${value}` : ''}`;
+        return `Update ${friendlyPropertyName}${value ? ` to ${value}` : ''}`;
       }
     }
 
@@ -1062,10 +1076,10 @@ export class WorkflowService {
       if (conditions.length > 0) {
         const condition = conditions[0];
         const property = condition.property || condition.propertyName || 'property';
-        const operator = condition.operator || 'equals';
+        const operator = this.getOperatorText(condition.operator || 'EQ');
         const value = condition.value || condition.propertyValue || 'value';
         
-        return `Branch: If ${property} ${operator} ${value}`;
+        return `Branch: If ${property} ${operator} "${value}"`;
       }
       return 'Conditional branch';
     }
@@ -1125,6 +1139,27 @@ export class WorkflowService {
       .replace(/\b\w/g, (l: string) => l.toUpperCase());
     
     return friendlyName || 'Unknown Action';
+  }
+
+  private getOperatorText(operator: string): string {
+    const operatorMap: { [key: string]: string } = {
+      'EQ': 'equals',
+      'NEQ': 'does not equal',
+      'GT': 'is greater than',
+      'GTE': 'is greater than or equal to',
+      'LT': 'is less than',
+      'LTE': 'is less than or equal to',
+      'CONTAINS': 'contains',
+      'NOT_CONTAINS': 'does not contain',
+      'STARTS_WITH': 'starts with',
+      'ENDS_WITH': 'ends with',
+      'IS_EMPTY': 'is empty',
+      'IS_NOT_EMPTY': 'is not empty',
+      'IS_KNOWN': 'is known',
+      'IS_UNKNOWN': 'is unknown'
+    };
+
+    return operatorMap[operator] || operator || 'equals';
   }
 
 
