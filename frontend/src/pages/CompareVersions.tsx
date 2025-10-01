@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,12 +16,9 @@ import {
   Mail,
   Clock,
   Calendar,
-  RotateCcw,
   AlertCircle,
-  Loader2,
   RefreshCw,
   Eye,
-  Download,
 } from "lucide-react";
 
 interface WorkflowVersion {
@@ -62,7 +51,6 @@ const CompareVersions = () => {
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [versionA, setVersionA] = useState(searchParams.get("versionA") || "");
   const [versionB, setVersionB] = useState(searchParams.get("versionB") || "");
-  const [syncScroll, setSyncScroll] = useState(true);
   const [workflowDetails, setWorkflowDetails] = useState<any>(null);
   const [comparisonData, setComparisonData] = useState<{
     versionA: WorkflowVersion | null;
@@ -73,7 +61,6 @@ const CompareVersions = () => {
       removed: any[];
     };
   } | null>(null);
-  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     if (workflowId) {
@@ -222,68 +209,7 @@ const CompareVersions = () => {
     fetchVersions();
   };
 
-  const handleRestoreVersion = async (versionId: string, versionLabel: string) => {
-    if (!workflowId) return;
 
-    try {
-      setRestoring(true);
-      await ApiService.restoreWorkflowVersion(workflowId, versionId);
-
-      toast({
-        title: "Version Restored",
-        description: `Successfully restored ${versionLabel}`,
-      });
-
-      // Navigate back to workflow history
-      navigate(`/workflow-history/${workflowId}`);
-    } catch (err: any) {
-      console.error("Failed to restore version:", err);
-      toast({
-        title: "Restore Failed",
-        description: err.response?.data?.message || "Failed to restore version. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
-  const handleDownloadVersion = async (versionId: string, versionLabel: string) => {
-    if (!workflowId) return;
-
-    try {
-      const response = await ApiService.downloadWorkflowVersion(workflowId, versionId);
-
-      // Add safety check for response.data
-      if (!response || !response.data) {
-        throw new Error("No data received from server");
-      }
-
-      // Create and download the file
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const workflowName = workflowDetails?.name || "unknown-workflow";
-      a.download = `workflow-${workflowName}-${versionLabel}.json`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: "Download Complete",
-        description: "Workflow version downloaded successfully.",
-      });
-    } catch (err: any) {
-      console.error("Failed to download version:", err);
-      toast({
-        title: "Download Failed",
-        description: err.response?.data?.message || err.message || "Failed to download workflow version. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleBackToHistory = () => {
     navigate(`/workflow-history/${workflowId}`);
@@ -424,120 +350,9 @@ const CompareVersions = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Version History
           </Button>
-          {comparisonData && (
-            <div className="flex items-center space-x-3">
-              <Button 
-                variant="outline" 
-                className="text-blue-600"
-                onClick={() => handleDownloadVersion(versionA, "Version-A")}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Version A
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-blue-600"
-                onClick={() => handleDownloadVersion(versionB, "Version-B")}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Version B
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-green-600"
-                onClick={() => handleRestoreVersion(versionA, "Version A")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version A
-                  </>
-                )}
-              </Button>
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => handleRestoreVersion(versionB, "Version B")}
-                disabled={restoring}
-              >
-                {restoring ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Restoring...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Restore Version B
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
         </div>
       </ContentSection>
 
-      {/* Version Selectors and Controls */}
-      <ContentSection>
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version A:
-              </span>
-              <Select value={versionA} onValueChange={setVersionA}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Version A" />
-                </SelectTrigger>
-                <SelectContent>
-                  {versions.map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      Version {version.versionNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                Version B:
-              </span>
-              <Select value={versionB} onValueChange={setVersionB}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Version B" />
-                </SelectTrigger>
-                <SelectContent>
-                  {versions.map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      Version {version.versionNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={syncScroll}
-                onCheckedChange={setSyncScroll}
-                id="sync-scroll"
-                disabled={loading}
-              />
-              <label htmlFor="sync-scroll" className="text-sm text-gray-700">
-                Sync Scroll
-              </label>
-            </div>
-          </div>
-        </div>
-      </ContentSection>
 
       {/* Comparison Content */}
       <ContentSection>
