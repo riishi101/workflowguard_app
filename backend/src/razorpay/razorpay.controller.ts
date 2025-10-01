@@ -293,17 +293,25 @@ export class RazorpayController {
         currency as keyof typeof planPricing.starter
       ] || 19;
 
-    const order = await this.razorpayService.createOrder(amount, currency, {
-      plan_id: body.planId,
-      user_id: user.id,
-      type: 'subscription_upgrade',
-      currency: currency,
-    });
+    try {
+      const order = await this.razorpayService.createOrder(amount, currency, {
+        plan_id: body.planId,
+        user_id: user.id,
+        type: 'subscription_upgrade',
+        currency: currency,
+      });
 
-    return {
-      success: true,
-      data: order,
-    };
+      return {
+        success: true,
+        data: order,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create Razorpay order for user ${user.id}: ${error.message}`);
+      if (error.message?.includes('Payment system')) {
+        throw error; // Re-throw configuration errors as-is
+      }
+      throw new BadRequestException('Payment system is temporarily unavailable. Please contact support.');
+    }
   }
 
   // Confirm Razorpay Payment

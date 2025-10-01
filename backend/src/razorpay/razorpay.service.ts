@@ -104,17 +104,26 @@ export class RazorpayService {
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
 
     if (!keyId || !keySecret) {
+      this.logger.error('Razorpay credentials not configured in environment variables');
+      this.logger.error('Required: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET');
       throw new Error(
-        'Razorpay credentials not found in environment variables',
+        'Payment system is not configured. Please contact support.',
       );
     }
 
-    this.razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
+    try {
+      this.razorpay = new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret,
+      });
 
-    this.logger.log('Razorpay service initialized');
+      this.logger.log('Razorpay service initialized successfully');
+    } catch (error) {
+      this.logger.error('Failed to initialize Razorpay SDK:', error.message);
+      throw new Error(
+        'Payment system initialization failed. Please contact support.',
+      );
+    }
   }
 
   // Customer Management

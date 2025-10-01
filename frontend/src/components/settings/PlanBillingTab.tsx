@@ -126,7 +126,7 @@ const PlanBillingTab = () => {
     if (!razorpayKeyId) {
       toast({
         title: 'Configuration Error',
-        description: 'Razorpay is not configured. Please contact support.',
+        description: 'Payment system is not configured. Please contact support for assistance.',
         variant: 'destructive',
       });
       return;
