@@ -492,6 +492,7 @@ export class WorkflowController {
         workflowId,
         versionA,
         versionB,
+        true, // Enable detailed property comparison
       );
       return {
         success: true,

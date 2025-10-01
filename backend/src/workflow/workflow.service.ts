@@ -56,6 +56,7 @@ export class WorkflowService {
     workflowId: string,
     versionA: string,
     versionB: string,
+    captureDetailedStepProperties: boolean = true,
   ): Promise<any> {
     console.log('🚨 COMPARE VERSIONS CALLED:', { workflowId, versionA, versionB });
     
@@ -151,6 +152,9 @@ export class WorkflowService {
         where: { id: actualWorkflowId }
       });
       const userId = workflow?.ownerId;
+      
+      // Ensure we capture detailed step properties for comparison
+      const captureDetailedStepProperties = true;
       
       // CRITICAL FIX: If stored data is incomplete, fetch fresh detailed data from HubSpot
       // Use the enhanced validation method
@@ -289,6 +293,11 @@ export class WorkflowService {
           sampleStep: markedStepsB[0] ? JSON.stringify(markedStepsB[0]).substring(0, 200) : 'no steps'
         }
       });
+      
+      // Enhance steps with detailed property information for better comparison
+      if (captureDetailedStepProperties) {
+        this.enhanceStepsWithDetailedProperties(markedStepsA, markedStepsB);
+      }
 
       const enhancedComparison = {
         versionA: {
@@ -574,8 +583,84 @@ export class WorkflowService {
     return {
       markedStepsA,
       markedStepsB,
-      changeSummary: { added, removed, modified }
+      changeSummary: {
+        added,
+        removed,
+        modified
+      }
     };
+  }
+  
+  private enhanceStepsWithDetailedProperties(stepsA: any[], stepsB: any[]): void {
+    // For each modified step in B, identify specific property changes
+    stepsB.forEach(step => {
+      if (step.isModified) {
+        // Find matching step in A
+        const stepA = stepsA.find(s => s.title === step.title && s.type === step.type);
+        if (stepA && stepA.details && step.details) {
+          // Store old properties for comparison
+          step.oldProperties = stepA.details;
+          
+          // Compare properties and identify changes
+          step.changedProperties = this.compareStepProperties(stepA.details, step.details);
+        }
+      }
+      
+      // Set status for UI display
+      if (step.isNew) {
+        step.status = 'added';
+      } else if (step.isModified) {
+        step.status = 'modified';
+      } else if (step.isRemoved) {
+        step.status = 'removed';
+      } else {
+        step.status = 'unchanged';
+      }
+    });
+    
+    // Update status for steps in A
+    stepsA.forEach(step => {
+      if (step.isRemoved) {
+        step.status = 'removed';
+      } else if (step.isModified) {
+        step.status = 'modified';
+      } else {
+        step.status = 'unchanged';
+      }
+    });
+  }
+  
+  private compareStepProperties(propsA: any, propsB: any): Record<string, {old: any, new: any}> {
+    const result: Record<string, {old: any, new: any}> = {};
+    
+    if (!propsA || !propsB) return result;
+    
+    // Get all unique keys
+    const allKeys = new Set([
+      ...Object.keys(propsA || {}),
+      ...Object.keys(propsB || {})
+    ]);
+    
+    // Compare each property
+    allKeys.forEach(key => {
+      // Skip raw data properties
+      if (key === 'rawAction' || key === 'rawStep' || key === 'rawWorkflowData' || key === 'rawGoal') {
+        return;
+      }
+      
+      const valueA = propsA[key];
+      const valueB = propsB[key];
+      
+      // Check if values are different
+      if (JSON.stringify(valueA) !== JSON.stringify(valueB)) {
+        result[key] = {
+          old: valueA,
+          new: valueB
+        };
+      }
+    });
+    
+    return result;
   }
 
   private hasStepChanged(stepA: any, stepB: any): boolean {
