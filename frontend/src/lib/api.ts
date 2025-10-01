@@ -733,7 +733,7 @@ class ApiService {
   // Razorpay Integration APIs
   static async createRazorpayOrder(planId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/razorpay/create-order', { planId });
+      const response = await apiClient.post('/api/razorpay/create-order', { planId });
       return response.data;
     } catch (error) {
       throw error;
@@ -747,7 +747,7 @@ class ApiService {
     signature: string;
   }): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/razorpay/confirm-payment', paymentData);
+      const response = await apiClient.post('/api/razorpay/confirm-payment', paymentData);
       return response.data;
     } catch (error) {
       throw error;
