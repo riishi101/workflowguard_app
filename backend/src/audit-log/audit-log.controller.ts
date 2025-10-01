@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuditLogService } from './audit-log.service';
 import { GetUser } from '../auth/get-user.decorator';
@@ -39,6 +39,29 @@ export class AuditLogController {
         page: pageNum,
         pageSize: pageSizeNum,
         total: auditLogs.length,
+      },
+    };
+  }
+
+  @Post('export')
+  async exportAuditLogs(
+    @GetUser() user: any,
+    @Body() filters?: any,
+  ) {
+    const auditLogs = await this.auditLogService.getAuditLogs(
+      user.id,
+      filters || {},
+      0, // skip
+      10000, // large limit for export
+    );
+
+    return {
+      success: true,
+      data: auditLogs,
+      exportInfo: {
+        totalRecords: auditLogs.length,
+        exportDate: new Date().toISOString(),
+        filters: filters || {},
       },
     };
   }

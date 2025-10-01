@@ -629,7 +629,7 @@ class ApiService {
 
   static async getAuditLogs(filters?: any): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/audit-logs', { params: filters });
+      const response = await apiClient.get('/api/audit-logs', { params: filters });
       return response.data;
     } catch (error) {
       throw error;
@@ -638,8 +638,8 @@ class ApiService {
 
   static async exportAuditLogs(filters?: any): Promise<ApiResponse<any>> {
     try {
-      // Backend expects POST /audit-logs/export with filters in body
-      const response = await apiClient.post('/audit-logs/export', filters || {});
+      // Backend expects POST /api/audit-logs/export with filters in body
+      const response = await apiClient.post('/api/audit-logs/export', filters || {});
       return response.data;
     } catch (error) {
       throw error;
