@@ -110,19 +110,30 @@ const PlanBillingTab = () => {
   const loadRazorpayScript = () => {
     return new Promise((resolve, reject) => {
       if (window.Razorpay) {
+        console.log('Razorpay script already loaded');
         resolve(true);
         return;
       }
+      console.log('Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => reject('Failed to load Razorpay');
+      script.onload = () => {
+        console.log('Razorpay script loaded successfully');
+        resolve(true);
+      };
+      script.onerror = (error) => {
+        console.error('Failed to load Razorpay script:', error);
+        reject('Failed to load Razorpay');
+      };
       document.body.appendChild(script);
     });
   };
 
   const handleUpgrade = async (planId: string) => {
+    // Force read the environment variable directly
     const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    console.log('Razorpay Key ID:', razorpayKeyId ? 'Found' : 'Not found');
+    
     if (!razorpayKeyId) {
       toast({
         title: 'Configuration Error',
@@ -131,18 +142,32 @@ const PlanBillingTab = () => {
       });
       return;
     }
+    
     try {
       toast({ title: 'Processing...', description: 'Initiating plan upgrade...' });
       
-      await loadRazorpayScript();
+      // Load Razorpay script first
+      try {
+        await loadRazorpayScript();
+        console.log('Razorpay script loaded successfully');
+      } catch (scriptError) {
+        console.error('Failed to load Razorpay script:', scriptError);
+        throw new Error('Failed to load payment gateway. Please try again later.');
+      }
+      
+      // Create order
+      console.log('Creating Razorpay order for plan:', planId);
       const resp = await ApiService.createRazorpayOrder(planId);
+      console.log('Order creation response:', resp);
       
       if (!resp.success || !resp.data?.id) {
         throw new Error(resp.message || 'Failed to create payment order');
       }
 
       const order = resp.data;
+      console.log('Order created successfully:', order.id);
       
+      // Configure Razorpay options
       const options = {
         key: razorpayKeyId,
         amount: order.amount,
@@ -151,6 +176,7 @@ const PlanBillingTab = () => {
         description: `Upgrade to ${planId} plan`,
         order_id: order.id,
         handler: async function (paymentResult: any) {
+          console.log('Payment successful, confirming payment:', paymentResult);
           try {
             const confirmResponse = await ApiService.confirmRazorpayPayment({
               planId,
@@ -158,6 +184,7 @@ const PlanBillingTab = () => {
               orderId: order.id,
               signature: paymentResult.razorpay_signature,
             });
+            console.log('Payment confirmation response:', confirmResponse);
 
             if (confirmResponse.success) {
               toast({
@@ -169,6 +196,7 @@ const PlanBillingTab = () => {
               throw new Error(confirmResponse.message || 'Payment confirmation failed');
             }
           } catch (error: any) {
+            console.error('Payment confirmation error:', error);
             toast({
               title: 'Upgrade Failed',
               description: error.message || 'Payment confirmation failed. Please contact support.',
@@ -181,19 +209,36 @@ const PlanBillingTab = () => {
           email: subscription?.customerEmail || '',
         },
         theme: { color: '#2563eb' },
+        modal: {
+          ondismiss: function() {
+            console.log('Checkout form closed');
+            toast({
+              title: 'Checkout Cancelled',
+              description: 'You have closed the payment window. You can try again anytime.',
+              variant: 'default',
+            });
+          }
+        }
       };
       
-            const rzp = new window.Razorpay(options);
-      rzp.open();
-
-      rzp.on('payment.failed', () => {
-        toast({
-          title: 'Payment Failed',
-          description: 'Your payment was not processed. Please try again.',
-          variant: 'destructive',
+      // Initialize and open Razorpay
+      console.log('Initializing Razorpay with options:', JSON.stringify(options, null, 2));
+      try {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+        
+        rzp.on('payment.failed', (response: any) => {
+          console.error('Payment failed:', response);
+          toast({
+            title: 'Payment Failed',
+            description: 'Your payment was not processed. Please try again.',
+            variant: 'destructive',
+          });
         });
-      });
-
+      } catch (razorpayError) {
+        console.error('Error opening Razorpay:', razorpayError);
+        throw new Error('Failed to open payment gateway. Please try again.');
+      }
     } catch (error: any) {
       console.error('Plan upgrade failed:', error);
       toast({
@@ -575,4 +620,4 @@ const PlanBillingTab = () => {
   );
 };
 
-export default PlanBillingTab; 
+export default PlanBillingTab;
