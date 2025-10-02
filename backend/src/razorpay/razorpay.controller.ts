@@ -253,6 +253,7 @@ export class RazorpayController {
 
   // Configuration endpoint for frontend
   @Get('config')
+  @UseGuards(JwtAuthGuard)
   async getConfig() {
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     
