@@ -215,19 +215,102 @@ export class RazorpayController {
     return await this.razorpayService.getAllPlans();
   }
 
+  // Plans (temporary override for config testing)
+  @Get('plans-config')
+  async getPlansAsConfig() {
+    this.logger.log('getPlansAsConfig method called');
+    return {
+      message: 'Razorpay config from plans method',
+      keyId: this.configService.get<string>('RAZORPAY_KEY_ID'),
+      availableCurrencies: this.razorpayService.getAvailableCurrencies(),
+    };
+  }
+
   @Get('plans/:planId')
   async getPlan(@Param('planId') planId: string) {
     return await this.razorpayService.getPlan(planId);
   }
 
-  // Configuration endpoint for frontend
+  // Configuration endpoint for frontend - Original Method
   @Get('config')
-  async getRazorpayConfig() {
+  async getRazorpayConfig(): Promise<any> {
     this.logger.log('getRazorpayConfig method called');
     return {
       message: 'Razorpay config endpoint working',
       keyId: this.configService.get<string>('RAZORPAY_KEY_ID'),
       availableCurrencies: this.razorpayService.getAvailableCurrencies(),
+    };
+  }
+
+  // Configuration endpoint for frontend - Debug Version
+  @Get('config-debug')
+  async getRazorpayConfigDebug() {
+    console.log('DEBUG: getRazorpayConfigDebug method called');
+    return {
+      message: 'Razorpay config debug endpoint working',
+      keyId: this.configService.get<string>('RAZORPAY_KEY_ID'),
+      availableCurrencies: ['INR', 'USD', 'GBP', 'EUR', 'CAD'],
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // Configuration endpoint for frontend - Simple Version (no service dependencies)
+  @Get('config-simple')
+  async getSimpleRazorpayConfig(): Promise<{
+    message: string;
+    keyId: string;
+    availableCurrencies: string[];
+  }> {
+    this.logger.log('getSimpleRazorpayConfig method called');
+    return {
+      message: 'Razorpay configuration loaded successfully',
+      keyId: this.configService.get<string>('RAZORPAY_KEY_ID') || '',
+      availableCurrencies: ['INR', 'USD', 'GBP', 'EUR', 'CAD'],
+    };
+  }
+
+  // Test method using exact same pattern as working getPlans method
+  @Get('config-test')
+  async getConfigTest() {
+    this.logger.log('getConfigTest method called');
+    return {
+      message: 'Config test endpoint working',
+      keyId: 'test-key',
+      availableCurrencies: ['INR', 'USD', 'GBP', 'EUR', 'CAD'],
+    };
+  }
+
+  // Configuration endpoint for frontend - Hardcoded Version
+  @Get('config-hardcoded')
+  async getHardcodedRazorpayConfig() {
+    this.logger.log('getHardcodedRazorpayConfig method called');
+    return {
+      message: 'Razorpay configuration with hardcoded values',
+      keyId: 'rzp_live_R6PjXR1FYupO0Y',
+      availableCurrencies: ['INR', 'USD', 'GBP', 'EUR', 'CAD'],
+      planIds: {
+        starter: {
+          INR: 'plan_R6RI02CsUCUlDz',
+          USD: 'plan_RBDqWapKHZfPU7',
+          GBP: 'plan_RBFxk81S3ySXxj',
+          EUR: 'plan_RBFjbYhAtD3snL',
+          CAD: 'plan_RBFrtufmxmxwi8',
+        },
+        professional: {
+          INR: 'plan_R6RKEg5mqJK6Ky',
+          USD: 'plan_RBDrKWI81HS1FZ',
+          GBP: 'plan_RBFy8LsuW36jIj',
+          EUR: 'plan_RBFjqo5wE0d4jz',
+          CAD: 'plan_RBFsD6U2rQb4B6',
+        },
+        enterprise: {
+          INR: 'plan_R6RKnjqXu0BZsH',
+          USD: 'plan_RBDrX9dGapWrTe',
+          GBP: 'plan_RBFyJlB5jxwxB9',
+          EUR: 'plan_RBFovOUIUXISBE',
+          CAD: 'plan_RBFscXaosRIzEc',
+        },
+      },
     };
   }
 
