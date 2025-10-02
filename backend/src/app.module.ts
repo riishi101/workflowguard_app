@@ -22,8 +22,7 @@ import { HubSpotModule } from './services/hubspot.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
 import { HealthModule } from './health/health.module';
-import { RazorpayApiController } from './controllers/razorpay-api.controller';
-import { RazorpayConfigController } from './controllers/razorpay-config.controller';
+// Removed duplicate imports for Razorpay controllers that are already provided by RazorpayModule
 
 @Module({
   imports: [
@@ -50,7 +49,7 @@ import { RazorpayConfigController } from './controllers/razorpay-config.controll
     WhatsAppModule,
     HealthModule,
   ],
-  controllers: [AppController, HubSpotMarketplaceController, BillingController, RazorpayApiController, RazorpayConfigController],
+  controllers: [AppController, HubSpotMarketplaceController, BillingController],
   providers: [AppService],
 })
 export class AppModule {}
