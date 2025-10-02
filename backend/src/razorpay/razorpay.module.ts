@@ -2,13 +2,12 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RazorpayService } from './razorpay.service';
 import { RazorpayController } from './razorpay.controller';
-import { RazorpayConfigController } from '../controllers/razorpay-config.controller';
 import { SubscriptionModule } from '../subscription/subscription.module';
 
 @Module({
   imports: [ConfigModule, forwardRef(() => SubscriptionModule)],
   providers: [RazorpayService],
-  controllers: [RazorpayController, RazorpayConfigController],
+  controllers: [RazorpayController],
   exports: [RazorpayService],
 })
 export class RazorpayModule {}
