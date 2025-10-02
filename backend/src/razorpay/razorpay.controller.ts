@@ -8,13 +8,12 @@ import {
   Param,
   Query,
   Headers,
-  RawBody,
   UseGuards,
   Logger,
   BadRequestException,
   HttpCode,
   HttpStatus,
-  Inject,
+  Req,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -24,6 +23,8 @@ import {
   CreateSubscriptionDto,
   CreateCustomerDto,
 } from './razorpay.service';
+import { RawBody } from './raw-body.decorator';
+import { Request } from 'express';
 
 @Controller('razorpay')
 export class RazorpayController {
@@ -460,12 +461,15 @@ export class RazorpayController {
   @Post('webhooks')
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
-    @RawBody() body: Buffer,
+    @Req() req: Request,
     @Headers('x-razorpay-signature') signature: string,
   ) {
     this.logger.log('Received Razorpay webhook');
-
-    const bodyString = body.toString();
+    
+    // Get raw body from request
+    const body = req.body;
+    const bodyString = JSON.stringify(body);
+    
     const isValid = this.razorpayService.verifyWebhookSignature(
       bodyString,
       signature,
@@ -476,7 +480,7 @@ export class RazorpayController {
       throw new BadRequestException('Invalid signature');
     }
 
-    const event = JSON.parse(bodyString);
+    const event = body;
     this.logger.log(`Processing webhook event: ${event.event}`);
 
     await this.handleWebhookEvent(event);
