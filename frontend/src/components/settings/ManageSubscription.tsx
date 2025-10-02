@@ -107,21 +107,28 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.onload = () => resolve(true);
       script.onerror = () => reject('Failed to load Razorpay');
-      document.body.appendChild(script);
     });
   };
 
-    const handleUpgrade = async (planId: string) => {
+  const handleUpgrade = async (planId: string) => {
     setIsUpgrading(planId);
-    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (!razorpayKeyId) {
+    
+    try {
+      // Get Razorpay configuration from backend
+      const configResponse = await ApiService.getRazorpayConfig();
+      if (!configResponse.data?.keyId) {
+        throw new Error('Payment system not configured');
+      }
+    } catch (configError) {
       toast({
         title: 'Configuration Error',
-        description: 'Razorpay is not configured. Please contact support.',
+        description: 'Payment system is not configured. Please contact support.',
         variant: 'destructive',
       });
+      setIsUpgrading(null);
       return;
     }
+    
     try {
       toast({ title: 'Processing...', description: 'Initiating plan upgrade...' });
       
@@ -132,9 +139,12 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
         throw new Error(resp.message || 'Failed to create payment order');
       }
       
+      // Get config again for payment options
+      const configResponse = await ApiService.getRazorpayConfig();
+      
       const order = resp.data;
       const options = {
-        key: razorpayKeyId,
+        key: configResponse.data.keyId,
         amount: order.amount,
         currency: order.currency,
         name: 'WorkflowGuard',

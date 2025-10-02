@@ -731,6 +731,15 @@ class ApiService {
   }
 
   // Razorpay Integration APIs
+  static async getRazorpayConfig(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/api/razorpay/config');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   static async createRazorpayOrder(planId: string): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post('/api/razorpay/create-order', { planId });

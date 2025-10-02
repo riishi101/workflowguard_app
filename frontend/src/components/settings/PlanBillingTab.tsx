@@ -130,11 +130,23 @@ const PlanBillingTab = () => {
   };
 
   const handleUpgrade = async (planId: string) => {
-    // Force read the environment variable directly
-    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    console.log('Razorpay Key ID:', razorpayKeyId ? 'Found' : 'Not found');
-    
-    if (!razorpayKeyId) {
+    try {
+      // Get Razorpay configuration from backend
+      const configResponse = await fetch('/api/razorpay/config', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!configResponse.ok) {
+        throw new Error('Failed to get payment configuration. Please contact support.');
+      }
+      
+      const config = await configResponse.json();
+      console.log('Razorpay configuration loaded successfully');
+    } catch (configError) {
+      console.error('Configuration error:', configError);
       toast({
         title: 'Configuration Error',
         description: 'Payment system is not configured. Please contact support for assistance.',
@@ -167,9 +179,18 @@ const PlanBillingTab = () => {
       const order = resp.data;
       console.log('Order created successfully:', order.id);
       
+      // Get Razorpay configuration again for payment options
+      const configResponse = await fetch('/api/razorpay/config', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const config = await configResponse.json();
+      
       // Configure Razorpay options
       const options = {
-        key: razorpayKeyId,
+        key: config.keyId,
         amount: order.amount,
         currency: order.currency,
         name: 'WorkflowGuard',

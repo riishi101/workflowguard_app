@@ -17,6 +17,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GetUser } from '../auth/get-user.decorator';
 import {
@@ -32,6 +33,7 @@ export class RazorpayController {
 
   constructor(
     private razorpayService: RazorpayService,
+    private configService: ConfigService,
     @Inject(forwardRef(() => SubscriptionService))
     private subscriptionService: SubscriptionService,
   ) {}
@@ -247,6 +249,44 @@ export class RazorpayController {
   @Get('plans/:planId')
   async getPlan(@Param('planId') planId: string) {
     return await this.razorpayService.getPlan(planId);
+  }
+
+  // Configuration endpoint for frontend
+  @Get('config')
+  async getConfig() {
+    const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
+    
+    if (!keyId) {
+      throw new BadRequestException('Payment system is not configured. Please contact support.');
+    }
+
+    return {
+      keyId,
+      availableCurrencies: this.razorpayService.getAvailableCurrencies(),
+      planIds: {
+        starter: {
+          INR: this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_INR'),
+          USD: this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_USD'),
+          GBP: this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_GBP'),
+          EUR: this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_EUR'),
+          CAD: this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_CAD'),
+        },
+        professional: {
+          INR: this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_INR'),
+          USD: this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_USD'),
+          GBP: this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_GBP'),
+          EUR: this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_EUR'),
+          CAD: this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_CAD'),
+        },
+        enterprise: {
+          INR: this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_INR'),
+          USD: this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_USD'),
+          GBP: this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_GBP'),
+          EUR: this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_EUR'),
+          CAD: this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_CAD'),
+        },
+      },
+    };
   }
 
   // Create Order for Plan Upgrade

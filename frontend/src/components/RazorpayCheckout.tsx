@@ -44,7 +44,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       const customerData = {
         name: user.name || user.email,
         email: user.email,
-        contact: user.phone || '',
+        contact: (user as any).phone || '',
         notes: {
           user_id: user.id,
           plan_type: planType,
@@ -54,7 +54,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       const customer = await RazorpayService.createCustomer(customerData);
 
       // Step 2: Get plan ID for the selected plan
-      const planId = getPlanId(planType);
+      const planId = await getPlanId(planType, currency);
 
       // Step 3: Create subscription
       const subscriptionData = {
@@ -74,7 +74,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       await RazorpayService.openSubscriptionCheckout(subscription, {
         name: user.name || user.email,
         email: user.email,
-        contact: user.phone || '',
+        contact: (user as any).phone || '',
       });
 
       toast({
@@ -119,7 +119,7 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
       await RazorpayService.openOrderCheckout(order, {
         name: user.name || user.email,
         email: user.email,
-        contact: user.phone || '',
+        contact: (user as any).phone || '',
       });
 
       toast({
@@ -143,13 +143,25 @@ const RazorpayCheckout: React.FC<RazorpayCheckoutProps> = ({
     }
   };
 
-  const getPlanId = (planType: string): string => {
-    const planIds = {
-      starter: 'plan_R6RI02CsUCUlDz',
-      professional: 'plan_R6RKEg5mqJK6Ky',
-      enterprise: 'plan_R6RKnjqXu0BZsH',
-    };
-    return planIds[planType as keyof typeof planIds] || planIds.starter;
+  const getPlanId = async (planType: string, currency: string = 'INR'): Promise<string> => {
+    try {
+      const config = await RazorpayService.getConfig();
+      const planId = config.planIds[planType]?.[currency];
+      
+      if (!planId) {
+        // Fallback to INR if currency not found
+        const fallbackPlanId = config.planIds[planType]?.['INR'];
+        if (!fallbackPlanId) {
+          throw new Error(`Plan ID not found for ${planType}`);
+        }
+        return fallbackPlanId;
+      }
+      
+      return planId;
+    } catch (error) {
+      console.error('Failed to get plan ID:', error);
+      throw new Error('Failed to get payment configuration');
+    }
   };
 
   const getPlanFeatures = (planType: string): string[] => {

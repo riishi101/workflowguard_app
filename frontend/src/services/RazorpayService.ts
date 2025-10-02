@@ -153,6 +153,12 @@ class RazorpayService {
     return response.data;
   }
 
+  // Configuration
+  async getConfig() {
+    const response = await ApiService.get('/razorpay/config');
+    return response.data;
+  }
+
   // Plans
   async getPlans() {
     const response = await ApiService.get('/razorpay/plans');
@@ -195,6 +201,8 @@ class RazorpayService {
     };
     handler: (response: any) => void;
   }) {
+    // Get configuration from backend
+    const config = await this.getConfig();
     await this.loadRazorpay();
 
     if (!window.Razorpay) {
@@ -202,7 +210,7 @@ class RazorpayService {
     }
 
     const rzp = new window.Razorpay({
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_R6PjXR1FYupO0Y',
+      key: config.keyId,
       ...options,
     });
 
