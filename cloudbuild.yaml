@@ -56,7 +56,7 @@ steps:
       - '--memory=512Mi'
       - '--cpu=1'
       - '--max-instances=10'
-      - '--set-env-vars=VITE_API_URL=https://api.workflowguard.pro/api,VITE_APP_URL=https://www.workflowguard.pro,NODE_ENV=production'
+      - '--set-env-vars=VITE_API_URL=https://api.workflowguard.pro,VITE_APP_URL=https://www.workflowguard.pro,NODE_ENV=production'
     id: 'deploy-frontend'
     waitFor: ['push-frontend']
 
