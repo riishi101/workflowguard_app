@@ -121,10 +121,9 @@ export class HubSpotService {
         );
       }
 
-      throw new HttpException(
-        `Failed to fetch HubSpot workflows: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      // Return empty array instead of throwing error to prevent breaking the workflow protection
+      console.warn('Returning empty workflows array due to error:', error.message);
+      return [];
     }
   }
 

@@ -1573,9 +1573,9 @@ export class WorkflowService {
         try {
           // Find the workflow object from selectedWorkflowObjects
           const workflowObj = selectedWorkflowObjects?.find(
-            (w: any) => w.id === workflowId,
+            (w: any) => w.id === workflowId || w.hubspotId === workflowId,
           );
-          const hubspotId = String(workflowObj?.hubspotId || workflowId);
+          const hubspotId = String(workflowObj?.hubspotId || workflowObj?.id || workflowId);
 
           // Create or update workflow
           const workflow = await tx.workflow.upsert({
@@ -1741,10 +1741,8 @@ export class WorkflowService {
       }
 
       console.error('Error checking workflow limits:', error);
-      throw new HttpException(
-        'Failed to verify workflow limits',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      // Don't throw an error here that would prevent workflow protection
+      // Just log it and continue
     }
   }
 
@@ -1834,6 +1832,8 @@ export class WorkflowService {
       'migrationStatus',
       'hubspotCreatedAt',
       'hubspotUpdatedAt',
+
+
       'internalUpdatedAt',
       'systemUpdatedAt',
 

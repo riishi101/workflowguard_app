@@ -558,8 +558,15 @@ export class WorkflowController {
       };
     } catch (error) {
       console.error('start-protection error:', error);
+      
+      // Handle specific error types
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      // For any other errors, provide a more user-friendly message
       throw new HttpException(
-        `Failed to start workflow protection: ${error.message}`,
+        `Failed to start workflow protection: ${error.message || 'An unexpected error occurred'}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
