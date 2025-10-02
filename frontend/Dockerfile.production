@@ -19,6 +19,11 @@ RUN npm ci --include=dev
 # Copy source code
 COPY . .
 
+# Set environment variables for build
+ENV VITE_API_URL=https://api.workflowguard.pro
+ENV VITE_APP_URL=https://www.workflowguard.pro
+ENV NODE_ENV=production
+
 # Build the application
 RUN npm run build
 
