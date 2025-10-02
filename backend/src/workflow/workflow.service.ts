@@ -30,21 +30,8 @@ export class WorkflowService {
 
   async getHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
-      console.log(
-        '🔍 WorkflowService - getHubSpotWorkflows called for userId:',
-        userId,
-      );
-      const workflows = await this.hubspotService.getWorkflows(userId);
-      console.log(
-        '🔍 WorkflowService - Retrieved workflows from HubSpot:',
-        workflows.length,
-      );
-      return workflows;
+      return await this.hubspotService.getWorkflows(userId);
     } catch (error) {
-      console.error(
-        '🔍 WorkflowService - Error getting HubSpot workflows:',
-        error,
-      );
       throw new HttpException(
         `Failed to get HubSpot workflows: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -1734,6 +1721,7 @@ export class WorkflowService {
       // Check if adding requested workflows would exceed limit
       const totalAfterAddition = currentCount + requestedCount;
 
+      // Handle high-limit plans (9999 is effectively unlimited for practical purposes)
       if (totalAfterAddition > workflowLimit) {
         throw new HttpException(
           {

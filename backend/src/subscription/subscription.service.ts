@@ -33,7 +33,7 @@ export class SubscriptionService {
       const planId = user.subscription?.planId || 'starter';
       let planName = 'Starter Plan';
       let price = 19;
-      let limits = { workflows: 5, versionHistory: 30 };
+      let limits = { workflows: 10, versionHistory: 30 };
       let features = [
         'workflow_selection',
         'dashboard_overview',
@@ -44,7 +44,7 @@ export class SubscriptionService {
       if (planId === 'professional') {
         planName = 'Professional Plan';
         price = 49;
-        limits = { workflows: 25, versionHistory: 90 };
+        limits = { workflows: 35, versionHistory: 90 };
         features = [
           'workflow_selection',
           'dashboard_overview',
@@ -220,11 +220,11 @@ export class SubscriptionService {
 
       // Get plan limits based on user's subscription or default to professional trial
       const planId = user.subscription?.planId || 'professional';
-      let workflowLimit = 5;
+      let workflowLimit = 10;
       let versionHistoryLimit = 30;
 
       if (planId === 'professional') {
-        workflowLimit = 25;
+        workflowLimit = 35;
         versionHistoryLimit = 90;
       } else if (planId === 'enterprise') {
         workflowLimit = 9999;

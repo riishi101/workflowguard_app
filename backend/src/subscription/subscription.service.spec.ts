@@ -57,7 +57,7 @@ describe('SubscriptionService', () => {
       expect(result.planName).toBe('Professional Plan');
       expect(result.price).toBe(49);
       expect(result.limits).toEqual({
-        workflows: 25,
+        workflows: 35,
         versionHistory: 90,
       });
       expect(result.features).toContain('workflow_selection');
@@ -76,7 +76,7 @@ describe('SubscriptionService', () => {
       expect(result.planName).toBe('Starter Plan');
       expect(result.price).toBe(19);
       expect(result.limits).toEqual({
-        workflows: 5,
+        workflows: 10,
         versionHistory: 30,
       });
     });
@@ -273,7 +273,7 @@ describe('SubscriptionService', () => {
       const result = await service.getUsageStats(userId);
 
       expect(result.workflows.used).toBe(3);
-      expect(result.workflows.limit).toBe(5);
+      expect(result.workflows.limit).toBe(10);
       expect(result.workflows.percentage).toBe(60);
       expect(result.versionHistory).toBeDefined();
       expect(result.storage).toBeDefined();

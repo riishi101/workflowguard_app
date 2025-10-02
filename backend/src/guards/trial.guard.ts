@@ -61,13 +61,15 @@ export class TrialGuard implements CanActivate {
         error,
       );
 
-      // Be more permissive - if we can't check trial status, allow access
-      // This prevents blocking users due to temporary service issues
-      console.log(
-        'TrialGuard - Allowing access due to service error for user:',
+      // Block access if we can't verify trial status - security first
+      console.error(
+        'TrialGuard - Blocking access due to service error for user:',
         userId,
       );
-      return true;
+      throw new HttpException(
+        'Unable to verify trial status. Please contact support.',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 }
