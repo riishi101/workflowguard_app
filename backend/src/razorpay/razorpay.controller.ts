@@ -269,6 +269,17 @@ export class RazorpayController {
     };
   }
 
+  // Configuration endpoint - Different pattern
+  @Get('payment-settings')
+  async getPaymentSettings() {
+    this.logger.log('getPaymentSettings method called');
+    return {
+      message: 'Payment settings endpoint working',
+      keyId: this.configService.get<string>('RAZORPAY_KEY_ID'),
+      availableCurrencies: this.razorpayService.getAvailableCurrencies(),
+    };
+  }
+
   // Test method using exact same pattern as working getPlans method
   @Get('config-test')
   async getConfigTest() {

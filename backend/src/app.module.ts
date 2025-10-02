@@ -22,6 +22,8 @@ import { HubSpotModule } from './services/hubspot.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
 import { BillingController } from './controllers/hubspot-billing.controller';
 import { HealthModule } from './health/health.module';
+import { RazorpayApiController } from './controllers/razorpay-api.controller';
+import { RazorpayConfigController } from './controllers/razorpay-config.controller';
 
 @Module({
   imports: [
@@ -48,7 +50,7 @@ import { HealthModule } from './health/health.module';
     WhatsAppModule,
     HealthModule,
   ],
-  controllers: [AppController, HubSpotMarketplaceController, BillingController],
+  controllers: [AppController, HubSpotMarketplaceController, BillingController, RazorpayApiController, RazorpayConfigController],
   providers: [AppService],
 })
 export class AppModule {}
