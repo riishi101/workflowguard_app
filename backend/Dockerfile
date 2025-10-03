@@ -21,8 +21,8 @@ RUN npx prisma generate
 # Copy source code
 COPY . .
 
-# Build the application using tsc directly
-RUN npx tsc
+# Build the application using npm build script
+RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 4000
