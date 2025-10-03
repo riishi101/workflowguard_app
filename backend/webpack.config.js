@@ -2,9 +2,9 @@ module.exports = {
   entry: './src/main.ts',
   target: 'node',
   externals: [
-    // Exclude node_modules from the bundle
+    // Exclude node_modules from the bundle, but include Prisma client
     function ({ context, request }, callback) {
-      if (/node_modules/.test(context)) {
+      if (/node_modules/.test(context) && !/@prisma/.test(request)) {
         return callback(null, 'commonjs ' + request);
       }
       callback();
