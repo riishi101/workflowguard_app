@@ -1368,7 +1368,7 @@ export class WorkflowService {
           versionNumber: 1,
           snapshotType: 'Initial Protection',
           createdBy: userId,
-          data: initialVersionData as any,
+          data: JSON.stringify(initialVersionData), // Convert object to JSON string
         },
       });
 
@@ -2168,7 +2168,7 @@ export class WorkflowService {
               data: {
                 workflowId: existingWorkflow.id,
                 versionNumber: nextVersionNumber,
-                data: currentWorkflowData as any,
+                data: JSON.stringify(currentWorkflowData), // Convert object to JSON string
                 snapshotType: 'Manual Sync',
                 createdBy: 'System (Sync)',
                 createdAt: new Date(),
