@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { HubSpotService } from '../services/hubspot.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { WorkflowVersionService } from '../workflow-version/workflow-version.service';
+import { EncryptionService } from '../services/encryption.service';
 
 @Injectable()
 export class WorkflowService {
@@ -11,6 +12,7 @@ export class WorkflowService {
     private hubspotService: HubSpotService,
     private subscriptionService: SubscriptionService,
     private workflowVersionService: WorkflowVersionService,
+    private encryptionService: EncryptionService,
   ) {}
 
   async create(createWorkflowDto: any) {
@@ -54,6 +56,10 @@ export class WorkflowService {
     const debugVersionB = await this.prisma.workflowVersion.findUnique({
       where: { id: versionB }
     });
+
+    // Decrypt the debug data for logging
+    const decryptedDebugA = debugVersionA?.data ? this.encryptionService.decryptWorkflowData(debugVersionA.data) : null;
+    const decryptedDebugB = debugVersionB?.data ? this.encryptionService.decryptWorkflowData(debugVersionB.data) : null;
     
     console.log('🚨 DATABASE VERSION A DATA:', {
       id: debugVersionA?.id,
@@ -131,8 +137,8 @@ export class WorkflowService {
       }
 
       // Enhanced comparison logic with complete workflow data
-      let originalDataA = versionAData.data;
-      let originalDataB = versionBData.data;
+      let originalDataA = this.encryptionService.decryptWorkflowData(versionAData.data);
+      let originalDataB = this.encryptionService.decryptWorkflowData(versionBData.data);
       
       // Get userId from the workflow owner
       const workflow = await this.prisma.workflow.findFirst({
@@ -1716,6 +1722,9 @@ export class WorkflowService {
               sanitizedDataSample: JSON.stringify(initialVersionData).substring(0, 200) + '...'
             });
 
+            // Encrypt sensitive data before storing
+            const encryptedVersionData = this.encryptionService.encryptWorkflowData(initialVersionData);
+
             // Create the initial version
             const initialVersion = await tx.workflowVersion.create({
               data: {
@@ -1723,7 +1732,7 @@ export class WorkflowService {
                 versionNumber: 1,
                 snapshotType: 'Initial Protection',
                 createdBy: userId,
-                data: JSON.stringify(initialVersionData), // Convert sanitized object to JSON string
+                data: JSON.stringify(encryptedVersionData), // Convert encrypted object to JSON string
               },
             });
 
@@ -2285,11 +2294,14 @@ export class WorkflowService {
               ? latestVersion.versionNumber + 1
               : 1;
 
+            // Encrypt sensitive data before storing
+            const encryptedWorkflowData = this.encryptionService.encryptWorkflowData(currentWorkflowData);
+
             await this.prisma.workflowVersion.create({
               data: {
                 workflowId: existingWorkflow.id,
                 versionNumber: nextVersionNumber,
-                data: JSON.stringify(currentWorkflowData), // Convert object to JSON string
+                data: JSON.stringify(encryptedWorkflowData), // Convert encrypted object to JSON string
                 snapshotType: 'Manual Sync',
                 createdBy: 'System (Sync)',
                 createdAt: new Date(),
@@ -2495,8 +2507,11 @@ export class WorkflowService {
         dataKeys: version.data ? Object.keys(version.data as any) : 'no data',
       });
 
-      // Return the actual workflow data for download
-      return version.data;
+      // Decrypt the workflow data before returning
+      const decryptedData = this.encryptionService.decryptWorkflowData(version.data);
+
+      // Return the decrypted workflow data for download
+      return decryptedData;
     } catch (error) {
       console.error('❌ Error downloading workflow version:', error);
       throw new HttpException(

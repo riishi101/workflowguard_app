@@ -16,12 +16,17 @@ import { WorkflowService } from './workflow.service';
 import { CreateWorkflowDto } from './dto/create-workflow.dto';
 import { UpdateWorkflowDto } from './dto/update-workflow.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RateLimitGuard, RateLimit } from '../auth/rate-limit.guard';
 import { TrialGuard } from '../guards/trial.guard';
 import { SubscriptionGuard } from '../guards/subscription.guard';
+import { SecurityMonitoringService } from '../services/security-monitoring.service';
 
 @Controller('workflow')
 export class WorkflowController {
-  constructor(private readonly workflowService: WorkflowService) {}
+  constructor(
+    private readonly workflowService: WorkflowService,
+    private readonly securityMonitoringService: SecurityMonitoringService,
+  ) {}
 
   @Post()
   create(@Body() createWorkflowDto: CreateWorkflowDto) {
@@ -61,6 +66,17 @@ export class WorkflowController {
       };
     } catch (error) {
       console.error('Failed to find workflow by HubSpot ID:', error);
+
+      // Record failed access attempt for security monitoring
+      this.securityMonitoringService.recordFailedAccess({
+        ipAddress: req.ip || req.connection?.remoteAddress || 'unknown',
+        endpoint: req.url,
+        method: req.method,
+        error: error.message,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date(),
+      });
+
       throw new HttpException(
         'Workflow not found or access denied',
         HttpStatus.NOT_FOUND,
@@ -340,7 +356,8 @@ export class WorkflowController {
   }
 
   @Post(':id/rollback/:versionId')
-  @UseGuards(JwtAuthGuard, TrialGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, RateLimitGuard)
+  @RateLimit({ windowMs: 60 * 1000, maxRequests: 10 }) // 10 rollback requests per minute
   async restoreWorkflowVersion(
     @Param('id') workflowId: string,
     @Param('versionId') versionId: string,
@@ -509,7 +526,8 @@ export class WorkflowController {
   }
 
   @Post('start-protection')
-  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard, RateLimitGuard)
+  @RateLimit({ windowMs: 60 * 1000, maxRequests: 5 }) // 5 requests per minute for protection start
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {
     console.log('🚨 CONTROLLER - start-protection called with body:', JSON.stringify(body));
     let userId = req.user?.sub || req.user?.id || req.user?.userId;

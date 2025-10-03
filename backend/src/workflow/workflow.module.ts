@@ -6,6 +6,8 @@ import { UserModule } from '../user/user.module';
 import { HubSpotModule } from '../services/hubspot.module';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { WorkflowVersionModule } from '../workflow-version/workflow-version.module';
+import { EncryptionService } from '../services/encryption.service';
+import { SecurityMonitoringService } from '../services/security-monitoring.service';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { WorkflowVersionModule } from '../workflow-version/workflow-version.modu
     forwardRef(() => WorkflowVersionModule),
   ],
   controllers: [WorkflowController],
-  providers: [WorkflowService],
-  exports: [WorkflowService],
+  providers: [WorkflowService, EncryptionService, SecurityMonitoringService],
+  exports: [WorkflowService, EncryptionService, SecurityMonitoringService],
 })
 export class WorkflowModule {}
