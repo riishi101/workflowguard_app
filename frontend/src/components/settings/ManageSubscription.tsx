@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PaymentButton } from '../PaymentButton';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, CreditCard, AlertTriangle } from 'lucide-react';
 import NextBillingCard from '@/components/billing/NextBillingCard';
@@ -97,114 +98,20 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
     }
   };
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve, reject) => {
-      if (window.Razorpay) {
-        resolve(true);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => reject('Failed to load Razorpay');
+  // Fresh Razorpay Integration - Memory-Guided Implementation
+  const handlePaymentSuccess = async () => {
+    // Refresh all data after successful payment
+    await fetchAllData();
+    setIsUpgrading(null);
+    toast({
+      title: 'Subscription Updated Successfully! 🎉',
+      description: 'Your subscription has been upgraded. Enjoy your new features!',
     });
   };
 
   const handleUpgrade = async (planId: string) => {
     setIsUpgrading(planId);
-    
-    try {
-      // Get Razorpay configuration from backend
-      const configResponse = await ApiService.getRazorpayConfig();
-      if (!configResponse.data?.keyId) {
-        throw new Error('Payment system not configured');
-      }
-    } catch (configError) {
-      toast({
-        title: 'Configuration Error',
-        description: 'Payment system is not configured. Please contact support.',
-        variant: 'destructive',
-      });
-      setIsUpgrading(null);
-      return;
-    }
-    
-    try {
-      toast({ title: 'Processing...', description: 'Initiating plan upgrade...' });
-      
-      await loadRazorpayScript();
-      const resp = await ApiService.createRazorpayOrder(planId);
-      
-      if (!resp.success || !resp.data?.id) {
-        throw new Error(resp.message || 'Failed to create payment order');
-      }
-      
-      // Get config again for payment options
-      const configResponse = await ApiService.getRazorpayConfig();
-      
-      const order = resp.data;
-      const options = {
-        key: configResponse.data.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'WorkflowGuard',
-        description: `Upgrade to ${planId} plan`,
-        order_id: order.id,
-        prefill: {
-          email: subscription?.email || '',
-        },
-        handler: async function (paymentResult: any) {
-          try {
-            const confirmResponse = await ApiService.confirmRazorpayPayment({
-              planId,
-              paymentId: paymentResult.razorpay_payment_id,
-              orderId: order.id,
-              signature: paymentResult.razorpay_signature
-            });
-            
-            if (confirmResponse.success) {
-              toast({ 
-                title: 'Upgrade Complete', 
-                description: `Successfully upgraded to ${planId} plan!` 
-              });
-              fetchAllData();
-            } else {
-              throw new Error(confirmResponse.message || 'Payment confirmation failed');
-            }
-          } catch (err: any) {
-            toast({ 
-              title: 'Payment Processing Error', 
-              description: err.message || 'Payment was processed but confirmation failed. Please contact support.',
-              variant: 'destructive' 
-            });
-          }
-        },
-                modal: {
-          ondismiss: function() {
-            toast({ 
-              title: 'Payment Cancelled', 
-              description: 'Plan upgrade was cancelled.' 
-            });
-            setIsUpgrading(null);
-          }
-        },
-        theme: { color: '#2563eb' },
-      };
-      
-            const rzp = new window.Razorpay(options);
-      rzp.open();
-
-      rzp.on('payment.failed', () => {
-        setIsUpgrading(null);
-      });
-    } catch (error: any) {
-      toast({ 
-        title: 'Upgrade Failed', 
-        description: error.message || 'Unable to initiate plan upgrade. Please try again.',
-        variant: 'destructive' 
-      });
-      setIsUpgrading(null);
-    }
+    // PaymentButton will handle the actual payment process
   };
 
     const handleCancelSubscription = async () => {
@@ -323,7 +230,8 @@ const ManageSubscriptionTab = ({ onBack }: ManageSubscriptionProps) => {
       });
       return;
     }
-    await handleUpgrade(planId);
+    // Set the upgrading state - PaymentButton will handle the actual payment
+    setIsUpgrading(planId);
   };
 
   const availablePlans = [

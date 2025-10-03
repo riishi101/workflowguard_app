@@ -1,7 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,7 +11,6 @@ model User {
   id                    String                @id @default(uuid())
   email                 String                @unique
   name                  String?
-
   password              String?
   jobTitle              String?
   timezone              String?
@@ -31,23 +26,23 @@ model User {
   notificationSettings  NotificationSettings?
   overages              Overage[]
   subscription          Subscription?
+  supportReplies        SupportReply[]
+  supportTickets        SupportTicket[]
   webhooks              Webhook[]
   workflows             Workflow[]
-  supportTickets        SupportTicket[]
-  supportReplies        SupportReply[]
 }
 
 model Workflow {
   id         String            @id @default(uuid())
   hubspotId  String            @unique
   name       String
-  status     String            @default("active")
   ownerId    String
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
-  isDeleted  Boolean           @default(false)
   deletedAt  DateTime?
+  isDeleted  Boolean           @default(false)
   restoredAt DateTime?
+  status     String?           @default("inactive")
   owner      User              @relation(fields: [ownerId], references: [id])
   versions   WorkflowVersion[]
 }
@@ -59,7 +54,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          String   // JSON as string for PostgreSQL
+  data          Json
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
@@ -71,24 +66,25 @@ model AuditLog {
   action     String
   entityType String
   entityId   String
-  oldValue   String?  // JSON as string for PostgreSQL
-  newValue   String?  // JSON as string for PostgreSQL
+  oldValue   Json?
+  newValue   Json?
   timestamp  DateTime @default(now())
   ipAddress  String?
   user       User?    @relation(fields: [userId], references: [id])
 }
 
 model Subscription {
-  id                String    @id @default(uuid())
-  userId            String    @unique
-  planId            String
-  status            String
-  trialEndDate      DateTime?
-  nextBillingDate   DateTime?
-  razorpayCustomerId String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  user              User      @relation(fields: [userId], references: [id])
+  id                     String    @id @default(uuid())
+  userId                 String    @unique
+  planId                 String
+  status                 String
+  trialEndDate           DateTime?
+  nextBillingDate        DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  razorpayCustomerId     String?
+  razorpaySubscriptionId String?
+  user                   User      @relation(fields: [userId], references: [id])
 }
 
 model Webhook {
@@ -109,10 +105,10 @@ model Plan {
   description String?
   price       Float
   interval    String
-  features    String?  // JSON as string for PostgreSQL
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  features    Json?
 }
 
 model Overage {
@@ -129,65 +125,65 @@ model Overage {
 }
 
 model NotificationSettings {
-  id                    String @id @default(uuid())
-  userId                String @unique
-  enabled               Boolean @default(true)
-  email                 String
-  workflowDeleted       Boolean @default(true)
-  enrollmentTriggerModified Boolean @default(true)
-  workflowRolledBack    Boolean @default(true)
-  criticalActionModified Boolean @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  user                  User     @relation(fields: [userId], references: [id])
+  id                        String   @id @default(uuid())
+  userId                    String   @unique
+  enabled                   Boolean  @default(true)
+  email                     String
+  workflowDeleted           Boolean  @default(true)
+  enrollmentTriggerModified Boolean  @default(true)
+  workflowRolledBack        Boolean  @default(true)
+  criticalActionModified    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  user                      User     @relation(fields: [userId], references: [id])
 }
 
 model ApiKey {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
   name        String
   description String?
-  key         String   @unique
-  isActive    Boolean  @default(true)
+  key         String    @unique
+  isActive    Boolean   @default(true)
   lastUsed    DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 model SsoConfig {
-  id                String @id @default(uuid())
-  provider          String @unique
-  clientId          String
-  clientSecret      String
-  redirectUri       String
-  isEnabled         Boolean @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id           String   @id @default(uuid())
+  provider     String   @unique
+  clientId     String
+  clientSecret String
+  redirectUri  String
+  isEnabled    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model SupportTicket {
-  id          String           @id @default(uuid())
+  id          String         @id @default(uuid())
   userId      String
   subject     String
   description String
-  status      String           @default("open")
-  priority    String           @default("medium")
+  status      String         @default("open")
+  priority    String         @default("medium")
   category    String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  user        User             @relation(fields: [userId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   replies     SupportReply[]
+  user        User           @relation(fields: [userId], references: [id])
 }
 
 model SupportReply {
-  id          String         @id @default(uuid())
-  ticketId    String
-  userId      String
-  message     String
-  isInternal  Boolean        @default(false)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  ticket      SupportTicket  @relation(fields: [ticketId], references: [id])
-  user        User           @relation(fields: [userId], references: [id])
-} 
+  id         String        @id @default(uuid())
+  ticketId   String
+  userId     String
+  message    String
+  isInternal Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+}

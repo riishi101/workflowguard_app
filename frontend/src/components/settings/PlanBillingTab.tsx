@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PaymentButton } from '../PaymentButton';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -107,157 +108,14 @@ const PlanBillingTab = () => {
     }
   };
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve, reject) => {
-      if (window.Razorpay) {
-        console.log('Razorpay script already loaded');
-        resolve(true);
-        return;
-      }
-      console.log('Loading Razorpay script...');
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => {
-        console.log('Razorpay script loaded successfully');
-        resolve(true);
-      };
-      script.onerror = (error) => {
-        console.error('Failed to load Razorpay script:', error);
-        reject('Failed to load Razorpay');
-      };
-      document.body.appendChild(script);
+  // Fresh Razorpay Integration - Memory-Guided Implementation
+  const handlePaymentSuccess = async () => {
+    // Refresh subscription data after successful payment
+    await fetchData();
+    toast({
+      title: 'Subscription Updated!',
+      description: 'Your subscription has been successfully updated. Enjoy your new features!',
     });
-  };
-
-  const handleUpgrade = async (planId: string) => {
-    try {
-      // Get Razorpay configuration from backend using ApiService
-      const configResponse = await ApiService.getRazorpayConfig();
-      
-      if (!configResponse.success) {
-        throw new Error('Failed to get payment configuration. Please contact support.');
-      }
-      
-      const config = configResponse.data;
-      console.log('Razorpay configuration loaded successfully');
-    } catch (configError) {
-      console.error('Configuration error:', configError);
-      toast({
-        title: 'Configuration Error',
-        description: 'Payment system is not configured. Please contact support for assistance.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    try {
-      toast({ title: 'Processing...', description: 'Initiating plan upgrade...' });
-      
-      // Load Razorpay script first
-      try {
-        await loadRazorpayScript();
-        console.log('Razorpay script loaded successfully');
-      } catch (scriptError) {
-        console.error('Failed to load Razorpay script:', scriptError);
-        throw new Error('Failed to load payment gateway. Please try again later.');
-      }
-      
-      // Create order
-      console.log('Creating Razorpay order for plan:', planId);
-      const resp = await ApiService.createRazorpayOrder(planId);
-      console.log('Order creation response:', resp);
-      
-      if (!resp.success || !resp.data?.id) {
-        throw new Error(resp.message || 'Failed to create payment order');
-      }
-
-      const order = resp.data;
-      console.log('Order created successfully:', order.id);
-      
-      // Get Razorpay configuration again for payment options
-      const configResponse = await ApiService.getRazorpayConfig();
-      const config = configResponse.data;
-      
-      // Configure Razorpay options
-      const options = {
-        key: config.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'WorkflowGuard',
-        description: `Upgrade to ${planId} plan`,
-        order_id: order.id,
-        handler: async function (paymentResult: any) {
-          console.log('Payment successful, confirming payment:', paymentResult);
-          try {
-            const confirmResponse = await ApiService.confirmRazorpayPayment({
-              planId,
-              paymentId: paymentResult.razorpay_payment_id,
-              orderId: order.id,
-              signature: paymentResult.razorpay_signature,
-            });
-            console.log('Payment confirmation response:', confirmResponse);
-
-            if (confirmResponse.success) {
-              toast({
-                title: 'Upgrade Successful!',
-                description: `Successfully upgraded to ${planId} plan.`,
-              });
-              await fetchData();
-            } else {
-              throw new Error(confirmResponse.message || 'Payment confirmation failed');
-            }
-          } catch (error: any) {
-            console.error('Payment confirmation error:', error);
-            toast({
-              title: 'Upgrade Failed',
-              description: error.message || 'Payment confirmation failed. Please contact support.',
-              variant: 'destructive',
-            });
-          }
-        },
-        prefill: {
-          name: subscription?.customerName || '',
-          email: subscription?.customerEmail || '',
-        },
-        theme: { color: '#2563eb' },
-        modal: {
-          ondismiss: function() {
-            console.log('Checkout form closed');
-            toast({
-              title: 'Checkout Cancelled',
-              description: 'You have closed the payment window. You can try again anytime.',
-              variant: 'default',
-            });
-          }
-        }
-      };
-      
-      // Initialize and open Razorpay
-      console.log('Initializing Razorpay with options:', JSON.stringify(options, null, 2));
-      try {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-        
-        rzp.on('payment.failed', (response: any) => {
-          console.error('Payment failed:', response);
-          toast({
-            title: 'Payment Failed',
-            description: 'Your payment was not processed. Please try again.',
-            variant: 'destructive',
-          });
-        });
-      } catch (razorpayError) {
-        console.error('Error opening Razorpay:', razorpayError);
-        throw new Error('Failed to open payment gateway. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Plan upgrade failed:', error);
-      toast({
-        title: "Upgrade Failed",
-        description: error.message || "Failed to process upgrade request. Please try again.",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleManageSubscription = () => {
@@ -309,7 +167,7 @@ const PlanBillingTab = () => {
         totalTrialDays={21}
         planName="Professional Plan"
         isTrialActive={trialStatus?.isTrial || false}
-        onUpgrade={() => handleUpgrade('professional')}
+        onUpgrade={() => {}} // Will be handled by PaymentButton in plan cards
       />
 
       {/* Current Subscription Overview */}
@@ -428,14 +286,19 @@ const PlanBillingTab = () => {
                 </li>
               </ul>
               <div className="mt-auto">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={subscription?.planId === 'starter'}
-                  onClick={() => handleUpgrade('starter')}
-                >
-                  {subscription?.planId === 'starter' ? 'Current Plan' : 'Select Plan'}
-                </Button>
+                {subscription?.planId === 'starter' ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    Current Plan
+                  </Button>
+                ) : (
+                  <PaymentButton 
+                    planId="starter" 
+                    planName="Starter Plan"
+                    onSuccess={handlePaymentSuccess}
+                  >
+                    Select Plan
+                  </PaymentButton>
+                )}
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   30 days version history, Basic comparison only
                 </p>
@@ -515,13 +378,19 @@ const PlanBillingTab = () => {
                 </li>
               </ul>
               <div className="mt-auto">
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={subscription?.planId === 'professional' || trialStatus?.isTrial}
-                  onClick={() => handleUpgrade('professional')}
-                >
-                  {(subscription?.planId === 'professional' || trialStatus?.isTrial) ? 'Current Plan' : 'Select Plan'}
-                </Button>
+                {(subscription?.planId === 'professional' || trialStatus?.isTrial) ? (
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700" disabled>
+                    Current Plan
+                  </Button>
+                ) : (
+                  <PaymentButton 
+                    planId="professional" 
+                    planName="Professional Plan"
+                    onSuccess={handlePaymentSuccess}
+                  >
+                    Select Plan
+                  </PaymentButton>
+                )}
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   90 days version history
                 </p>
@@ -591,14 +460,19 @@ const PlanBillingTab = () => {
                 </li>
               </ul>
               <div className="mt-auto">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={subscription?.planId === 'enterprise'}
-                  onClick={() => handleUpgrade('enterprise')}
-                >
-                  {subscription?.planId === 'enterprise' ? 'Current Plan' : 'Select Plan'}
-                </Button>
+                {subscription?.planId === 'enterprise' ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    Current Plan
+                  </Button>
+                ) : (
+                  <PaymentButton 
+                    planId="enterprise" 
+                    planName="Enterprise Plan"
+                    onSuccess={handlePaymentSuccess}
+                  >
+                    Select Plan
+                  </PaymentButton>
+                )}
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   1 year version history, All features unlocked
                 </p>

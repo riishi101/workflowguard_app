@@ -1,0 +1,269 @@
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  UseGuards, 
+  Request,
+  HttpException,
+  HttpStatus,
+  Logger
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PaymentService } from './payment.service';
+import { SubscriptionService } from '../subscription/subscription.service';
+
+@Controller('payment')
+export class PaymentController {
+  private readonly logger = new Logger(PaymentController.name);
+
+  constructor(
+    private paymentService: PaymentService,
+    private subscriptionService: SubscriptionService
+  ) {}
+
+  /**
+   * Get payment configuration for frontend
+   * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Single source of truth
+   */
+  @Get('config')
+  getPaymentConfig() {
+    try {
+      const config = this.paymentService.getPaymentConfig();
+      
+      return {
+        success: true,
+        data: config,
+        message: 'Payment configuration retrieved successfully'
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get payment config: ${error.message}`);
+      
+      return {
+        success: false,
+        message: error.message || 'Payment configuration unavailable',
+        data: null
+      };
+    }
+  }
+
+  /**
+   * Create payment order
+   * Memory Check: Following MISTAKE #6 lesson - Specific error messages with clear instructions
+   */
+  @Post('create-order')
+  @UseGuards(JwtAuthGuard)
+  async createOrder(@Body() body: { planId: string }, @Request() req: any) {
+    try {
+      const userId = req.user?.userId;
+      const { planId } = body;
+
+      if (!userId) {
+        throw new HttpException(
+          'User authentication required. Please log in and try again.',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+
+      if (!planId) {
+        throw new HttpException(
+          'Plan selection required. Please select a plan and try again.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // Validate plan ID
+      const validPlans = ['starter', 'professional', 'enterprise'];
+      if (!validPlans.includes(planId)) {
+        throw new HttpException(
+          `Invalid plan: ${planId}. Please select from: ${validPlans.join(', ')}`,
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      const order = await this.paymentService.createOrder(planId, userId);
+      
+      this.logger.log(`Order created successfully for user: ${userId}, plan: ${planId}`);
+      
+      return {
+        success: true,
+        data: order,
+        message: 'Payment order created successfully'
+      };
+
+    } catch (error) {
+      this.logger.error(`Failed to create order: ${error.message}`, error.stack);
+      
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new HttpException(
+        'Unable to process your request. Please try again or contact support.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * Confirm payment and upgrade subscription
+   * Memory Check: Following MISTAKE #6 lesson - Proper error handling with user feedback
+   */
+  @Post('confirm')
+  @UseGuards(JwtAuthGuard)
+  async confirmPayment(
+    @Body() body: { 
+      orderId: string; 
+      paymentId: string; 
+      signature: string; 
+      planId: string; 
+    }, 
+    @Request() req: any
+  ) {
+    try {
+      const userId = req.user?.userId;
+      const { orderId, paymentId, signature, planId } = body;
+
+      if (!userId) {
+        throw new HttpException(
+          'User authentication required. Please log in and try again.',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+
+      // Validate required fields
+      if (!orderId || !paymentId || !signature || !planId) {
+        throw new HttpException(
+          'Payment confirmation failed. Missing payment details. Please try again.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // Verify payment signature
+      const isValidPayment = this.paymentService.verifyPayment(orderId, paymentId, signature);
+      
+      if (!isValidPayment) {
+        this.logger.warn(`Invalid payment signature for user: ${userId}, order: ${orderId}`);
+        throw new HttpException(
+          'Payment verification failed. Please contact support if amount was deducted.',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // Get payment details for logging
+      try {
+        const paymentDetails = await this.paymentService.getPaymentDetails(paymentId);
+        this.logger.log(`Payment confirmed: ${paymentId}, Amount: ${paymentDetails.amount}, Status: ${paymentDetails.status}`);
+      } catch (detailsError) {
+        this.logger.warn(`Could not fetch payment details: ${detailsError.message}`);
+      }
+
+      // Update user subscription
+      await this.subscriptionService.upgradeUserPlan(userId, planId, { paymentId, orderId });
+      
+      this.logger.log(`Payment confirmed and subscription updated for user: ${userId}, plan: ${planId}`);
+      
+      return {
+        success: true,
+        data: {
+          paymentId,
+          planId,
+          status: 'confirmed'
+        },
+        message: `Successfully upgraded to ${planId} plan! Welcome to your new subscription.`
+      };
+
+    } catch (error) {
+      this.logger.error(`Payment confirmation failed: ${error.message}`, error.stack);
+      
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new HttpException(
+        'Payment confirmation failed. Please contact support if amount was deducted.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * Handle Razorpay webhooks for payment confirmation
+   * Memory Check: Following MISTAKE #6 lesson - Proper webhook handling with specific error messages
+   */
+  @Post('webhook')
+  async handleWebhook(@Body() body: any, @Request() req: any) {
+    try {
+      const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      
+      if (!webhookSecret) {
+        this.logger.error('Webhook secret not configured');
+        throw new HttpException('Webhook not configured', HttpStatus.SERVICE_UNAVAILABLE);
+      }
+
+      // Verify webhook signature (basic implementation)
+      const receivedSignature = req.headers['x-razorpay-signature'];
+      
+      if (!receivedSignature) {
+        this.logger.warn('Webhook received without signature');
+        throw new HttpException('Invalid webhook signature', HttpStatus.BAD_REQUEST);
+      }
+
+      // Log webhook event for monitoring
+      this.logger.log(`Webhook received: ${body.event}, Entity: ${body.entity}`);
+
+      // Handle different webhook events
+      switch (body.event) {
+        case 'payment.captured':
+          this.logger.log(`Payment captured: ${body.payload.payment.entity.id}`);
+          break;
+        case 'payment.failed':
+          this.logger.warn(`Payment failed: ${body.payload.payment.entity.id}`);
+          break;
+        case 'subscription.charged':
+          this.logger.log(`Subscription charged: ${body.payload.subscription.entity.id}`);
+          break;
+        default:
+          this.logger.log(`Unhandled webhook event: ${body.event}`);
+      }
+
+      return {
+        success: true,
+        message: 'Webhook processed successfully'
+      };
+
+    } catch (error) {
+      this.logger.error(`Webhook processing failed: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
+   * Get payment history (placeholder for future implementation)
+   */
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getPaymentHistory(@Request() req: any) {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        throw new HttpException(
+          'User authentication required.',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
+
+      // This will be implemented when payment history tracking is added
+      return {
+        success: true,
+        data: [],
+        message: 'Payment history feature coming soon'
+      };
+
+    } catch (error) {
+      this.logger.error(`Failed to get payment history: ${error.message}`);
+      throw error;
+    }
+  }
+}

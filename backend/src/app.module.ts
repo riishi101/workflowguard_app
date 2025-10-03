@@ -16,7 +16,7 @@ import { WebhookModule } from './webhook/webhook.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AppCacheModule } from './cache/cache.module';
-import { RazorpayModule } from './razorpay/razorpay.module';
+import { PaymentModule } from './payment/payment.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { HubSpotModule } from './services/hubspot.module';
 import { HubSpotMarketplaceController } from './controllers/hubspot-marketplace.controller';
@@ -44,7 +44,7 @@ import { HealthModule } from './health/health.module';
     DashboardModule,
     AnalyticsModule,
     AppCacheModule,
-    RazorpayModule,
+    PaymentModule,
     WhatsAppModule,
     HealthModule,
   ],

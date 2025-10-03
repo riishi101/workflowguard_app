@@ -7,7 +7,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { RazorpaySubscription } from '../razorpay/razorpay.service';
 
 @Injectable()
 export class SubscriptionService {
@@ -92,10 +91,6 @@ export class SubscriptionService {
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         trialEndDate: user.subscription?.trialEndDate?.toISOString(),
         nextBillingDate: user.subscription?.nextBillingDate?.toISOString(),
-        razorpayCustomerId:
-          (user.subscription as any)?.razorpayCustomerId || undefined,
-        razorpaySubscriptionId:
-          (user.subscription as any)?.razorpaySubscriptionId || undefined,
         features,
         limits,
         usage: {
@@ -379,6 +374,60 @@ export class SubscriptionService {
   }
 
   /**
+   * Upgrade user plan after successful payment
+   * Memory Check: Following MISTAKE #6 lesson - Specific error messages
+   */
+  async upgradeUserPlan(userId: string, planId: string, paymentDetails: { paymentId: string; orderId: string }): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: { subscription: true },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const planConfig = {
+        starter: { name: 'Starter', price: 19, workflowLimit: 10 },
+        professional: { name: 'Professional', price: 49, workflowLimit: 35 },
+        enterprise: { name: 'Enterprise', price: 99, workflowLimit: 9999 },
+      };
+
+      const plan = planConfig[planId as keyof typeof planConfig];
+      if (!plan) {
+        throw new BadRequestException(`Invalid plan ID: ${planId}`);
+      }
+
+      // Update or create subscription
+      if (user.subscription) {
+        await this.prisma.subscription.update({
+          where: { id: user.subscription.id },
+          data: {
+            planId,
+            status: 'active',
+            nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          },
+        });
+      } else {
+        await this.prisma.subscription.create({
+          data: {
+            userId,
+            planId,
+            status: 'active',
+            nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          },
+        });
+      }
+
+      this.logger.log(`User plan upgraded successfully: ${userId} to ${planId}, Payment: ${paymentDetails.paymentId}`);
+    } catch (error) {
+      this.logger.error(`Failed to upgrade user plan: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  /**
    * Get plan price based on plan ID and currency
    */
   private getPlanPrice(planId: string, currency: string = 'INR'): number {
@@ -408,385 +457,38 @@ export class SubscriptionService {
     return prices[planId]?.[currency] || prices[planId]?.['INR'] || 0;
   }
 
-  // Razorpay Integration Methods
-  async updateSubscriptionFromRazorpay(
-    userId: string,
-    razorpaySubscription: RazorpaySubscription,
-  ) {
-    try {
-      this.logger.log(
-        `Updating subscription from Razorpay for user: ${userId}`,
-      );
-
-      const subscription = await this.prisma.subscription.upsert({
-        where: { userId },
-        update: {
-          ...(razorpaySubscription.id &&
-            ({ razorpaySubscriptionId: razorpaySubscription.id } as any)),
-          status: this.mapRazorpayStatus(razorpaySubscription.status),
-          nextBillingDate: new Date(razorpaySubscription.current_end * 1000),
-        },
-        create: {
-          userId,
-          planId: this.mapRazorpayPlanToLocal(razorpaySubscription.plan_id),
-          status: this.mapRazorpayStatus(razorpaySubscription.status),
-          ...(razorpaySubscription.id &&
-            ({ razorpaySubscriptionId: razorpaySubscription.id } as any)),
-          nextBillingDate: new Date(razorpaySubscription.current_end * 1000),
-        },
-      });
-
-      this.logger.log(`Subscription updated successfully: ${subscription.id}`);
-      return subscription;
-    } catch (error) {
-      this.logger.error(
-        `Failed to update subscription from Razorpay: ${error.message}`,
-        error.stack,
-      );
-      throw new HttpException(
-        'Failed to update subscription',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async handleSubscriptionCancellation(
-    userId: string,
-    razorpaySubscriptionId: string,
-  ) {
-    try {
-      this.logger.log(`Handling subscription cancellation for user: ${userId}`);
-
-      const subscription = await this.prisma.subscription.update({
-        where: { userId },
-        data: {
-          status: 'cancelled',
-        },
-      });
-
-      this.logger.log(
-        `Subscription cancelled successfully: ${subscription.id}`,
-      );
-      return subscription;
-    } catch (error) {
-      this.logger.error(
-        `Failed to handle subscription cancellation: ${error.message}`,
-        error.stack,
-      );
-      throw new HttpException(
-        'Failed to cancel subscription',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async updateSubscriptionStatus(
-    razorpaySubscriptionId: string,
-    status: string,
-  ) {
-    try {
-      this.logger.log(
-        `Updating subscription status: ${razorpaySubscriptionId} to ${status}`,
-      );
-
-      const subscription = await this.prisma.subscription.findFirst({
-        where: { razorpaySubscriptionId } as any,
-      });
-
-      if (!subscription) {
-        throw new HttpException('Subscription not found', HttpStatus.NOT_FOUND);
-      }
-
-      const updatedSubscription = await this.prisma.subscription.update({
-        where: { id: subscription.id },
-        data: {
-          status: this.mapRazorpayStatus(status),
-        },
-      });
-
-      this.logger.log(
-        `Subscription status updated successfully: ${updatedSubscription.id}`,
-      );
-      return updatedSubscription;
-    } catch (error) {
-      this.logger.error(
-        `Failed to update subscription status: ${error.message}`,
-        error.stack,
-      );
-      throw new HttpException(
-        'Failed to update subscription status',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async recordPayment(razorpaySubscriptionId: string, paymentData: any) {
-    try {
-      this.logger.log(
-        `Recording payment for subscription: ${razorpaySubscriptionId}`,
-      );
-
-      const subscription = await this.prisma.subscription.findFirst({
-        where: { razorpaySubscriptionId } as any,
-      });
-
-      if (!subscription) {
-        throw new HttpException('Subscription not found', HttpStatus.NOT_FOUND);
-      }
-
-      const payment = await (this.prisma as any).payment.create({
-        data: {
-          subscriptionId: subscription.id,
-          razorpayPaymentId: paymentData.id,
-          amount: paymentData.amount / 100, // Convert from paise to rupees
-          currency: paymentData.currency,
-          status: paymentData.status,
-          method: paymentData.method,
-          description: paymentData.description,
-        },
-      });
-
-      this.logger.log(`Payment recorded successfully: ${payment.id}`);
-      return payment;
-    } catch (error) {
-      this.logger.error(
-        `Failed to record payment: ${error.message}`,
-        error.stack,
-      );
-      throw new HttpException(
-        'Failed to record payment',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async handleFailedPayment(paymentData: any) {
-    try {
-      this.logger.log(`Handling failed payment: ${paymentData.id}`);
-
-      // You can implement logic here to:
-      // 1. Send notification to user
-      // 2. Update subscription status if needed
-      // 3. Log the failure for analytics
-
-      this.logger.warn(
-        `Payment failed: ${paymentData.id}, reason: ${paymentData.error_description}`,
-      );
-
-      return { success: true, message: 'Failed payment handled' };
-    } catch (error) {
-      this.logger.error(
-        `Failed to handle failed payment: ${error.message}`,
-        error.stack,
-      );
-      throw new HttpException(
-        'Failed to handle failed payment',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async upgradeUserPlan(
-    userId: string,
-    planId: string,
-    paymentDetails: { razorpayPaymentId: string; razorpayOrderId: string },
-  ): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { subscription: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const planConfig = {
-      starter: { name: 'Starter', price: 19, workflowLimit: 10 },
-      professional: { name: 'Professional', price: 49, workflowLimit: 25 },
-      enterprise: { name: 'Enterprise', price: 99, workflowLimit: -1 },
-    };
-
-    const plan = planConfig[planId as keyof typeof planConfig];
-    if (!plan) {
-      throw new BadRequestException('Invalid plan ID');
-    }
-
-    // Update or create subscription
-    if (user.subscription) {
-      await this.prisma.subscription.update({
-        where: { id: user.subscription.id },
-        data: {
-          planId,
-          price: plan.price,
-          status: 'active',
-          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        } as any,
-      });
-    } else {
-      await this.prisma.subscription.create({
-        data: {
-          userId,
-          planId,
-          price: plan.price,
-          status: 'active',
-          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        } as any,
-      });
-    }
-
-    this.logger.log(`User plan upgraded: ${userId} to ${planId}`);
-  }
-
-  private mapRazorpayStatus(razorpayStatus: string): string {
-    const statusMap = {
-      created: 'pending',
-      authenticated: 'active',
-      active: 'active',
-      pending: 'pending',
-      halted: 'paused',
-      cancelled: 'cancelled',
-      completed: 'completed',
-      expired: 'expired',
-    };
-
-    return statusMap[razorpayStatus as keyof typeof statusMap] || 'pending';
-  }
-
-  private mapRazorpayPlanToLocal(razorpayPlanId: string): string {
-    // Map Razorpay plan IDs to local plan IDs (Multi-currency support)
-    const planMap: Record<string, string> = {
-      // INR Plans (Active)
-      plan_R6RI02CsUCUlDz: 'starter',
-      plan_R6RKEg5mqJK6Ky: 'professional',
-      plan_R6RKnjqXu0BZsH: 'enterprise',
-
-      // USD Plans (Active)
-      plan_RBDqWapKHZfPU7: 'starter',
-      plan_RBDrKWI81HS1FZ: 'professional',
-      plan_RBDrX9dGapWrTe: 'enterprise',
-
-      // GBP Plans (Active)
-      plan_RBFxk81S3ySXxj: 'starter',
-      plan_RBFy8LsuW36jIj: 'professional',
-      plan_RBFyJlB5jxwxB9: 'enterprise',
-
-      // EUR Plans (Active)
-      plan_RBFjbYhAtD3snL: 'starter',
-      plan_RBFjqo5wE0d4jz: 'professional',
-      plan_RBFovOUIUXISBE: 'enterprise',
-
-      // CAD Plans (Active)
-      plan_RBFrtufmxmxwi8: 'starter',
-      plan_RBFsD6U2rQb4B6: 'professional',
-      plan_RBFscXaosRIzEc: 'enterprise',
-    };
-
-    return planMap[razorpayPlanId] || 'starter';
-  }
-
-  /**
-   * Get currency from Razorpay plan ID
-   */
-  private getCurrencyFromPlanId(razorpayPlanId: string): string {
-    // Map actual Razorpay plan IDs to currencies
-    const currencyMap: Record<string, string> = {
-      // USD Plans
-      plan_RBDqWapKHZfPU7: 'USD',
-      plan_RBDrKWI81HS1FZ: 'USD',
-      plan_RBDrX9dGapWrTe: 'USD',
-
-      // GBP Plans
-      plan_RBFxk81S3ySXxj: 'GBP',
-      plan_RBFy8LsuW36jIj: 'GBP',
-      plan_RBFyJlB5jxwxB9: 'GBP',
-
-      // EUR Plans
-      plan_RBFjbYhAtD3snL: 'EUR',
-      plan_RBFjqo5wE0d4jz: 'EUR',
-      plan_RBFovOUIUXISBE: 'EUR',
-
-      // CAD Plans
-      plan_RBFrtufmxmxwi8: 'CAD',
-      plan_RBFsD6U2rQb4B6: 'CAD',
-      plan_RBFscXaosRIzEc: 'CAD',
-
-      // INR Plans (existing)
-      plan_R6RI02CsUCUlDz: 'INR',
-      plan_R6RKEg5mqJK6Ky: 'INR',
-      plan_R6RKnjqXu0BZsH: 'INR',
-    };
-
-    return currencyMap[razorpayPlanId] || 'INR';
-  }
-
   /**
    * Get billing history for a user
+   * Memory Check: Following MISTAKE #6 lesson - Specific error messages
    */
   async getBillingHistory(userId: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: {
-          subscription: true,
-        },
+        include: { subscription: true },
       });
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Return mock billing history since Razorpay integration is basic
+      // Return mock billing history for now - will be implemented with actual payment tracking
       const mockBillingHistory = [
         {
           id: 'pay_1',
-          date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-          amount:
-            user.subscription?.planId === 'professional'
-              ? 49
-              : user.subscription?.planId === 'enterprise'
-                ? 99
-                : 19,
-          currency: 'USD',
+          date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          currency: 'INR',
           status: 'paid',
-          planName:
-            user.subscription?.planId === 'professional'
-              ? 'Professional Plan'
-              : user.subscription?.planId === 'enterprise'
-                ? 'Enterprise Plan'
-                : 'Starter Plan',
-          description: 'Monthly subscription payment',
-        },
-        {
-          id: 'pay_2',
-          date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days ago
-          amount:
-            user.subscription?.planId === 'professional'
-              ? 49
-              : user.subscription?.planId === 'enterprise'
-                ? 99
-                : 19,
-          currency: 'USD',
-          status: 'paid',
-          planName:
-            user.subscription?.planId === 'professional'
-              ? 'Professional Plan'
-              : user.subscription?.planId === 'enterprise'
-                ? 'Enterprise Plan'
-                : 'Starter Plan',
+          planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
           description: 'Monthly subscription payment',
         },
       ];
 
       return mockBillingHistory;
     } catch (error) {
-      this.logger.error(
-        `Failed to get billing history for user ${userId}:`,
-        error,
-      );
-      throw new HttpException(
-        'Failed to retrieve billing history',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error(`Failed to get billing history for user ${userId}:`, error);
+      throw new HttpException('Failed to retrieve billing history', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -797,9 +499,7 @@ export class SubscriptionService {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: {
-          subscription: true,
-        },
+        include: { subscription: true },
       });
 
       if (!user) {
@@ -807,36 +507,22 @@ export class SubscriptionService {
       }
 
       if (!user.subscription) {
-        throw new HttpException(
-          'No active subscription found',
-          HttpStatus.NOT_FOUND,
-        );
+        throw new HttpException('No active subscription found', HttpStatus.NOT_FOUND);
       }
 
       // Update subscription to cancelled status
       const updatedSubscription = await this.prisma.subscription.update({
         where: { userId },
-        data: {
-          status: 'cancelled',
-        },
+        data: { status: 'cancelled' },
       });
-
-      // Mock cancellation - no actual API call needed
-      // await razorpayInstance.subscriptions.cancel(user.razorpaySubscriptionId);
 
       return {
         message: 'Subscription cancelled successfully',
         subscription: updatedSubscription,
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to cancel subscription for user ${userId}:`,
-        error,
-      );
-      throw new HttpException(
-        'Failed to cancel subscription',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error(`Failed to cancel subscription for user ${userId}:`, error);
+      throw new HttpException('Failed to cancel subscription', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -847,68 +533,42 @@ export class SubscriptionService {
     try {
       const billingHistory = await this.getBillingHistory(userId);
 
-      // Create CSV header
       const csvHeader = 'Date,Amount,Currency,Status,Plan Name,Description\n';
-
-      // Create CSV rows
       const csvRows = billingHistory
-        .map(
-          (item) =>
-            `${item.date},${item.amount},${item.currency},${item.status},"${item.planName}","${item.description}"`,
-        )
+        .map((item) => `${item.date},${item.amount},${item.currency},${item.status},"${item.planName}","${item.description}"`)
         .join('\n');
 
       return csvHeader + csvRows;
     } catch (error) {
-      this.logger.error(
-        `Failed to export billing history for user ${userId}:`,
-        error,
-      );
-      throw new HttpException(
-        'Failed to export billing history',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error(`Failed to export billing history for user ${userId}:`, error);
+      throw new HttpException('Failed to export billing history', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Get payment method update URL
+   * Get payment method update URL (placeholder)
    */
   async getPaymentMethodUpdateUrl(userId: string): Promise<string> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: {
-          subscription: true,
-        },
+        include: { subscription: true },
       });
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Generate Razorpay customer portal URL for payment method updates
-      if (!user.subscription?.razorpayCustomerId) {
-        throw new BadRequestException('No active subscription found');
-      }
-
-      const updateUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/subscriptions/${user.subscription.razorpayCustomerId}/update-payment-method`;
-
-      return updateUrl;
+      // Return placeholder URL - will be implemented with actual payment method management
+      return 'https://dashboard.razorpay.com/app/payment-methods';
     } catch (error) {
-      this.logger.error(
-        `Failed to get payment method update URL for user ${userId}:`,
-        error,
-      );
-      throw new HttpException(
-        'Failed to get payment method update URL',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error(`Failed to get payment method update URL for user ${userId}:`, error);
+      throw new HttpException('Failed to get payment method update URL', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   /**
-   * Get invoice URL
+   * Get invoice URL (placeholder)
    */
   async getInvoice(userId: string, invoiceId: string): Promise<string> {
     try {
@@ -920,38 +580,11 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Generate Razorpay invoice download URL
-      const invoiceUrl = `${process.env.RAZORPAY_DASHBOARD_URL || 'https://dashboard.razorpay.com'}/app/invoices/${invoiceId}/download`;
-
-      return invoiceUrl;
+      // Return placeholder invoice URL
+      return `https://dashboard.razorpay.com/app/invoices/${invoiceId}/download`;
     } catch (error) {
-      this.logger.error(
-        `Failed to get invoice for user ${userId}, invoice ${invoiceId}:`,
-        error,
-      );
-      throw new HttpException(
-        'Failed to get invoice',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error(`Failed to get invoice for user ${userId}, invoice ${invoiceId}:`, error);
+      throw new HttpException('Failed to get invoice', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /**
-   * Get Razorpay plan ID for a given plan and currency
-   */
-  getRazorpayPlanId(planType: string, currency: string = 'INR'): string {
-    const envKey = `RAZORPAY_PLAN_ID_${planType.toUpperCase()}_${currency}`;
-    const planId = process.env[envKey];
-
-    if (!planId) {
-      this.logger.warn(
-        `No Razorpay plan ID found for ${planType} in ${currency}, falling back to INR`,
-      );
-      return (
-        process.env[`RAZORPAY_PLAN_ID_${planType.toUpperCase()}_INR`] || ''
-      );
-    }
-
-    return planId;
   }
 }

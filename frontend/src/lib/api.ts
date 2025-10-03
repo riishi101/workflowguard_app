@@ -741,42 +741,33 @@ class ApiService {
     }
   }
 
-  // Razorpay Integration APIs
-  static async getRazorpayConfig(): Promise<ApiResponse<any>> {
-    const headers: any = {
-      'Content-Type': 'application/json',
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
+  // Fresh Razorpay Integration - Memory-Guided Implementation
+  static async getPaymentConfig(): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get('/api/razorpay/config', { headers });
+      const response = await apiClient.get('/api/payment/config');
       return response.data;
     } catch (error) {
       throw error;
     }
   }
 
-  static async createRazorpayOrder(planId: string): Promise<ApiResponse<any>> {
+  static async createPaymentOrder(planId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/api/razorpay/create-order', { planId });
+      const response = await apiClient.post('/api/payment/create-order', { planId });
       return response.data;
     } catch (error) {
       throw error;
     }
   }
 
-  static async confirmRazorpayPayment(paymentData: {
-    planId: string;
-    paymentId: string;
+  static async confirmPayment(paymentData: {
     orderId: string;
+    paymentId: string;
     signature: string;
+    planId: string;
   }): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post('/api/razorpay/confirm-payment', paymentData);
+      const response = await apiClient.post('/api/payment/confirm', paymentData);
       return response.data;
     } catch (error) {
       throw error;
