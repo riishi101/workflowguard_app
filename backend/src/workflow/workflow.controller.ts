@@ -557,7 +557,13 @@ export class WorkflowController {
         data: result,
       };
     } catch (error) {
-      console.error('start-protection error:', error);
+      console.error('❌ CONTROLLER - start-protection error:', {
+        error: error.message,
+        stack: error.stack,
+        userId,
+        workflowCount: body.workflows?.length,
+        errorType: error.constructor.name,
+      });
       
       // Handle specific error types
       if (error instanceof HttpException) {

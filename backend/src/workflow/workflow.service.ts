@@ -1538,37 +1538,55 @@ export class WorkflowService {
     userId: string,
     selectedWorkflowObjects: any[],
   ): Promise<any[]> {
+    console.log('🚀 START PROTECTION - Starting for user:', userId, 'workflows:', workflowIds);
+    
     if (!userId) {
+      console.error('❌ START PROTECTION - User ID is missing');
       throw new HttpException('User ID is required', HttpStatus.BAD_REQUEST);
     }
 
-    // Validate user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+    try {
+      // Validate user exists
+      console.log('🔍 START PROTECTION - Validating user exists:', userId);
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        console.error('❌ START PROTECTION - User not found:', userId);
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      console.log('✅ START PROTECTION - User validated successfully');
 
-    // Check workflow limits before proceeding
-    await this.checkWorkflowLimits(userId, workflowIds.length);
+      // Check workflow limits before proceeding
+      console.log('🔍 START PROTECTION - Checking workflow limits');
+      try {
+        await this.checkWorkflowLimits(userId, workflowIds.length);
+        console.log('✅ START PROTECTION - Workflow limits check passed');
+      } catch (limitError) {
+        console.error('❌ START PROTECTION - Workflow limits check failed:', limitError.message);
+        throw limitError;
+      }
 
     const protectedWorkflows: any[] = [];
     const errors: Array<{ workflowId: string; error: string }> = [];
 
-    // Fetch HubSpot workflows OUTSIDE the transaction to avoid conflicts
-    let hubspotWorkflows: any[] = [];
-    try {
-      hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
-    } catch (hubspotError) {
-      console.warn(
-        'Could not fetch HubSpot workflows, proceeding with minimal data:',
-        hubspotError.message,
-      );
-    }
+      // Fetch HubSpot workflows OUTSIDE the transaction to avoid conflicts
+      let hubspotWorkflows: any[] = [];
+      try {
+        console.log('🔍 START PROTECTION - Fetching HubSpot workflows');
+        hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+        console.log('✅ START PROTECTION - HubSpot workflows fetched:', hubspotWorkflows.length);
+      } catch (hubspotError) {
+        console.warn(
+          '⚠️ START PROTECTION - Could not fetch HubSpot workflows, proceeding with minimal data:',
+          hubspotError.message,
+        );
+      }
 
-    // Use transaction to ensure data consistency
-    await this.prisma.$transaction(async (tx) => {
+      // Use transaction with timeout to ensure data consistency
+      console.log('🔍 START PROTECTION - Starting database transaction');
+      await this.prisma.$transaction(async (tx) => {
+        console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
       for (const workflowId of workflowIds) {
         try {
           // Find the workflow object from selectedWorkflowObjects
@@ -1683,7 +1701,10 @@ export class WorkflowService {
           // Don't throw here, collect all errors
         }
       }
-    });
+        console.log('✅ START PROTECTION - Transaction completed successfully');
+      }, {
+        timeout: 30000, // 30 second timeout for complex operations
+      });
 
     // If there were errors, throw with details
     if (errors.length > 0) {
@@ -1698,7 +1719,28 @@ export class WorkflowService {
       );
     }
 
-    return protectedWorkflows;
+      console.log('🎉 START PROTECTION - All workflows protected successfully');
+      return protectedWorkflows;
+    } catch (error) {
+      console.error('❌ START PROTECTION - Critical error in startWorkflowProtection:', {
+        error: error.message,
+        stack: error.stack,
+        userId,
+        workflowIds,
+        errorType: error.constructor.name,
+      });
+      
+      // Re-throw HttpExceptions as-is
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      // For any other errors, provide detailed error information
+      throw new HttpException(
+        `Failed to start workflow protection: ${error.message || 'Unknown error occurred'}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**
