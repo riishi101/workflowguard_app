@@ -23,13 +23,14 @@ export class PaymentController {
   ) {}
 
   /**
-   * Get payment configuration for frontend
    * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Single source of truth
    */
   @Get('config')
   getPaymentConfig() {
     try {
+      console.log('💳 PaymentController - getPaymentConfig called');
       const config = this.paymentService.getPaymentConfig();
+      console.log('💳 PaymentController - Config retrieved successfully');
       
       return {
         success: true,
@@ -37,14 +38,35 @@ export class PaymentController {
         message: 'Payment configuration retrieved successfully'
       };
     } catch (error) {
-      this.logger.error(`Failed to get payment config: ${error.message}`);
-      
-      return {
-        success: false,
-        message: error.message || 'Payment configuration unavailable',
-        data: null
-      };
+      console.log('❌ PaymentController - Config error:', error.message);
+      throw error;
     }
+  }
+
+  /**
+   * Debug endpoint to check environment variables
+   * Memory Check: Following MISTAKE #6 lesson - Specific error messages for debugging
+   */
+  @Get('debug/env')
+  debugEnvironmentVariables() {
+    console.log('🔍 PaymentController - Debug environment variables called');
+    
+    const envVars = {
+      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 10) + '...' : 'MISSING',
+      RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ? process.env.RAZORPAY_KEY_SECRET.substring(0, 10) + '...' : 'MISSING',
+      RAZORPAY_PLAN_ID_STARTER_INR: process.env.RAZORPAY_PLAN_ID_STARTER_INR || 'MISSING',
+      RAZORPAY_PLAN_ID_PROFESSIONAL_INR: process.env.RAZORPAY_PLAN_ID_PROFESSIONAL_INR || 'MISSING',
+      RAZORPAY_PLAN_ID_ENTERPRISE_INR: process.env.RAZORPAY_PLAN_ID_ENTERPRISE_INR || 'MISSING',
+      NODE_ENV: process.env.NODE_ENV || 'MISSING'
+    };
+    
+    console.log('🔍 PaymentController - Environment variables:', envVars);
+    
+    return {
+      success: true,
+      message: 'Environment variables debug information',
+      data: envVars
+    };
   }
 
   /**
