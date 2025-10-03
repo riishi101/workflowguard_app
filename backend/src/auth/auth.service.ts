@@ -100,15 +100,56 @@ export class AuthService {
       payload,
     );
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-    });
-    console.log(
-      'AuthService - User found in database:',
-      user ? { id: user.id, email: user.email } : null,
-    );
+    try {
+      // First try to find user by ID
+      let user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      
+      console.log(
+        'AuthService - User found by ID:',
+        user ? { id: user.id, email: user.email } : null,
+      );
 
-    return user;
+      // If user not found by ID, try to find by email
+      if (!user) {
+        console.log('AuthService - User not found by ID, trying email lookup...');
+        user = await this.prisma.user.findUnique({
+          where: { email: payload.email },
+        });
+        
+        console.log(
+          'AuthService - User found by email:',
+          user ? { id: user.id, email: user.email } : null,
+        );
+      }
+
+      // If still not found, create user (for HubSpot OAuth users)
+      if (!user && payload.email && payload.sub) {
+        console.log('AuthService - Creating missing user from JWT payload...');
+        try {
+          user = await this.prisma.user.create({
+            data: {
+              id: payload.sub,
+              email: payload.email,
+              name: payload.email.split('@')[0], // Use email prefix as name
+              hubspotPortalId: payload.email.includes('hubspot') 
+                ? payload.email.split('-')[1]?.split('@')[0] 
+                : null,
+            },
+          });
+          console.log('AuthService - User created successfully:', { id: user.id, email: user.email });
+        } catch (createError) {
+          console.log('AuthService - Failed to create user:', createError);
+          return null;
+        }
+      }
+
+      return user;
+    } catch (error) {
+      console.log('AuthService - Error in validateJwtPayload:', error);
+      return null;
+    }
   }
 
   async verifyToken(token: string) {
