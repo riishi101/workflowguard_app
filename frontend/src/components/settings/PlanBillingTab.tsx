@@ -131,19 +131,14 @@ const PlanBillingTab = () => {
 
   const handleUpgrade = async (planId: string) => {
     try {
-      // Get Razorpay configuration from backend
-      const configResponse = await fetch('/api/razorpay/config', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Get Razorpay configuration from backend using ApiService
+      const configResponse = await ApiService.getRazorpayConfig();
       
-      if (!configResponse.ok) {
+      if (!configResponse.success) {
         throw new Error('Failed to get payment configuration. Please contact support.');
       }
       
-      const config = await configResponse.json();
+      const config = configResponse.data;
       console.log('Razorpay configuration loaded successfully');
     } catch (configError) {
       console.error('Configuration error:', configError);
@@ -180,13 +175,8 @@ const PlanBillingTab = () => {
       console.log('Order created successfully:', order.id);
       
       // Get Razorpay configuration again for payment options
-      const configResponse = await fetch('/api/razorpay/config', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const config = await configResponse.json();
+      const configResponse = await ApiService.getRazorpayConfig();
+      const config = configResponse.data;
       
       // Configure Razorpay options
       const options = {
