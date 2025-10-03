@@ -753,9 +753,22 @@ class ApiService {
 
   static async createPaymentOrder(planId: string): Promise<ApiResponse<any>> {
     try {
+      // Debug API call - Memory Check: Following MISTAKE #6 lesson for specific error messages
+      const token = localStorage.getItem('token');
+      console.log('🔐 API Debug - createPaymentOrder called:');
+      console.log('  - planId:', planId);
+      console.log('  - token exists:', !!token);
+      console.log('  - token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+      
       const response = await apiClient.post('/api/payment/create-order', { planId });
+      console.log('✅ API Debug - createPaymentOrder success:', response.status);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      console.log('❌ API Debug - createPaymentOrder failed:');
+      console.log('  - status:', error.response?.status);
+      console.log('  - statusText:', error.response?.statusText);
+      console.log('  - data:', error.response?.data);
+      console.log('  - headers sent:', error.config?.headers);
       throw error;
     }
   }

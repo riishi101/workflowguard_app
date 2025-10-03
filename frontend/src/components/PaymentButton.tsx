@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { ApiService } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { TokenValidator } from '../utils/tokenValidator';
 
 interface PaymentButtonProps {
   planId: string;
@@ -40,7 +41,31 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages with clear instructions
    */
   const handlePaymentClick = async () => {
+    // Debug authentication state - Memory Check: Following MISTAKE #6 lesson
+    console.log('🔐 PaymentButton Debug - Authentication State:');
+    console.log('  - isAuthenticated:', isAuthenticated);
+    console.log('  - user:', user);
+    
+    // Use TokenValidator for comprehensive token validation
+    const tokenValidation = TokenValidator.validateToken();
+    console.log('  - token validation:', tokenValidation);
+    
+    if (!tokenValidation.isValid) {
+      console.log('❌ PaymentButton - Invalid token:', tokenValidation.error);
+      TokenValidator.cleanInvalidToken();
+      
+      toast({
+        title: tokenValidation.isExpired ? "Session Expired" : "Authentication Error",
+        description: tokenValidation.isExpired 
+          ? "Your session has expired. Please log in again to continue with your payment."
+          : "Authentication failed. Please log in again to continue with your payment.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!isAuthenticated || !user) {
+      console.log('❌ PaymentButton - User not authenticated, showing error');
       toast({
         title: "Authentication Required",
         description: "Please log in to upgrade your subscription.",
@@ -48,6 +73,10 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       });
       return;
     }
+
+    // Debug token before API call
+    const token = localStorage.getItem('token');
+    console.log('🔐 PaymentButton - About to make payment with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
 
     await handlePayment();
   };
