@@ -511,6 +511,7 @@ export class WorkflowController {
   @Post('start-protection')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {
+    console.log('🚨 CONTROLLER - start-protection called with body:', JSON.stringify(body));
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
     if (!userId) {
       userId = req.headers['x-user-id'];

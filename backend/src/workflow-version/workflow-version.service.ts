@@ -6,6 +6,11 @@ export class WorkflowVersionService {
   constructor(private prisma: PrismaService) {}
 
   async create(createWorkflowVersionDto: any): Promise<any> {
+    // Ensure data field is properly stringified if it's an object
+    if (createWorkflowVersionDto.data && typeof createWorkflowVersionDto.data === 'object') {
+      createWorkflowVersionDto.data = JSON.stringify(createWorkflowVersionDto.data);
+    }
+    
     return this.prisma.workflowVersion.create({
       data: createWorkflowVersionDto,
     });
@@ -153,7 +158,7 @@ export class WorkflowVersionService {
         workflowId: workflowId,
         versionNumber: nextVersionNumber,
         snapshotType: 'Restore',
-        data: version.data,
+        data: typeof version.data === 'string' ? version.data : JSON.stringify(version.data),
         createdBy: userId,
       });
 
@@ -202,7 +207,7 @@ export class WorkflowVersionService {
         workflowId: workflowId,
         versionNumber: latestVersion.versionNumber + 1,
         snapshotType: 'Rollback',
-        data: previousVersion.data,
+        data: typeof previousVersion.data === 'string' ? previousVersion.data : JSON.stringify(previousVersion.data),
         createdBy: userId,
       });
 
@@ -720,7 +725,7 @@ export class WorkflowVersionService {
         snapshotType: version.snapshotType,
         createdBy: version.createdBy,
         createdAt: version.createdAt,
-        data: version.data,
+        data: typeof version.data === 'string' ? version.data : JSON.stringify(version.data),
         workflowId: version.workflowId,
         changes: this.calculateChanges(version.data),
         changeSummary: this.generateChangeSummary(
