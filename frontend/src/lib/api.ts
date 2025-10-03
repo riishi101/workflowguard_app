@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://www.workflowguard.pro';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
 
 // Create axios instance
 const apiClient = axios.create({
