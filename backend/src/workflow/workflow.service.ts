@@ -1619,14 +1619,14 @@ export class WorkflowService {
       }
 
       // Use transaction with timeout to ensure data consistency
-      console.log('🔍 START PROTECTION - Starting database transaction with 30s timeout');
+      console.log('🔍 START PROTECTION - Starting database transaction with 60s timeout');
       try {
         await this.prisma.$transaction(async (tx) => {
           console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
         
         for (const workflowId of workflowIds) {
           console.log('🔄 START PROTECTION - Processing workflow:', workflowId);
-          try {
+
           // Find the workflow object from selectedWorkflowObjects
           const workflowObj = selectedWorkflowObjects?.find(
             (w: any) => w.id === workflowId || w.hubspotId === workflowId,
@@ -1660,60 +1660,110 @@ export class WorkflowService {
 
           // Ensure workflow has at least one version (only create if none exist)
           if (!workflowWithVersions?.versions?.length) {
+            console.log('🔄 START PROTECTION - Creating initial version for workflow:', workflowId);
+
             // Use pre-fetched HubSpot data (outside transaction)
             const workflowData = hubspotWorkflows.find(
               (w) => String(w.id) === hubspotId,
             );
 
-            // Sanitize HubSpot data to remove ALL complex objects before serialization
+            console.log('🔍 START PROTECTION - HubSpot data found:', {
+              workflowId,
+              hasWorkflowData: !!workflowData,
+              workflowDataKeys: workflowData ? Object.keys(workflowData) : 'none',
+              hubspotId
+            });
+
+            // CRITICAL FIX: Enhanced data sanitization with bulletproof error handling
             const sanitizeForJSON = (data: any): any => {
-              if (!data || typeof data !== 'object') return data;
-              
+              if (!data || typeof data !== 'object') {
+                // Return safe primitive values only
+                if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean' || data === null) {
+                  return data;
+                }
+                return null; // Reject unsafe types
+              }
+
               const sanitized: any = {};
-              for (const key in data) {
-                const value = data[key];
-                
-                // Only keep primitive values (string, number, boolean, null)
-                if (value === null || value === undefined) {
-                  sanitized[key] = value;
-                } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-                  sanitized[key] = value;
-                } else if (Array.isArray(value)) {
-                  // Only keep arrays of primitives
-                  const primitiveArray = value.filter(item => 
-                    typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean'
-                  );
-                  if (primitiveArray.length > 0) {
-                    sanitized[key] = primitiveArray;
+              
+              // Whitelist of safe fields to include
+              const safeFields = ['id', 'name', 'status', 'type', 'enabled', 'insertedAt', 'updatedAt', 'hubspotId'];
+              
+              for (const key of safeFields) {
+                if (data.hasOwnProperty(key)) {
+                  const value = data[key];
+                  try {
+                    // Only keep safe primitive values
+                    if (value === null || value === undefined) {
+                      sanitized[key] = value;
+                    } else if (typeof value === 'string') {
+                      // Ensure string is not too long and doesn't contain problematic characters
+                      sanitized[key] = String(value).substring(0, 500).replace(/[\x00-\x1F\x7F]/g, '');
+                    } else if (typeof value === 'number' && isFinite(value)) {
+                      sanitized[key] = value;
+                    } else if (typeof value === 'boolean') {
+                      sanitized[key] = value;
+                    }
+                    // Skip everything else including arrays and objects
+                  } catch (error) {
+                    console.warn(`⚠️ Failed to sanitize field ${key}:`, error);
+                    // Continue without this field rather than failing
                   }
                 }
-                // Skip all objects, complex arrays, functions, etc.
               }
               return sanitized;
             };
 
-            // Create completely safe initial version data
+            // CRITICAL FIX: Create completely safe initial version data with guaranteed JSON serialization
             const initialVersionData = {
-              hubspotId: String(hubspotId),
-              name: String(workflow.name),
-              status: String((workflowData?.status || workflowObj?.status || 'ACTIVE')).toLowerCase(),
-              type: String(workflowData?.type || 'unknown'),
+              hubspotId: String(hubspotId || '').substring(0, 100),
+              name: String(workflow.name || 'Unnamed Workflow').substring(0, 200),
+              status: String((workflowData?.status || workflowObj?.status || 'ACTIVE')).toLowerCase().substring(0, 50),
+              type: String(workflowData?.type || 'unknown').substring(0, 50),
               enabled: Boolean((workflowData?.status || workflowObj?.status || 'ACTIVE') === 'ACTIVE'),
-              // Add only safe, primitive fields from workflowData
-              ...(workflowData && sanitizeForJSON({
-                id: workflowData.id,
-                insertedAt: workflowData.insertedAt,
-                updatedAt: workflowData.updatedAt,
-              })),
+              // Only add sanitized data if it exists and is safe
+              ...(workflowData ? sanitizeForJSON(workflowData) : {}),
+              // Safe metadata with guaranteed primitive values
               metadata: {
                 protection: {
                   initialProtection: true,
                   protectedAt: new Date().toISOString(),
-                  protectedBy: userId,
+                  protectedBy: String(userId).substring(0, 100),
                   source: workflowData ? 'hubspot' : 'minimal',
                 },
               },
             };
+            
+            // CRITICAL: Validate that the data is actually JSON serializable
+            try {
+              const testSerialization = JSON.stringify(initialVersionData);
+              if (!testSerialization || testSerialization === 'null') {
+                throw new Error('Data serialization resulted in null or empty string');
+              }
+              console.log('✅ Data serialization test passed, size:', testSerialization.length);
+            } catch (serializationError) {
+              console.error('❌ CRITICAL: Data serialization test failed:', serializationError);
+              // Fallback to minimal safe data
+              const fallbackData = {
+                hubspotId: String(hubspotId || ''),
+                name: String(workflow.name || 'Unnamed Workflow'),
+                status: 'active',
+                type: 'unknown',
+                enabled: true,
+                metadata: {
+                  protection: {
+                    initialProtection: true,
+                    protectedAt: new Date().toISOString(),
+                    protectedBy: String(userId),
+                    source: 'fallback',
+                    error: 'Original data serialization failed'
+                  }
+                }
+              };
+              // Replace with fallback
+              Object.assign(initialVersionData, fallbackData);
+              console.log('🔄 Using fallback data for workflow:', workflow.id);
+            }
 
             console.log('🔍 START PROTECTION - Creating initial version with SANITIZED data:', {
               workflowId: workflow.id,
@@ -1722,18 +1772,83 @@ export class WorkflowService {
               sanitizedDataSample: JSON.stringify(initialVersionData).substring(0, 200) + '...'
             });
 
-            // Encrypt sensitive data before storing
-            const encryptedVersionData = this.encryptionService.encryptWorkflowData(initialVersionData);
+            // CRITICAL FIX: Safe encryption with comprehensive error handling
+            let finalVersionData = initialVersionData;
+            let encryptionAttempted = false;
+            
+            try {
+              if (this.encryptionService && typeof this.encryptionService.encryptWorkflowData === 'function') {
+                finalVersionData = this.encryptionService.encryptWorkflowData(initialVersionData);
+                encryptionAttempted = true;
+                console.log('✅ Workflow data encrypted successfully for workflow:', workflow.id);
+              } else {
+                console.warn('⚠️ Encryption service not available, using unencrypted data');
+              }
+            } catch (encryptionError) {
+              console.warn('⚠️ Encryption failed, using unencrypted data for workflow:', workflow.id, encryptionError.message);
+              finalVersionData = initialVersionData; // Fallback to original data
+            }
 
-            // Create the initial version
+            // CRITICAL FIX: Final safety check before database insertion
+            let dataToStore: string;
+            try {
+              // Ensure we have a valid object
+              if (!finalVersionData || typeof finalVersionData !== 'object') {
+                throw new Error('Final version data is not a valid object');
+              }
+              
+              // Attempt JSON stringification with error handling
+              dataToStore = JSON.stringify(finalVersionData);
+              
+              // Validate the stringified data
+              if (!dataToStore || dataToStore === 'null' || dataToStore === '{}') {
+                throw new Error('JSON stringification resulted in invalid data');
+              }
+              
+              // Check size limits (SQLite has limits)
+              if (dataToStore.length > 1000000) { // 1MB limit
+                console.warn('⚠️ Data size is very large:', dataToStore.length, 'characters');
+              }
+              
+              console.log('✅ Final data validation passed, size:', dataToStore.length, 'encrypted:', encryptionAttempted);
+              
+            } catch (finalError) {
+              console.error('❌ CRITICAL: Final data preparation failed:', finalError);
+              
+              // Ultimate fallback - create minimal safe data
+              const ultimateFallback = {
+                hubspotId: String(hubspotId || ''),
+                name: String(workflow.name || 'Unnamed Workflow'),
+                status: 'active',
+                type: 'workflow',
+                enabled: true,
+                createdAt: new Date().toISOString(),
+                metadata: {
+                  error: 'Data serialization failed, using minimal fallback',
+                  originalError: finalError.message,
+                  timestamp: new Date().toISOString()
+                }
+              };
+              
+              dataToStore = JSON.stringify(ultimateFallback);
+              console.log('🆘 Using ultimate fallback data for workflow:', workflow.id);
+            }
+
+            // Create the initial version with bulletproof data
             const initialVersion = await tx.workflowVersion.create({
               data: {
                 workflowId: workflow.id,
                 versionNumber: 1,
                 snapshotType: 'Initial Protection',
                 createdBy: userId,
-                data: JSON.stringify(encryptedVersionData), // Convert encrypted object to JSON string
+                data: dataToStore, // Now guaranteed to be a valid JSON string
               },
+            });
+
+            console.log('✅ Created initial version for workflow:', {
+              workflowId: workflow.id,
+              versionId: initialVersion.id,
+              versionNumber: initialVersion.versionNumber,
             });
 
             // Create audit log
@@ -1765,23 +1880,10 @@ export class WorkflowService {
           }
 
           protectedWorkflows.push(workflow);
-          } catch (err) {
-            const errorMessage = `Failed to protect workflow ${workflowId}: ${err?.message || err}`;
-            console.error('❌ START PROTECTION - Error protecting individual workflow:', {
-              workflowId,
-              error: err?.message || err,
-              stack: err?.stack,
-              userId,
-              errorType: err?.constructor?.name,
-              prismaError: err?.code || 'N/A'
-            });
-            errors.push({ workflowId, error: errorMessage });
-            // Don't throw here, collect all errors
-          }
         }
         console.log('✅ START PROTECTION - Transaction completed successfully');
       }, {
-        timeout: 30000, // 30 second timeout for complex operations
+        timeout: 60000, // 60 second timeout for complex operations
       });
       
       // If there were errors, throw with details

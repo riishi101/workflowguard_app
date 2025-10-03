@@ -2,15 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -61,7 +59,7 @@ model WorkflowVersion {
   snapshotType  String
   createdBy     String
   createdAt     DateTime @default(now())
-  data          String   // JSON as string for SQLite
+  data          String   // JSON as string for PostgreSQL
   workflow      Workflow @relation(fields: [workflowId], references: [id])
 
   @@unique([workflowId, versionNumber])
@@ -73,8 +71,8 @@ model AuditLog {
   action     String
   entityType String
   entityId   String
-  oldValue   String?  // JSON as string for SQLite
-  newValue   String?  // JSON as string for SQLite
+  oldValue   String?  // JSON as string for PostgreSQL
+  newValue   String?  // JSON as string for PostgreSQL
   timestamp  DateTime @default(now())
   ipAddress  String?
   user       User?    @relation(fields: [userId], references: [id])
@@ -111,7 +109,7 @@ model Plan {
   description String?
   price       Float
   interval    String
-  features    String?  // JSON as string for SQLite
+  features    String?  // JSON as string for PostgreSQL
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
