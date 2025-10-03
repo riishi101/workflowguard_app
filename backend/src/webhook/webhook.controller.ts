@@ -168,6 +168,9 @@ export class WebhookController {
           const { WorkflowService } = await import(
             '../workflow/workflow.service'
           );
+          const { EncryptionService } = await import(
+            '../services/encryption.service'
+          );
           const { PrismaService } = await import('../prisma/prisma.service');
           const { HubSpotService } = await import(
             '../services/hubspot.service'
@@ -185,11 +188,13 @@ export class WebhookController {
           const workflowVersionService = new WorkflowVersionService(
             prismaService,
           );
+          const encryptionService = new EncryptionService();
           const workflowService = new WorkflowService(
             prismaService,
             hubspotService,
             subscriptionService,
             workflowVersionService,
+            encryptionService,
           );
 
           // Handle workflow deletion
