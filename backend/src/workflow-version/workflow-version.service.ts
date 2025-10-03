@@ -31,7 +31,7 @@ export class WorkflowVersionService {
           versionNumber,
           snapshotType,
           createdBy: userId,
-          data: data || {},
+          data: JSON.stringify(data || {}), // Convert object to JSON string
         },
       });
 
@@ -239,7 +239,7 @@ export class WorkflowVersionService {
           versionNumber: latestVersion.versionNumber + 1,
           snapshotType: 'Auto Backup',
           createdBy: userId,
-          data: latestVersion.data || {},
+          data: JSON.stringify(latestVersion.data || {}), // Convert object to JSON string
         },
       });
 
@@ -616,13 +616,13 @@ export class WorkflowVersionService {
           versionNumber,
           snapshotType: 'Initial Protection',
           createdBy: userId,
-          data: initialData || {
+          data: JSON.stringify(initialData || {
             hubspotId: workflow.hubspotId,
             name: workflow.name,
             status: 'active',
             initialProtection: true,
             protectedAt: new Date().toISOString(),
-          },
+          }),
         },
       });
 

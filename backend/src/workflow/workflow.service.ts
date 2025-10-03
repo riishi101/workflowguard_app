@@ -1668,7 +1668,7 @@ export class WorkflowService {
                 action: 'workflow_protection_started',
                 entityType: 'workflow',
                 entityId: workflow.id,
-                oldValue: null as any,
+                oldValue: null,
                 newValue: JSON.stringify({
                   versionId: initialVersion.id,
                   versionNumber: 1,
