@@ -1640,8 +1640,8 @@ export class WorkflowService {
               (w) => String(w.id) === hubspotId,
             );
 
-            // Create initial version with available data
-            const initialVersionData = workflowData || {
+            // Create initial version with available data (sanitized for JSON serialization)
+            const initialVersionData = {
               hubspotId,
               name: workflow.name,
               status: (
@@ -1649,10 +1649,20 @@ export class WorkflowService {
                 workflowObj?.status ||
                 'ACTIVE'
               ).toLowerCase(),
-              type: 'unknown',
+              type: workflowData?.type || 'unknown',
               enabled:
                 (workflowData?.status || workflowObj?.status || 'ACTIVE') ===
                 'ACTIVE',
+              // Only include serializable fields from workflowData
+              ...(workflowData && {
+                id: workflowData.id,
+                name: workflowData.name,
+                type: workflowData.type,
+                enabled: workflowData.enabled,
+                insertedAt: workflowData.insertedAt,
+                updatedAt: workflowData.updatedAt,
+                // Exclude complex objects that cause serialization issues
+              }),
               metadata: {
                 protection: {
                   initialProtection: true,
@@ -1663,6 +1673,12 @@ export class WorkflowService {
               },
             };
 
+            console.log('🔍 START PROTECTION - Creating initial version with data:', {
+              workflowId: workflow.id,
+              dataKeys: Object.keys(initialVersionData),
+              hasWorkflowData: !!workflowData
+            });
+
             // Create the initial version
             const initialVersion = await tx.workflowVersion.create({
               data: {
@@ -1670,7 +1686,7 @@ export class WorkflowService {
                 versionNumber: 1,
                 snapshotType: 'Initial Protection',
                 createdBy: userId,
-                data: JSON.stringify(initialVersionData), // Convert object to JSON string
+                data: JSON.stringify(initialVersionData), // Convert sanitized object to JSON string
               },
             });
 
