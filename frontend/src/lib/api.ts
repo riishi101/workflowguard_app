@@ -743,8 +743,17 @@ class ApiService {
 
   // Razorpay Integration APIs
   static async getRazorpayConfig(): Promise<ApiResponse<any>> {
+    const headers: any = {
+      'Content-Type': 'application/json',
+    };
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
-      const response = await apiClient.get('/api/razorpay/config');
+      const response = await apiClient.get('/api/razorpay/config', { headers });
       return response.data;
     } catch (error) {
       throw error;
