@@ -1,5 +1,5 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://www.workflowguard.pro';
 
 // API Endpoints
 export const ENDPOINTS = {
