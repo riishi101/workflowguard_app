@@ -1640,29 +1640,46 @@ export class WorkflowService {
               (w) => String(w.id) === hubspotId,
             );
 
-            // Create initial version with available data (sanitized for JSON serialization)
+            // Sanitize HubSpot data to remove ALL complex objects before serialization
+            const sanitizeForJSON = (data: any): any => {
+              if (!data || typeof data !== 'object') return data;
+              
+              const sanitized: any = {};
+              for (const key in data) {
+                const value = data[key];
+                
+                // Only keep primitive values (string, number, boolean, null)
+                if (value === null || value === undefined) {
+                  sanitized[key] = value;
+                } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                  sanitized[key] = value;
+                } else if (Array.isArray(value)) {
+                  // Only keep arrays of primitives
+                  const primitiveArray = value.filter(item => 
+                    typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean'
+                  );
+                  if (primitiveArray.length > 0) {
+                    sanitized[key] = primitiveArray;
+                  }
+                }
+                // Skip all objects, complex arrays, functions, etc.
+              }
+              return sanitized;
+            };
+
+            // Create completely safe initial version data
             const initialVersionData = {
-              hubspotId,
-              name: workflow.name,
-              status: (
-                workflowData?.status ||
-                workflowObj?.status ||
-                'ACTIVE'
-              ).toLowerCase(),
-              type: workflowData?.type || 'unknown',
-              enabled:
-                (workflowData?.status || workflowObj?.status || 'ACTIVE') ===
-                'ACTIVE',
-              // Only include serializable fields from workflowData
-              ...(workflowData && {
+              hubspotId: String(hubspotId),
+              name: String(workflow.name),
+              status: String((workflowData?.status || workflowObj?.status || 'ACTIVE')).toLowerCase(),
+              type: String(workflowData?.type || 'unknown'),
+              enabled: Boolean((workflowData?.status || workflowObj?.status || 'ACTIVE') === 'ACTIVE'),
+              // Add only safe, primitive fields from workflowData
+              ...(workflowData && sanitizeForJSON({
                 id: workflowData.id,
-                name: workflowData.name,
-                type: workflowData.type,
-                enabled: workflowData.enabled,
                 insertedAt: workflowData.insertedAt,
                 updatedAt: workflowData.updatedAt,
-                // Exclude complex objects that cause serialization issues
-              }),
+              })),
               metadata: {
                 protection: {
                   initialProtection: true,
@@ -1673,10 +1690,11 @@ export class WorkflowService {
               },
             };
 
-            console.log('🔍 START PROTECTION - Creating initial version with data:', {
+            console.log('🔍 START PROTECTION - Creating initial version with SANITIZED data:', {
               workflowId: workflow.id,
               dataKeys: Object.keys(initialVersionData),
-              hasWorkflowData: !!workflowData
+              hasWorkflowData: !!workflowData,
+              sanitizedDataSample: JSON.stringify(initialVersionData).substring(0, 200) + '...'
             });
 
             // Create the initial version
