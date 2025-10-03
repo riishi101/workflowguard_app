@@ -55,10 +55,16 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   async createOrder(@Body() body: { planId: string }, @Request() req: any) {
     try {
-      const userId = req.user?.userId;
+      // Debug user object from JWT strategy
+      console.log('🔐 PaymentController - User from JWT:', req.user);
+      
+      const userId = req.user?.id; // Fixed: use 'id' instead of 'userId'
       const { planId } = body;
 
+      console.log('🔐 PaymentController - Extracted userId:', userId);
+
       if (!userId) {
+        console.log('❌ PaymentController - No userId found in req.user:', req.user);
         throw new HttpException(
           'User authentication required. Please log in and try again.',
           HttpStatus.UNAUTHORIZED
@@ -121,7 +127,7 @@ export class PaymentController {
     @Request() req: any
   ) {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
       const { orderId, paymentId, signature, planId } = body;
 
       if (!userId) {
@@ -245,7 +251,7 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   async getPaymentHistory(@Request() req: any) {
     try {
-      const userId = req.user?.userId;
+      const userId = req.user?.id;
 
       if (!userId) {
         throw new HttpException(
