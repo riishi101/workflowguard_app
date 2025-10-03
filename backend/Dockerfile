@@ -39,7 +39,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./
+COPY --from=builder /app/dist ./dist
 
 # Copy generated Prisma client from builder stage
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -63,4 +63,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:4000/api/health || exit 1
 
 # Start the application with Prisma setup
-CMD ["sh", "-c", "npx prisma generate && node --max-old-space-size=400 main.js"]
+CMD ["sh", "-c", "npx prisma generate && node --max-old-space-size=400 dist/main.js"]
