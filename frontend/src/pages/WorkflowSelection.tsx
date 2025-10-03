@@ -359,11 +359,12 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       
 
       // Call real API to start protection
+      console.log('Sending workflow data:', selectedWorkflowObjects);
       const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
       
-      
+      console.log('API Response:', response);
 
-      if (response.success) {
+      if (response && response.success) {
         // Store selected workflows in WorkflowState for backward compatibility
         WorkflowState.setSelectedWorkflows(selectedWorkflowObjects.map(workflow => ({
           ...workflow,
@@ -377,7 +378,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Navigate to dashboard
-        
         navigate("/dashboard");
         
         // Show success toast
@@ -386,7 +386,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           description: response.message || (selectedWorkflows.length + " workflows are now being monitored."),
         });
       } else {
-        throw new Error(response.message || 'Failed to start protection');
+        throw new Error((response && response.message) || 'Failed to start protection');
       }
       
     } catch (error: any) {

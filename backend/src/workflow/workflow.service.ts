@@ -1581,6 +1581,24 @@ export class WorkflowService {
     const protectedWorkflows: any[] = [];
     const errors: Array<{ workflowId: string; error: string }> = [];
 
+      // Validate workflow data before proceeding
+      console.log('🔍 START PROTECTION - Validating workflow data');
+      if (selectedWorkflowObjects && selectedWorkflowObjects.length > 0) {
+        // Ensure each workflow has at least id and hubspotId
+        const invalidWorkflows = selectedWorkflowObjects.filter(
+          workflow => !workflow.id && !workflow.hubspotId
+        );
+        if (invalidWorkflows.length > 0) {
+          console.error('❌ START PROTECTION - Invalid workflow data detected:', 
+            JSON.stringify(invalidWorkflows.map(w => ({ id: w.id, hubspotId: w.hubspotId })))
+          );
+          throw new HttpException(
+            'Invalid workflow data: Each workflow must have either id or hubspotId', 
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+
       // Fetch HubSpot workflows OUTSIDE the transaction to avoid conflicts
       let hubspotWorkflows: any[] = [];
       try {
@@ -1596,8 +1614,9 @@ export class WorkflowService {
 
       // Use transaction with timeout to ensure data consistency
       console.log('🔍 START PROTECTION - Starting database transaction with 30s timeout');
-      await this.prisma.$transaction(async (tx) => {
-        console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
         
         for (const workflowId of workflowIds) {
           console.log('🔄 START PROTECTION - Processing workflow:', workflowId);
@@ -1755,22 +1774,44 @@ export class WorkflowService {
       }, {
         timeout: 30000, // 30 second timeout for complex operations
       });
-
-    // If there were errors, throw with details
-    if (errors.length > 0) {
-      throw new HttpException(
-        {
-          message: 'Some workflows could not be protected',
-          errors,
-          successCount: protectedWorkflows.length,
-          totalCount: workflowIds.length,
-        },
-        HttpStatus.PARTIAL_CONTENT,
-      );
-    }
-
+      
+      // If there were errors, throw with details
+      if (errors.length > 0) {
+        throw new HttpException(
+          {
+            message: 'Some workflows could not be protected',
+            errors,
+            successCount: protectedWorkflows.length,
+            totalCount: workflowIds.length,
+          },
+          HttpStatus.PARTIAL_CONTENT,
+        );
+      }
+      
       console.log('🎉 START PROTECTION - All workflows protected successfully');
       return protectedWorkflows;
+      
+    } catch (txError) {
+      // Handle transaction-specific errors
+      console.error('❌ START PROTECTION - Transaction error:', {
+        error: txError.message,
+        code: txError.code,
+        meta: txError.meta,
+        userId,
+        errorType: txError.constructor.name
+      });
+      
+      // Rethrow with better error message for transaction errors
+      throw new HttpException(
+        {
+          message: 'Database transaction failed during workflow protection',
+          error: txError.message,
+          code: txError.code
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+    
     } catch (error) {
       console.error('❌ START PROTECTION - Critical error in startWorkflowProtection:', {
         error: error.message,
@@ -1782,6 +1823,16 @@ export class WorkflowService {
         prismaError: error?.code || 'N/A',
         httpStatus: error?.status || 'N/A'
       });
+      
+      // Return a more graceful error response instead of crashing
+      throw new HttpException(
+        {
+          success: false,
+          message: `Failed to start workflow protection: ${error.message || 'An unexpected error occurred'}`,
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
       
       // Re-throw HttpExceptions as-is
       if (error instanceof HttpException) {

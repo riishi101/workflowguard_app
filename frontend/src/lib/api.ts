@@ -286,11 +286,22 @@ class ApiService {
 
   static async startWorkflowProtection(selectedWorkflowObjects: any[]): Promise<ApiResponse<any>> {
     try {
+      // Ensure we're sending the data in the format the backend expects
       const response = await apiClient.post('/api/workflow/start-protection', {
-        workflows: selectedWorkflowObjects
+        workflows: selectedWorkflowObjects.map(workflow => ({
+          id: workflow.id,
+          hubspotId: workflow.hubspotId || workflow.id,
+          name: workflow.name,
+          status: workflow.status
+        }))
       });
       return response.data;
     } catch (error) {
+      // Add better error handling
+      console.error('API Error in startWorkflowProtection:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+      }
       throw error;
     }
   }

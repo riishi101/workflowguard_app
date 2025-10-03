@@ -179,53 +179,14 @@ const PlanBillingTab = () => {
       const order = resp.data;
       console.log('Order created successfully:', order.id);
       
-      // Get Razorpay configuration from multiple endpoints with fallback
-      let config;
-      try {
-        // Try multiple endpoints in order of preference
-        const endpoints = [
-          '/api/razorpay-api/config',      // New API controller
-          '/api/razorpay-config/config',   // Separate config controller
-          '/api/razorpay/payment-settings', // Different naming pattern
-          '/api/razorpay/config-simple',   // Simple config endpoint
-          '/api/razorpay/config'           // Original endpoint (fallback)
-        ];
-
-        for (const endpoint of endpoints) {
-          try {
-            console.log(`Trying endpoint: ${endpoint}`);
-            const configResponse = await fetch(endpoint, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            if (configResponse.ok) {
-              config = await configResponse.json();
-              console.log(`✅ Successfully loaded config from: ${endpoint}`, config);
-              break;
-            } else {
-              console.log(`❌ Endpoint ${endpoint} failed with status: ${configResponse.status}`);
-            }
-          } catch (endpointError) {
-            console.log(`❌ Endpoint ${endpoint} error:`, endpointError.message);
-            continue;
-          }
-        }
-
-        if (!config) {
-          throw new Error('All configuration endpoints failed');
-        }
-      } catch (configError) {
-        console.error('Configuration error:', configError);
-        toast({
-          title: 'Configuration Error',
-          description: 'Payment system is not configured. Please contact support for assistance.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // Get Razorpay configuration again for payment options
+      const configResponse = await fetch('/api/razorpay/config', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const config = await configResponse.json();
       
       // Configure Razorpay options
       const options = {
