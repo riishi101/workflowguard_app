@@ -1539,10 +1539,16 @@ export class WorkflowService {
     selectedWorkflowObjects: any[],
   ): Promise<any[]> {
     console.log('🚀 START PROTECTION - Starting for user:', userId, 'workflows:', workflowIds);
+    console.log('🚀 START PROTECTION - Selected workflow objects:', JSON.stringify(selectedWorkflowObjects, null, 2));
     
     if (!userId) {
       console.error('❌ START PROTECTION - User ID is missing');
       throw new HttpException('User ID is required', HttpStatus.BAD_REQUEST);
+    }
+
+    if (!workflowIds || workflowIds.length === 0) {
+      console.error('❌ START PROTECTION - No workflow IDs provided');
+      throw new HttpException('At least one workflow ID is required', HttpStatus.BAD_REQUEST);
     }
 
     try {
@@ -1555,15 +1561,20 @@ export class WorkflowService {
         console.error('❌ START PROTECTION - User not found:', userId);
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-      console.log('✅ START PROTECTION - User validated successfully');
+      console.log('✅ START PROTECTION - User validated successfully:', user.email);
 
       // Check workflow limits before proceeding
-      console.log('🔍 START PROTECTION - Checking workflow limits');
+      console.log('🔍 START PROTECTION - Checking workflow limits for', workflowIds.length, 'workflows');
       try {
         await this.checkWorkflowLimits(userId, workflowIds.length);
         console.log('✅ START PROTECTION - Workflow limits check passed');
       } catch (limitError) {
-        console.error('❌ START PROTECTION - Workflow limits check failed:', limitError.message);
+        console.error('❌ START PROTECTION - Workflow limits check failed:', {
+          error: limitError.message,
+          userId,
+          requestedCount: workflowIds.length,
+          errorType: limitError.constructor.name
+        });
         throw limitError;
       }
 
@@ -1584,11 +1595,13 @@ export class WorkflowService {
       }
 
       // Use transaction with timeout to ensure data consistency
-      console.log('🔍 START PROTECTION - Starting database transaction');
+      console.log('🔍 START PROTECTION - Starting database transaction with 30s timeout');
       await this.prisma.$transaction(async (tx) => {
         console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
-      for (const workflowId of workflowIds) {
-        try {
+        
+        for (const workflowId of workflowIds) {
+          console.log('🔄 START PROTECTION - Processing workflow:', workflowId);
+          try {
           // Find the workflow object from selectedWorkflowObjects
           const workflowObj = selectedWorkflowObjects?.find(
             (w: any) => w.id === workflowId || w.hubspotId === workflowId,
@@ -1690,17 +1703,20 @@ export class WorkflowService {
           }
 
           protectedWorkflows.push(workflow);
-        } catch (err) {
-          const errorMessage = `Failed to protect workflow ${workflowId}: ${err?.message || err}`;
-          console.error('❌ Error protecting workflow:', {
-            workflowId,
-            error: err,
-            userId,
-          });
-          errors.push({ workflowId, error: errorMessage });
-          // Don't throw here, collect all errors
+          } catch (err) {
+            const errorMessage = `Failed to protect workflow ${workflowId}: ${err?.message || err}`;
+            console.error('❌ START PROTECTION - Error protecting individual workflow:', {
+              workflowId,
+              error: err?.message || err,
+              stack: err?.stack,
+              userId,
+              errorType: err?.constructor?.name,
+              prismaError: err?.code || 'N/A'
+            });
+            errors.push({ workflowId, error: errorMessage });
+            // Don't throw here, collect all errors
+          }
         }
-      }
         console.log('✅ START PROTECTION - Transaction completed successfully');
       }, {
         timeout: 30000, // 30 second timeout for complex operations
@@ -1727,7 +1743,10 @@ export class WorkflowService {
         stack: error.stack,
         userId,
         workflowIds,
+        selectedWorkflowObjects: selectedWorkflowObjects?.length || 0,
         errorType: error.constructor.name,
+        prismaError: error?.code || 'N/A',
+        httpStatus: error?.status || 'N/A'
       });
       
       // Re-throw HttpExceptions as-is
@@ -1750,15 +1769,25 @@ export class WorkflowService {
     userId: string,
     requestedCount: number,
   ): Promise<void> {
+    console.log('🔍 WORKFLOW LIMITS - Checking limits for user:', userId, 'requested:', requestedCount);
     try {
       // Get current protected workflows count
+      console.log('🔍 WORKFLOW LIMITS - Getting current protected workflows');
       const currentWorkflows = await this.getProtectedWorkflows(userId);
       const currentCount = currentWorkflows.length;
+      console.log('🔍 WORKFLOW LIMITS - Current protected workflows count:', currentCount);
 
       // Get user subscription and limits
+      console.log('🔍 WORKFLOW LIMITS - Getting user subscription');
       const subscription =
         await this.subscriptionService.getUserSubscription(userId);
       const workflowLimit = subscription.limits.workflows;
+      console.log('🔍 WORKFLOW LIMITS - Subscription details:', {
+        planName: subscription.planName,
+        workflowLimit,
+        currentCount,
+        requestedCount
+      });
 
       // Check if adding requested workflows would exceed limit
       const totalAfterAddition = currentCount + requestedCount;
@@ -1779,10 +1808,17 @@ export class WorkflowService {
       }
     } catch (error) {
       if (error instanceof HttpException) {
+        console.log('🔍 WORKFLOW LIMITS - HttpException thrown:', error.message);
         throw error;
       }
 
-      console.error('Error checking workflow limits:', error);
+      console.error('❌ WORKFLOW LIMITS - Error checking workflow limits:', {
+        error: error.message,
+        stack: error.stack,
+        userId,
+        requestedCount,
+        errorType: error.constructor.name
+      });
       // Don't throw an error here that would prevent workflow protection
       // Just log it and continue
     }
