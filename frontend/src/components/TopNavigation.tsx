@@ -109,7 +109,7 @@ const TopNavigation = () => {
     } catch (error) {
       console.error('Logout failed:', error);
       // Force logout even if API call fails
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
       navigate("/");
     }
   };

@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   // Check if user has a token, even if isAuthenticated is false temporarily
-  const hasToken = localStorage.getItem('authToken');
+  const hasToken = localStorage.getItem('token');
   
   if (!isAuthenticated && !hasToken) {
     

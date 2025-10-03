@@ -17,7 +17,7 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,7 +37,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token for auth endpoints
       if (error.config.url?.includes('/auth')) {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
       }
       // Don't clear token for non-auth endpoints to avoid infinite loops
     }
@@ -140,7 +140,7 @@ class ApiService {
       'Content-Type': 'application/json',
     };
 
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -329,7 +329,7 @@ class ApiService {
       'Content-Type': 'application/json',
     };
 
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

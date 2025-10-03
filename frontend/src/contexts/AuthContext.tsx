@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Handle OAuth callback
         if (successParam === 'true' && tokenParam) {
           
-          localStorage.setItem('authToken', tokenParam);
+          localStorage.setItem('token', tokenParam);
           
           // Clean up URL without triggering a navigation
           const newUrl = window.location.pathname + 
@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
         }
 
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         
 
         if (token) {
@@ -125,12 +125,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             } else {
               
-              localStorage.removeItem('authToken');
+              localStorage.removeItem('token');
               setUser(null);
             }
           } catch (error) {
             
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
             setUser(null);
           }
         } else {
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
       } catch (error) {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
         setUser(null);
       } finally {
         setLoading(false);
@@ -187,7 +187,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const testAuthentication = async () => {
     
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token');
     return;
   };
 
@@ -196,13 +196,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Clear auth state
       setUser(null);
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
       
     } catch (error) {
       
       // Force logout even on error
       setUser(null);
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
     }
   };
 
