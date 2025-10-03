@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { ApiService } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PaymentButtonProps {
   planId: string;
@@ -31,6 +32,25 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+
+  /**
+   * Check authentication before payment
+   * Memory Check: Avoiding 401 errors by ensuring user is authenticated
+   * Memory Check: Following MISTAKE #6 lesson - Specific error messages with clear instructions
+   */
+  const handlePaymentClick = async () => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to upgrade your subscription.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await handlePayment();
+  };
 
   /**
    * Load Razorpay script dynamically
@@ -190,7 +210,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
   return (
     <Button
-      onClick={handlePayment}
+      onClick={handlePaymentClick}
       disabled={disabled || isProcessing}
       className="w-full"
     >
