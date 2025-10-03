@@ -3032,7 +3032,7 @@ export class WorkflowService {
       await workflowVersionService.createVersion(
         workflow.id,
         user.id,
-        hubspotWorkflowData,
+        typeof hubspotWorkflowData === 'string' ? hubspotWorkflowData : JSON.stringify(hubspotWorkflowData),
         'webhook',
       );
 
@@ -3101,7 +3101,7 @@ export class WorkflowService {
         await this.workflowVersionService.createVersion(
           workflow.id,
           user.id,
-          latestVersion.data,
+          typeof latestVersion.data === 'string' ? latestVersion.data : JSON.stringify(latestVersion.data),
           'deletion_backup',
         );
 
@@ -3226,7 +3226,7 @@ export class WorkflowService {
       await this.workflowVersionService.createVersion(
         workflow.id,
         userId,
-        restoredWorkflow,
+        typeof restoredWorkflow === 'string' ? restoredWorkflow : JSON.stringify(restoredWorkflow),
         'restoration',
       );
 
