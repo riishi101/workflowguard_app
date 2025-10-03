@@ -12,10 +12,12 @@ export class TrialGuard implements CanActivate {
   constructor(private subscriptionService: SubscriptionService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log('🔍 TRIAL GUARD - Starting trial check');
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
     if (!user) {
+      console.error('❌ TRIAL GUARD - No user in request');
       throw new HttpException(
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
@@ -23,13 +25,17 @@ export class TrialGuard implements CanActivate {
     }
 
     const userId = user.sub || user.id || user.userId;
+    console.log('🔍 TRIAL GUARD - User ID extracted:', userId);
     if (!userId) {
+      console.error('❌ TRIAL GUARD - User ID not found in token');
       throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
     }
 
     try {
       // Check trial status
+      console.log('🔍 TRIAL GUARD - Getting trial status for:', userId);
       const trialStatus = await this.subscriptionService.getTrialStatus(userId);
+      console.log('✅ TRIAL GUARD - Trial status retrieved:', trialStatus);
 
       console.log(
         'TrialGuard - Trial status for user',
@@ -47,19 +53,20 @@ export class TrialGuard implements CanActivate {
         );
       }
 
-      console.log('TrialGuard - Access granted for user:', userId);
+      console.log('✅ TRIAL GUARD - Access granted for user:', userId);
       return true;
     } catch (error) {
       if (error instanceof HttpException) {
+        console.log('🔍 TRIAL GUARD - HttpException thrown:', error.message, 'Status:', error.getStatus());
         throw error;
       }
 
-      console.error(
-        'TrialGuard - Error checking trial status for user',
+      console.error('❌ TRIAL GUARD - Error checking trial status:', {
+        error: error.message,
+        stack: error.stack,
         userId,
-        ':',
-        error,
-      );
+        errorType: error.constructor.name
+      });
 
       // Block access if we can't verify trial status - security first
       console.error(
