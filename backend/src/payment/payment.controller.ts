@@ -68,7 +68,7 @@ export class PaymentController {
         receipt: `emergency_${Date.now()}`,
         notes: {
           planId: body.planId,
-          userId: req.user.sub,
+          userId: req.user?.id || req.user?.sub,
           test: 'emergency_bypass'
         }
       };
@@ -108,7 +108,7 @@ export class PaymentController {
       // Enhanced user ID extraction with debugging
       console.log('🔐 PaymentController - Full user object:', JSON.stringify(req.user, null, 2));
       
-      const userId = req.user?.sub || req.user?.id || req.user?.userId || req.user?.user_id;
+      const userId = req.user?.id || req.user?.sub;
       const { planId } = body;
 
       console.log('🔐 PaymentController - Extracted userId:', userId);
