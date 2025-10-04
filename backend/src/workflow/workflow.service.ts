@@ -2888,8 +2888,8 @@ export class WorkflowService {
           enabled: false, // Start disabled for safety
         },
         actions: this.formatActionsForExport(workflowData?.actions || []),
-        triggers: this.formatTriggersForExport(workflowData?.triggerSets || []),
-        enrollmentCriteria: workflowData?.segmentCriteria || [],
+        triggers: this.formatTriggersForExport(workflowData?.enrollmentTriggers || workflowData?.triggerSets || []),
+        enrollmentCriteria: workflowData?.enrollmentTriggers || workflowData?.segmentCriteria || [],
         goals: workflowData?.goalCriteria || [],
         settings: {
           allowMultipleEnrollments:
@@ -2952,9 +2952,12 @@ export class WorkflowService {
   }
 
   private formatTriggersForExport(triggerSets: any[]): any[] {
+    if (!triggerSets || triggerSets.length === 0) return [];
+    
     return triggerSets.map((triggerSet, index) => ({
       triggerSet: index + 1,
-      description: 'Contact enrollment criteria',
+      description: this.getTriggerDescription(triggerSet),
+      type: triggerSet.eventId || triggerSet.type || 'unknown',
       filters: triggerSet.filters || [],
       configuration: triggerSet,
     }));
