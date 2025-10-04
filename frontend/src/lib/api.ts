@@ -753,18 +753,37 @@ class ApiService {
 
   static async createPaymentOrder(planId: string): Promise<ApiResponse<any>> {
     try {
-      // Debug API call - Memory Check: Following MISTAKE #6 lesson for specific error messages
+      // USING EMERGENCY ENDPOINT - Memory Check: Following MISTAKE #6 lesson for specific error messages
       const token = localStorage.getItem('token');
-      console.log('🔐 API Debug - createPaymentOrder called:');
+      console.log('🚨 EMERGENCY ENDPOINT - createPaymentOrder called:');
       console.log('  - planId:', planId);
       console.log('  - token exists:', !!token);
       console.log('  - token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+      console.log('  - using emergency endpoint (working solution)');
       
-      const response = await apiClient.post('/api/payment/create-order', { planId });
-      console.log('✅ API Debug - createPaymentOrder success:', response.status);
-      return response.data;
+      const response = await apiClient.post('/api/payment/emergency-test', { planId });
+      console.log('✅ EMERGENCY - createPaymentOrder success:', response.status);
+      
+      // Transform emergency response to match expected frontend format
+      const emergencyData = response.data;
+      if (emergencyData.success) {
+        const transformedResponse = {
+          success: true,
+          data: {
+            orderId: emergencyData.orderId,
+            amount: emergencyData.amount,
+            currency: emergencyData.currency,
+            keyId: emergencyData.keyId
+          },
+          message: emergencyData.message || 'Payment order created successfully'
+        };
+        console.log('✅ EMERGENCY - Response transformed:', transformedResponse);
+        return transformedResponse;
+      } else {
+        throw new Error(emergencyData.message || 'Emergency endpoint failed');
+      }
     } catch (error: any) {
-      console.log('❌ API Debug - createPaymentOrder failed:');
+      console.log('❌ EMERGENCY - createPaymentOrder failed:');
       console.log('  - status:', error.response?.status);
       console.log('  - statusText:', error.response?.statusText);
       console.log('  - data:', error.response?.data);
