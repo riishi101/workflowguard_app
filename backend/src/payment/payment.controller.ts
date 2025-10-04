@@ -198,4 +198,35 @@ export class PaymentController {
       }
     };
   }
+    /**
+   * SIMPLE TEST ENDPOINT - No authentication required
+   */
+    @Get('simple-test')
+    async simpleTest() {
+      try {
+        const Razorpay = require('razorpay');
+        const razorpay = new Razorpay({
+          key_id: 'rzp_live_R6PjXR1FYupO0Y',
+          key_secret: 'O5McpwbAgoiSNMJDQetruaTK',
+        });
+  
+        const order = await razorpay.orders.create({
+          amount: 159900,
+          currency: 'INR',
+          receipt: `test_${Date.now()}`,
+        });
+        
+        return {
+          success: true,
+          orderId: order.id,
+          message: 'Razorpay credentials work!'
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message,
+          message: 'Razorpay credentials invalid'
+        };
+      }
+    }
 }
