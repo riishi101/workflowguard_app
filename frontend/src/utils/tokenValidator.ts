@@ -78,6 +78,12 @@ export class TokenValidator {
     if (!validation.isValid) {
       console.log('🧹 TokenValidator - Cleaning invalid token:', validation.error);
       localStorage.removeItem('token');
+      
+      // Show user-friendly notification
+      if (window.location.pathname !== '/') {
+        console.log('🔄 TokenValidator - Redirecting to login due to invalid token');
+        // Don't redirect immediately to avoid loops, let AuthContext handle it
+      }
       return true;
     }
     
@@ -116,7 +122,37 @@ export class TokenValidator {
 (window as any).validateToken = () => TokenValidator.validateToken();
 (window as any).cleanToken = () => TokenValidator.cleanInvalidToken();
 
+// Additional debug functions for testing
+(window as any).testWorkflowAPI = async () => {
+  console.log('🧪 Testing Workflow APIs...');
+  try {
+    const { ApiService } = await import('../lib/api');
+    console.log('📋 Testing getHubSpotWorkflows...');
+    const workflows = await ApiService.getHubSpotWorkflows();
+    console.log('✅ Workflows result:', workflows);
+    
+    console.log('🛡️ Testing getProtectedWorkflows...');
+    const protectedWorkflows = await ApiService.getProtectedWorkflows();
+    console.log('✅ Protected workflows result:', protectedWorkflows);
+  } catch (error) {
+    console.error('❌ API Test failed:', error);
+  }
+};
+
+(window as any).testAuth = async () => {
+  console.log('🧪 Testing Authentication...');
+  try {
+    const { ApiService } = await import('../lib/api');
+    const user = await ApiService.getCurrentUser();
+    console.log('✅ Current user:', user);
+  } catch (error) {
+    console.error('❌ Auth test failed:', error);
+  }
+};
+
 console.log('🔐 TokenValidator loaded - Available console commands:');
 console.log('  - debugToken() - Show detailed token information');
 console.log('  - validateToken() - Validate current token');
 console.log('  - cleanToken() - Remove invalid token');
+console.log('  - testWorkflowAPI() - Test workflow API endpoints');
+console.log('  - testAuth() - Test authentication status');

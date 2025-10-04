@@ -47,7 +47,7 @@ const CompareVersions = () => {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonLoading, setComparisonLoading] = useState(true); // Start with loading state
   const [error, setError] = useState<string | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [versionA, setVersionA] = useState(searchParams.get("versionA") || "");
@@ -71,8 +71,16 @@ const CompareVersions = () => {
   }, [workflowId]);
 
   useEffect(() => {
-    if (versionA && versionB && workflowId) {
+    if (versionA && versionB && versionA !== versionB && workflowId) {
       fetchComparisonData();
+    } else if (versionA && versionB && versionA === versionB) {
+      // Same version selected, clear comparison data
+      setComparisonData(null);
+      setComparisonLoading(false);
+    } else {
+      // No valid comparison possible, clear data and stop loading
+      setComparisonData(null);
+      setComparisonLoading(false);
     }
   }, [versionA, versionB, workflowId]);
 
@@ -126,6 +134,9 @@ const CompareVersions = () => {
       if (safeVersions.length >= 2) {
         if (!versionA) setVersionA(safeVersions[0].id);
         if (!versionB) setVersionB(safeVersions[1].id);
+      } else {
+        // If no versions available for comparison, stop comparison loading
+        setComparisonLoading(false);
       }
     } catch (err: any) {
       console.error("Failed to fetch versions:", err);
@@ -138,6 +149,10 @@ const CompareVersions = () => {
       });
     } finally {
       setLoading(false);
+      // If there was an error, also stop comparison loading
+      if (error) {
+        setComparisonLoading(false);
+      }
     }
   };
 
@@ -344,6 +359,54 @@ const CompareVersions = () => {
         </nav>
       </ContentSection>
 
+      {/* Version Selection */}
+      <ContentSection>
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Versions to Compare</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Version A</label>
+              <select
+                value={versionA}
+                onChange={(e) => setVersionA(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading || versions.length === 0}
+              >
+                <option value="">Select a version...</option>
+                {versions.map((version) => (
+                  <option key={version.id} value={version.id}>
+                    Version {version.versionNumber} - {new Date(version.dateTime).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Version B</label>
+              <select
+                value={versionB}
+                onChange={(e) => setVersionB(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={loading || versions.length === 0}
+              >
+                <option value="">Select a version...</option>
+                {versions.map((version) => (
+                  <option key={version.id} value={version.id}>
+                    Version {version.versionNumber} - {new Date(version.dateTime).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {versions.length > 0 && versionA && versionB && versionA === versionB && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                Please select two different versions to compare.
+              </p>
+            </div>
+          )}
+        </div>
+      </ContentSection>
+
       {/* Action Buttons */}
       <ContentSection>
         <div className="flex items-center justify-between pt-6 border-t border-gray-200">
@@ -351,6 +414,21 @@ const CompareVersions = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Version History
           </Button>
+          {versionA && versionB && versionA !== versionB && (
+            <Button onClick={() => fetchComparisonData()} disabled={comparisonLoading}>
+              {comparisonLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Comparing...
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Compare Versions
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </ContentSection>
 
@@ -373,7 +451,7 @@ const CompareVersions = () => {
               </div>
             ))}
           </div>
-        ) : comparisonData ? (
+        ) : !comparisonLoading && comparisonData ? (
           <div className="grid grid-cols-2 gap-6">
             {/* Version A */}
             <div className="border border-gray-200 rounded-lg">
@@ -482,17 +560,19 @@ const CompareVersions = () => {
               </div>
             </div>
           </div>
-        ) : (
+        ) : !comparisonLoading ? (
           <div className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No Comparison Data
             </h3>
             <p className="text-gray-600">
-              Select two different versions to compare them.
+              {versions.length < 2 
+                ? "This workflow needs at least 2 versions to compare." 
+                : "Select two different versions to compare them."}
             </p>
           </div>
-        )}
+        ) : null}
       </ContentSection>
     </MainAppLayout>
   );

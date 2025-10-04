@@ -34,9 +34,18 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Enhanced error handling following Memory lessons
+    console.log('🔍 API Error Interceptor:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      message: error.response?.data?.message
+    });
+
     if (error.response?.status === 401) {
-      // Clear token for auth endpoints
-      if (error.config.url?.includes('/auth')) {
+      // Clear token for auth endpoints or if token is invalid
+      if (error.config.url?.includes('/auth') || error.response?.data?.message?.includes('token')) {
+        console.log('🧹 API: Clearing invalid token due to 401 error');
         localStorage.removeItem('token');
       }
       // Don't clear token for non-auth endpoints to avoid infinite loops
@@ -150,10 +159,27 @@ class ApiService {
     }
 
     try {
+      console.log('🔍 API: Fetching protected workflows...');
       const response = await apiClient.get('/api/workflow/protected', { headers });
+      console.log('✅ API: Protected workflows fetched:', response.data?.data?.length || 0, 'workflows');
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('❌ API: Failed to fetch protected workflows:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        url: error.config?.url
+      });
+      
+      // Enhanced error messages following Memory lessons
+      if (error.response?.status === 401) {
+        throw new Error('Authentication required. Please log in again.');
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. Please check your subscription status.');
+      } else if (error.response?.status === 404) {
+        throw new Error('No protected workflows found. Please protect some workflows first.');
+      } else {
+        throw new Error(error.response?.data?.message || 'Failed to fetch protected workflows. Please try again.');
+      }
     }
   }
 
@@ -317,10 +343,27 @@ class ApiService {
 
   static async getHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
+      console.log('🔍 API: Fetching HubSpot workflows...');
       const response = await apiClient.get('/api/workflow/hubspot');
+      console.log('✅ API: HubSpot workflows fetched successfully:', response.data?.data?.length || 0, 'workflows');
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('❌ API: Failed to fetch HubSpot workflows:', {
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        url: error.config?.url
+      });
+      
+      // Enhanced error messages following Memory lessons
+      if (error.response?.status === 401) {
+        throw new Error('Authentication failed. Please reconnect your HubSpot account.');
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. Please check your HubSpot permissions.');
+      } else if (error.response?.status === 404) {
+        throw new Error('HubSpot integration not found. Please reconnect your account.');
+      } else {
+        throw new Error(error.response?.data?.message || 'Failed to fetch workflows from HubSpot. Please try again.');
+      }
     }
   }
 

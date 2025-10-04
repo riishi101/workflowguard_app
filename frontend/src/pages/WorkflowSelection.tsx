@@ -75,12 +75,14 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   const fetchWorkflows = async () => {
     // Check if user is authenticated before making API call
     if (!isAuthenticated) {
-      
+      console.log('🔍 WorkflowSelection: User not authenticated, showing connection message');
       setError('Please connect your HubSpot account first to view workflows.');
       setWorkflows([]);
       setLoading(false);
       return;
     }
+
+    console.log('🔍 WorkflowSelection: Starting workflow fetch for user:', user?.email);
 
 
     // Ensure minimum loading time to prevent too quick completion
@@ -100,18 +102,17 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
       const response = await ApiService.getHubSpotWorkflows();
       
       const apiEndTime = Date.now();
-      
-      
-      
+      console.log('✅ WorkflowSelection: API call completed in', apiEndTime - apiStartTime, 'ms');
       
       // Validate the response structure
       if (!response || !response.success) {
+        console.error('❌ WorkflowSelection: Invalid response structure:', response);
         throw new Error(response?.message || 'Invalid response structure from HubSpot API');
       }
       
       // Extract workflows from the response data
       const workflows = response.data || [];
-      
+      console.log('🔍 WorkflowSelection: Received', workflows.length, 'workflows from API');
       
       if (workflows.length > 0) {
         

@@ -109,32 +109,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
 
         if (token) {
-          
+          console.log('🔍 AuthContext: Token found, validating user...');
           // Add small delay to ensure token is properly set
           await new Promise(resolve => setTimeout(resolve, 100));
           try {
             const response = await ApiService.getCurrentUser();
-            
+            console.log('✅ AuthContext: User validation successful:', response.data?.email);
 
             if (response.success && response.data) {
               setUser(response.data);
 
               // Don't redirect here - let the OnboardingFlow handle navigation
               if (successParam === 'true' && tokenParam) {
-                
+                console.log('🎉 AuthContext: OAuth callback successful');
               }
             } else {
-              
+              console.log('❌ AuthContext: Invalid user response, clearing token');
               localStorage.removeItem('token');
               setUser(null);
             }
-          } catch (error) {
-            
+          } catch (error: any) {
+            console.error('❌ AuthContext: User validation failed:', error.response?.status, error.response?.data?.message);
             localStorage.removeItem('token');
             setUser(null);
           }
         } else {
-          
+          console.log('🔍 AuthContext: No token found');
           setUser(null);
         }
       } catch (error) {
