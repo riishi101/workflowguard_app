@@ -2939,8 +2939,25 @@ export class WorkflowService {
         );
       }
 
-      const latestBackup = workflow.versions[0];
-      const workflowData = latestBackup.data as any;
+      let latestBackup = workflow.versions[0];
+      let workflowData = latestBackup.data as any;
+
+      // Check if backup data is incomplete (missing enrollment triggers)
+      const hasEnrollmentTriggers = workflowData?.enrollmentTriggers && workflowData.enrollmentTriggers.length > 0;
+      const backupAge = new Date().getTime() - new Date(latestBackup.createdAt).getTime();
+      const isOldBackup = backupAge > (7 * 24 * 60 * 60 * 1000); // Older than 7 days
+
+      if (!hasEnrollmentTriggers && isOldBackup) {
+        console.log('🔄 Backup data incomplete, creating fresh backup with enrollment triggers...');
+        try {
+          const freshBackup = await this.createFreshBackup(workflow.id, userId);
+          latestBackup = freshBackup;
+          workflowData = this.encryptionService.decryptWorkflowData(freshBackup.data);
+          console.log('✅ Created fresh backup with complete data');
+        } catch (error) {
+          console.warn('⚠️ Could not create fresh backup, using existing data:', error.message);
+        }
+      }
 
       // Format data for easy manual recreation
       const exportData = {
