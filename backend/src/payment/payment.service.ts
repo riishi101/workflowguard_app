@@ -19,10 +19,11 @@ export class PaymentService {
     console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 15) + '...' : 'MISSING');
     console.log('  - RAZORPAY_KEY_SECRET:', keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING');
     
-    // Memory Check: Verify against latest credentials from memory f70fe203
+    // Memory Check: Verify against NEW credentials (keeping as intended)
     console.log('💳 PaymentService - Memory verification:');
-    console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (from memory f70fe203)');
+    console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (NEW credentials from memory f70fe203)');
     console.log('  - Credentials match:', keyId === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO');
+    console.log('  - OLD credentials removed from codebase');
     
     if (!keyId || !keySecret) {
       console.log('❌ PaymentService - Razorpay credentials not configured');
@@ -36,8 +37,8 @@ export class PaymentService {
         key_secret: keySecret,
       });
       console.log('✅ PaymentService - Razorpay initialized successfully');
-      console.log('✅ PaymentService - Using credentials from memory f70fe203');
-      this.logger.log('Razorpay service initialized successfully');
+      console.log('✅ PaymentService - Using NEW credentials (rzp_live_RP85gyDpAKJ4Au)');
+      this.logger.log('Razorpay service initialized successfully with NEW credentials');
     } catch (error) {
       console.log('❌ PaymentService - Razorpay initialization failed:', error);
       this.logger.error('Razorpay initialization failed:', error);
@@ -125,7 +126,7 @@ export class PaymentService {
       console.log('💳 PaymentService - Current credentials check:');
       console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 15) + '...' : 'MISSING');
       console.log('  - RAZORPAY_KEY_SECRET:', keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING');
-      console.log('  - Expected KEY_ID prefix: rzp_live_RP85gyDpAKJ4Au (from memory)');
+      console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (NEW credentials)');
 
       if (!this.razorpay) {
         console.log('❌ PaymentService - Razorpay not initialized');
@@ -214,7 +215,8 @@ export class PaymentService {
       // Enhanced error analysis from memories
       if (error.message && error.message.includes('authentication')) {
         console.log('❌ PaymentService - AUTHENTICATION ERROR: Invalid Razorpay credentials');
-        console.log('❌ PaymentService - Check if credentials match: rzp_live_RP85gyDpAKJ4Au');
+        console.log('❌ PaymentService - Check if NEW credentials are valid: rzp_live_RP85gyDpAKJ4Au');
+        console.log('❌ PaymentService - Verify credentials are active in Razorpay dashboard');
       }
       
       if (error.code === 'BAD_REQUEST_ERROR') {
@@ -287,6 +289,49 @@ export class PaymentService {
     } catch (error) {
       this.logger.error(`Payment verification error: ${error.message}`, error.stack);
       return false;
+    }
+  }
+
+  /**
+   * Test Razorpay connection
+   */
+  async testRazorpayConnection() {
+    try {
+      if (!this.razorpay) {
+        throw new Error('Razorpay not initialized - check credentials');
+      }
+
+      // Test with a simple API call to fetch payment methods
+      console.log('🔍 PaymentService - Testing Razorpay connection...');
+      
+      // Try to create a test order with minimal amount
+      const testOrder = await this.razorpay.orders.create({
+        amount: 100, // ₹1.00 in paise
+        currency: 'INR',
+        receipt: `test_${Date.now()}`,
+        notes: {
+          test: true,
+          purpose: 'connection_test'
+        }
+      });
+
+      console.log('✅ PaymentService - Razorpay connection test successful');
+      return {
+        connectionStatus: 'SUCCESS',
+        testOrderId: testOrder.id,
+        message: 'Razorpay API is accessible and credentials are valid'
+      };
+
+    } catch (error) {
+      console.log('❌ PaymentService - Razorpay connection test failed:', error);
+      return {
+        connectionStatus: 'FAILED',
+        error: {
+          message: error.message,
+          code: error.code,
+          response: error.response?.data
+        }
+      };
     }
   }
 

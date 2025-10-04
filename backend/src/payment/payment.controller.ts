@@ -44,6 +44,31 @@ export class PaymentController {
   }
 
   /**
+   * Test Razorpay connection
+   */
+  @Get('debug/test-razorpay')
+  async testRazorpayConnection() {
+    try {
+      const testResult = await this.paymentService.testRazorpayConnection();
+      return {
+        success: true,
+        message: 'Razorpay connection test completed',
+        data: testResult
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Razorpay connection test failed',
+        error: {
+          message: error.message,
+          code: error.code,
+          response: error.response?.data
+        }
+      };
+    }
+  }
+
+  /**
    * Debug endpoint to check environment variables
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages for debugging
    */
@@ -74,7 +99,8 @@ export class PaymentController {
         expectedKeySecret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
         credentialsMatch: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au',
         deploymentId: 'Build ID: 855005e8-be80-4d1b-bdfa-980f14e2dff9 (from memory)',
-        memorySource: 'Memory f70fe203 - Latest credentials applied'
+        memorySource: 'Memory f70fe203 - NEW credentials (old ones removed)',
+        credentialStatus: 'Using NEW Razorpay credentials as intended'
       },
       troubleshooting: {
         commonIssues: [

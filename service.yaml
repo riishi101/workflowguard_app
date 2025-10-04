@@ -36,9 +36,9 @@ spec:
         - name: JWT_SECRET
           value: "xrDmUc9gji+BcWHxH2gEPhjvNDDehJDs4Z04UI/bVn1fhjmKOgH9WoUUnrVEFYcaTlYmbUdhaoSysZWHiNy5Dw=="
         - name: RAZORPAY_KEY_ID
-          value: "rzp_live_R6PjXR1FYupO0Y"
+          value: "rzp_live_RP85gyDpAKJ4Au"
         - name: RAZORPAY_KEY_SECRET
-          value: "O5McpwbAgoiSNMJDQetruaTK"
+          value: "j7s5n6sJ4Yec4n3AdSYeJ2LW"
         - name: RAZORPAY_WEBHOOK_SECRET
           value: "Liverpoolisthebest@1998"
         - name: RAZORPAY_PLAN_ID_STARTER_INR
