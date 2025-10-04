@@ -1050,10 +1050,23 @@ class ApiService {
 
   static async exportDeletedWorkflow(workflowId: string): Promise<ApiResponse<any>> {
     try {
+      console.log('🔍 API: Exporting workflow with ID:', workflowId);
       const response = await apiClient.get(`/workflow/${workflowId}/export-deleted`);
+      console.log('✅ API: Export successful for workflow:', workflowId);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('❌ API: Export failed for workflow:', workflowId, 'Error:', error.response?.status, error.response?.data);
+      
+      // Enhanced error messages following memory lessons (avoid generic errors)
+      if (error.response?.status === 404) {
+        throw new Error(`Workflow not found or not accessible. Please ensure the workflow is deleted and you have permission to export it.`);
+      } else if (error.response?.status === 401) {
+        throw new Error(`Authentication required. Please log in and try again.`);
+      } else if (error.response?.status === 403) {
+        throw new Error(`Access denied. You don't have permission to export this workflow.`);
+      } else {
+        throw new Error(error.response?.data?.message || `Failed to export workflow data (${error.response?.status || 'Network Error'})`);
+      }
     }
   }
 }

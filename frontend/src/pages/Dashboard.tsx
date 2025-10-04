@@ -303,7 +303,17 @@ const Dashboard: React.FC = () => {
   const handleExportWorkflow = async (workflow: DashboardWorkflow) => {
     try {
       setSelectedWorkflow(workflow);
-      const response = await ApiService.exportDeletedWorkflow(workflow.id);
+      
+      // 🔧 FIX: Use correct ID for deleted workflows
+      // For deleted workflows, use internalId (WorkflowGuard UUID)
+      // For active workflows, use id (HubSpot ID)
+      const workflowIdToUse = workflow.isDeleted && workflow.internalId 
+        ? workflow.internalId 
+        : workflow.id;
+      
+      console.log('🔍 Export workflow - Using ID:', workflowIdToUse, 'for workflow:', workflow.name, 'isDeleted:', workflow.isDeleted);
+      
+      const response = await ApiService.exportDeletedWorkflow(workflowIdToUse);
       setExportData(response.data);
       setShowExportModal(true);
       toast({
