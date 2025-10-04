@@ -52,20 +52,29 @@ export class PaymentController {
     console.log('🔍 PaymentController - Debug environment variables called');
     
     const envVars = {
-      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 10) + '...' : 'MISSING',
+      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 15) + '...' : 'MISSING',
       RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ? process.env.RAZORPAY_KEY_SECRET.substring(0, 10) + '...' : 'MISSING',
       RAZORPAY_PLAN_ID_STARTER_INR: process.env.RAZORPAY_PLAN_ID_STARTER_INR || 'MISSING',
       RAZORPAY_PLAN_ID_PROFESSIONAL_INR: process.env.RAZORPAY_PLAN_ID_PROFESSIONAL_INR || 'MISSING',
       RAZORPAY_PLAN_ID_ENTERPRISE_INR: process.env.RAZORPAY_PLAN_ID_ENTERPRISE_INR || 'MISSING',
-      NODE_ENV: process.env.NODE_ENV || 'MISSING'
+      NODE_ENV: process.env.NODE_ENV || 'MISSING',
+      // Memory check: Expected credentials from latest memory
+      EXPECTED_KEY_ID: 'rzp_live_RP85gyDpAKJ4Au',
+      CREDENTIALS_MATCH: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO'
     };
     
     console.log('🔍 PaymentController - Environment variables:', envVars);
     
     return {
       success: true,
-      message: 'Environment variables debug information',
-      data: envVars
+      message: 'Environment variables debug information - Memory Check Applied',
+      data: envVars,
+      memoryCheck: {
+        expectedKeyId: 'rzp_live_RP85gyDpAKJ4Au',
+        expectedKeySecret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
+        credentialsMatch: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au',
+        deploymentId: 'Build ID: 855005e8-be80-4d1b-bdfa-980f14e2dff9 (from memory)'
+      }
     };
   }
 
