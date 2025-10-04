@@ -83,7 +83,7 @@ export class PaymentController {
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: 'rzp_live_R6PjXR1FYupO0Y',
+        keyId: 'rzp_live_RP85gyDpAKJ4Au',
         message: 'Emergency test successful - Razorpay is working!'
       };
 
