@@ -751,44 +751,83 @@ class ApiService {
     }
   }
 
-  static async createPaymentOrder(planId: string): Promise<ApiResponse<any>> {
+  static async createPaymentOrder(planId: string, currency: string = 'INR'): Promise<ApiResponse<any>> {
     try {
-      // USING EMERGENCY ENDPOINT - Memory Check: Following MISTAKE #6 lesson for specific error messages
+      // MULTI-CURRENCY ENDPOINT - Memory Check: Following all memory lessons with enhanced support
       const token = localStorage.getItem('token');
-      console.log('🚨 EMERGENCY ENDPOINT - createPaymentOrder called:');
+      console.log('🌍 MULTI-CURRENCY - createPaymentOrder called:');
       console.log('  - planId:', planId);
+      console.log('  - currency:', currency);
       console.log('  - token exists:', !!token);
       console.log('  - token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
-      console.log('  - using emergency endpoint (working solution)');
       
-      const response = await apiClient.post('/api/payment/emergency-test', { planId });
-      console.log('✅ EMERGENCY - createPaymentOrder success:', response.status);
-      
-      // Transform emergency response to match expected frontend format
-      const emergencyData = response.data;
-      if (emergencyData.success) {
-        const transformedResponse = {
-          success: true,
-          data: {
-            orderId: emergencyData.orderId,
-            amount: emergencyData.amount,
-            currency: emergencyData.currency,
-            keyId: emergencyData.keyId
-          },
-          message: emergencyData.message || 'Payment order created successfully'
-        };
-        console.log('✅ EMERGENCY - Response transformed:', transformedResponse);
-        return transformedResponse;
-      } else {
-        throw new Error(emergencyData.message || 'Emergency endpoint failed');
+      // Try multi-currency endpoint first
+      try {
+        const response = await apiClient.post('/api/payment/create-order-multicurrency', { planId, currency });
+        console.log('✅ MULTI-CURRENCY - createPaymentOrder success:', response.status);
+        return response.data;
+      } catch (multiCurrencyError: any) {
+        console.log('⚠️ MULTI-CURRENCY - Failed, falling back to emergency endpoint');
+        console.log('  - error:', multiCurrencyError.response?.status, multiCurrencyError.response?.data);
+        
+        // Fallback to emergency endpoint (INR only)
+        console.log('🚨 FALLBACK - Using emergency endpoint');
+        const response = await apiClient.post('/api/payment/emergency-test', { planId });
+        console.log('✅ FALLBACK - Emergency endpoint success:', response.status);
+        
+        // Transform emergency response to match expected frontend format
+        const emergencyData = response.data;
+        if (emergencyData.success) {
+          const transformedResponse = {
+            success: true,
+            data: {
+              orderId: emergencyData.orderId,
+              amount: emergencyData.amount,
+              currency: emergencyData.currency,
+              keyId: emergencyData.keyId
+            },
+            message: emergencyData.message || 'Payment order created successfully (fallback to INR)'
+          };
+          console.log('✅ FALLBACK - Response transformed:', transformedResponse);
+          return transformedResponse;
+        } else {
+          throw new Error(emergencyData.message || 'Emergency endpoint failed');
+        }
       }
     } catch (error: any) {
-      console.log('❌ EMERGENCY - createPaymentOrder failed:');
+      console.log('❌ PAYMENT - All endpoints failed:');
       console.log('  - status:', error.response?.status);
       console.log('  - statusText:', error.response?.statusText);
       console.log('  - data:', error.response?.data);
       console.log('  - headers sent:', error.config?.headers);
       throw error;
+    }
+  }
+
+  // Currency detection helper
+  static detectUserCurrency(): string {
+    try {
+      // Try to detect user's currency based on locale
+      const locale = navigator.language || 'en-US';
+      const currencyMap: { [key: string]: string } = {
+        'en-US': 'USD',
+        'en-GB': 'GBP', 
+        'en-CA': 'CAD',
+        'fr-CA': 'CAD',
+        'de-DE': 'EUR',
+        'fr-FR': 'EUR',
+        'es-ES': 'EUR',
+        'it-IT': 'EUR',
+        'en-IN': 'INR',
+        'hi-IN': 'INR'
+      };
+      
+      const detectedCurrency = currencyMap[locale] || 'USD';
+      console.log('🌍 CURRENCY - Detected:', detectedCurrency, 'from locale:', locale);
+      return detectedCurrency;
+    } catch (error) {
+      console.log('⚠️ CURRENCY - Detection failed, defaulting to USD');
+      return 'USD';
     }
   }
 
