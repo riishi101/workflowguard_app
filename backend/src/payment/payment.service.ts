@@ -1,11 +1,11 @@
  import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Razorpay from 'razorpay';
+const Razorpay = require('razorpay');
 
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
-  private razorpay: Razorpay;
+  private razorpay: any;
 
   constructor(private configService: ConfigService) {
     // Initialize Razorpay with environment variables
@@ -16,9 +16,14 @@ export class PaymentService {
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
     
     console.log('💳 PaymentService - Environment variables check:');
-    console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 10) + '...' : 'MISSING');
+    console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 15) + '...' : 'MISSING');
     console.log('  - RAZORPAY_KEY_SECRET:', keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING');
-
+    
+    // Memory Check: Verify against latest credentials from memory f70fe203
+    console.log('💳 PaymentService - Memory verification:');
+    console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (from memory f70fe203)');
+    console.log('  - Credentials match:', keyId === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO');
+    
     if (!keyId || !keySecret) {
       console.log('❌ PaymentService - Razorpay credentials not configured');
       this.logger.warn('Razorpay credentials not configured. Payment functionality will be disabled.');
@@ -31,6 +36,7 @@ export class PaymentService {
         key_secret: keySecret,
       });
       console.log('✅ PaymentService - Razorpay initialized successfully');
+      console.log('✅ PaymentService - Using credentials from memory f70fe203');
       this.logger.log('Razorpay service initialized successfully');
     } catch (error) {
       console.log('❌ PaymentService - Razorpay initialization failed:', error);
@@ -193,12 +199,16 @@ export class PaymentService {
       };
 
     } catch (error) {
+      // Comprehensive error logging - Memory Check: Following MISTAKE #6 lesson
       console.log('❌ PaymentService - Error in createOrder:', {
         message: error.message,
         stack: error.stack,
         name: error.name,
         code: error.code,
-        statusCode: error.statusCode
+        statusCode: error.statusCode,
+        response: error.response?.data,
+        description: error.description,
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
       });
       
       // Enhanced error analysis from memories
@@ -212,7 +222,30 @@ export class PaymentService {
         console.log('❌ PaymentService - This usually means invalid plan ID or amount');
       }
       
-      this.logger.error(`Failed to create payment order: ${error.message}`, error.stack);
+      // Extract meaningful error message - Fix for "undefined" error
+      let errorMessage = 'Unable to create payment order';
+      
+      if (error.response?.data?.error?.description) {
+        errorMessage = error.response.data.error.description;
+        console.log('🔍 PaymentService - Using Razorpay API error description:', errorMessage);
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        console.log('🔍 PaymentService - Using response message:', errorMessage);
+      } else if (error.message && error.message !== 'undefined') {
+        errorMessage = error.message;
+        console.log('🔍 PaymentService - Using error message:', errorMessage);
+      } else if (error.description) {
+        errorMessage = error.description;
+        console.log('🔍 PaymentService - Using error description:', errorMessage);
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+        console.log('🔍 PaymentService - Using string error:', errorMessage);
+      } else {
+        errorMessage = 'Razorpay API error - please check credentials and configuration';
+        console.log('🔍 PaymentService - Using fallback error message');
+      }
+      
+      this.logger.error(`Failed to create payment order: ${errorMessage}`, error.stack);
       
       if (error instanceof HttpException) {
         throw error;
@@ -220,7 +253,7 @@ export class PaymentService {
       
       // Memory Check: Following MISTAKE #6 lesson - Specific error messages
       throw new HttpException(
-        `Payment order creation failed: ${error.message}. Please try again or contact support.`,
+        `Payment order creation failed: ${errorMessage}. Please try again or contact support.`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

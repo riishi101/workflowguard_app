@@ -73,7 +73,22 @@ export class PaymentController {
         expectedKeyId: 'rzp_live_RP85gyDpAKJ4Au',
         expectedKeySecret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
         credentialsMatch: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au',
-        deploymentId: 'Build ID: 855005e8-be80-4d1b-bdfa-980f14e2dff9 (from memory)'
+        deploymentId: 'Build ID: 855005e8-be80-4d1b-bdfa-980f14e2dff9 (from memory)',
+        memorySource: 'Memory f70fe203 - Latest credentials applied'
+      },
+      troubleshooting: {
+        commonIssues: [
+          'Credentials mismatch - check if environment variables match expected values',
+          'Razorpay API authentication failure - verify key_id and key_secret',
+          'Plan ID configuration - ensure INR plan IDs are properly set',
+          'Network connectivity - verify Razorpay API accessibility'
+        ],
+        nextSteps: [
+          'Check if CREDENTIALS_MATCH shows YES',
+          'Verify all plan IDs are not MISSING',
+          'Test payment creation with debug logs',
+          'Check Google Cloud Run logs for detailed errors'
+        ]
       }
     };
   }
