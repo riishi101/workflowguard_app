@@ -1,18 +1,19 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  UseGuards, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
   Request,
   HttpException,
   HttpStatus,
-  Logger
+  Logger,
+  Query
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaymentService } from './payment.service';
 import { SubscriptionService } from '../subscription/subscription.service';
-
+import { Inject, forwardRef } from '@nestjs/common';
 @Controller('payment')
 export class PaymentController {
   private readonly logger = new Logger(PaymentController.name);
@@ -23,19 +24,21 @@ export class PaymentController {
   ) {}
 
   /**
-   * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Single source of truth
+   * Get payment configuration
+   * Memory Check: Following MISTAKE #1 lesson - Backend-only configuration endpoint
+   * Memory Check: Following MISTAKE #4 lesson - USD for American users (avoiding complexity)
    */
   @Get('config')
-  getPaymentConfig() {
+  async getPaymentConfig() {
     try {
-      console.log('💳 PaymentController - getPaymentConfig called');
+      console.log('🔍 PaymentController - getPaymentConfig called');
       const config = this.paymentService.getPaymentConfig();
-      console.log('💳 PaymentController - Config retrieved successfully');
       
       return {
         success: true,
         data: config,
-        message: 'Payment configuration retrieved successfully'
+        message: `Payment configuration retrieved successfully (${config.currency})`,
+        currency: config.currency
       };
     } catch (error) {
       console.log('❌ PaymentController - Config error:', error.message);

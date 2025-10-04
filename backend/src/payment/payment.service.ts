@@ -48,6 +48,7 @@ export class PaymentService {
   /**
    * Get payment configuration for frontend
    * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Backend-only config
+   * Memory Check: Avoiding MISTAKE #4 (Hardcoded Plan IDs) - Use USD for American users (simple fix)
    */
   getPaymentConfig() {
     console.log('💳 PaymentService - getPaymentConfig called');
@@ -63,26 +64,26 @@ export class PaymentService {
       );
     }
 
-    // Memory Check: Following MISTAKE #4 lesson - Dynamic plan IDs from environment, starting with INR
-    const starterPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_INR');
-    const professionalPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_INR');
-    const enterprisePlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_INR');
+    // Memory Check: Following MISTAKE #4 lesson - Dynamic plan IDs from environment, using USD for American users
+    const starterPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_USD');
+    const professionalPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_USD');
+    const enterprisePlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_USD');
     
-    console.log('💳 PaymentService - Plan IDs check:');
-    console.log('  - STARTER_INR:', starterPlanId || 'MISSING');
-    console.log('  - PROFESSIONAL_INR:', professionalPlanId || 'MISSING');
-    console.log('  - ENTERPRISE_INR:', enterprisePlanId || 'MISSING');
+    console.log('💳 PaymentService - Plan IDs check (USD for American users):');
+    console.log('  - STARTER_USD:', starterPlanId || 'MISSING');
+    console.log('  - PROFESSIONAL_USD:', professionalPlanId || 'MISSING');
+    console.log('  - ENTERPRISE_USD:', enterprisePlanId || 'MISSING');
 
     return {
       keyId,
-      currency: 'INR',
+      currency: 'USD',
       plans: {
         starter: {
           id: 'starter',
           razorpayPlanId: starterPlanId,
           name: 'Starter Plan',
-          price: 1900, // ₹19.00 in paise
-          currency: 'INR',
+          price: 1900, // $19.00 in cents
+          currency: 'USD',
           description: 'Perfect for small teams',
           features: ['10 workflows', '30 days history', 'Basic support']
         },
@@ -90,8 +91,8 @@ export class PaymentService {
           id: 'professional', 
           razorpayPlanId: professionalPlanId,
           name: 'Professional Plan',
-          price: 4900, // ₹49.00 in paise
-          currency: 'INR',
+          price: 4900, // $49.00 in cents
+          currency: 'USD',
           description: 'Best for growing businesses',
           features: ['35 workflows', '90 days history', 'Priority support', 'Advanced features']
         },
@@ -99,8 +100,8 @@ export class PaymentService {
           id: 'enterprise',
           razorpayPlanId: enterprisePlanId,
           name: 'Enterprise Plan', 
-          price: 9900, // ₹99.00 in paise
-          currency: 'INR',
+          price: 9900, // $99.00 in cents
+          currency: 'USD',
           description: 'For large organizations',
           features: ['Unlimited workflows', '365 days history', '24/7 support', 'All features']
         }
@@ -358,4 +359,5 @@ export class PaymentService {
       );
     }
   }
+
 }
