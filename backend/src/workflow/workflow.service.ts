@@ -2496,6 +2496,44 @@ export class WorkflowService {
     }
   }
 
+  async createFreshBackup(workflowId: string, userId: string): Promise<any> {
+    try {
+      const workflow = await this.prisma.workflow.findUnique({
+        where: { id: workflowId },
+        include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } }
+      });
+
+      if (!workflow) {
+        throw new HttpException('Workflow not found', HttpStatus.NOT_FOUND);
+      }
+
+      const freshData = await this.hubspotService.getWorkflowById(userId, workflow.hubspotId);
+      if (!freshData) {
+        throw new HttpException('Could not fetch fresh data from HubSpot', HttpStatus.BAD_REQUEST);
+      }
+
+      const nextVersionNumber = workflow.versions[0] ? workflow.versions[0].versionNumber + 1 : 1;
+      const encryptedData = this.encryptionService.encryptWorkflowData(freshData);
+
+      const freshBackup = await this.prisma.workflowVersion.create({
+        data: {
+          workflowId: workflowId,
+          versionNumber: nextVersionNumber,
+          snapshotType: 'Fresh Backup',
+          createdBy: userId,
+          data: encryptedData,
+        },
+      });
+
+      return freshBackup;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to create fresh backup: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async createChangeNotification(
     workflowId: string,
     userId: string,

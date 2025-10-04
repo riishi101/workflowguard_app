@@ -211,6 +211,38 @@ export class WorkflowController {
     }
   }
 
+  @Post(':id/fresh-backup')
+  @UseGuards(JwtAuthGuard, TrialGuard)
+  async createFreshBackup(
+    @Param('id') workflowId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const backup = await this.workflowService.createFreshBackup(
+        workflowId,
+        userId,
+      );
+      return {
+        message: 'Fresh backup created successfully with complete data',
+        backup: backup,
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to create fresh backup: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post(':id/change-notification')
   @UseGuards(JwtAuthGuard, TrialGuard)
   async createChangeNotification(
