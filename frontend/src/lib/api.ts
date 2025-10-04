@@ -239,7 +239,7 @@ class ApiService {
 
   static async getComparisonData(workflowId: string, versionAId: string, versionBId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/compare/${versionAId}/${versionBId}`);
+      const response = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionAId}/${versionBId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -389,7 +389,7 @@ class ApiService {
     }
 
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/compliance-report?startDate=${startDate}&endDate=${endDate}`, { headers });
+      const response = await apiClient.get(`/api/workflow/${workflowId}/compliance-report?startDate=${startDate}&endDate=${endDate}`, { headers });
       return response.data;
     } catch (error) {
       throw error;
@@ -967,7 +967,7 @@ class ApiService {
   // Advanced Enterprise Features
   static async getWorkflowAnalytics(workflowId: string): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.get(`/workflow/${workflowId}/analytics`);
+      const response = await apiClient.get(`/api/workflow/${workflowId}/analytics`);
       return response.data;
     } catch (error) {
       throw error;
@@ -1051,7 +1051,7 @@ class ApiService {
   static async exportDeletedWorkflow(workflowId: string): Promise<ApiResponse<any>> {
     try {
       console.log('🔍 API: Exporting workflow with ID:', workflowId);
-      const response = await apiClient.get(`/workflow/${workflowId}/export-deleted`);
+      const response = await apiClient.get(`/api/workflow/${workflowId}/export-deleted`);
       console.log('✅ API: Export successful for workflow:', workflowId);
       return response.data;
     } catch (error: any) {
