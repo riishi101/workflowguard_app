@@ -2801,6 +2801,16 @@ export class WorkflowService {
         `📤 Exporting deleted workflow ${workflowId} for user ${userId}`,
       );
 
+      // 🔍 DEBUG: First check if workflow exists at all (regardless of deletion status)
+      const anyWorkflow = await this.prisma.workflow.findFirst({
+        where: {
+          id: workflowId,
+          ownerId: userId,
+        },
+      });
+      
+      console.log('🔍 DEBUG: Workflow found (any status):', !!anyWorkflow, 'isDeleted:', anyWorkflow?.isDeleted);
+
       // Try to find by WorkflowGuard UUID first, then by HubSpot ID
       let workflow = await this.prisma.workflow.findFirst({
         where: {
@@ -2833,9 +2843,27 @@ export class WorkflowService {
         });
       }
 
+      // 🔧 FIX: If still not found with isDeleted=true, try without deletion filter
+      // This handles cases where frontend shows as deleted but DB isn't marked as deleted
+      if (!workflow && anyWorkflow) {
+        console.log('🔧 FALLBACK: Workflow exists but not marked as deleted, allowing export anyway');
+        workflow = await this.prisma.workflow.findFirst({
+          where: {
+            id: workflowId,
+            ownerId: userId,
+          },
+          include: {
+            versions: {
+              orderBy: { versionNumber: 'desc' },
+              take: 1,
+            },
+          },
+        });
+      }
+
       if (!workflow) {
         throw new HttpException(
-          'Deleted workflow not found or not accessible',
+          'Workflow not found or not accessible',
           HttpStatus.NOT_FOUND,
         );
       }
