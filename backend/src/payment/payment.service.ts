@@ -21,8 +21,8 @@ export class PaymentService {
     
     // Memory Check: Verify against WORKING credentials (from memory)
     console.log('💳 PaymentService - Memory verification:');
-    console.log('  - Expected KEY_ID: rzp_live_R6PjXR1FYupO0Y (WORKING credentials from memory)');
-    console.log('  - Credentials match:', keyId === 'rzp_live_R6PjXR1FYupO0Y' ? 'YES' : 'NO');
+    console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (NEW credentials)');
+    console.log('  - Credentials match:', keyId === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO');
     console.log('  - Using WORKING credentials from memory');
     
     if (!keyId || !keySecret) {
@@ -37,7 +37,7 @@ export class PaymentService {
         key_secret: keySecret,
       });
       console.log('✅ PaymentService - Razorpay initialized successfully');
-      console.log('✅ PaymentService - Using WORKING credentials (rzp_live_R6PjXR1FYupO0Y)');
+      console.log('✅ PaymentService - Using NEW credentials (rzp_live_RP85gyDpAKJ4Au)');
       this.logger.log('Razorpay service initialized successfully with WORKING credentials');
     } catch (error) {
       console.log('❌ PaymentService - Razorpay initialization failed:', error);

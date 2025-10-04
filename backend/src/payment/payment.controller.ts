@@ -58,8 +58,8 @@ export class PaymentController {
       
       const Razorpay = require('razorpay');
       const razorpay = new Razorpay({
-        key_id: 'rzp_live_R6PjXR1FYupO0Y',
-        key_secret: 'O5McpwbAgoiSNMJDQetruaTK',
+        key_id: 'rzp_live_RP85gyDpAKJ4Au',
+        key_secret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
       });
 
       const orderOptions = {
@@ -182,8 +182,8 @@ export class PaymentController {
       RAZORPAY_PLAN_ID_PROFESSIONAL_INR: process.env.RAZORPAY_PLAN_ID_PROFESSIONAL_INR || 'MISSING',
       RAZORPAY_PLAN_ID_ENTERPRISE_INR: process.env.RAZORPAY_PLAN_ID_ENTERPRISE_INR || 'MISSING',
       NODE_ENV: process.env.NODE_ENV || 'MISSING',
-      EXPECTED_KEY_ID: 'rzp_live_R6PjXR1FYupO0Y',
-      CREDENTIALS_MATCH: process.env.RAZORPAY_KEY_ID === 'rzp_live_R6PjXR1FYupO0Y' ? 'YES' : 'NO'
+      EXPECTED_KEY_ID: 'rzp_live_RP85gyDpAKJ4Au',
+      CREDENTIALS_MATCH: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO'
     };
     
     return {
@@ -191,10 +191,10 @@ export class PaymentController {
       message: 'Environment variables debug information - Memory Check Applied',
       data: envVars,
       memoryCheck: {
-        expectedKeyId: 'rzp_live_R6PjXR1FYupO0Y',
-        expectedKeySecret: 'O5McpwbAgoiSNMJDQetruaTK',
-        credentialsMatch: process.env.RAZORPAY_KEY_ID === 'rzp_live_R6PjXR1FYupO0Y',
-        credentialStatus: 'Using WORKING Razorpay credentials from memory'
+        expectedKeyId: 'rzp_live_RP85gyDpAKJ4Au',
+        expectedKeySecret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
+        credentialsMatch: process.env.RAZORPAY_KEY_ID === 'rzp_live_RP85gyDpAKJ4Au',
+        credentialStatus: 'Using NEW Razorpay credentials'
       }
     };
   }
@@ -206,8 +206,8 @@ export class PaymentController {
       try {
         const Razorpay = require('razorpay');
         const razorpay = new Razorpay({
-          key_id: 'rzp_live_R6PjXR1FYupO0Y',
-          key_secret: 'O5McpwbAgoiSNMJDQetruaTK',
+          key_id: 'rzp_live_RP85gyDpAKJ4Au',
+          key_secret: 'j7s5n6sJ4Yec4n3AdSYeJ2LW',
         });
   
         const order = await razorpay.orders.create({
