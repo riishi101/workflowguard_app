@@ -139,6 +139,12 @@ export class TokenValidator {
       console.log('- Verify HubSpot OAuth scopes include workflow permissions');
       console.log('- Check backend database connection (Memory 6a80c641)');
       console.log('- Verify parameter order in backend calls (Memory 3af4ea2c)');
+      console.log('');
+      console.log('🎯 LIKELY CAUSES:');
+      console.log('1. HubSpot account has no workflows created');
+      console.log('2. All workflows are in DRAFT status (not ACTIVE)');
+      console.log('3. OAuth scopes missing workflow read permissions');
+      console.log('4. Backend connecting to wrong database (Memory 6a80c641)');
     }
     
     console.log('🛡️ Testing getProtectedWorkflows...');
@@ -194,18 +200,42 @@ export class TokenValidator {
     console.log('- Parameter Order (Memory 3af4ea2c): Should be getWorkflowById(userId, workflowId)');
     console.log('- API Endpoints (Memory 1abf712b): Should use /api prefix');
     
-    // Test 4: Raw API call
+    // Test 4: Raw API call (Memory 1abf712b compliance - use full URL)
     console.log('4️⃣ Raw API Test...');
     const token = localStorage.getItem('token');
-    const response = await fetch('/api/workflow/hubspot', {
+    const apiBaseUrl = 'https://api.workflowguard.pro';
+    const response = await fetch(`${apiBaseUrl}/api/workflow/hubspot`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
+    console.log('📡 Raw API Status:', response.status, response.statusText);
     const rawData = await response.json();
     console.log('📡 Raw API Response:', rawData);
     
   } catch (error) {
     console.error('❌ Diagnosis failed:', error);
   }
+};
+
+// HubSpot account verification function
+(window as any).checkHubSpotAccount = () => {
+  console.log('🔍 HUBSPOT ACCOUNT VERIFICATION:');
+  console.log('=====================================');
+  console.log('');
+  console.log('📋 MANUAL CHECKS NEEDED:');
+  console.log('1. Log into your HubSpot account');
+  console.log('2. Go to Automation > Workflows');
+  console.log('3. Check if you have any workflows created');
+  console.log('4. Verify workflows are ACTIVE (not DRAFT)');
+  console.log('');
+  console.log('🔑 OAUTH SCOPES CHECK:');
+  console.log('- Automation scope required for workflow access');
+  console.log('- Marketing automation permissions needed');
+  console.log('');
+  console.log('🎯 COMMON SOLUTIONS:');
+  console.log('1. Create a test workflow in HubSpot');
+  console.log('2. Activate any draft workflows');
+  console.log('3. Reconnect HubSpot with proper scopes');
+  console.log('4. Check if trial account has workflow limitations');
 };
 
 console.log('🔐 TokenValidator loaded - Available console commands:');
@@ -215,3 +245,4 @@ console.log('  - cleanToken() - Remove invalid token');
 console.log('  - testWorkflowAPI() - Test workflow API endpoints');
 console.log('  - testAuth() - Test authentication status');
 console.log('  - diagnoseWorkflowIssue() - Memory-based workflow diagnosis');
+console.log('  - checkHubSpotAccount() - HubSpot account verification guide');
