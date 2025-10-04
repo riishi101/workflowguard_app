@@ -346,6 +346,17 @@ class ApiService {
       console.log('🔍 API: Fetching HubSpot workflows...');
       const response = await apiClient.get('/api/workflow/hubspot');
       console.log('✅ API: HubSpot workflows fetched successfully:', response.data?.data?.length || 0, 'workflows');
+      
+      // Enhanced debugging for empty results (Memory compliance check)
+      if (response.data?.data?.length === 0) {
+        console.log('⚠️ API: Zero workflows returned - debugging response structure:');
+        console.log('📊 Full Response:', response.data);
+        console.log('📊 Response Success:', response.data?.success);
+        console.log('📊 Response Message:', response.data?.message);
+        console.log('📊 Response Data Type:', typeof response.data?.data);
+        console.log('📊 Response Data:', response.data?.data);
+      }
+      
       return response.data;
     } catch (error: any) {
       console.error('❌ API: Failed to fetch HubSpot workflows:', {

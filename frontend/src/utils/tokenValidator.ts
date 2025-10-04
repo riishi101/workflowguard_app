@@ -127,15 +127,35 @@ export class TokenValidator {
   console.log('🧪 Testing Workflow APIs...');
   try {
     const { ApiService } = await import('../lib/api');
+    
     console.log('📋 Testing getHubSpotWorkflows...');
     const workflows = await ApiService.getHubSpotWorkflows();
     console.log('✅ Workflows result:', workflows);
     
+    // Enhanced debugging for Memory compliance
+    if (workflows?.data?.length === 0) {
+      console.log('🔍 ZERO WORKFLOWS DEBUG:');
+      console.log('- Check if HubSpot account has active workflows');
+      console.log('- Verify HubSpot OAuth scopes include workflow permissions');
+      console.log('- Check backend database connection (Memory 6a80c641)');
+      console.log('- Verify parameter order in backend calls (Memory 3af4ea2c)');
+    }
+    
     console.log('🛡️ Testing getProtectedWorkflows...');
     const protectedWorkflows = await ApiService.getProtectedWorkflows();
     console.log('✅ Protected workflows result:', protectedWorkflows);
+    
+    // Test backend health
+    console.log('🏥 Testing backend health...');
+    const user = await ApiService.getCurrentUser();
+    console.log('✅ Current user (backend connectivity):', user);
+    
   } catch (error) {
     console.error('❌ API Test failed:', error);
+    console.log('🔍 ERROR ANALYSIS:');
+    console.log('- Status:', error.response?.status);
+    console.log('- Message:', error.response?.data?.message);
+    console.log('- URL:', error.config?.url);
   }
 };
 
@@ -150,9 +170,48 @@ export class TokenValidator {
   }
 };
 
+// Memory-based diagnostic function
+(window as any).diagnoseWorkflowIssue = async () => {
+  console.log('🔍 WORKFLOW ISSUE DIAGNOSIS (Memory-based)');
+  console.log('=====================================');
+  
+  try {
+    const { ApiService } = await import('../lib/api');
+    
+    // Test 1: Authentication
+    console.log('1️⃣ Testing Authentication...');
+    const user = await ApiService.getCurrentUser();
+    console.log('✅ User authenticated:', user?.data?.email);
+    
+    // Test 2: HubSpot Workflows
+    console.log('2️⃣ Testing HubSpot Workflow Fetch...');
+    const workflows = await ApiService.getHubSpotWorkflows();
+    console.log('📊 Workflow count:', workflows?.data?.length || 0);
+    
+    // Test 3: Memory compliance checks
+    console.log('3️⃣ Memory Compliance Checks:');
+    console.log('- Database Connection (Memory 6a80c641): Backend should use Neon, not local PostgreSQL');
+    console.log('- Parameter Order (Memory 3af4ea2c): Should be getWorkflowById(userId, workflowId)');
+    console.log('- API Endpoints (Memory 1abf712b): Should use /api prefix');
+    
+    // Test 4: Raw API call
+    console.log('4️⃣ Raw API Test...');
+    const token = localStorage.getItem('token');
+    const response = await fetch('/api/workflow/hubspot', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const rawData = await response.json();
+    console.log('📡 Raw API Response:', rawData);
+    
+  } catch (error) {
+    console.error('❌ Diagnosis failed:', error);
+  }
+};
+
 console.log('🔐 TokenValidator loaded - Available console commands:');
 console.log('  - debugToken() - Show detailed token information');
 console.log('  - validateToken() - Validate current token');
 console.log('  - cleanToken() - Remove invalid token');
 console.log('  - testWorkflowAPI() - Test workflow API endpoints');
 console.log('  - testAuth() - Test authentication status');
+console.log('  - diagnoseWorkflowIssue() - Memory-based workflow diagnosis');
