@@ -105,10 +105,17 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   async createOrder(@Body() body: { planId: string }, @Request() req: any) {
     try {
-      const userId = req.user?.sub || req.user?.id;
+      // Enhanced user ID extraction with debugging
+      console.log('🔐 PaymentController - Full user object:', JSON.stringify(req.user, null, 2));
+      
+      const userId = req.user?.sub || req.user?.id || req.user?.userId || req.user?.user_id;
       const { planId } = body;
 
+      console.log('🔐 PaymentController - Extracted userId:', userId);
+      console.log('🔐 PaymentController - Available user fields:', Object.keys(req.user || {}));
+
       if (!userId) {
+        console.log('❌ PaymentController - No userId found in req.user:', req.user);
         throw new HttpException(
           'User authentication required. Please log in and try again.',
           HttpStatus.UNAUTHORIZED
