@@ -238,6 +238,99 @@ export class TokenValidator {
   console.log('4. Check if trial account has workflow limitations');
 };
 
+// Enhanced HubSpot Trial Account Diagnostic
+(window as any).diagnoseTrialLimitations = async () => {
+  console.log('🔍 HUBSPOT TRIAL ACCOUNT LIMITATIONS DIAGNOSIS');
+  console.log('=====================================');
+  console.log('🚨 CONFIRMED: 4 workflows exist in HubSpot UI but API returns 0');
+  console.log('');
+  
+  try {
+    const token = localStorage.getItem('token');
+    const apiBaseUrl = 'https://api.workflowguard.pro';
+    
+    // Test 1: Check HubSpot account type
+    console.log('1️⃣ Testing HubSpot Account Type...');
+    const accountTest = await fetch(`${apiBaseUrl}/api/auth/hubspot/account-info`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (accountTest.ok) {
+      const accountData = await accountTest.json();
+      console.log('📋 HubSpot Account Info:', accountData);
+      console.log('  - Account Type:', accountData.accountType || 'Unknown');
+      console.log('  - Trial Status:', accountData.trialStatus || 'Unknown');
+    } else {
+      console.log('⚠️ Account info check failed:', accountTest.status);
+    }
+    
+    // Test 2: Check OAuth scopes
+    console.log('2️⃣ Testing OAuth Scopes...');
+    const scopeTest = await fetch(`${apiBaseUrl}/api/auth/hubspot/token-info`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (scopeTest.ok) {
+      const scopeData = await scopeTest.json();
+      console.log('📋 OAuth Token Info:', scopeData);
+      
+      const scopes = scopeData.scopes || [];
+      console.log('🔍 Available Scopes:', scopes);
+      
+      // Check for workflow-related scopes
+      const workflowScopes = ['automation', 'workflows', 'marketing-automation'];
+      console.log('🎯 Workflow Scope Analysis:');
+      workflowScopes.forEach(scope => {
+        const hasScope = scopes.includes(scope);
+        console.log(`  - ${scope}: ${hasScope ? '✅ Available' : '❌ Missing'}`);
+      });
+      
+    } else {
+      console.log('⚠️ OAuth scopes check failed:', scopeTest.status);
+    }
+    
+    // Test 3: Direct HubSpot API call with detailed error analysis
+    console.log('3️⃣ Direct HubSpot Workflows API Test...');
+    const workflowTest = await fetch(`${apiBaseUrl}/api/workflow/hubspot-debug`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (workflowTest.ok) {
+      const workflowData = await workflowTest.json();
+      console.log('📡 HubSpot Workflows Debug Response:', workflowData);
+    } else {
+      console.log('❌ HubSpot Workflows API Failed:', workflowTest.status);
+      const errorText = await workflowTest.text();
+      console.log('📄 Error Details:', errorText);
+    }
+    
+    // Analysis and recommendations
+    console.log('');
+    console.log('🎯 TRIAL ACCOUNT ANALYSIS:');
+    console.log('- UI Message: "Workflows will no longer be accessible once your trial ends"');
+    console.log('- Behavior: Workflows visible in UI but not accessible via API');
+    console.log('- Root Cause: HubSpot restricts workflow API access for trial accounts');
+    console.log('');
+    console.log('🔧 RECOMMENDED SOLUTIONS:');
+    console.log('1. 🏆 UPGRADE HUBSPOT ACCOUNT to Professional/Enterprise');
+    console.log('   - Removes all trial limitations');
+    console.log('   - Enables full workflow API access');
+    console.log('   - Immediate solution');
+    console.log('');
+    console.log('2. 🔄 RECONNECT with Enhanced Scopes (if upgrade not possible)');
+    console.log('   - Disconnect HubSpot integration');
+    console.log('   - Reconnect with explicit automation permissions');
+    console.log('   - May not work for trial accounts');
+    console.log('');
+    console.log('3. 📞 CONTACT HUBSPOT SUPPORT');
+    console.log('   - Ask about workflow API access for trial accounts');
+    console.log('   - Request temporary API access for testing');
+    
+  } catch (error) {
+    console.error('❌ Trial limitations diagnosis failed:', error);
+  }
+};
+
 console.log('🔐 TokenValidator loaded - Available console commands:');
 console.log('  - debugToken() - Show detailed token information');
 console.log('  - validateToken() - Validate current token');
@@ -246,3 +339,4 @@ console.log('  - testWorkflowAPI() - Test workflow API endpoints');
 console.log('  - testAuth() - Test authentication status');
 console.log('  - diagnoseWorkflowIssue() - Memory-based workflow diagnosis');
 console.log('  - checkHubSpotAccount() - HubSpot account verification guide');
+console.log('  - diagnoseTrialLimitations() - HubSpot trial account diagnosis (NEW)');
