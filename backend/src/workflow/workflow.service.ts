@@ -1662,10 +1662,30 @@ export class WorkflowService {
           if (!workflowWithVersions?.versions?.length) {
             console.log('🔄 START PROTECTION - Creating initial version for workflow:', workflowId);
 
-            // Use pre-fetched HubSpot data (outside transaction)
-            const workflowData = hubspotWorkflows.find(
+            // Fetch detailed HubSpot data with enrollment triggers
+            let workflowData = hubspotWorkflows.find(
               (w) => String(w.id) === hubspotId,
             );
+            
+            // If we have basic data, try to get detailed data with enrollment triggers
+            if (workflowData && workflowData.hubspotData) {
+              workflowData = workflowData.hubspotData;
+            } else {
+              // Fallback: fetch detailed data directly from HubSpot
+              try {
+                console.log('🔍 Fetching detailed workflow data for enrollment triggers:', hubspotId);
+                const detailedData = await this.hubspotService.getWorkflowById(userId, hubspotId);
+                if (detailedData) {
+                  workflowData = detailedData;
+                  console.log('✅ Got detailed workflow data with triggers:', {
+                    hasEnrollmentTriggers: !!detailedData.enrollmentTriggers?.length,
+                    triggersCount: detailedData.enrollmentTriggers?.length || 0
+                  });
+                }
+              } catch (detailError) {
+                console.warn('⚠️ Could not fetch detailed workflow data:', detailError.message);
+              }
+            }
 
             console.log('🔍 START PROTECTION - HubSpot data found:', {
               workflowId,
@@ -1686,8 +1706,8 @@ export class WorkflowService {
 
               const sanitized: any = {};
               
-              // Whitelist of safe fields to include
-              const safeFields = ['id', 'name', 'status', 'type', 'enabled', 'insertedAt', 'updatedAt', 'hubspotId'];
+              // Whitelist of safe fields to include (including enrollment triggers)
+              const safeFields = ['id', 'name', 'status', 'type', 'enabled', 'insertedAt', 'updatedAt', 'hubspotId', 'actions', 'enrollmentTriggers', 'goals', 'settings'];
               
               for (const key of safeFields) {
                 if (data.hasOwnProperty(key)) {
@@ -1703,8 +1723,14 @@ export class WorkflowService {
                       sanitized[key] = value;
                     } else if (typeof value === 'boolean') {
                       sanitized[key] = value;
+                    } else if (Array.isArray(value) && ['actions', 'enrollmentTriggers', 'goals'].includes(key)) {
+                      // Preserve important arrays for workflow functionality
+                      sanitized[key] = value;
+                    } else if (typeof value === 'object' && value !== null && key === 'settings') {
+                      // Preserve settings object
+                      sanitized[key] = value;
                     }
-                    // Skip everything else including arrays and objects
+                    // Skip everything else
                   } catch (error) {
                     console.warn(`⚠️ Failed to sanitize field ${key}:`, error);
                     // Continue without this field rather than failing
