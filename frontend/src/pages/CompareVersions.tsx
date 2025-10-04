@@ -47,6 +47,7 @@ const CompareVersions = () => {
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [versionA, setVersionA] = useState(searchParams.get("versionA") || "");
@@ -144,7 +145,7 @@ const CompareVersions = () => {
     if (!workflowId || !versionA || !versionB) return;
 
     try {
-      setLoading(true);
+      setComparisonLoading(true);
       const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
 
       console.log("Comparison response:", response); // Debug log
@@ -201,7 +202,7 @@ const CompareVersions = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setComparisonLoading(false);
     }
   };
 
@@ -250,7 +251,7 @@ const CompareVersions = () => {
     }
   };
 
-  if (loading && !comparisonData) {
+  if (loading) {
     return (
       <MainAppLayout title="Compare Workflow Versions">
         <ContentSection>
@@ -313,9 +314,9 @@ const CompareVersions = () => {
         variant="outline"
         size="sm"
         onClick={handleRefresh}
-        disabled={loading}
+        disabled={loading || comparisonLoading}
       >
-        <RefreshCw className="w-4 h-4 mr-2" />
+        <RefreshCw className={`w-4 h-4 mr-2 ${(loading || comparisonLoading) ? 'animate-spin' : ''}`} />
         Refresh
       </Button>
     </div>
@@ -356,7 +357,23 @@ const CompareVersions = () => {
 
       {/* Comparison Content */}
       <ContentSection>
-        {comparisonData ? (
+        {comparisonLoading ? (
+          <div className="grid grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="p-4 space-y-3">
+                  {[...Array(5)].map((_, j) => (
+                    <Skeleton key={j} className="h-12 w-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : comparisonData ? (
           <div className="grid grid-cols-2 gap-6">
             {/* Version A */}
             <div className="border border-gray-200 rounded-lg">
