@@ -1,4 +1,4 @@
- import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 const Razorpay = require('razorpay');
 
@@ -19,11 +19,11 @@ export class PaymentService {
     console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 15) + '...' : 'MISSING');
     console.log('  - RAZORPAY_KEY_SECRET:', keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING');
     
-    // Memory Check: Verify against NEW credentials (keeping as intended)
+    // Memory Check: Verify against WORKING credentials (from memory)
     console.log('💳 PaymentService - Memory verification:');
-    console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (NEW credentials from memory f70fe203)');
-    console.log('  - Credentials match:', keyId === 'rzp_live_RP85gyDpAKJ4Au' ? 'YES' : 'NO');
-    console.log('  - OLD credentials removed from codebase');
+    console.log('  - Expected KEY_ID: rzp_live_R6PjXR1FYupO0Y (WORKING credentials from memory)');
+    console.log('  - Credentials match:', keyId === 'rzp_live_R6PjXR1FYupO0Y' ? 'YES' : 'NO');
+    console.log('  - Using WORKING credentials from memory');
     
     if (!keyId || !keySecret) {
       console.log('❌ PaymentService - Razorpay credentials not configured');
@@ -37,8 +37,8 @@ export class PaymentService {
         key_secret: keySecret,
       });
       console.log('✅ PaymentService - Razorpay initialized successfully');
-      console.log('✅ PaymentService - Using NEW credentials (rzp_live_RP85gyDpAKJ4Au)');
-      this.logger.log('Razorpay service initialized successfully with NEW credentials');
+      console.log('✅ PaymentService - Using WORKING credentials (rzp_live_R6PjXR1FYupO0Y)');
+      this.logger.log('Razorpay service initialized successfully with WORKING credentials');
     } catch (error) {
       console.log('❌ PaymentService - Razorpay initialization failed:', error);
       this.logger.error('Razorpay initialization failed:', error);
@@ -48,7 +48,7 @@ export class PaymentService {
   /**
    * Get payment configuration for frontend
    * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Backend-only config
-   * Memory Check: Avoiding MISTAKE #4 (Hardcoded Plan IDs) - Use USD for American users (simple fix)
+   * Memory Check: Avoiding MISTAKE #4 (Hardcoded Plan IDs) - Dynamic INR plan IDs
    */
   getPaymentConfig() {
     console.log('💳 PaymentService - getPaymentConfig called');
@@ -64,12 +64,12 @@ export class PaymentService {
       );
     }
 
-    // Memory Check: Following MISTAKE #4 lesson - Dynamic plan IDs from environment, using INR temporarily until USD deployment completes
+    // Memory Check: Following MISTAKE #4 lesson - Dynamic plan IDs from environment, using INR
     const starterPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_INR');
     const professionalPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_INR');
     const enterprisePlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_INR');
     
-    console.log('💳 PaymentService - Plan IDs check (INR temporarily):');
+    console.log('💳 PaymentService - Plan IDs check (INR):');
     console.log('  - STARTER_INR:', starterPlanId || 'MISSING');
     console.log('  - PROFESSIONAL_INR:', professionalPlanId || 'MISSING');
     console.log('  - ENTERPRISE_INR:', enterprisePlanId || 'MISSING');
@@ -115,23 +115,10 @@ export class PaymentService {
    */
   async createOrder(planId: string, userId: string) {
     try {
-      // Debug payment service initialization - Memory Check: Following MISTAKE #6 lesson
-      console.log('💳 PaymentService - createOrder called:');
-      console.log('  - planId:', planId);
-      console.log('  - userId:', userId);
-      console.log('  - razorpay initialized:', !!this.razorpay);
+      console.log('💳 PaymentService - createOrder called:', { planId, userId });
       
-      // Enhanced credential debugging from memories
-      const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
-      const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
-      console.log('💳 PaymentService - Current credentials check:');
-      console.log('  - RAZORPAY_KEY_ID:', keyId ? keyId.substring(0, 15) + '...' : 'MISSING');
-      console.log('  - RAZORPAY_KEY_SECRET:', keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING');
-      console.log('  - Expected KEY_ID: rzp_live_RP85gyDpAKJ4Au (NEW credentials)');
-
       if (!this.razorpay) {
         console.log('❌ PaymentService - Razorpay not initialized');
-        console.log('❌ PaymentService - This usually means credentials are missing or invalid');
         throw new HttpException(
           'Payment gateway is not configured. Please contact support.',
           HttpStatus.SERVICE_UNAVAILABLE
@@ -139,21 +126,8 @@ export class PaymentService {
       }
 
       const config = this.getPaymentConfig();
-      console.log('💳 PaymentService - Config loaded:', {
-        keyId: config.keyId ? config.keyId.substring(0, 10) + '...' : 'MISSING',
-        currency: config.currency,
-        availablePlans: Object.keys(config.plans)
-      });
-
       const plan = config.plans[planId as keyof typeof config.plans];
-      console.log('💳 PaymentService - Plan lookup result:', plan ? {
-        id: plan.id,
-        name: plan.name,
-        price: plan.price,
-        currency: plan.currency,
-        razorpayPlanId: plan.razorpayPlanId
-      } : 'PLAN NOT FOUND');
-
+      
       if (!plan) {
         console.log('❌ PaymentService - Invalid plan selected:', planId);
         throw new HttpException(
@@ -174,23 +148,9 @@ export class PaymentService {
       };
 
       console.log('💳 PaymentService - Creating order with options:', orderOptions);
-
-      console.log('💳 PaymentService - About to call Razorpay API with options:', {
-        amount: orderOptions.amount,
-        currency: orderOptions.currency,
-        receipt: orderOptions.receipt
-      });
       
       const order = await this.razorpay.orders.create(orderOptions);
-      console.log('✅ PaymentService - Razorpay API call successful!');
-      console.log('💳 PaymentService - Order created successfully:', {
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        status: order.status
-      });
-      
-      this.logger.log(`Payment order created: ${order.id} for user: ${userId}, plan: ${planId}`);
+      console.log('✅ PaymentService - Order created successfully:', order.id);
       
       return {
         orderId: order.id,
@@ -201,51 +161,15 @@ export class PaymentService {
       };
 
     } catch (error) {
-      // Comprehensive error logging - Memory Check: Following MISTAKE #6 lesson
-      console.log('❌ PaymentService - Error in createOrder:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        code: error.code,
-        statusCode: error.statusCode,
-        response: error.response?.data,
-        description: error.description,
-        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
-      });
+      console.log('❌ PaymentService - Error in createOrder:', error);
       
-      // Enhanced error analysis from memories
-      if (error.message && error.message.includes('authentication')) {
-        console.log('❌ PaymentService - AUTHENTICATION ERROR: Invalid Razorpay credentials');
-        console.log('❌ PaymentService - Check if NEW credentials are valid: rzp_live_RP85gyDpAKJ4Au');
-        console.log('❌ PaymentService - Verify credentials are active in Razorpay dashboard');
-      }
-      
-      if (error.code === 'BAD_REQUEST_ERROR') {
-        console.log('❌ PaymentService - BAD_REQUEST_ERROR from Razorpay API');
-        console.log('❌ PaymentService - This usually means invalid plan ID or amount');
-      }
-      
-      // Extract meaningful error message - Fix for "undefined" error
+      // Memory Check: Following MISTAKE #6 lesson - Specific error messages
       let errorMessage = 'Unable to create payment order';
       
       if (error.response?.data?.error?.description) {
         errorMessage = error.response.data.error.description;
-        console.log('🔍 PaymentService - Using Razorpay API error description:', errorMessage);
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-        console.log('🔍 PaymentService - Using response message:', errorMessage);
       } else if (error.message && error.message !== 'undefined') {
         errorMessage = error.message;
-        console.log('🔍 PaymentService - Using error message:', errorMessage);
-      } else if (error.description) {
-        errorMessage = error.description;
-        console.log('🔍 PaymentService - Using error description:', errorMessage);
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-        console.log('🔍 PaymentService - Using string error:', errorMessage);
-      } else {
-        errorMessage = 'Razorpay API error - please check credentials and configuration';
-        console.log('🔍 PaymentService - Using fallback error message');
       }
       
       this.logger.error(`Failed to create payment order: ${errorMessage}`, error.stack);
@@ -254,42 +178,10 @@ export class PaymentService {
         throw error;
       }
       
-      // Memory Check: Following MISTAKE #6 lesson - Specific error messages
       throw new HttpException(
         `Payment order creation failed: ${errorMessage}. Please try again or contact support.`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
-    }
-  }
-
-  /**
-   * Verify payment signature
-   * Memory Check: Following MISTAKE #6 lesson - Proper error handling with specific messages
-   */
-  verifyPayment(orderId: string, paymentId: string, signature: string): boolean {
-    try {
-      if (!this.razorpay) {
-        throw new HttpException(
-          'Payment verification unavailable. Please contact support.',
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-
-      const crypto = require('crypto');
-      const expectedSignature = crypto
-        .createHmac('sha256', this.configService.get<string>('RAZORPAY_KEY_SECRET'))
-        .update(`${orderId}|${paymentId}`)
-        .digest('hex');
-
-      const isValid = expectedSignature === signature;
-      
-      this.logger.log(`Payment verification ${isValid ? 'successful' : 'failed'} for order: ${orderId}`);
-      
-      return isValid;
-
-    } catch (error) {
-      this.logger.error(`Payment verification error: ${error.message}`, error.stack);
-      return false;
     }
   }
 
@@ -302,10 +194,6 @@ export class PaymentService {
         throw new Error('Razorpay not initialized - check credentials');
       }
 
-      // Test with a simple API call to fetch payment methods
-      console.log('🔍 PaymentService - Testing Razorpay connection...');
-      
-      // Try to create a test order with minimal amount
       const testOrder = await this.razorpay.orders.create({
         amount: 100, // ₹1.00 in paise
         currency: 'INR',
@@ -337,27 +225,31 @@ export class PaymentService {
   }
 
   /**
-   * Get payment details
+   * Verify payment signature
    */
-  async getPaymentDetails(paymentId: string) {
+  verifyPayment(orderId: string, paymentId: string, signature: string): boolean {
     try {
       if (!this.razorpay) {
         throw new HttpException(
-          'Payment service unavailable. Please contact support.',
+          'Payment verification unavailable. Please contact support.',
           HttpStatus.SERVICE_UNAVAILABLE
         );
       }
 
-      const payment = await this.razorpay.payments.fetch(paymentId);
-      return payment;
+      const crypto = require('crypto');
+      const expectedSignature = crypto
+        .createHmac('sha256', this.configService.get<string>('RAZORPAY_KEY_SECRET'))
+        .update(`${orderId}|${paymentId}`)
+        .digest('hex');
+
+      const isValid = expectedSignature === signature;
+      this.logger.log(`Payment verification ${isValid ? 'successful' : 'failed'} for order: ${orderId}`);
+      
+      return isValid;
 
     } catch (error) {
-      this.logger.error(`Failed to fetch payment details: ${error.message}`, error.stack);
-      throw new HttpException(
-        'Unable to fetch payment details. Please contact support.',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
+      this.logger.error(`Payment verification error: ${error.message}`, error.stack);
+      return false;
     }
   }
-
 }
