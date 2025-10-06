@@ -174,9 +174,9 @@ export class HubSpotService {
         }
       }
 
-      // Try the correct HubSpot API endpoint for complete workflow data
-      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
-      console.log(`🔍 HubSpotService - Fetching from: ${endpoint}`);
+      // CRITICAL FIX: Use V4 API endpoint for individual workflow fetch
+      const endpoint = `https://api.hubapi.com/automation/v4/flows/${workflowId}`;
+      console.log(`🔍 HubSpotService - Fetching from V4 API: ${endpoint}`);
 
       const response = await fetch(endpoint, {
         method: 'GET',
@@ -309,7 +309,9 @@ export class HubSpotService {
     console.log('🔍 HubSpotService - Using portalId:', portalId);
 
     try {
-      const endpoint = `https://api.hubapi.com/automation/v3/workflows`;
+      // CRITICAL FIX: Use V4 API to support all workflow types (Deals, Companies, etc.)
+      // V3 only returns Contact-based workflows - this was the root cause!
+      const endpoint = `https://api.hubapi.com/automation/v4/flows`;
       const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
@@ -339,8 +341,9 @@ export class HubSpotService {
       const workflowList = data.results || [];
 
       if (workflowList.length === 0) {
-        console.warn('🚨 CRITICAL: No workflows returned but user confirms 5 exist in HubSpot!');
-        console.warn('🚨 This indicates token/permission issue - not a trial limitation');
+        console.warn('🚨 CRITICAL: No workflows returned with V4 API!');
+        console.warn('🚨 Possible causes: Missing OAuth scopes or workflows are in unsupported format');
+        console.warn('🚨 Required scopes: automation, crm.objects.deals.read, crm.objects.companies.read');
         return [];
       }
 
@@ -401,7 +404,8 @@ export class HubSpotService {
     workflowId: string
   ): Promise<HubSpotWorkflow | null> {
     try {
-      const endpoint = `https://api.hubapi.com/automation/v3/workflows/${workflowId}`;
+      // CRITICAL FIX: Use V4 API for detailed workflow fetch
+      const endpoint = `https://api.hubapi.com/automation/v4/flows/${workflowId}`;
       
       const response = await fetch(endpoint, {
         method: 'GET',
@@ -548,7 +552,7 @@ export class HubSpotService {
         // Approach 2: v3 API with full complex data
         {
           name: 'v3 API Full Complex Data',
-          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
+          endpoint: 'https://api.hubapi.com/automation/v4/flows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
@@ -565,7 +569,7 @@ export class HubSpotService {
         // Approach 3: v3 API with actions only
         {
           name: 'v3 API Actions Only',
-          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
+          endpoint: 'https://api.hubapi.com/automation/v4/flows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
@@ -579,7 +583,7 @@ export class HubSpotService {
         // Approach 4: v3 API basic workflow only (fallback)
         {
           name: 'v3 API Basic Only',
-          endpoint: 'https://api.hubapi.com/automation/v3/workflows',
+          endpoint: 'https://api.hubapi.com/automation/v4/flows',
           payload: {
             name: workflowData.name || 'Restored Workflow',
             enabled: false,
