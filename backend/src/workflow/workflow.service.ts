@@ -1543,7 +1543,7 @@ export class WorkflowService {
     workflowIds: string[],
     userId: string,
     selectedWorkflowObjects: any[],
-  ): Promise<any[]> {
+  ): Promise<any> {
     console.log('🚀 START PROTECTION - Starting for user:', userId, 'workflows:', workflowIds);
     console.log('🚀 START PROTECTION - Selected workflow objects:', JSON.stringify(selectedWorkflowObjects, null, 2));
     
@@ -1926,7 +1926,19 @@ export class WorkflowService {
       }
       
       console.log('🎉 START PROTECTION - All workflows protected successfully');
-      return protectedWorkflows;
+      console.log('🎉 START PROTECTION - Returning result:', {
+        success: true,
+        protectedCount: protectedWorkflows.length,
+        errorCount: errors.length
+      });
+      
+      return {
+        success: true,
+        message: `Successfully protected ${protectedWorkflows.length} workflows`,
+        protectedWorkflows,
+        errors: errors.length > 0 ? errors : undefined,
+        count: protectedWorkflows.length
+      };
       
     } catch (txError) {
       // Handle transaction-specific errors
