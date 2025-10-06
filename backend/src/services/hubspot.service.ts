@@ -327,9 +327,20 @@ export class HubSpotService {
       }
 
       const data = (await response.json()) as HubSpotApiResponse;
+      
+      // DEBUG: Log the exact API response
+      console.log('🔍 DEBUG - HubSpot API Response:', {
+        hasResults: !!data.results,
+        resultsCount: data.results?.length || 0,
+        firstWorkflow: data.results?.[0] ? { id: data.results[0].id, name: data.results[0].name } : null,
+        rawResponse: JSON.stringify(data).substring(0, 500)
+      });
+      
       const workflowList = data.results || [];
 
       if (workflowList.length === 0) {
+        console.warn('🚨 CRITICAL: No workflows returned but user confirms 5 exist in HubSpot!');
+        console.warn('🚨 This indicates token/permission issue - not a trial limitation');
         return [];
       }
 
