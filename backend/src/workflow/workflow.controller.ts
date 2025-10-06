@@ -502,9 +502,22 @@ export class WorkflowController {
         versionId,
       );
 
+      // Parse the data if it's a string to ensure proper JSON format
+      // This fixes the double-stringification issue where encrypted data
+      // is returned as a JSON string but gets stringified again in response
+      let parsedData = versionData;
+      if (typeof versionData === 'string') {
+        try {
+          parsedData = JSON.parse(versionData);
+          console.log('✅ DOWNLOAD - Successfully parsed stringified JSON data');
+        } catch (parseError) {
+          console.warn('⚠️ DOWNLOAD - Data is not valid JSON string, returning as-is:', parseError.message);
+        }
+      }
+
       return {
         success: true,
-        data: versionData,
+        data: parsedData,
         message: 'Workflow version downloaded successfully'
       };
     } catch (error) {
