@@ -2324,6 +2324,10 @@ export class WorkflowService {
       previousLength: previousString.length,
       currentKeys: Object.keys(currentCore),
       previousKeys: Object.keys(previousCore),
+      currentActionsCount: currentCore.actions?.length || 0,
+      previousActionsCount: previousCore.actions?.length || 0,
+      currentTriggersCount: currentCore.triggers?.length || 0,
+      previousTriggersCount: previousCore.triggers?.length || 0,
     });
 
     return hasChanges;
@@ -2400,46 +2404,32 @@ export class WorkflowService {
               `Comparing workflow structure for ${hubspotWorkflow.id}...`,
             );
 
+            // Decrypt the stored version data before comparison
+            const decryptedStoredData = this.encryptionService.decryptWorkflowData(latestVersion.data);
+            
             // Use the new structure-based comparison that focuses on functional changes
             shouldCreateVersion = this.compareWorkflowStructure(
               currentWorkflowData,
-              latestVersion.data,
+              decryptedStoredData,
             );
 
-            // Fallback to full data comparison if structure comparison indicates no changes
-            // but we want to be extra sure for debugging
+            // Only create versions for actual structural changes
+            // Skip metadata-only differences like timestamps, fetchedAt, etc.
             if (!shouldCreateVersion) {
-              const normalizedCurrentData =
-                this.normalizeWorkflowData(currentWorkflowData);
-              const normalizedLatestData = this.normalizeWorkflowData(
-                latestVersion.data,
-              );
-
-              const currentDataString = JSON.stringify(normalizedCurrentData);
-              const latestDataString = JSON.stringify(normalizedLatestData);
-
-              const fullDataChanged = currentDataString !== latestDataString;
-
               console.log(
-                `🔍 Full data comparison for workflow ${hubspotWorkflow.id}:`,
+                `🔍 Structure comparison for workflow ${hubspotWorkflow.id}: NO structural changes detected`,
                 {
-                  structureChanged: shouldCreateVersion,
-                  fullDataChanged,
-                  currentLength: currentDataString.length,
-                  latestLength: latestDataString.length,
+                  structureChanged: false,
+                  skipReason: 'No functional workflow changes found',
+                  latestVersionNumber: latestVersion.versionNumber,
                 },
               );
-
-              if (fullDataChanged) {
-                console.log(
-                  `⚠️ Workflow ${hubspotWorkflow.id}: Structure unchanged but metadata differs - will CREATE version`,
-                );
-                console.log(
-                  `Current data length: ${currentDataString.length}, Latest data length: ${latestDataString.length}`,
-                );
-                // Set shouldCreateVersion to true since there are differences
-                shouldCreateVersion = true;
-              }
+              
+              // Do NOT create versions for metadata-only changes
+              // This prevents unnecessary version creation on every sync
+              console.log(
+                `✅ Workflow ${hubspotWorkflow.id}: Skipping version creation - no functional changes`,
+              );
             }
 
             console.log(`Workflow ${hubspotWorkflow.id} comparison result:`, {
