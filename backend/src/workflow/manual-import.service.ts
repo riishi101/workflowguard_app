@@ -23,7 +23,6 @@ export class ManualImportService {
           name: workflowData.name || 'Imported Workflow',
           ownerId: userId,
           status: 'active',
-          // Note: isManualImport field not in schema - using hubspotId prefix instead
         },
       });
 

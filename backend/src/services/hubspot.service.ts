@@ -364,16 +364,16 @@ export class HubSpotService {
         hasResults: !!data.results,
         resultsCount: data.results?.length || 0,
         firstWorkflow: data.results?.[0] ? { 
-          id: data.results[0].id, 
-          name: data.results[0].name,
+          id: (data.results[0] as any).id, 
+          name: (data.results[0] as any).name,
           // Log ALL possible status properties from V4 API
-          enabled: data.results[0].enabled,
-          status: data.results[0].status,
-          state: data.results[0].state,
-          active: data.results[0].active,
-          isEnabled: data.results[0].isEnabled,
-          workflowStatus: data.results[0].workflowStatus,
-          allKeys: Object.keys(data.results[0])
+          enabled: (data.results[0] as any).enabled,
+          status: (data.results[0] as any).status,
+          state: (data.results[0] as any).state,
+          active: (data.results[0] as any).active,
+          isEnabled: (data.results[0] as any).isEnabled,
+          workflowStatus: (data.results[0] as any).workflowStatus,
+          allKeys: Object.keys(data.results[0] as any)
         } : null,
         rawResponse: JSON.stringify(data).substring(0, 800)
       });
