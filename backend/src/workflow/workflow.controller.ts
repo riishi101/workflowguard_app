@@ -99,6 +99,13 @@ export class WorkflowController {
 
     try {
       const workflowIds = workflows.map(w => w.hubspotId || w.id);
+      
+      console.log('🔍 CONTROLLER - Starting protection for workflows:', {
+        workflowIds,
+        userId,
+        workflowsCount: workflows.length
+      });
+      
       const result = await this.workflowService.startWorkflowProtection(
         workflowIds,
         userId,
@@ -106,9 +113,25 @@ export class WorkflowController {
       );
       return result;
     } catch (error) {
-      this.logger.error(`Error starting workflow protection:`, error);
+      console.error('❌ CONTROLLER - Error starting workflow protection:', {
+        error: error.message,
+        stack: error.stack,
+        userId,
+        workflows: workflows?.length || 0,
+        workflowIds: workflows?.map(w => w.hubspotId || w.id) || []
+      });
+      
+      // Re-throw HttpExceptions as-is to preserve status codes and messages
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
       throw new HttpException(
-        'Failed to start workflow protection',
+        {
+          success: false,
+          message: `Failed to start workflow protection: ${error.message || 'Unknown error'}`,
+          error: error.message,
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

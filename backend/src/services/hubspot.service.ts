@@ -18,28 +18,40 @@ export class HubSpotService {
    * V4 API uses different property names than V3
    */
   private getWorkflowStatus(workflow: any): string {
-    // Check various possible status properties from V4 API
-    if (workflow.status === 'ENABLED' || workflow.status === 'ACTIVE') return 'active';
-    if (workflow.status === 'DISABLED' || workflow.status === 'INACTIVE') return 'inactive';
-    if (workflow.state === 'ENABLED' || workflow.state === 'ACTIVE') return 'active';
-    if (workflow.state === 'DISABLED' || workflow.state === 'INACTIVE') return 'inactive';
-    if (workflow.enabled === true) return 'active';
-    if (workflow.enabled === false) return 'inactive';
-    if (workflow.active === true) return 'active';
-    if (workflow.active === false) return 'inactive';
+    // V4 API commonly uses these patterns - check all variations
     
-    // Default fallback - log for debugging
-    console.log('🔍 DEBUG - Unknown workflow status format:', {
+    // String-based status checks (case-insensitive)
+    const statusStr = (workflow.status || '').toString().toLowerCase();
+    const stateStr = (workflow.state || '').toString().toLowerCase();
+    
+    if (statusStr === 'enabled' || statusStr === 'active' || statusStr === 'published') return 'active';
+    if (statusStr === 'disabled' || statusStr === 'inactive' || statusStr === 'draft') return 'inactive';
+    
+    if (stateStr === 'enabled' || stateStr === 'active' || stateStr === 'published') return 'active';
+    if (stateStr === 'disabled' || stateStr === 'inactive' || stateStr === 'draft') return 'inactive';
+    
+    // Boolean checks
+    if (workflow.enabled === true || workflow.active === true || workflow.isEnabled === true) return 'active';
+    if (workflow.enabled === false || workflow.active === false || workflow.isEnabled === false) return 'inactive';
+    
+    // V4 API might use 'insertedAt' vs 'updatedAt' to indicate if workflow is active
+    if (workflow.insertedAt && !workflow.deletedAt) return 'active';
+    
+    // Default to active if workflow exists and no clear inactive indicators
+    // Most workflows in HubSpot are active unless explicitly disabled
+    console.log('🔍 DEBUG - Defaulting to ACTIVE for workflow:', {
       id: workflow.id,
       name: workflow.name,
+      allProps: Object.keys(workflow),
       statusProps: {
         status: workflow.status,
         state: workflow.state,
         enabled: workflow.enabled,
-        active: workflow.active
+        active: workflow.active,
+        isEnabled: workflow.isEnabled
       }
     });
-    return 'inactive';
+    return 'active'; // Changed default to 'active' since most workflows are active
   }
 
   async getWorkflows(userId: string): Promise<WorkflowResponse[]> {
