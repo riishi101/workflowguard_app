@@ -2001,8 +2001,18 @@ export class WorkflowService {
 
       // Get user subscription and limits
       console.log('🔍 WORKFLOW LIMITS - Getting user subscription');
-      const subscription =
-        await this.subscriptionService.getUserSubscription(userId);
+      let subscription;
+      try {
+        subscription = await this.subscriptionService.getUserSubscription(userId);
+      } catch (subscriptionError) {
+        console.warn('⚠️ WORKFLOW LIMITS - Subscription service error, using trial defaults:', subscriptionError.message);
+        // Default to trial limits if subscription service fails
+        subscription = {
+          planName: 'Trial',
+          limits: { workflows: 10 },
+          status: 'trial'
+        };
+      }
       const workflowLimit = subscription.limits.workflows;
       console.log('🔍 WORKFLOW LIMITS - Subscription details:', {
         planName: subscription.planName,
