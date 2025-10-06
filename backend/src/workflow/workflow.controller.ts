@@ -63,7 +63,11 @@ export class WorkflowController {
 
     try {
       const workflows = await this.workflowService.getProtectedWorkflows(userId);
-      return workflows;
+      return {
+        success: true,
+        data: workflows,
+        count: workflows.length
+      };
     } catch (error) {
       this.logger.error(`Error fetching protected workflows for user ${userId}:`, error);
       throw new HttpException(
