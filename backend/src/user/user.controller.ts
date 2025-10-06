@@ -324,4 +324,97 @@ export class UserController {
       );
     }
   }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Req() req: any, @Body() updateData: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const updatedUser = await this.userService.update(userId, updateData);
+
+      return {
+        success: true,
+        data: updatedUser,
+        message: 'Profile updated successfully',
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to update profile: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('disconnect-hubspot')
+  @UseGuards(JwtAuthGuard)
+  async disconnectHubSpot(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      // Clear HubSpot tokens and connection data
+      await this.userService.update(userId, {
+        hubspotAccessToken: null,
+        hubspotRefreshToken: null,
+        hubspotPortalId: null,
+      } as any);
+
+      return {
+        success: true,
+        message: 'HubSpot account disconnected successfully',
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to disconnect HubSpot: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('account')
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      // Note: In a production environment, you might want to:
+      // 1. Soft delete instead of hard delete
+      // 2. Send confirmation email
+      // 3. Add a grace period for account recovery
+      // 4. Clean up related data (workflows, subscriptions, etc.)
+      
+      await this.userService.remove(userId);
+
+      return {
+        success: true,
+        message: 'Account deleted successfully',
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to delete account: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
