@@ -76,7 +76,7 @@ export class WorkflowController {
   @Post('start-protection')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async startWorkflowProtection(@Body() body: any, @Req() req: any) {
-    const workflowId = body.workflowId;
+    const workflows = body.workflows;
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
     if (!userId) {
@@ -90,18 +90,19 @@ export class WorkflowController {
       );
     }
 
-    if (!workflowId) {
+    if (!workflows || !Array.isArray(workflows) || workflows.length === 0) {
       throw new HttpException(
-        'Workflow ID is required',
+        'Workflows array is required',
         HttpStatus.BAD_REQUEST,
       );
     }
 
     try {
+      const workflowIds = workflows.map(w => w.hubspotId || w.id);
       const result = await this.workflowService.startWorkflowProtection(
-        [workflowId],
+        workflowIds,
         userId,
-        [{ id: workflowId, name: 'Workflow' }],
+        workflows,
       );
       return result;
     } catch (error) {
