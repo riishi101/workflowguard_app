@@ -1623,6 +1623,7 @@ export class WorkflowService {
       try {
         await this.prisma.$transaction(async (tx) => {
           console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
+          console.log('🔍 START PROTECTION - Transaction started successfully');
         
         for (const workflowId of workflowIds) {
           console.log('🔄 START PROTECTION - Processing workflow:', workflowId);
@@ -1922,8 +1923,30 @@ export class WorkflowService {
           protectedWorkflows.push(workflow);
         }
         console.log('✅ START PROTECTION - Transaction completed successfully');
+        console.log('🔍 START PROTECTION - Transaction summary:', {
+          processedWorkflows: protectedWorkflows.length,
+          errorCount: errors.length,
+          workflowIds: protectedWorkflows.map(w => ({ id: w.id, hubspotId: w.hubspotId }))
+        });
       }, {
         timeout: 60000, // 60 second timeout for complex operations
+      });
+      
+      // Verify workflows are actually in database after transaction
+      console.log('🔍 START PROTECTION - Post-transaction verification...');
+      const verificationWorkflows = await this.prisma.workflow.findMany({
+        where: { ownerId: userId },
+        select: { id: true, hubspotId: true, name: true, ownerId: true }
+      });
+      console.log('🔍 START PROTECTION - Database verification result:', {
+        totalWorkflowsInDB: verificationWorkflows.length,
+        workflowsForUser: verificationWorkflows.map(w => ({ 
+          id: w.id, 
+          hubspotId: w.hubspotId, 
+          name: w.name,
+          ownerId: w.ownerId
+        })),
+        expectedUserId: userId
       });
       
       // If there were errors, throw with details

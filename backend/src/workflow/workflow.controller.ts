@@ -111,6 +111,17 @@ export class WorkflowController {
         userId,
         workflows,
       );
+      
+      // Immediately check if workflows were actually saved
+      console.log('🔍 CONTROLLER - Verifying workflows were saved...');
+      const savedWorkflows = await this.workflowService.getProtectedWorkflows(userId);
+      console.log('🔍 CONTROLLER - Verification result:', {
+        expectedCount: workflowIds.length,
+        actualCount: savedWorkflows.length,
+        savedWorkflowIds: savedWorkflows.map(w => w.id),
+        userId: userId
+      });
+      
       return result;
     } catch (error) {
       console.error('❌ CONTROLLER - Error starting workflow protection:', {
