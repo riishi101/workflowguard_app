@@ -258,6 +258,112 @@ export class WorkflowController {
     }
   }
 
+  @Get('by-hubspot-id/:hubspotId')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async getWorkflowByHubspotId(
+    @Param('hubspotId') hubspotId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const workflow = await this.workflowService.findByHubspotId(hubspotId, userId);
+      return {
+        success: true,
+        data: workflow
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching workflow by HubSpot ID ${hubspotId}:`, error);
+      throw new HttpException(
+        'Failed to fetch workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('by-hubspot-id/:hubspotId/versions')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async getWorkflowVersionsByHubspotId(
+    @Param('hubspotId') hubspotId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const versions = await this.workflowService.getWorkflowVersions(hubspotId, userId);
+      return {
+        success: true,
+        data: versions
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching workflow versions by HubSpot ID ${hubspotId}:`, error);
+      throw new HttpException(
+        'Failed to fetch workflow versions',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('by-hubspot-id/:hubspotId/compare/:versionA/:versionB')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async compareWorkflowVersionsByHubspotId(
+    @Param('hubspotId') hubspotId: string,
+    @Param('versionA') versionA: string,
+    @Param('versionB') versionB: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const comparison = await this.workflowService.compareWorkflowVersions(
+        hubspotId,
+        versionA,
+        versionB,
+        true,
+      );
+      return comparison;
+    } catch (error) {
+      this.logger.error(`Error comparing workflow versions by HubSpot ID ${hubspotId}:`, error);
+      throw new HttpException(
+        'Failed to compare workflow versions',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('sync-hubspot')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async syncHubSpotWorkflows(@Req() req: any) {
@@ -290,6 +396,75 @@ export class WorkflowController {
       this.logger.error(`Error syncing HubSpot workflows for user ${userId}:`, error);
       throw new HttpException(
         'Failed to sync HubSpot workflows',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':workflowId/rollback')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async rollbackWorkflow(
+    @Param('workflowId') workflowId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const result = await this.workflowService.rollbackWorkflow(workflowId, userId);
+      return {
+        success: true,
+        data: result
+      };
+    } catch (error) {
+      this.logger.error(`Error rolling back workflow ${workflowId}:`, error);
+      throw new HttpException(
+        'Failed to rollback workflow',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post(':workflowId/rollback/:versionId')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async rollbackWorkflowToVersion(
+    @Param('workflowId') workflowId: string,
+    @Param('versionId') versionId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const result = await this.workflowService.rollbackWorkflow(workflowId, userId);
+      return {
+        success: true,
+        data: result
+      };
+    } catch (error) {
+      this.logger.error(`Error rolling back workflow ${workflowId} to version ${versionId}:`, error);
+      throw new HttpException(
+        'Failed to rollback workflow to specific version',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
