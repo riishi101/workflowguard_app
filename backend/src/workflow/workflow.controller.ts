@@ -214,7 +214,12 @@ export class WorkflowController {
         versionB,
         true,
       );
-      return comparison;
+      
+      return {
+        success: true,
+        data: comparison,
+        message: 'Workflow versions compared successfully'
+      };
     } catch (error) {
       this.logger.error(`Error comparing workflow versions:`, error);
       throw new HttpException(
@@ -354,7 +359,12 @@ export class WorkflowController {
         versionB,
         true,
       );
-      return comparison;
+      
+      return {
+        success: true,
+        data: comparison,
+        message: 'Workflow versions compared successfully'
+      };
     } catch (error) {
       this.logger.error(`Error comparing workflow versions by HubSpot ID ${hubspotId}:`, error);
       throw new HttpException(
