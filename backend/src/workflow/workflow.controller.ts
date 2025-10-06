@@ -382,14 +382,37 @@ export class WorkflowController {
 
     try {
       console.log('🔄 SYNC - Starting HubSpot workflow sync for user:', userId);
-      const hubspotWorkflows = await this.workflowService.getHubSpotWorkflows(userId);
+      
+      // Call the correct sync method that performs actual sync operations
+      // This method includes: change detection, version comparison, and version creation
+      const syncResult = await this.workflowService.syncHubSpotWorkflows(userId);
+      
+      // Count workflows that had changes detected and versions created
+      const versionsCreated = syncResult.filter(workflow => 
+        workflow.versions && workflow.versions.length > 1
+      ).length;
+      
+      console.log('✅ SYNC - Sync operation completed:', {
+        totalWorkflows: syncResult.length,
+        versionsCreated,
+        userId
+      });
       
       return {
         success: true,
-        message: `Successfully synced ${hubspotWorkflows.length} workflows from HubSpot`,
+        message: `Successfully synced ${syncResult.length} workflows from HubSpot. ${versionsCreated} workflows had changes and new versions were created.`,
         data: {
-          syncedCount: hubspotWorkflows.length,
-          timestamp: new Date().toISOString()
+          syncedCount: syncResult.length,
+          versionsCreated,
+          timestamp: new Date().toISOString(),
+          workflows: syncResult.map(workflow => ({
+            id: workflow.id,
+            name: workflow.name,
+            hubspotId: workflow.hubspotId,
+            currentVersion: workflow.versions?.[0]?.versionNumber || 1,
+            totalVersions: workflow.versions?.length || 1,
+            lastUpdated: workflow.updatedAt
+          }))
         }
       };
     } catch (error) {
