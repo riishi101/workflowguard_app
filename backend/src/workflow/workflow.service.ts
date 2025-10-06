@@ -1634,6 +1634,13 @@ export class WorkflowService {
           const hubspotId = String(workflowObj?.hubspotId || workflowObj?.id || workflowId);
 
           // Create or update workflow
+          console.log('🔄 START PROTECTION - Upserting workflow:', {
+            hubspotId,
+            name: workflowObj?.name,
+            status: workflowObj?.status,
+            userId
+          });
+          
           const workflow = await tx.workflow.upsert({
             where: {
               hubspotId: hubspotId,
@@ -1650,6 +1657,13 @@ export class WorkflowService {
               status: (workflowObj?.status || 'ACTIVE').toLowerCase(),
               ownerId: userId,
             },
+          });
+          
+          console.log('✅ START PROTECTION - Workflow upserted successfully:', {
+            id: workflow.id,
+            hubspotId: workflow.hubspotId,
+            name: workflow.name,
+            ownerId: workflow.ownerId
           });
 
           // Get the workflow with versions to check if any exist
@@ -2069,11 +2083,14 @@ export class WorkflowService {
   }
 
   async getProtectedWorkflows(userId: string): Promise<any[]> {
+    console.log('🔍 GET PROTECTED - Fetching workflows for userId:', userId);
     if (!userId) {
+      console.warn('⚠️ GET PROTECTED - No userId provided');
       return [];
     }
 
     try {
+      console.log('🔍 GET PROTECTED - Querying database for workflows');
       const workflows = await this.prisma.workflow.findMany({
         where: { ownerId: userId },
         include: {
@@ -2087,6 +2104,11 @@ export class WorkflowService {
           },
         },
         orderBy: { updatedAt: 'desc' },
+      });
+
+      console.log('🔍 GET PROTECTED - Database query result:', {
+        count: workflows.length,
+        workflowIds: workflows.map(w => ({ id: w.id, hubspotId: w.hubspotId, name: w.name }))
       });
 
       // Transform database records to match Dashboard expectations
