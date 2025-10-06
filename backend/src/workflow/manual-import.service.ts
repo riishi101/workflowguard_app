@@ -23,7 +23,7 @@ export class ManualImportService {
           name: workflowData.name || 'Imported Workflow',
           ownerId: userId,
           status: 'active',
-          isManualImport: true, // Flag to identify manual imports
+          // Note: isManualImport field not in schema - using hubspotId prefix instead
         },
       });
 

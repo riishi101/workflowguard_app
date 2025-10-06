@@ -41,7 +41,7 @@ export class TemplateLibraryService {
         name: customizations.name || template.name,
         ownerId: userId,
         status: 'active',
-        isTemplate: true,
+        // Note: isTemplate field not in schema - using hubspotId prefix instead
       },
     });
 
