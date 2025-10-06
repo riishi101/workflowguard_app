@@ -360,11 +360,22 @@ export class HubSpotService {
       const data = (await response.json()) as HubSpotApiResponse;
       
       // DEBUG: Log the exact API response
-      console.log('🔍 DEBUG - HubSpot API Response:', {
+      console.log('🔍 DEBUG - HubSpot V4 API Response:', {
         hasResults: !!data.results,
         resultsCount: data.results?.length || 0,
-        firstWorkflow: data.results?.[0] ? { id: data.results[0].id, name: data.results[0].name } : null,
-        rawResponse: JSON.stringify(data).substring(0, 500)
+        firstWorkflow: data.results?.[0] ? { 
+          id: data.results[0].id, 
+          name: data.results[0].name,
+          // Log ALL possible status properties from V4 API
+          enabled: data.results[0].enabled,
+          status: data.results[0].status,
+          state: data.results[0].state,
+          active: data.results[0].active,
+          isEnabled: data.results[0].isEnabled,
+          workflowStatus: data.results[0].workflowStatus,
+          allKeys: Object.keys(data.results[0])
+        } : null,
+        rawResponse: JSON.stringify(data).substring(0, 800)
       });
       
       const workflowList = data.results || [];
