@@ -257,4 +257,41 @@ export class WorkflowController {
       );
     }
   }
+
+  @Post('sync-hubspot')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async syncHubSpotWorkflows(@Req() req: any) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      console.log('🔄 SYNC - Starting HubSpot workflow sync for user:', userId);
+      const hubspotWorkflows = await this.workflowService.getHubSpotWorkflows(userId);
+      
+      return {
+        success: true,
+        message: `Successfully synced ${hubspotWorkflows.length} workflows from HubSpot`,
+        data: {
+          syncedCount: hubspotWorkflows.length,
+          timestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      this.logger.error(`Error syncing HubSpot workflows for user ${userId}:`, error);
+      throw new HttpException(
+        'Failed to sync HubSpot workflows',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
