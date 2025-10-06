@@ -469,4 +469,50 @@ export class WorkflowController {
       );
     }
   }
+
+  @Get(':workflowId/version/:versionId/download')
+  @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
+  async downloadWorkflowVersion(
+    @Param('workflowId') workflowId: string,
+    @Param('versionId') versionId: string,
+    @Req() req: any,
+  ) {
+    let userId = req.user?.sub || req.user?.id || req.user?.userId;
+
+    if (!userId) {
+      userId = req.headers['x-user-id'];
+    }
+
+    if (!userId) {
+      throw new HttpException(
+        'User ID not found in request',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      console.log('🔽 DOWNLOAD - Downloading workflow version:', {
+        workflowId,
+        versionId,
+        userId
+      });
+
+      const versionData = await this.workflowService.downloadWorkflowVersion(
+        workflowId,
+        versionId,
+      );
+
+      return {
+        success: true,
+        data: versionData,
+        message: 'Workflow version downloaded successfully'
+      };
+    } catch (error) {
+      this.logger.error(`Error downloading workflow version ${versionId} for workflow ${workflowId}:`, error);
+      throw new HttpException(
+        'Failed to download workflow version',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
