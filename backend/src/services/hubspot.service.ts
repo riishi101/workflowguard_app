@@ -13,6 +13,35 @@ import {
 export class HubSpotService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Determine workflow status from V4 API response
+   * V4 API uses different property names than V3
+   */
+  private getWorkflowStatus(workflow: any): string {
+    // Check various possible status properties from V4 API
+    if (workflow.status === 'ENABLED' || workflow.status === 'ACTIVE') return 'active';
+    if (workflow.status === 'DISABLED' || workflow.status === 'INACTIVE') return 'inactive';
+    if (workflow.state === 'ENABLED' || workflow.state === 'ACTIVE') return 'active';
+    if (workflow.state === 'DISABLED' || workflow.state === 'INACTIVE') return 'inactive';
+    if (workflow.enabled === true) return 'active';
+    if (workflow.enabled === false) return 'inactive';
+    if (workflow.active === true) return 'active';
+    if (workflow.active === false) return 'inactive';
+    
+    // Default fallback - log for debugging
+    console.log('🔍 DEBUG - Unknown workflow status format:', {
+      id: workflow.id,
+      name: workflow.name,
+      statusProps: {
+        status: workflow.status,
+        state: workflow.state,
+        enabled: workflow.enabled,
+        active: workflow.active
+      }
+    });
+    return 'inactive';
+  }
+
   async getWorkflows(userId: string): Promise<WorkflowResponse[]> {
     console.log('🔍 HubSpotService - getWorkflows called for userId:', userId);
 
@@ -365,7 +394,7 @@ export class HubSpotService {
             name: workflow.name || 'Unnamed Workflow',
             description: workflow.description || '',
             type: 'workflow',
-            status: workflow.enabled ? 'active' : 'inactive',
+            status: this.getWorkflowStatus(workflow),
             hubspotData: detailedWorkflow || workflow, // Use detailed data if available
           });
         } catch (error) {
@@ -377,7 +406,7 @@ export class HubSpotService {
             name: workflow.name || 'Unnamed Workflow',
             description: workflow.description || '',
             type: 'workflow',
-            status: workflow.enabled ? 'active' : 'inactive',
+            status: this.getWorkflowStatus(workflow),
             hubspotData: workflow,
           });
         }
