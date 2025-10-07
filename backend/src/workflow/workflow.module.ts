@@ -1,6 +1,8 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import { WorkflowController } from './workflow.controller';
+import { RiskAssessmentService } from './risk-assessment.service';
+import { RiskAssessmentController } from './risk-assessment.controller';
 import { TrialAccountHandlerService } from './trial-account-handler.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UserModule } from '../user/user.module';
@@ -18,8 +20,8 @@ import { SecurityMonitoringService } from '../services/security-monitoring.servi
     HubSpotModule,
     forwardRef(() => WorkflowVersionModule),
   ],
-  controllers: [WorkflowController],
-  providers: [WorkflowService, TrialAccountHandlerService, EncryptionService, SecurityMonitoringService],
-  exports: [WorkflowService, TrialAccountHandlerService, EncryptionService, SecurityMonitoringService],
+  controllers: [WorkflowController, RiskAssessmentController],
+  providers: [WorkflowService, RiskAssessmentService, TrialAccountHandlerService, EncryptionService, SecurityMonitoringService],
+  exports: [WorkflowService, RiskAssessmentService, TrialAccountHandlerService, EncryptionService, SecurityMonitoringService],
 })
 export class WorkflowModule {}

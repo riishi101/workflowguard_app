@@ -7,17 +7,18 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import "@/utils/tokenValidator"; // Load token validator for global debugging
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TrialAccessGuard from "@/components/TrialAccessGuard";
-import OnboardingFlow from "@/components/OnboardingFlow";
 import WorkflowSelection from "./pages/WorkflowSelection";
 import Dashboard from "./pages/Dashboard";
 import WorkflowHistory from "./pages/WorkflowHistory";
 import WorkflowHistoryDetail from "./pages/WorkflowHistoryDetail";
 import CompareVersions from "./pages/CompareVersions";
-import Settings from "./pages/Settings";
+import RiskAssessment from "./pages/RiskAssessment";
 import HelpSupport from "./pages/HelpSupport";
 import ConnectHubSpotGuide from "./pages/help/ConnectHubSpotGuide";
 import RestoreWorkflowGuide from "./pages/help/RestoreWorkflowGuide";
 
+import OnboardingFlow from "@/components/OnboardingFlow";
+import Settings from "./pages/Settings";
 import UserManual from "./pages/help/UserManual";
 import FeatureSpotlights from "./pages/help/FeatureSpotlights";
 import AdvancedUseCases from "./pages/help/AdvancedUseCases";
@@ -60,19 +61,17 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
           <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<RootRoute />} />
               <Route path="/workflow-selection" element={<ProtectedRoute><TrialAccessGuard><WorkflowSelection /></TrialAccessGuard></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
+              <Route path="/risk-assessment" element={<ProtectedRoute><TrialAccessGuard><RiskAssessment /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/workflow-history" element={<ProtectedRoute><TrialAccessGuard><WorkflowHistory /></TrialAccessGuard></ProtectedRoute>} />
               <Route
                 path="/workflow-history/:workflowId"
                 element={<ProtectedRoute><TrialAccessGuard><WorkflowHistoryDetail /></TrialAccessGuard></ProtectedRoute>}
               />
-              <Route path="/compare-versions/:workflowId" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
               <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />

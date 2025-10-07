@@ -87,6 +87,7 @@ const TopNavigation = () => {
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
+    { label: "Risk Assessment", path: "/risk-assessment" },
     { label: "Workflow History", path: "/workflow-history" },
     { label: "Settings", path: "/settings" },
     { label: "Help & Support", path: "/help-support" },

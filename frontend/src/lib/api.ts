@@ -1148,6 +1148,68 @@ class ApiService {
       }
     }
   }
+
+  // Risk Assessment Methods
+  static async getRiskDashboard(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/api/risk-assessment/dashboard');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async assessWorkflow(workflowId: string, forceReassessment?: boolean): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post('/api/risk-assessment/assess', {
+        workflowId,
+        forceReassessment
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getWorkflowRiskAssessment(workflowId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get(`/api/risk-assessment/workflow/${workflowId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getPendingApprovals(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/api/risk-assessment/pending-approvals');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async approveRiskAssessment(assessmentId: string, approvalStatus: string, comments?: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put('/api/risk-assessment/approve', {
+        assessmentId,
+        approvalStatus,
+        comments
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getRiskStatistics(): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.get('/api/risk-assessment/statistics');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export { ApiService };
