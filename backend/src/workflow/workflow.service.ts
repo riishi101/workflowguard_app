@@ -2322,13 +2322,17 @@ export class WorkflowService {
     const normalizedCurrent = this.normalizeWorkflowData(current);
     const normalizedPrevious = this.normalizeWorkflowData(previous);
     
-    // DEBUG: Log normalization results
-    console.log(`🧽 NORMALIZATION DEBUG:`, {
-      originalCurrentKeys: Object.keys(current || {}),
-      normalizedCurrentKeys: Object.keys(normalizedCurrent || {}),
-      originalPreviousKeys: Object.keys(previous || {}),
-      normalizedPreviousKeys: Object.keys(normalizedPrevious || {}),
-    });
+    // DEBUG: Log normalization results (with error handling)
+    try {
+      console.log(`🧽 NORMALIZATION DEBUG:`, {
+        originalCurrentKeys: Object.keys(current || {}),
+        normalizedCurrentKeys: Object.keys(normalizedCurrent || {}),
+        originalPreviousKeys: Object.keys(previous || {}),
+        normalizedPreviousKeys: Object.keys(normalizedPrevious || {}),
+      });
+    } catch (normalizationError) {
+      console.log(`⚠️ NORMALIZATION DEBUG ERROR:`, normalizationError.message);
+    }
     
     // Now extract core fields from already normalized data
     const currentCore = extractCoreData(normalizedCurrent);
@@ -2360,17 +2364,26 @@ export class WorkflowService {
         lengthDifference: currentString.length - previousString.length,
       });
       
-      // CRITICAL: Log the exact fields causing differences
-      console.log(`🔍 FIELD-BY-FIELD COMPARISON:`);
-      Object.keys(currentCore).forEach(key => {
-        const currentValue = JSON.stringify(currentCore[key]);
-        const previousValue = JSON.stringify(previousCore[key]);
-        if (currentValue !== previousValue) {
-          console.log(`  ❌ FIELD '${key}' DIFFERS:`);
-          console.log(`    Current:  ${currentValue.substring(0, 200)}...`);
-          console.log(`    Previous: ${previousValue.substring(0, 200)}...`);
-        }
-      });
+      // CRITICAL: Log the exact fields causing differences (with error handling)
+      try {
+        console.log(`🔍 FIELD-BY-FIELD COMPARISON:`);
+        const allKeys = new Set([...Object.keys(currentCore || {}), ...Object.keys(previousCore || {})]);
+        allKeys.forEach(key => {
+          try {
+            const currentValue = JSON.stringify(currentCore[key] || null);
+            const previousValue = JSON.stringify(previousCore[key] || null);
+            if (currentValue !== previousValue) {
+              console.log(`  ❌ FIELD '${key}' DIFFERS:`);
+              console.log(`    Current:  ${currentValue.substring(0, 200)}...`);
+              console.log(`    Previous: ${previousValue.substring(0, 200)}...`);
+            }
+          } catch (fieldError) {
+            console.log(`  ⚠️ FIELD '${key}' ERROR:`, fieldError.message);
+          }
+        });
+      } catch (comparisonError) {
+        console.log(`⚠️ FIELD COMPARISON ERROR:`, comparisonError.message);
+      }
     } else {
       console.log(`✅ NO CHANGES DETECTED - Data is identical`);
     }
