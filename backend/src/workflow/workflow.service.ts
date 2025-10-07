@@ -2298,6 +2298,42 @@ export class WorkflowService {
       'fetchedAt',
       'source',
       'completeData',
+      
+      // CRITICAL FIX: Additional dynamic fields from HubSpot V4 API that cause false positives
+      'lastFetchedAt',
+      'apiCallTimestamp',
+      'systemTimestamp',
+      'internalId',
+      'requestId',
+      'sessionId',
+      'cacheKey',
+      'lastModifiedBySystem',
+      'apiVersion',
+      'responseTimestamp',
+      'fetchTimestamp',
+      'apiResponseTime',
+      'systemGeneratedAt',
+      'internalTimestamp',
+      'hubspotInternalId',
+      'workflowInternalId',
+      'systemMetadata',
+      'apiMetadata',
+      'fetchMetadata',
+      'responseMetadata',
+      'hubspotSystemData',
+      'internalSystemData',
+      'apiRequestId',
+      'hubspotRequestId',
+      'callTimestamp',
+      'responseId',
+      'systemCallId',
+      'apiCallId',
+      'hubspotApiVersion',
+      'internalApiData',
+      'systemApiData',
+      'dynamicTimestamp',
+      'autoTimestamp',
+      'generatedTimestamp'
     ];
 
     const removeFields = (obj: any) => {
@@ -2398,7 +2434,7 @@ export class WorkflowService {
 
     const hasChanges = currentString !== previousString;
 
-    console.log(`🔍 FIXED COMPARISON for workflow:`, {
+    console.log(`🔍 ENHANCED COMPARISON for workflow:`, {
       hasChanges,
       currentLength: currentString.length,
       previousLength: previousString.length,
@@ -2409,6 +2445,8 @@ export class WorkflowService {
       currentEnrollmentTriggersCount: currentCore.enrollmentTriggers?.length || 0,
       previousEnrollmentTriggersCount: previousCore.enrollmentTriggers?.length || 0,
       normalizationApplied: true,
+      enhancedFieldRemoval: true,
+      falsePositiveFix: 'Applied'
     });
 
     // If changes detected, log the actual differences for debugging
