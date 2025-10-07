@@ -861,6 +861,7 @@ export class WorkflowService {
           console.log(`🔍 DEBUG: Action ${index}:`, {
             type: action.type,
             actionType: action.actionType,
+            actionTypeId: action.actionTypeId,
             propertyName: action.propertyName,
             propertyValue: action.propertyValue,
             subject: action.subject,
@@ -869,8 +870,21 @@ export class WorkflowService {
             conditions: action.conditions,
             hasContextJson: !!action.contextJson,
             contextJsonLength: action.contextJson ? action.contextJson.length : 0,
+            hasFields: !!action.fields,
+            fieldsKeys: action.fields ? Object.keys(action.fields) : [],
             rawActionKeys: Object.keys(action)
           });
+          
+          // ENHANCED: Log fields structure for SINGLE_CONNECTION debugging
+          if (action.type === 'SINGLE_CONNECTION' && action.fields) {
+            console.log(`🔍 SINGLE_CONNECTION Fields Debug:`, {
+              actionTypeId: action.actionTypeId,
+              fieldsStructure: action.fields,
+              propertyName: action.fields.property_name,
+              value: action.fields.value,
+              associations: action.fields.associations
+            });
+          }
           
           // CRITICAL: Test contextJson parsing specifically
           if (action.type === 'UNSUPPORTED_ACTION' && action.contextJson) {
@@ -1090,6 +1104,14 @@ export class WorkflowService {
     }
 
     // ENHANCED: Handle HubSpot-specific action types for Compare Versions
+    console.log('🔧 getActionTitle DEBUG:', {
+      actionType,
+      hasActionTypeId: !!actionData.actionTypeId,
+      actionTypeId: actionData.actionTypeId,
+      hasFields: !!actionData.fields,
+      fieldsKeys: actionData.fields ? Object.keys(actionData.fields) : []
+    });
+    
     // Handle SINGLE_CONNECTION type (common HubSpot wrapper)
     if (actionType === 'SINGLE_CONNECTION' && actionData.actionTypeId) {
       const typeId = actionData.actionTypeId;
