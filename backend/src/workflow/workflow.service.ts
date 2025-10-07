@@ -2472,7 +2472,7 @@ export class WorkflowService {
               rawDataPreview: typeof latestVersion?.data === 'string' ? latestVersion.data.substring(0, 100) + '...' : 'Not a string'
             });
             
-            // Parse JSON string if needed, then decrypt
+            // Parse JSON string if needed, then decrypt with error handling
             let parsedStoredData;
             try {
               parsedStoredData = typeof latestVersion.data === 'string' 
@@ -2483,7 +2483,23 @@ export class WorkflowService {
               parsedStoredData = latestVersion.data;
             }
             
-            const decryptedStoredData = this.encryptionService.decryptWorkflowData(parsedStoredData);
+            let decryptedStoredData;
+            try {
+              decryptedStoredData = this.encryptionService.decryptWorkflowData(parsedStoredData);
+              console.log(`✅ DECRYPTION SUCCESS for workflow ${hubspotWorkflow.id}`);
+            } catch (decryptionError) {
+              console.log(`🚨 DECRYPTION FAILED for workflow ${hubspotWorkflow.id}:`, decryptionError.message);
+              console.log(`🔄 FALLBACK: Using raw stored data as-is`);
+              // Fallback: use the raw stored data if decryption fails
+              decryptedStoredData = parsedStoredData;
+            }
+            
+            // If decryption still resulted in empty/null data, skip comparison
+            if (!decryptedStoredData || Object.keys(decryptedStoredData).length === 0) {
+              console.log(`⚠️ STORED DATA IS EMPTY for workflow ${hubspotWorkflow.id} - SKIPPING VERSION CHECK`);
+              console.log(`🔄 This workflow will be treated as having no previous version`);
+              decryptedStoredData = null; // Explicitly set to null for clear comparison
+            }
             
             console.log(`🔓 DECRYPTED DATA for workflow ${hubspotWorkflow.id}:`, {
               decryptedDataType: typeof decryptedStoredData,
