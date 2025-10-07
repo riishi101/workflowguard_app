@@ -2322,6 +2322,14 @@ export class WorkflowService {
     const normalizedCurrent = this.normalizeWorkflowData(current);
     const normalizedPrevious = this.normalizeWorkflowData(previous);
     
+    // DEBUG: Log normalization results
+    console.log(`🧽 NORMALIZATION DEBUG:`, {
+      originalCurrentKeys: Object.keys(current || {}),
+      normalizedCurrentKeys: Object.keys(normalizedCurrent || {}),
+      originalPreviousKeys: Object.keys(previous || {}),
+      normalizedPreviousKeys: Object.keys(normalizedPrevious || {}),
+    });
+    
     // Now extract core fields from already normalized data
     const currentCore = extractCoreData(normalizedCurrent);
     const previousCore = extractCoreData(normalizedPrevious);
@@ -2351,6 +2359,20 @@ export class WorkflowService {
         previousStringPreview: previousString.substring(0, 500) + '...',
         lengthDifference: currentString.length - previousString.length,
       });
+      
+      // CRITICAL: Log the exact fields causing differences
+      console.log(`🔍 FIELD-BY-FIELD COMPARISON:`);
+      Object.keys(currentCore).forEach(key => {
+        const currentValue = JSON.stringify(currentCore[key]);
+        const previousValue = JSON.stringify(previousCore[key]);
+        if (currentValue !== previousValue) {
+          console.log(`  ❌ FIELD '${key}' DIFFERS:`);
+          console.log(`    Current:  ${currentValue.substring(0, 200)}...`);
+          console.log(`    Previous: ${previousValue.substring(0, 200)}...`);
+        }
+      });
+    } else {
+      console.log(`✅ NO CHANGES DETECTED - Data is identical`);
     }
 
     return hasChanges;
