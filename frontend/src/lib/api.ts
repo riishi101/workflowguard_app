@@ -334,9 +334,34 @@ class ApiService {
 
   static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
+      console.log('🔍 API SERVICE: Starting sync request...');
+      console.log('🔍 API SERVICE: Request details:', {
+        url: '/api/workflow/sync-hubspot',
+        method: 'POST',
+        baseURL: apiClient.defaults.baseURL,
+        timeout: apiClient.defaults.timeout,
+        hasAuthHeader: !!localStorage.getItem('token')
+      });
+      
       const response = await apiClient.post('/api/workflow/sync-hubspot');
+      
+      console.log('✅ API SERVICE: Sync request completed');
+      console.log('🔍 API SERVICE: Response status:', response.status);
+      console.log('🔍 API SERVICE: Response data:', response.data);
+      
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('🔴 API SERVICE: Sync request failed:', error);
+      console.error('🔍 API SERVICE: Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
       throw error;
     }
   }

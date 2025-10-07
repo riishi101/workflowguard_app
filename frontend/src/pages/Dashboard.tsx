@@ -121,22 +121,30 @@ const Dashboard: React.FC = () => {
   const syncHubSpotChanges = async () => {
     setSyncing(true);
     console.log('🔄 FRONTEND: Starting sync operation...');
+    console.log('🔍 FRONTEND: API call details:', {
+      endpoint: '/api/workflow/sync-hubspot',
+      method: 'POST',
+      baseURL: 'https://api.workflowguard.pro',
+      hasToken: !!localStorage.getItem('token')
+    });
+    
     try {
+      console.log('📡 FRONTEND: Making API call to sync endpoint...');
       const response = await ApiService.syncHubSpotWorkflows();
+      console.log('✅ FRONTEND: API call completed successfully');
       
       // CRITICAL DEBUG: Log the complete sync response
-      console.log('🚨 FRONTEND: Sync response received:', {
+      console.log('🚨 FRONTEND: Sync response received:', response);
+      console.log('🔍 FRONTEND: Response details:', {
         success: response.success,
         message: response.message,
-        syncedCount: response.data?.syncedCount,
-        versionsCreated: response.data?.versionsCreated,
-        workflows: response.data?.workflows?.map(w => ({
-          name: w.name,
-          currentVersion: w.currentVersion,
-          totalVersions: w.totalVersions,
-          hubspotId: w.hubspotId
-        }))
+        dataType: typeof response.data,
+        dataLength: Array.isArray(response.data) ? response.data.length : 'Not array',
+        fullResponse: JSON.stringify(response, null, 2)
       });
+      
+      // Store last response for debugging
+      (window as any).lastSyncResponse = response;
       
       if (response.success) {
         refreshWorkflows();
@@ -145,11 +153,20 @@ const Dashboard: React.FC = () => {
           description: response.message || "Successfully synced workflow changes from HubSpot.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔴 FRONTEND: Sync failed:', error);
+      console.error('🔍 FRONTEND: Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        method: error.config?.method,
+        message: error.response?.data?.message,
+        fullError: error
+      });
+      
       toast({
         title: "Sync Failed",
-        description: "Failed to sync changes from HubSpot. Please try again.",
+        description: `Failed to sync changes from HubSpot: ${error.response?.data?.message || error.message}`,
         variant: "destructive",
       });
     } finally {
