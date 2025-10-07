@@ -1089,6 +1089,34 @@ export class WorkflowService {
       }
     }
 
+    // ENHANCED: Handle HubSpot-specific action types for Compare Versions
+    // Handle SINGLE_CONNECTION type (common HubSpot wrapper)
+    if (actionType === 'SINGLE_CONNECTION' && actionData.actionTypeId) {
+      const typeId = actionData.actionTypeId;
+      if (typeId === '0-5' && actionData.fields?.property_name) {
+        const propertyName = actionData.fields.property_name;
+        const value = actionData.fields.value?.staticValue || '';
+        if (propertyName === 'lifecyclestage' && !value) {
+          return 'Clear Lifecycle Stage';
+        }
+        return `Set ${propertyName}${value ? ` to ${value}` : ''}`;
+      }
+      if (typeId === '0-3') {
+        return 'Send internal email notification';
+      }
+      if (typeId === '0-1') {
+        return 'Delay';
+      }
+      if (typeId === '0-2') {
+        return 'Branch condition';
+      }
+    }
+
+    // Handle LIST_BRANCH type (branch conditions)
+    if (actionType === 'LIST_BRANCH') {
+      return 'Branch: Company property conditions';
+    }
+
     // Handle EMAIL_NOTIFICATION specifically (from contextJson)
     if (actionType === 'EMAIL_NOTIFICATION') {
       const subject = actionData.subject || 'notification';
