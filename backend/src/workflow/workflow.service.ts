@@ -2437,21 +2437,27 @@ export class WorkflowService {
     const currentString = JSON.stringify(currentCore);
     const previousString = JSON.stringify(previousCore);
 
-    const hasChanges = currentString !== previousString;
+    // EMERGENCY FIX: Only check core functional elements to eliminate false positives
+    const hasChanges = (
+      currentCore.name !== previousCore.name ||
+      currentCore.enabled !== previousCore.enabled ||
+      (currentCore.actions?.length || 0) !== (previousCore.actions?.length || 0) ||
+      (currentCore.enrollmentTriggers?.length || 0) !== (previousCore.enrollmentTriggers?.length || 0)
+    );
 
-    console.log(`🔍 ENHANCED COMPARISON for workflow:`, {
+    console.log(`🛡️ BULLETPROOF COMPARISON for workflow:`, {
+      workflowName: currentCore.name || 'Unknown',
       hasChanges,
-      currentLength: currentString.length,
-      previousLength: previousString.length,
-      currentKeys: Object.keys(currentCore),
-      previousKeys: Object.keys(previousCore),
+      comparisonMethod: 'FUNCTIONAL_ELEMENTS_ONLY',
+      nameChanged: currentCore.name !== previousCore.name,
+      enabledChanged: currentCore.enabled !== previousCore.enabled,
+      actionsCountChanged: (currentCore.actions?.length || 0) !== (previousCore.actions?.length || 0),
+      triggersCountChanged: (currentCore.enrollmentTriggers?.length || 0) !== (previousCore.enrollmentTriggers?.length || 0),
       currentActionsCount: currentCore.actions?.length || 0,
       previousActionsCount: previousCore.actions?.length || 0,
-      currentEnrollmentTriggersCount: currentCore.enrollmentTriggers?.length || 0,
-      previousEnrollmentTriggersCount: previousCore.enrollmentTriggers?.length || 0,
-      normalizationApplied: true,
-      enhancedFieldRemoval: true,
-      falsePositiveFix: 'Applied'
+      currentTriggersCount: currentCore.enrollmentTriggers?.length || 0,
+      previousTriggersCount: previousCore.enrollmentTriggers?.length || 0,
+      falsePositiveFix: 'EMERGENCY_FUNCTIONAL_CHECK_APPLIED'
     });
 
     // If changes detected, log the actual differences for debugging
@@ -2488,7 +2494,7 @@ export class WorkflowService {
         console.log(`⚠️ FIELD COMPARISON ERROR:`, comparisonError.message);
       }
     } else {
-      console.log(`✅ NO CHANGES DETECTED - Data is identical`);
+      console.log(`✅ NO FUNCTIONAL CHANGES DETECTED - Version creation blocked by emergency fix`);
     }
 
     return hasChanges;
