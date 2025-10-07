@@ -1126,6 +1126,11 @@ export class WorkflowService {
       if (typeId === '0-3') {
         return 'Send internal email notification';
       }
+      if (typeId === '0-8') {
+        // Internal email notification with user_ids, subject, body
+        const subject = actionData.fields?.subject || 'notification';
+        return `Send internal email: ${subject}`;
+      }
       if (typeId === '0-1') {
         return 'Delay';
       }
