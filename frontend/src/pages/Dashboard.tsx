@@ -120,8 +120,24 @@ const Dashboard: React.FC = () => {
 
   const syncHubSpotChanges = async () => {
     setSyncing(true);
+    console.log('🔄 FRONTEND: Starting sync operation...');
     try {
       const response = await ApiService.syncHubSpotWorkflows();
+      
+      // CRITICAL DEBUG: Log the complete sync response
+      console.log('🚨 FRONTEND: Sync response received:', {
+        success: response.success,
+        message: response.message,
+        syncedCount: response.data?.syncedCount,
+        versionsCreated: response.data?.versionsCreated,
+        workflows: response.data?.workflows?.map(w => ({
+          name: w.name,
+          currentVersion: w.currentVersion,
+          totalVersions: w.totalVersions,
+          hubspotId: w.hubspotId
+        }))
+      });
+      
       if (response.success) {
         refreshWorkflows();
         toast({
@@ -130,6 +146,7 @@ const Dashboard: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error('🔴 FRONTEND: Sync failed:', error);
       toast({
         title: "Sync Failed",
         description: "Failed to sync changes from HubSpot. Please try again.",
