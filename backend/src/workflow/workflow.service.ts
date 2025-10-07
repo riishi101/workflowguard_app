@@ -2463,7 +2463,33 @@ export class WorkflowService {
             );
 
             // Decrypt the stored version data before comparison
-            const decryptedStoredData = this.encryptionService.decryptWorkflowData(latestVersion.data);
+            console.log(`🔍 RAW DATABASE DATA for workflow ${hubspotWorkflow.id}:`, {
+              latestVersionExists: !!latestVersion,
+              latestVersionId: latestVersion?.id,
+              latestVersionNumber: latestVersion?.versionNumber,
+              rawDataType: typeof latestVersion?.data,
+              rawDataLength: typeof latestVersion?.data === 'string' ? latestVersion.data.length : 0,
+              rawDataPreview: typeof latestVersion?.data === 'string' ? latestVersion.data.substring(0, 100) + '...' : 'Not a string'
+            });
+            
+            // Parse JSON string if needed, then decrypt
+            let parsedStoredData;
+            try {
+              parsedStoredData = typeof latestVersion.data === 'string' 
+                ? JSON.parse(latestVersion.data) 
+                : latestVersion.data;
+            } catch (parseError) {
+              console.log(`⚠️ JSON PARSE ERROR for workflow ${hubspotWorkflow.id}:`, parseError.message);
+              parsedStoredData = latestVersion.data;
+            }
+            
+            const decryptedStoredData = this.encryptionService.decryptWorkflowData(parsedStoredData);
+            
+            console.log(`🔓 DECRYPTED DATA for workflow ${hubspotWorkflow.id}:`, {
+              decryptedDataType: typeof decryptedStoredData,
+              decryptedDataKeys: Object.keys(decryptedStoredData || {}),
+              decryptedDataPreview: JSON.stringify(decryptedStoredData).substring(0, 100) + '...'
+            });
             
             console.log(`🔍 DETAILED COMPARISON for workflow ${hubspotWorkflow.id}:`, {
               currentDataKeys: Object.keys(currentWorkflowData || {}),
