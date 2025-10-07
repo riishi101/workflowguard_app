@@ -2466,20 +2466,21 @@ export class WorkflowService {
               );
             }
 
-            console.log(`Workflow ${hubspotWorkflow.id} comparison result:`, {
+            console.log(`🚨 CRITICAL DEBUG - Workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}) comparison result:`, {
               hasChanges: shouldCreateVersion,
               latestVersionNumber: latestVersion.versionNumber,
               latestVersionCreated: latestVersion.createdAt,
               comparisonMethod: 'structure-based',
+              workflowName: hubspotWorkflow.name,
             });
 
             if (shouldCreateVersion) {
               console.log(
-                `CHANGES DETECTED for workflow ${hubspotWorkflow.id} - will create new version`,
+                `🔴 CHANGES DETECTED for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}) - WILL CREATE NEW VERSION`,
               );
             } else {
               console.log(
-                `NO CHANGES detected for workflow ${hubspotWorkflow.id} - skipping version creation`,
+                `🟢 NO CHANGES detected for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}) - SKIPPING VERSION CREATION`,
               );
             }
           } else if (!latestVersion && currentWorkflowData) {
@@ -2508,7 +2509,14 @@ export class WorkflowService {
           });
 
           // Create new version if content changed
+          console.log(`📝 VERSION CREATION CHECK for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}):`, {
+            shouldCreateVersion,
+            hasCurrentWorkflowData: !!currentWorkflowData,
+            willCreateVersion: shouldCreateVersion && !!currentWorkflowData
+          });
+          
           if (shouldCreateVersion && currentWorkflowData) {
+            console.log(`🆕 CREATING NEW VERSION for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name})`);
             const nextVersionNumber = latestVersion
               ? latestVersion.versionNumber + 1
               : 1;
