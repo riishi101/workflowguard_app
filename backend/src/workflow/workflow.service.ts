@@ -2284,6 +2284,7 @@ export class WorkflowService {
       'enabled',
       'actions',
       'triggers',
+      'enrollmentTriggers', // CRITICAL: HubSpot uses this field for triggers
       'goalCriteria',
       'enrollmentCriteria',
       'suppressionLists',
