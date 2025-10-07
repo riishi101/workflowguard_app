@@ -2416,10 +2416,15 @@ export class WorkflowService {
     // DEBUG: Log normalization results (with error handling)
     try {
       console.log(`🧽 NORMALIZATION DEBUG:`, {
+        workflowName: current?.name || 'Unknown',
         originalCurrentKeys: Object.keys(current || {}),
         normalizedCurrentKeys: Object.keys(normalizedCurrent || {}),
         originalPreviousKeys: Object.keys(previous || {}),
         normalizedPreviousKeys: Object.keys(normalizedPrevious || {}),
+        currentHasMetadata: !!(current?._metadata),
+        previousHasMetadata: !!(previous?._metadata),
+        currentFetchedAt: current?._metadata?.fetchedAt,
+        previousFetchedAt: previous?._metadata?.fetchedAt
       });
     } catch (normalizationError) {
       console.log(`⚠️ NORMALIZATION DEBUG ERROR:`, normalizationError.message);
@@ -2451,10 +2456,15 @@ export class WorkflowService {
 
     // If changes detected, log the actual differences for debugging
     if (hasChanges) {
-      console.log(`⚠️ CHANGES DETECTED - Detailed comparison:`, {
+      console.log(`🚨 FALSE POSITIVE DETECTED - CRITICAL DEBUG:`, {
+        workflowName: current?.name || 'Unknown',
         currentStringPreview: currentString.substring(0, 500) + '...',
         previousStringPreview: previousString.substring(0, 500) + '...',
         lengthDifference: currentString.length - previousString.length,
+        currentStringLength: currentString.length,
+        previousStringLength: previousString.length,
+        exactCurrentString: currentString, // Full string for analysis
+        exactPreviousString: previousString // Full string for analysis
       });
       
       // CRITICAL: Log the exact fields causing differences (with error handling)
