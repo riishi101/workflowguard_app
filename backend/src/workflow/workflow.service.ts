@@ -2317,15 +2317,21 @@ export class WorkflowService {
       return core;
     };
 
-    const currentCore = this.normalizeWorkflowData(extractCoreData(current));
-    const previousCore = this.normalizeWorkflowData(extractCoreData(previous));
+    // CRITICAL FIX: Normalize BEFORE extracting core data
+    // This ensures timestamp fields within actions/enrollmentTriggers are removed
+    const normalizedCurrent = this.normalizeWorkflowData(current);
+    const normalizedPrevious = this.normalizeWorkflowData(previous);
+    
+    // Now extract core fields from already normalized data
+    const currentCore = extractCoreData(normalizedCurrent);
+    const previousCore = extractCoreData(normalizedPrevious);
 
     const currentString = JSON.stringify(currentCore);
     const previousString = JSON.stringify(previousCore);
 
     const hasChanges = currentString !== previousString;
 
-    console.log(`🔍 Structure comparison for workflow:`, {
+    console.log(`🔍 FIXED COMPARISON for workflow:`, {
       hasChanges,
       currentLength: currentString.length,
       previousLength: previousString.length,
@@ -2333,8 +2339,9 @@ export class WorkflowService {
       previousKeys: Object.keys(previousCore),
       currentActionsCount: currentCore.actions?.length || 0,
       previousActionsCount: previousCore.actions?.length || 0,
-      currentTriggersCount: currentCore.triggers?.length || 0,
-      previousTriggersCount: previousCore.triggers?.length || 0,
+      currentEnrollmentTriggersCount: currentCore.enrollmentTriggers?.length || 0,
+      previousEnrollmentTriggersCount: previousCore.enrollmentTriggers?.length || 0,
+      normalizationApplied: true,
     });
 
     // If changes detected, log the actual differences for debugging
