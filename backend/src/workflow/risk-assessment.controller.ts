@@ -107,41 +107,130 @@ export class RiskAssessmentController {
           console.log(`🔍 RISK DASHBOARD DEBUG: Latest version for ${workflow.hubspotId}:`, {
             found: !!latestVersion,
             hasData: !!(latestVersion?.data),
-            versionId: latestVersion?.id
+            versionId: latestVersion?.id,
+            dataType: typeof latestVersion?.data,
+            dataLength: latestVersion?.data ? JSON.stringify(latestVersion.data).length : 0
           });
           
+          let workflowData = null;
+          
+          // Try to get stored workflow data first
           if (latestVersion && latestVersion.data) {
-            // Use stored workflow data (decrypt if needed)
-            let workflowData;
             try {
               workflowData = typeof latestVersion.data === 'string' 
                 ? JSON.parse(latestVersion.data) 
                 : latestVersion.data;
+              
+              // Check if stored data is meaningful (not empty object)
+              const dataKeys = Object.keys(workflowData || {});
+              const hasActions = workflowData?.actions && Array.isArray(workflowData.actions) && workflowData.actions.length > 0;
+              const hasName = workflowData?.name && workflowData.name.trim().length > 0;
+              
+              console.log(`🔍 RISK DASHBOARD DEBUG: Stored data analysis for ${workflow.hubspotId}:`, {
+                dataKeys: dataKeys,
+                keyCount: dataKeys.length,
+                hasName: hasName,
+                hasActions: hasActions,
+                actionsCount: workflowData?.actions?.length || 0,
+                workflowName: workflowData?.name || 'NO_NAME'
+              });
+              
+              // If stored data is empty/corrupted, set to null to trigger fallback
+              if (!hasName || !hasActions || dataKeys.length < 3) {
+                console.log(`⚠️ RISK DASHBOARD DEBUG: Stored data is empty/corrupted for ${workflow.hubspotId}, will use fallback`);
+                workflowData = null;
+              }
             } catch (parseError) {
-              this.logger.warn(`⚠️ RISK DASHBOARD: Failed to parse workflow data for ${workflow.hubspotId}:`, parseError.message);
+              console.log(`⚠️ RISK DASHBOARD DEBUG: Failed to parse stored data for ${workflow.hubspotId}:`, parseError.message);
+              workflowData = null;
+            }
+          }
+          
+          // 🚀 FALLBACK: If no stored data or corrupted, fetch fresh from HubSpot
+          if (!workflowData) {
+            console.log(`🔄 RISK DASHBOARD DEBUG: Fetching fresh workflow data from HubSpot for ${workflow.hubspotId}...`);
+            try {
+              workflowData = await this.hubspotService.getWorkflowById(userId, workflow.hubspotId);
+              console.log(`✅ RISK DASHBOARD DEBUG: Fresh HubSpot data fetched for ${workflow.hubspotId}:`, {
+                hasData: !!workflowData,
+                hasName: !!workflowData?.name,
+                hasActions: !!workflowData?.actions,
+                actionsCount: workflowData?.actions?.length || 0
+              });
+              
+              // Store fresh data for future use
+              if (workflowData && workflowData.name && workflowData.actions) {
+                console.log(`💾 RISK DASHBOARD DEBUG: Storing fresh data for future use for ${workflow.hubspotId}`);
+                await this.prisma.workflowVersion.create({
+                  data: {
+                    workflowId: workflow.id,
+                    versionNumber: (latestVersion?.versionNumber || 0) + 1,
+                    data: JSON.stringify(workflowData),
+                    changeDescription: 'Fresh data fetched for risk assessment',
+                    createdAt: new Date()
+                  }
+                });
+              }
+            } catch (hubspotError) {
+              console.error(`❌ RISK DASHBOARD DEBUG: Failed to fetch fresh data for ${workflow.hubspotId}:`, hubspotError.message);
               continue;
             }
+          }
           
           if (workflowData) {
+            console.log(`🔍 RISK DASHBOARD DEBUG: Starting risk assessment for ${workflow.hubspotId} with data:`, {
+              workflowName: workflowData.name,
+              actionsCount: workflowData.actions?.length || 0,
+              hasEnrollmentCriteria: !!workflowData.enrollmentCriteria,
+              workflowType: workflowData.type
+            });
+            
             // Perform risk assessment on stored workflow data
             const assessment = await this.riskAssessmentService.assessWorkflowRisk(
               workflow.hubspotId, 
               workflowData
             );
+            
+            console.log(`✅ RISK DASHBOARD DEBUG: Risk assessment completed for ${workflow.hubspotId}:`, {
+              riskLevel: assessment.riskLevel,
+              riskScore: assessment.riskScore,
+              complexityScore: assessment.complexityScore,
+              impactScore: assessment.impactScore,
+              safetyScore: assessment.safetyScore,
+              requiresApproval: assessment.requiresApproval,
+              approvalStatus: assessment.approvalStatus
+            });
 
             // Update statistics
+            console.log(`📊 RISK DASHBOARD DEBUG: Updating statistics for ${assessment.riskLevel} risk level`);
             switch (assessment.riskLevel) {
-              case 'CRITICAL': riskStats.criticalRisk++; break;
-              case 'HIGH': riskStats.highRisk++; break;
-              case 'MEDIUM': riskStats.mediumRisk++; break;
-              case 'LOW': riskStats.lowRisk++; break;
+              case 'CRITICAL': 
+                riskStats.criticalRisk++; 
+                console.log(`🔴 CRITICAL risk incremented to: ${riskStats.criticalRisk}`);
+                break;
+              case 'HIGH': 
+                riskStats.highRisk++; 
+                console.log(`🟠 HIGH risk incremented to: ${riskStats.highRisk}`);
+                break;
+              case 'MEDIUM': 
+                riskStats.mediumRisk++; 
+                console.log(`🟡 MEDIUM risk incremented to: ${riskStats.mediumRisk}`);
+                break;
+              case 'LOW': 
+                riskStats.lowRisk++; 
+                console.log(`🟢 LOW risk incremented to: ${riskStats.lowRisk}`);
+                break;
+              default:
+                console.log(`⚠️ Unknown risk level: ${assessment.riskLevel}`);
             }
 
             if (assessment.requiresApproval && assessment.approvalStatus === 'PENDING') {
               riskStats.pendingApprovals++;
+              console.log(`📝 Pending approvals incremented to: ${riskStats.pendingApprovals}`);
             }
 
             // Add to recent assessments
+            console.log(`📈 Adding to recent assessments: ${workflow.hubspotId}`);
             riskStats.recentAssessments.push({
               workflowId: workflow.hubspotId,
               workflowName: workflow.name,
@@ -150,9 +239,26 @@ export class RiskAssessmentController {
               assessedAt: new Date().toISOString(),
               requiresApproval: assessment.requiresApproval
             });
-          }
+            
+            console.log(`📉 Current stats after processing ${workflow.hubspotId}:`, {
+              totalWorkflows: riskStats.totalWorkflows,
+              criticalRisk: riskStats.criticalRisk,
+              highRisk: riskStats.highRisk,
+              mediumRisk: riskStats.mediumRisk,
+              lowRisk: riskStats.lowRisk,
+              pendingApprovals: riskStats.pendingApprovals,
+              recentAssessmentsCount: riskStats.recentAssessments.length
+            });
+          } else {
+            console.log(`⚠️ RISK DASHBOARD DEBUG: No workflow data available for ${workflow.hubspotId} after fallback attempt`);
           }
         } catch (error) {
+          console.error(`❌ RISK DASHBOARD DEBUG: Failed to assess workflow ${workflow.hubspotId}:`, {
+            error: error.message,
+            stack: error.stack,
+            workflowId: workflow.hubspotId,
+            workflowName: workflow.name
+          });
           this.logger.warn(`⚠️ RISK DASHBOARD: Failed to assess workflow ${workflow.hubspotId}:`, error.message);
         }
       }
