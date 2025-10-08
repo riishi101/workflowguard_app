@@ -31,6 +31,7 @@ import {
 interface RiskAssessment {
   id: string;
   workflowId: string;
+  hubspotId?: string; // Optional fallback identifier
   workflowName: string;
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   riskScore: number;
