@@ -10,7 +10,7 @@ This document outlines the comprehensive HubSpot integration reliability feature
 - **Client ID**: `<set-in-secrets>`
 - **Client Secret**: `<set-in-secrets>`
 - **Redirect URI**: `https://api.workflowguard.pro/api/auth/hubspot/callback`
-- **Scopes**: `crm.schemas.deals.read automation oauth crm.objects.companies.read crm.objects.deals.read crm.schemas.contacts.read crm.objects.contacts.read crm.schemas.companies.read`
+- **Scopes**: `automation oauth`
 
 ### Security Features
 - ✅ **Token Encryption**: Optional encryption of stored tokens
