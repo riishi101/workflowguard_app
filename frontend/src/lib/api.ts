@@ -1152,9 +1152,25 @@ class ApiService {
   // Risk Assessment Methods
   static async getRiskDashboard(): Promise<ApiResponse<any>> {
     try {
+      console.log('🔍 API DEBUG: Starting getRiskDashboard request...');
+      console.log('🔍 API DEBUG: Making request to /api/risk-assessment/dashboard');
+      
       const response = await apiClient.get('/api/risk-assessment/dashboard');
+      
+      console.log('🔍 API DEBUG: Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      });
+      
       return response.data;
     } catch (error) {
+      console.error('🔍 API DEBUG: Request failed:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
       throw error;
     }
   }

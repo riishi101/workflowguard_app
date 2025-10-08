@@ -89,14 +89,21 @@ const RiskAssessment: React.FC = () => {
   const loadRiskDashboard = async () => {
     try {
       setLoading(true);
+      console.log('🔍 FRONTEND DEBUG: Starting loadRiskDashboard...');
+      console.log('🔍 FRONTEND DEBUG: Current user:', user);
       console.log('🛡️ RISK DASHBOARD: Loading dashboard data...');
       
+      console.log('🔍 FRONTEND DEBUG: Calling ApiService.getRiskDashboard()...');
       const response = await ApiService.getRiskDashboard();
+      console.log('🔍 FRONTEND DEBUG: API Response received:', response);
       
       if (response.success) {
+        console.log('🔍 FRONTEND DEBUG: Response data:', response.data);
         setRiskStats(response.data);
         console.log('✅ RISK DASHBOARD: Data loaded successfully');
+        console.log('🔍 FRONTEND DEBUG: RiskStats state updated:', response.data);
       } else {
+        console.error('🔍 FRONTEND DEBUG: Response not successful:', response);
         console.error('❌ RISK DASHBOARD: Failed to load data:', response.message);
         toast({
           title: "Error",
@@ -105,6 +112,12 @@ const RiskAssessment: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error('🔍 FRONTEND DEBUG: Catch block error:', error);
+      console.error('🔍 FRONTEND DEBUG: Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       console.error('❌ RISK DASHBOARD: Error loading dashboard:', error);
       toast({
         title: "Error",
@@ -112,6 +125,7 @@ const RiskAssessment: React.FC = () => {
         variant: "destructive",
       });
     } finally {
+      console.log('🔍 FRONTEND DEBUG: Setting loading to false');
       setLoading(false);
     }
   };

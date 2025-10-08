@@ -50,10 +50,18 @@ export class RiskAssessmentController {
   async getRiskDashboard(@Req() req: Request) {
     try {
       const userId = req.user?.['userId'];
+      console.log('🔍 RISK DASHBOARD DEBUG: Starting dashboard request');
+      console.log('🔍 RISK DASHBOARD DEBUG: User ID:', userId);
+      console.log('🔍 RISK DASHBOARD DEBUG: Request headers:', req.headers);
       this.logger.log(`🛡️ RISK DASHBOARD: Fetching overview for user ${userId}`);
 
       // ✅ FIX: Get protected workflows from database instead of HubSpot API directly
+      console.log('🔍 RISK DASHBOARD DEBUG: Calling getProtectedWorkflows...');
       const protectedWorkflows = await this.workflowService.getProtectedWorkflows(userId);
+      console.log('🔍 RISK DASHBOARD DEBUG: Protected workflows result:', {
+        count: protectedWorkflows.length,
+        workflows: protectedWorkflows.map(w => ({ id: w.id, name: w.name, hubspotId: w.hubspotId }))
+      });
       this.logger.log(`✅ RISK DASHBOARD: Successfully fetched ${protectedWorkflows.length} protected workflows from database`);
       
       // Calculate risk statistics
@@ -68,12 +76,19 @@ export class RiskAssessmentController {
       };
 
       // Get recent risk assessments for each protected workflow
+      console.log('🔍 RISK DASHBOARD DEBUG: Starting workflow processing loop...');
       for (const workflow of protectedWorkflows.slice(0, 10)) { // Limit to first 10 for performance
         try {
+          console.log(`🔍 RISK DASHBOARD DEBUG: Processing workflow ${workflow.hubspotId} (${workflow.name})`);
           // Get latest version data from database instead of HubSpot API
           const latestVersion = await this.prisma.workflowVersion.findFirst({
             where: { workflowId: workflow.id },
             orderBy: { createdAt: 'desc' }
+          });
+          console.log(`🔍 RISK DASHBOARD DEBUG: Latest version for ${workflow.hubspotId}:`, {
+            found: !!latestVersion,
+            hasData: !!(latestVersion?.data),
+            versionId: latestVersion?.id
           });
           
           if (latestVersion && latestVersion.data) {
@@ -127,12 +142,20 @@ export class RiskAssessmentController {
       riskStats.recentAssessments.sort((a, b) => b.riskScore - a.riskScore);
       riskStats.recentAssessments = riskStats.recentAssessments.slice(0, 10); // Top 10
 
+      console.log('🔍 RISK DASHBOARD DEBUG: Final response data:', {
+        success: true,
+        data: riskStats,
+        message: 'Risk dashboard data retrieved successfully'
+      });
+      
       return {
         success: true,
         data: riskStats,
         message: 'Risk dashboard data retrieved successfully'
       };
     } catch (error) {
+      console.error('🔍 RISK DASHBOARD DEBUG: Error occurred:', error);
+      console.error('🔍 RISK DASHBOARD DEBUG: Error stack:', error.stack);
       this.logger.error('❌ RISK DASHBOARD: Failed to fetch dashboard data:', error);
       return {
         success: false,
