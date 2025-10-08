@@ -442,10 +442,21 @@ const RiskAssessment: React.FC = () => {
                                 size="sm" 
                                 variant="outline"
                                 onClick={() => {
-                                // ✅ FIX: Use hubspotId as fallback if workflowId is undefined
-                                const workflowId = assessment.workflowId || assessment.id;
+                                // ✅ FIX: Try multiple fallback properties for workflowId
+                                const workflowId = assessment.workflowId || assessment.id || assessment.hubspotId || assessment.workflowName;
                                 console.log('🔍 FRONTEND DEBUG: Assessment click - workflowId:', workflowId, 'assessment:', assessment);
-                                assessWorkflow(workflowId);
+                                console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(assessment));
+                                if (workflowId && workflowId !== 'undefined') {
+                                  assessWorkflow(workflowId);
+                                  setActiveTab('assessments'); // Auto-switch to detailed view
+                                } else {
+                                  console.error('❌ FRONTEND DEBUG: No valid workflowId found in assessment object');
+                                  toast({
+                                    title: "Error",
+                                    description: "Unable to load workflow details - missing workflow ID",
+                                    variant: "destructive",
+                                  });
+                                }
                               }}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
@@ -639,10 +650,21 @@ const RiskAssessment: React.FC = () => {
                             size="sm" 
                             variant="outline"
                             onClick={() => {
-                              // ✅ FIX: Use id as fallback if workflowId is undefined
-                              const workflowId = approval.workflowId || approval.id;
+                              // ✅ FIX: Try multiple fallback properties for workflowId
+                              const workflowId = approval.workflowId || approval.id || approval.hubspotId || approval.workflowName;
                               console.log('🔍 FRONTEND DEBUG: Approval click - workflowId:', workflowId, 'approval:', approval);
-                              assessWorkflow(workflowId);
+                              console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(approval));
+                              if (workflowId && workflowId !== 'undefined') {
+                                assessWorkflow(workflowId);
+                                setActiveTab('assessments'); // Auto-switch to detailed view
+                              } else {
+                                console.error('❌ FRONTEND DEBUG: No valid workflowId found in approval object');
+                                toast({
+                                  title: "Error",
+                                  description: "Unable to load workflow details - missing workflow ID",
+                                  variant: "destructive",
+                                });
+                              }
                             }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
