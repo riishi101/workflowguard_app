@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RiskAssessmentService, WorkflowRiskAssessment } from './risk-assessment.service';
 import { WorkflowService } from './workflow.service';
 import { HubSpotService } from '../services/hubspot.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Request } from 'express';
 
 interface AssessWorkflowDto {
@@ -36,7 +37,8 @@ export class RiskAssessmentController {
   constructor(
     private riskAssessmentService: RiskAssessmentService,
     private workflowService: WorkflowService,
-    private hubspotService: HubSpotService
+    private hubspotService: HubSpotService,
+    private prisma: PrismaService
   ) {}
 
   /**
@@ -48,12 +50,13 @@ export class RiskAssessmentController {
       const userId = req.user?.['userId'];
       this.logger.log(`🛡️ RISK DASHBOARD: Fetching overview for user ${userId}`);
 
-      // Get all user workflows from HubSpot
-      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+      // ✅ FIX: Get protected workflows from database instead of HubSpot API directly
+      const protectedWorkflows = await this.workflowService.getProtectedWorkflows(userId);
+      this.logger.log(`✅ RISK DASHBOARD: Successfully fetched ${protectedWorkflows.length} protected workflows from database`);
       
       // Calculate risk statistics
       const riskStats = {
-        totalWorkflows: hubspotWorkflows.length,
+        totalWorkflows: protectedWorkflows.length,
         criticalRisk: 0,
         highRisk: 0,
         mediumRisk: 0,
@@ -62,16 +65,31 @@ export class RiskAssessmentController {
         recentAssessments: []
       };
 
-      // Get recent risk assessments for each workflow
-      for (const workflow of hubspotWorkflows.slice(0, 10)) { // Limit to first 10 for performance
+      // Get recent risk assessments for each protected workflow
+      for (const workflow of protectedWorkflows.slice(0, 10)) { // Limit to first 10 for performance
         try {
-          // Get detailed workflow data from HubSpot
-          const workflowData = await this.hubspotService.getWorkflowById(userId, workflow.id.toString());
+          // Get latest version data from database instead of HubSpot API
+          const latestVersion = await this.prisma.workflowVersion.findFirst({
+            where: { workflowId: workflow.id },
+            orderBy: { createdAt: 'desc' }
+          });
+          
+          if (latestVersion && latestVersion.data) {
+            // Use stored workflow data (decrypt if needed)
+            let workflowData;
+            try {
+              workflowData = typeof latestVersion.data === 'string' 
+                ? JSON.parse(latestVersion.data) 
+                : latestVersion.data;
+            } catch (parseError) {
+              this.logger.warn(`⚠️ RISK DASHBOARD: Failed to parse workflow data for ${workflow.hubspotId}:`, parseError.message);
+              continue;
+            }
           
           if (workflowData) {
-            // Perform risk assessment
+            // Perform risk assessment on stored workflow data
             const assessment = await this.riskAssessmentService.assessWorkflowRisk(
-              workflow.id.toString(), 
+              workflow.hubspotId, 
               workflowData
             );
 
@@ -89,7 +107,7 @@ export class RiskAssessmentController {
 
             // Add to recent assessments
             riskStats.recentAssessments.push({
-              workflowId: workflow.id.toString(),
+              workflowId: workflow.hubspotId,
               workflowName: workflow.name,
               riskLevel: assessment.riskLevel,
               riskScore: assessment.riskScore,
@@ -97,8 +115,9 @@ export class RiskAssessmentController {
               requiresApproval: assessment.requiresApproval
             });
           }
+          }
         } catch (error) {
-          this.logger.warn(`⚠️ RISK DASHBOARD: Failed to assess workflow ${workflow.id}:`, error.message);
+          this.logger.warn(`⚠️ RISK DASHBOARD: Failed to assess workflow ${workflow.hubspotId}:`, error.message);
         }
       }
 
@@ -292,24 +311,39 @@ export class RiskAssessmentController {
       const userId = req.user?.['userId'];
       this.logger.log(`🛡️ PENDING APPROVALS: Fetching for user ${userId}`);
 
-      // Get all user workflows from HubSpot
-      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+      // ✅ FIX: Get protected workflows from database instead of HubSpot API
+      const protectedWorkflows = await this.workflowService.getProtectedWorkflows(userId);
       const pendingApprovals = [];
 
-      // Check each workflow for high/critical risk
-      for (const workflow of hubspotWorkflows.slice(0, 5)) { // Limit for performance
+      // Check each protected workflow for high/critical risk
+      for (const workflow of protectedWorkflows.slice(0, 5)) { // Limit for performance
         try {
-          const workflowData = await this.hubspotService.getWorkflowById(userId, workflow.id.toString());
+          // Get latest version data from database
+          const latestVersion = await this.prisma.workflowVersion.findFirst({
+            where: { workflowId: workflow.id },
+            orderBy: { createdAt: 'desc' }
+          });
           
-          if (workflowData) {
+          if (latestVersion && latestVersion.data) {
+            // Use stored workflow data
+            let workflowData;
+            try {
+              workflowData = typeof latestVersion.data === 'string' 
+                ? JSON.parse(latestVersion.data) 
+                : latestVersion.data;
+            } catch (parseError) {
+              this.logger.warn(`⚠️ PENDING APPROVALS: Failed to parse workflow data for ${workflow.hubspotId}:`, parseError.message);
+              continue;
+            }
+
             const assessment = await this.riskAssessmentService.assessWorkflowRisk(
-              workflow.id.toString(),
+              workflow.hubspotId,
               workflowData
             );
 
             if (assessment.requiresApproval && assessment.approvalStatus === 'PENDING') {
               pendingApprovals.push({
-                workflowId: workflow.id.toString(),
+                workflowId: workflow.hubspotId,
                 workflowName: workflow.name,
                 riskLevel: assessment.riskLevel,
                 riskScore: assessment.riskScore,
@@ -437,11 +471,11 @@ export class RiskAssessmentController {
       const userId = req.user?.['userId'];
       this.logger.log(`🛡️ RISK STATISTICS: Fetching for user ${userId}`);
 
-      // Get all workflows from HubSpot and calculate statistics
-      const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
+      // ✅ FIX: Get protected workflows from database instead of HubSpot API
+      const protectedWorkflows = await this.workflowService.getProtectedWorkflows(userId);
       
       const stats = {
-        totalAssessments: hubspotWorkflows.length,
+        totalAssessments: protectedWorkflows.length,
         riskDistribution: {
           critical: 0,
           high: 0,
@@ -450,7 +484,7 @@ export class RiskAssessmentController {
         },
         averageRiskScore: 0,
         trendsLastWeek: {
-          assessments: Math.min(hubspotWorkflows.length, 7),
+          assessments: Math.min(protectedWorkflows.length, 7),
           averageScore: 42,
           improvement: '+15%'
         },
@@ -463,14 +497,29 @@ export class RiskAssessmentController {
 
       let totalScore = 0;
 
-      // Calculate actual statistics for a sample of workflows
-      for (const workflow of hubspotWorkflows.slice(0, 10)) {
+      // Calculate actual statistics for a sample of protected workflows
+      for (const workflow of protectedWorkflows.slice(0, 10)) {
         try {
-          const workflowData = await this.hubspotService.getWorkflowById(userId, workflow.id.toString());
+          // Get latest version data from database
+          const latestVersion = await this.prisma.workflowVersion.findFirst({
+            where: { workflowId: workflow.id },
+            orderBy: { createdAt: 'desc' }
+          });
           
-          if (workflowData) {
+          if (latestVersion && latestVersion.data) {
+            // Use stored workflow data
+            let workflowData;
+            try {
+              workflowData = typeof latestVersion.data === 'string' 
+                ? JSON.parse(latestVersion.data) 
+                : latestVersion.data;
+            } catch (parseError) {
+              this.logger.warn(`⚠️ RISK STATISTICS: Failed to parse workflow data for ${workflow.hubspotId}:`, parseError.message);
+              continue;
+            }
+
             const assessment = await this.riskAssessmentService.assessWorkflowRisk(
-              workflow.id.toString(),
+              workflow.hubspotId,
               workflowData
             );
 
@@ -478,11 +527,11 @@ export class RiskAssessmentController {
             stats.riskDistribution[assessment.riskLevel.toLowerCase()]++;
           }
         } catch (error) {
-          this.logger.warn(`⚠️ RISK STATISTICS: Failed to assess workflow ${workflow.id}:`, error.message);
+          this.logger.warn(`⚠️ RISK STATISTICS: Failed to assess workflow ${workflow.hubspotId}:`, error.message);
         }
       }
 
-      const assessedCount = Math.min(hubspotWorkflows.length, 10);
+      const assessedCount = Math.min(protectedWorkflows.length, 10);
       stats.averageRiskScore = assessedCount > 0 ? Math.round(totalScore / assessedCount) : 0;
 
       return {
