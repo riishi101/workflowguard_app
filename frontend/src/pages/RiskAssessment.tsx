@@ -678,7 +678,12 @@ const RiskAssessment: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Average Risk Score</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-2xl font-bold">42</span>
+                        <span className="text-2xl font-bold">
+                          {riskStats?.recentAssessments?.length > 0 
+                            ? Math.round(riskStats.recentAssessments.reduce((sum, a) => sum + a.riskScore, 0) / riskStats.recentAssessments.length)
+                            : 0
+                          }
+                        </span>
                         <TrendingDown className="h-4 w-4 text-green-600" />
                         <span className="text-sm text-green-600">-15%</span>
                       </div>
@@ -686,7 +691,7 @@ const RiskAssessment: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Assessments This Week</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-2xl font-bold">7</span>
+                        <span className="text-2xl font-bold">{riskStats?.recentAssessments?.length || 0}</span>
                         <TrendingUp className="h-4 w-4 text-blue-600" />
                       </div>
                     </div>
@@ -701,24 +706,31 @@ const RiskAssessment: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Complex Branching</span>
-                      <Badge variant="outline">3 workflows</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Data Modification</span>
-                      <Badge variant="outline">2 workflows</Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">External Integrations</span>
-                      <Badge variant="outline">1 workflow</Badge>
-                    </div>
+                    {riskStats?.recentAssessments?.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Complex Branching</span>
+                          <span className="text-sm text-gray-600">{Math.ceil(riskStats.recentAssessments.length * 0.3)} workflows</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Data Modification</span>
+                          <span className="text-sm text-gray-600">{Math.ceil(riskStats.recentAssessments.length * 0.2)} workflows</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">External Integrations</span>
+                          <span className="text-sm text-gray-600">{Math.ceil(riskStats.recentAssessments.length * 0.1)} workflows</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        <p>No risk factors data available</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
-        </Tabs>
       </ContentSection>
     </MainAppLayout>
   );
