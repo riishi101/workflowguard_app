@@ -137,9 +137,10 @@ export class RiskAssessmentController {
           
           const workflowIdentifier = workflow.hubspotId || workflow.id || 'unknown';
           console.log(`🔍 RISK DASHBOARD DEBUG: Processing workflow ${workflowIdentifier} (${workflow.name})`);
-          // Get latest version data from database instead of HubSpot API
+          // ✅ FIX: Use internalId for database operations (Memory lesson: distinguish HubSpot vs DB IDs)
+          const dbWorkflowId = workflow.internalId || workflow.id;
           const latestVersion = await this.prisma.workflowVersion.findFirst({
-            where: { workflowId: workflow.id },
+            where: { workflowId: dbWorkflowId },
             orderBy: { createdAt: 'desc' }
           });
           console.log(`🔍 RISK DASHBOARD DEBUG: Latest version for ${workflow.hubspotId}:`, {
@@ -206,7 +207,7 @@ export class RiskAssessmentController {
                 console.log(`💾 RISK DASHBOARD DEBUG: Storing fresh data for future use for ${workflow.hubspotId}`);
                 await this.prisma.workflowVersion.create({
                   data: {
-                    workflowId: workflow.id,
+                    workflowId: dbWorkflowId,
                     versionNumber: (latestVersion?.versionNumber || 0) + 1,
                     snapshotType: 'RISK_ASSESSMENT_FRESH_DATA',
                     createdBy: userId,
