@@ -165,8 +165,9 @@ export class RiskAssessmentController {
                   data: {
                     workflowId: workflow.id,
                     versionNumber: (latestVersion?.versionNumber || 0) + 1,
-                    data: JSON.stringify(workflowData),
-                    changeDescription: 'Fresh data fetched for risk assessment',
+                    snapshotType: 'RISK_ASSESSMENT_FRESH_DATA',
+                    createdBy: userId,
+                    data: workflowData,
                     createdAt: new Date()
                   }
                 });
