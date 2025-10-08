@@ -49,10 +49,29 @@ export class RiskAssessmentController {
   @Get('dashboard')
   async getRiskDashboard(@Req() req: Request) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
       console.log('🔍 RISK DASHBOARD DEBUG: Starting dashboard request');
-      console.log('🔍 RISK DASHBOARD DEBUG: User ID:', userId);
+      console.log('🔍 RISK DASHBOARD DEBUG: User extraction:', {
+        userObject: req.user,
+        extractedUserId: userId,
+        fallbackHeader: req.headers['x-user-id']
+      });
       console.log('🔍 RISK DASHBOARD DEBUG: Request headers:', req.headers);
+      
+      if (!userId) {
+        console.error('❌ RISK DASHBOARD DEBUG: No user ID found!');
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       this.logger.log(`🛡️ RISK DASHBOARD: Fetching overview for user ${userId}`);
 
       // ✅ FIX: Get protected workflows from database instead of HubSpot API directly
@@ -171,7 +190,20 @@ export class RiskAssessmentController {
   @Post('assess')
   async assessWorkflow(@Body() assessDto: AssessWorkflowDto, @Req() req: Request) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       const { workflowId, versionId, forceReassessment } = assessDto;
 
       this.logger.log(`🛡️ RISK ASSESSMENT: Starting assessment for workflow ${workflowId}`);
@@ -333,7 +365,21 @@ export class RiskAssessmentController {
   @Get('pending-approvals')
   async getPendingApprovals(@Req() req: Request) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
+      
       this.logger.log(`🛡️ PENDING APPROVALS: Fetching for user ${userId}`);
 
       // ✅ FIX: Get protected workflows from database instead of HubSpot API
@@ -493,7 +539,21 @@ export class RiskAssessmentController {
   @Get('statistics')
   async getRiskStatistics(@Req() req: Request) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
+      
       this.logger.log(`🛡️ RISK STATISTICS: Fetching for user ${userId}`);
 
       // ✅ FIX: Get protected workflows from database instead of HubSpot API
