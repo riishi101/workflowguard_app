@@ -80,6 +80,7 @@ const RiskAssessment: React.FC = () => {
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [assessmentLoading, setAssessmentLoading] = useState(false); // ✅ FIX: Add assessment-specific loading state
   const [activeTab, setActiveTab] = useState('overview');
 
   // ✅ FIX: Optimize loading with dependency control (Memory lesson: avoid unnecessary complexity)
@@ -172,8 +173,8 @@ const RiskAssessment: React.FC = () => {
     try {
       console.log(`🛡️ RISK ASSESSMENT: Assessing workflow ${workflowId}...`);
       
-      // ✅ FIX: Clear previous assessment data to prevent stale data display
-      setSelectedWorkflow(null);
+      // ✅ FIX: Set loading state using consistent Dashboard pattern
+      setAssessmentLoading(true);
       
       const response = await ApiService.assessWorkflow(workflowId, true);
       
@@ -186,15 +187,17 @@ const RiskAssessment: React.FC = () => {
         console.log('✅ RISK ASSESSMENT: Assessment completed for workflow:', workflowId);
         console.log('✅ RISK ASSESSMENT: Selected workflow updated:', response.data?.workflowName || 'Unknown');
         // ✅ FIX: Don't reload entire dashboard, just refresh if needed
-        // loadRiskDashboard(); // Removed to prevent unnecessary reloads
       }
     } catch (error) {
       console.error('❌ RISK ASSESSMENT: Assessment failed:', error);
       toast({
         title: "Assessment Failed",
-        description: "Unable to assess workflow risk",
+        description: "Failed to assess workflow. Please try again.",
         variant: "destructive",
       });
+    }
+    finally {
+      setAssessmentLoading(false);
     }
   };
 
@@ -499,7 +502,19 @@ const RiskAssessment: React.FC = () => {
 
           {/* Risk Assessments Tab */}
           <TabsContent value="assessments" className="space-y-4">
-            {selectedWorkflow ? (
+            {assessmentLoading ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex items-center gap-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    Analyzing Workflow Risk
+                  </p>
+                  <p className="text-xs text-blue-800">
+                    Performing comprehensive risk assessment and generating recommendations...
+                  </p>
+                </div>
+              </div>
+            ) : selectedWorkflow ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
