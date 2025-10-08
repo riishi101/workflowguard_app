@@ -1,5 +1,34 @@
 import { registerAs } from '@nestjs/config';
 
+// Direct config object for imports
+export const hubspotConfig = {
+  // OAuth Configuration
+  clientId: process.env.HUBSPOT_CLIENT_ID,
+  clientSecret: process.env.HUBSPOT_CLIENT_SECRET,
+  redirectUri:
+    process.env.HUBSPOT_REDIRECT_URI ||
+    'https://api.workflowguard.pro/api/auth/hubspot/callback',
+
+  // Frontend URLs
+  frontendUrl: process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
+  apiUrl: process.env.API_URL || 'https://api.workflowguard.pro',
+
+  // Complete scopes as required by HubSpot app configuration
+  scopes: ['automation', 'oauth', 'crm.objects.companies.read', 'crm.objects.contacts.read', 'crm.objects.deals.read'].join(' '),
+
+  // API Configuration
+  apiBaseUrl: 'https://api.hubapi.com',
+  apiTimeout: 30000, // 30 seconds
+  maxRetries: 3,
+  retryDelay: 1000, // 1 second
+
+  // Rate Limiting
+  rateLimitPerMinute: 100,
+  rateLimitPerHour: 1000,
+  rateLimitPerDay: 10000,
+};
+
+// NestJS config registration
 export default registerAs('hubspot', () => ({
   // OAuth Configuration
   clientId: process.env.HUBSPOT_CLIENT_ID,
