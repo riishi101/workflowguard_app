@@ -94,9 +94,12 @@ export class RiskAssessmentController {
         recentAssessments: []
       };
 
-      // Get recent risk assessments for each protected workflow
-      console.log('🔍 RISK DASHBOARD DEBUG: Starting workflow processing loop...');
-      for (const workflow of protectedWorkflows.slice(0, 10)) { // Limit to first 10 for performance
+      // ✅ FIX: Process workflows in parallel for better performance (Memory lesson: avoid complexity)
+      console.log('🔍 RISK DASHBOARD DEBUG: Starting PARALLEL workflow processing...');
+      const workflowsToProcess = protectedWorkflows.slice(0, 10); // Limit to first 10 for performance
+      
+      // ⚡ PERFORMANCE FIX: Process workflows in parallel with timeout
+      const processWorkflow = async (workflow) => {
         try {
           console.log(`🔍 RISK DASHBOARD DEBUG: Processing workflow ${workflow.hubspotId} (${workflow.name})`);
           // Get latest version data from database instead of HubSpot API
@@ -146,11 +149,16 @@ export class RiskAssessmentController {
             }
           }
           
-          // 🚀 FALLBACK: If no stored data or corrupted, fetch fresh from HubSpot
+          // 🚀 FALLBACK: If no stored data or corrupted, fetch fresh from HubSpot with timeout
           if (!workflowData) {
             console.log(`🔄 RISK DASHBOARD DEBUG: Fetching fresh workflow data from HubSpot for ${workflow.hubspotId}...`);
             try {
-              workflowData = await this.hubspotService.getWorkflowById(userId, workflow.hubspotId);
+              // ✅ FIX: Add timeout to HubSpot API calls (Memory lesson: proper error handling)
+              const hubspotPromise = this.hubspotService.getWorkflowById(userId, workflow.hubspotId);
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('HubSpot API timeout')), 15000) // 15 second timeout
+              );
+              workflowData = await Promise.race([hubspotPromise, timeoutPromise]);
               console.log(`✅ RISK DASHBOARD DEBUG: Fresh HubSpot data fetched for ${workflow.hubspotId}:`, {
                 hasData: !!workflowData,
                 hasName: !!workflowData?.name,
@@ -174,7 +182,7 @@ export class RiskAssessmentController {
               }
             } catch (hubspotError) {
               console.error(`❌ RISK DASHBOARD DEBUG: Failed to fetch fresh data for ${workflow.hubspotId}:`, hubspotError.message);
-              continue;
+              return; // Return from function instead of continue
             }
           }
           
@@ -264,7 +272,25 @@ export class RiskAssessmentController {
           });
           this.logger.warn(`⚠️ RISK DASHBOARD: Failed to assess workflow ${workflow.hubspotId}:`, error.message);
         }
-      }
+      };
+      
+      // ⚡ PARALLEL PROCESSING: Process all workflows concurrently with timeout
+      console.log(`🚀 RISK DASHBOARD DEBUG: Processing ${workflowsToProcess.length} workflows in parallel...`);
+      const processingPromises = workflowsToProcess.map(workflow => 
+        Promise.race([
+          processWorkflow(workflow),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Workflow processing timeout')), 30000) // 30 second timeout per workflow
+          )
+        ]).catch(error => {
+          console.error(`⚠️ RISK DASHBOARD DEBUG: Workflow ${workflow.hubspotId} failed or timed out:`, error.message);
+          return null; // Continue with other workflows
+        })
+      );
+      
+      // Wait for all workflows to complete (or timeout)
+      await Promise.allSettled(processingPromises);
+      console.log(`✅ RISK DASHBOARD DEBUG: Parallel processing completed`);
 
       // Sort recent assessments by risk score (highest first)
       riskStats.recentAssessments.sort((a, b) => b.riskScore - a.riskScore);
