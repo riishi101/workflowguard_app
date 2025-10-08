@@ -129,7 +129,14 @@ export class RiskAssessmentController {
       // ⚡ PERFORMANCE FIX: Process workflows in parallel with timeout
       const processWorkflow = async (workflow) => {
         try {
-          console.log(`🔍 RISK DASHBOARD DEBUG: Processing workflow ${workflow.hubspotId} (${workflow.name})`);
+          // ✅ FIX: Add validation for workflow object (Memory lesson: always validate data)
+          if (!workflow || (!workflow.hubspotId && !workflow.id)) {
+            console.warn(`⚠️ RISK DASHBOARD DEBUG: Invalid workflow object:`, workflow);
+            return; // Skip invalid workflows
+          }
+          
+          const workflowIdentifier = workflow.hubspotId || workflow.id || 'unknown';
+          console.log(`🔍 RISK DASHBOARD DEBUG: Processing workflow ${workflowIdentifier} (${workflow.name})`);
           // Get latest version data from database instead of HubSpot API
           const latestVersion = await this.prisma.workflowVersion.findFirst({
             where: { workflowId: workflow.id },
@@ -281,10 +288,12 @@ export class RiskAssessmentController {
               workflowId: workflow.workflowId
             });
             
+            // ✅ FIX: Ensure valid ID fallback (Memory lesson: always validate data)
+            const validId = workflow.hubspotId || workflow.id || `workflow_${Date.now()}`;
             const assessmentEntry = {
-              id: workflow.hubspotId,                    // ✅ FIX: Add id field for fallback
-              workflowId: workflow.hubspotId,            // Keep original for compatibility
-              hubspotId: workflow.hubspotId,             // ✅ FIX: Add explicit hubspotId
+              id: validId,                               // ✅ FIX: Use valid ID with fallback
+              workflowId: validId,                       // Keep original for compatibility
+              hubspotId: workflow.hubspotId,             // ✅ FIX: Add explicit hubspotId (can be null)
               workflowName: workflow.name,
               riskLevel: assessment.riskLevel,
               riskScore: assessment.riskScore,
