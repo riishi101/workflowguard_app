@@ -12,8 +12,8 @@ export default registerAs('hubspot', () => ({
   frontendUrl: process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
   apiUrl: process.env.API_URL || 'https://api.workflowguard.pro',
 
-  // Minimal scopes as required by HubSpot marketplace review
-  scopes: ['automation', 'oauth'].join(' '),
+  // Complete scopes as required by HubSpot app configuration
+  scopes: ['automation', 'oauth', 'crm.objects.companies.read', 'crm.objects.contacts.read', 'crm.objects.deals.read'].join(' '),
 
   // API Configuration
   apiBaseUrl: 'https://api.hubapi.com',

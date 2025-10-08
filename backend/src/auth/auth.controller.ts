@@ -40,8 +40,8 @@ export class AuthController {
         process.env.HUBSPOT_REDIRECT_URI ||
         'https://api.workflowguard.pro/api/auth/hubspot/callback';
 
-      // Use only automation scope for workflows API (as per HubSpot docs)
-      const scopes = 'automation oauth';
+      // Use complete scopes as required by HubSpot app configuration
+      const scopes = 'automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read';
 
       // Debug logging
       console.log('HUBSPOT_CLIENT_ID:', clientId);
@@ -78,8 +78,8 @@ export class AuthController {
       process.env.HUBSPOT_REDIRECT_URI ||
         'http://localhost:3000/auth/hubspot/callback',
     );
-    // Use only automation scope for workflows API (as per HubSpot docs)
-    const scopes = encodeURIComponent('automation oauth');
+    // Use complete scopes as required by HubSpot app configuration
+    const scopes = encodeURIComponent('automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read');
 
     const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${redirectUri}`;
 
