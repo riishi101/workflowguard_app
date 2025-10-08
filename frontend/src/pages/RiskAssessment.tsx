@@ -172,12 +172,19 @@ const RiskAssessment: React.FC = () => {
     try {
       console.log(`🛡️ RISK ASSESSMENT: Assessing workflow ${workflowId}...`);
       
+      // ✅ FIX: Clear previous assessment data to prevent stale data display
+      setSelectedWorkflow(null);
+      
       const response = await ApiService.assessWorkflow(workflowId, true);
+      
+      console.log('🔍 RISK ASSESSMENT DEBUG: API Response:', response);
+      console.log('🔍 RISK ASSESSMENT DEBUG: Response data:', response.data);
       
       if (response.success) {
         setSelectedWorkflow(response.data);
         setActiveTab('assessments');
-        console.log('✅ RISK ASSESSMENT: Assessment completed');
+        console.log('✅ RISK ASSESSMENT: Assessment completed for workflow:', workflowId);
+        console.log('✅ RISK ASSESSMENT: Selected workflow updated:', response.data?.workflowName || 'Unknown');
         // ✅ FIX: Don't reload entire dashboard, just refresh if needed
         // loadRiskDashboard(); // Removed to prevent unnecessary reloads
       }
@@ -447,6 +454,13 @@ const RiskAssessment: React.FC = () => {
                                 const workflowId = assessment.workflowId || assessment.id || assessment.hubspotId || assessment.workflowName;
                                 console.log('🔍 FRONTEND DEBUG: Assessment click - workflowId:', workflowId, 'assessment:', assessment);
                                 console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(assessment));
+                                console.log('🔍 FRONTEND DEBUG: Workflow name for context:', assessment.workflowName);
+                                console.log('🔍 FRONTEND DEBUG: All assessment properties:', {
+                                  id: assessment.id,
+                                  workflowId: assessment.workflowId,
+                                  hubspotId: assessment.hubspotId,
+                                  workflowName: assessment.workflowName
+                                });
                                 if (workflowId && workflowId !== 'undefined') {
                                   assessWorkflow(workflowId);
                                   setActiveTab('assessments'); // Auto-switch to detailed view
@@ -490,6 +504,9 @@ const RiskAssessment: React.FC = () => {
                       <CardTitle>Risk Assessment: {selectedWorkflow.workflowName}</CardTitle>
                       <p className="text-sm text-gray-600 mt-1">
                         Comprehensive risk analysis and mitigation recommendations
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Workflow ID: {selectedWorkflow.workflowId || selectedWorkflow.id} | HubSpot ID: {selectedWorkflow.hubspotId}
                       </p>
                     </div>
                     <Badge className={getRiskColor(selectedWorkflow.riskLevel)}>
