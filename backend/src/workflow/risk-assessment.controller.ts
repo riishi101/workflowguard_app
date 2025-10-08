@@ -48,6 +48,34 @@ export class RiskAssessmentController {
    */
   @Get('dashboard')
   async getRiskDashboard(@Req() req: any) {
+    const startTime = Date.now();
+    console.log('🚀 RISK DASHBOARD DEBUG: === STARTING RISK DASHBOARD REQUEST ===');
+    
+    try {
+      // ✅ FIX: Add global timeout to prevent hanging (Memory lesson: proper error handling)
+      const dashboardPromise = this.processRiskDashboardInternal(req);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Risk dashboard timeout - 60 seconds exceeded')), 60000)
+      );
+      
+      const result = await Promise.race([dashboardPromise, timeoutPromise]);
+      const duration = Date.now() - startTime;
+      console.log(`✅ RISK DASHBOARD DEBUG: === COMPLETED IN ${duration}ms ===`);
+      return result;
+      
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`❌ RISK DASHBOARD DEBUG: === FAILED AFTER ${duration}ms ===`, error.message);
+      return {
+        success: false,
+        message: 'Risk dashboard request failed or timed out',
+        error: error.message,
+        duration: `${duration}ms`
+      };
+    }
+  }
+  
+  private async processRiskDashboardInternal(@Req() req: any) {
     try {
       // ✅ FIX: Use same user ID extraction pattern as working workflow controller
       let userId = req.user?.sub || req.user?.id || req.user?.userId;
@@ -194,11 +222,17 @@ export class RiskAssessmentController {
               workflowType: workflowData.type
             });
             
-            // Perform risk assessment on stored workflow data
-            const assessment = await this.riskAssessmentService.assessWorkflowRisk(
+            // Perform risk assessment on stored workflow data with timeout
+            console.log(`🔍 RISK DASHBOARD DEBUG: Starting risk assessment service for ${workflow.hubspotId}...`);
+            const assessmentPromise = this.riskAssessmentService.assessWorkflowRisk(
               workflow.hubspotId, 
               workflowData
             );
+            const assessmentTimeout = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Risk assessment service timeout')), 10000) // 10 second timeout
+            );
+            const assessment = await Promise.race([assessmentPromise, assessmentTimeout]) as any;
+            console.log(`✅ RISK DASHBOARD DEBUG: Risk assessment service completed for ${workflow.hubspotId}`);
             
             console.log(`✅ RISK DASHBOARD DEBUG: Risk assessment completed for ${workflow.hubspotId}:`, {
               riskLevel: assessment.riskLevel,
@@ -276,21 +310,32 @@ export class RiskAssessmentController {
       
       // ⚡ PARALLEL PROCESSING: Process all workflows concurrently with timeout
       console.log(`🚀 RISK DASHBOARD DEBUG: Processing ${workflowsToProcess.length} workflows in parallel...`);
-      const processingPromises = workflowsToProcess.map(workflow => 
+      const processingPromises = workflowsToProcess.map((workflow, index) => 
         Promise.race([
           processWorkflow(workflow),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Workflow processing timeout')), 30000) // 30 second timeout per workflow
+            setTimeout(() => reject(new Error(`Workflow ${index + 1}/${workflowsToProcess.length} processing timeout`)), 20000) // 20 second timeout per workflow
           )
         ]).catch(error => {
-          console.error(`⚠️ RISK DASHBOARD DEBUG: Workflow ${workflow.hubspotId} failed or timed out:`, error.message);
+          console.error(`⚠️ RISK DASHBOARD DEBUG: Workflow ${workflow.hubspotId} (${index + 1}/${workflowsToProcess.length}) failed or timed out:`, error.message);
           return null; // Continue with other workflows
         })
       );
       
       // Wait for all workflows to complete (or timeout)
-      await Promise.allSettled(processingPromises);
-      console.log(`✅ RISK DASHBOARD DEBUG: Parallel processing completed`);
+      console.log(`⏳ RISK DASHBOARD DEBUG: Waiting for all ${workflowsToProcess.length} workflows to complete...`);
+      const results = await Promise.allSettled(processingPromises);
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+      console.log(`✅ RISK DASHBOARD DEBUG: Parallel processing completed - ${successful} successful, ${failed} failed`);
+      console.log(`📈 RISK DASHBOARD DEBUG: Final statistics:`, {
+        totalWorkflows: riskStats.totalWorkflows,
+        assessmentsProcessed: riskStats.recentAssessments.length,
+        criticalRisk: riskStats.criticalRisk,
+        highRisk: riskStats.highRisk,
+        mediumRisk: riskStats.mediumRisk,
+        lowRisk: riskStats.lowRisk
+      });
 
       // Sort recent assessments by risk score (highest first)
       riskStats.recentAssessments.sort((a, b) => b.riskScore - a.riskScore);
@@ -311,11 +356,7 @@ export class RiskAssessmentController {
       console.error('🔍 RISK DASHBOARD DEBUG: Error occurred:', error);
       console.error('🔍 RISK DASHBOARD DEBUG: Error stack:', error.stack);
       this.logger.error('❌ RISK DASHBOARD: Failed to fetch dashboard data:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch risk dashboard data',
-        error: error.message
-      };
+      throw error; // Re-throw to be caught by timeout wrapper
     }
   }
 
