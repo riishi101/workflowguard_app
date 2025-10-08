@@ -65,6 +65,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<RootRoute />} />
+              <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/workflow-selection" element={<ProtectedRoute><TrialAccessGuard><WorkflowSelection /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/risk-assessment" element={<ProtectedRoute><TrialAccessGuard><RiskAssessment /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/workflow-history" element={<ProtectedRoute><TrialAccessGuard><WorkflowHistory /></TrialAccessGuard></ProtectedRoute>} />
@@ -72,6 +73,7 @@ const App = () => {
                 path="/workflow-history/:workflowId"
                 element={<ProtectedRoute><TrialAccessGuard><WorkflowHistoryDetail /></TrialAccessGuard></ProtectedRoute>}
               />
+              <Route path="/compare-versions/:workflowId" element={<ProtectedRoute><TrialAccessGuard><CompareVersions /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
               <Route path="/help/connect-hubspot" element={<ProtectedRoute><TrialAccessGuard><ConnectHubSpotGuide /></TrialAccessGuard></ProtectedRoute>} />
