@@ -731,6 +731,7 @@ const RiskAssessment: React.FC = () => {
               </Card>
             </div>
           </TabsContent>
+        </Tabs>
       </ContentSection>
     </MainAppLayout>
   );
