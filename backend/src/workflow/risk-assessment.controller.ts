@@ -11,6 +11,8 @@ import {
   Logger 
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { TrialGuard } from '../guards/trial.guard';
+import { SubscriptionGuard } from '../guards/subscription.guard';
 import { RiskAssessmentService, WorkflowRiskAssessment } from './risk-assessment.service';
 import { WorkflowService } from './workflow.service';
 import { HubSpotService } from '../services/hubspot.service';
@@ -30,7 +32,7 @@ interface ApproveRiskDto {
 }
 
 @Controller('risk-assessment')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
 export class RiskAssessmentController {
   private readonly logger = new Logger(RiskAssessmentController.name);
 
