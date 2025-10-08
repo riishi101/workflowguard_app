@@ -274,7 +274,14 @@ export class RiskAssessmentController {
 
             // Add to recent assessments
             console.log(`📈 Adding to recent assessments: ${workflow.hubspotId}`);
-            riskStats.recentAssessments.push({
+            console.log(`🔍 DASHBOARD DEBUG: Workflow object structure:`, {
+              hubspotId: workflow.hubspotId,
+              name: workflow.name,
+              id: workflow.id,
+              workflowId: workflow.workflowId
+            });
+            
+            const assessmentEntry = {
               id: workflow.hubspotId,                    // ✅ FIX: Add id field for fallback
               workflowId: workflow.hubspotId,            // Keep original for compatibility
               hubspotId: workflow.hubspotId,             // ✅ FIX: Add explicit hubspotId
@@ -283,7 +290,10 @@ export class RiskAssessmentController {
               riskScore: assessment.riskScore,
               assessedAt: new Date().toISOString(),
               requiresApproval: assessment.requiresApproval
-            });
+            };
+            
+            console.log(`🔍 DASHBOARD DEBUG: Assessment entry being added:`, assessmentEntry);
+            riskStats.recentAssessments.push(assessmentEntry);
             
             console.log(`📉 Current stats after processing ${workflow.hubspotId}:`, {
               totalWorkflows: riskStats.totalWorkflows,
@@ -383,13 +393,26 @@ export class RiskAssessmentController {
       const { workflowId, versionId, forceReassessment } = assessDto;
 
       this.logger.log(`🛡️ RISK ASSESSMENT: Starting assessment for workflow ${workflowId}`);
+      console.log(`🔍 ASSESS DEBUG: Received workflowId:`, workflowId);
+      console.log(`🔍 ASSESS DEBUG: workflowId type:`, typeof workflowId);
+      console.log(`🔍 ASSESS DEBUG: Is numeric ID?`, /^\d+$/.test(workflowId));
 
       // Get workflow data from HubSpot
       const workflowData = await this.hubspotService.getWorkflowById(userId, workflowId);
+      console.log(`🔍 ASSESS DEBUG: HubSpot returned workflowData:`, workflowData ? 'Found' : 'Not Found');
+      if (workflowData) {
+        console.log(`🔍 ASSESS DEBUG: Workflow data structure:`, {
+          id: workflowData.id,
+          name: workflowData.name,
+          type: workflowData.type
+        });
+      }
+      
       if (!workflowData) {
+        console.log(`❌ ASSESS DEBUG: No workflow found for ID: ${workflowId}`);
         return {
           success: false,
-          message: 'Failed to fetch workflow data from HubSpot'
+          message: `Failed to fetch workflow data from HubSpot for ID: ${workflowId}`
         };
       }
 
