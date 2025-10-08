@@ -90,10 +90,15 @@ const RiskAssessment: React.FC = () => {
   }, [user]); // Only reload when user changes
 
   const loadRiskDashboard = async (force = false) => {
-    // ✅ FIX: Prevent unnecessary reloads (Memory lesson: performance optimization)
-    if (loading && !force) {
-      console.log('🔍 FRONTEND DEBUG: Dashboard already loading, skipping...');
+    // ✅ FIX: Prevent unnecessary reloads but allow initial load (Memory lesson: avoid race conditions)
+    if (loading && !force && riskStats !== null) {
+      console.log('🔍 FRONTEND DEBUG: Dashboard already loaded with data, skipping...');
       return;
+    }
+    
+    // Allow loading if no data exists yet
+    if (loading && !force && riskStats === null) {
+      console.log('🔍 FRONTEND DEBUG: Dashboard loading but no data yet, allowing...');
     }
     
     try {
