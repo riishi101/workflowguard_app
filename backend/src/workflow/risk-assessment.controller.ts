@@ -17,7 +17,7 @@ import { RiskAssessmentService, WorkflowRiskAssessment } from './risk-assessment
 import { WorkflowService } from './workflow.service';
 import { HubSpotService } from '../services/hubspot.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { Request } from 'express';
+// Removed Request import - using 'any' type like working workflow controller
 
 interface AssessWorkflowDto {
   workflowId: string;
@@ -47,7 +47,7 @@ export class RiskAssessmentController {
    * Get risk assessment dashboard overview
    */
   @Get('dashboard')
-  async getRiskDashboard(@Req() req: Request) {
+  async getRiskDashboard(@Req() req: any) {
     try {
       // ✅ FIX: Use same user ID extraction pattern as working workflow controller
       let userId = req.user?.sub || req.user?.id || req.user?.userId;
@@ -188,7 +188,7 @@ export class RiskAssessmentController {
    * Assess risk for a specific workflow
    */
   @Post('assess')
-  async assessWorkflow(@Body() assessDto: AssessWorkflowDto, @Req() req: Request) {
+  async assessWorkflow(@Body() assessDto: AssessWorkflowDto, @Req() req: any) {
     try {
       // ✅ FIX: Use same user ID extraction pattern as working workflow controller
       let userId = req.user?.sub || req.user?.id || req.user?.userId;
@@ -243,9 +243,22 @@ export class RiskAssessmentController {
    * Get detailed risk assessment for a workflow
    */
   @Get('workflow/:workflowId')
-  async getWorkflowRiskAssessment(@Param('workflowId') workflowId: string, @Req() req: Request) {
+  async getWorkflowRiskAssessment(@Param('workflowId') workflowId: string, @Req() req: any) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       this.logger.log(`🛡️ RISK ASSESSMENT: Fetching assessment for workflow ${workflowId}`);
 
       // Get workflow data from HubSpot
@@ -329,9 +342,22 @@ export class RiskAssessmentController {
    * Approve or reject a high-risk workflow
    */
   @Put('approve')
-  async approveRiskAssessment(@Body() approveDto: ApproveRiskDto, @Req() req: Request) {
+  async approveRiskAssessment(@Body() approveDto: ApproveRiskDto, @Req() req: any) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       const { assessmentId, approvalStatus, comments } = approveDto;
 
       this.logger.log(`🛡️ RISK APPROVAL: ${approvalStatus} assessment ${assessmentId} by user ${userId}`);
@@ -363,7 +389,7 @@ export class RiskAssessmentController {
    * Get workflows requiring approval
    */
   @Get('pending-approvals')
-  async getPendingApprovals(@Req() req: Request) {
+  async getPendingApprovals(@Req() req: any) {
     try {
       // ✅ FIX: Use same user ID extraction pattern as working workflow controller
       let userId = req.user?.sub || req.user?.id || req.user?.userId;
@@ -448,9 +474,22 @@ export class RiskAssessmentController {
    * Get risk mitigation suggestions for a workflow
    */
   @Get('workflow/:workflowId/mitigations')
-  async getRiskMitigations(@Param('workflowId') workflowId: string, @Req() req: Request) {
+  async getRiskMitigations(@Param('workflowId') workflowId: string, @Req() req: any) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       this.logger.log(`🛡️ RISK MITIGATIONS: Fetching for workflow ${workflowId}`);
 
       // Get workflow data from HubSpot
@@ -493,9 +532,22 @@ export class RiskAssessmentController {
    * Run safety checks on a workflow
    */
   @Post('workflow/:workflowId/safety-check')
-  async runSafetyCheck(@Param('workflowId') workflowId: string, @Req() req: Request) {
+  async runSafetyCheck(@Param('workflowId') workflowId: string, @Req() req: any) {
     try {
-      const userId = req.user?.['userId'];
+      // ✅ FIX: Use same user ID extraction pattern as working workflow controller
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+      
+      if (!userId) {
+        return {
+          success: false,
+          message: 'User ID not found in request',
+          error: 'Authentication required'
+        };
+      }
       this.logger.log(`🛡️ SAFETY CHECK: Running for workflow ${workflowId}`);
 
       // Get workflow data from HubSpot
@@ -537,7 +589,7 @@ export class RiskAssessmentController {
    * Get risk assessment statistics
    */
   @Get('statistics')
-  async getRiskStatistics(@Req() req: Request) {
+  async getRiskStatistics(@Req() req: any) {
     try {
       // ✅ FIX: Use same user ID extraction pattern as working workflow controller
       let userId = req.user?.sub || req.user?.id || req.user?.userId;
