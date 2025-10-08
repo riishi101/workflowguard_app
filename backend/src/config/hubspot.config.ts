@@ -13,8 +13,8 @@ export const hubspotConfig = {
   frontendUrl: process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
   apiUrl: process.env.API_URL || 'https://api.workflowguard.pro',
 
-  // Complete scopes as required by HubSpot app configuration
-  scopes: ['automation', 'oauth', 'crm.objects.companies.read', 'crm.objects.contacts.read', 'crm.objects.deals.read'].join(' '),
+  // Minimal scopes for workflow structure access only (no sensitive data)
+  scopes: ['automation', 'oauth'].join(' '),
 
   // API Configuration
   apiBaseUrl: 'https://api.hubapi.com',
@@ -41,8 +41,8 @@ export default registerAs('hubspot', () => ({
   frontendUrl: process.env.FRONTEND_URL || 'https://www.workflowguard.pro',
   apiUrl: process.env.API_URL || 'https://api.workflowguard.pro',
 
-  // Complete scopes as required by HubSpot app configuration
-  scopes: ['automation', 'oauth', 'crm.objects.companies.read', 'crm.objects.contacts.read', 'crm.objects.deals.read'].join(' '),
+  // Minimal scopes for workflow structure access only (no sensitive data)
+  scopes: ['automation', 'oauth'].join(' '),
 
   // API Configuration
   apiBaseUrl: 'https://api.hubapi.com',

@@ -395,7 +395,7 @@ export class HubSpotService {
       if (workflowList.length === 0) {
         console.warn('🚨 CRITICAL: No workflows returned with V4 API!');
         console.warn('🚨 Possible causes: Missing OAuth scopes or workflows are in unsupported format');
-        console.warn('🚨 Required scopes: automation, crm.objects.deals.read, crm.objects.companies.read');
+        console.warn('🚨 Required scopes: automation, oauth');
         return [];
       }
 
