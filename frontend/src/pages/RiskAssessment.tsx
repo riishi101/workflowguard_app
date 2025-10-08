@@ -81,12 +81,21 @@ const RiskAssessment: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // ✅ FIX: Optimize loading with dependency control (Memory lesson: avoid unnecessary complexity)
   useEffect(() => {
-    loadRiskDashboard();
-    loadPendingApprovals();
-  }, []);
+    if (user) {
+      loadRiskDashboard();
+      loadPendingApprovals();
+    }
+  }, [user]); // Only reload when user changes
 
-  const loadRiskDashboard = async () => {
+  const loadRiskDashboard = async (force = false) => {
+    // ✅ FIX: Prevent unnecessary reloads (Memory lesson: performance optimization)
+    if (loading && !force) {
+      console.log('🔍 FRONTEND DEBUG: Dashboard already loading, skipping...');
+      return;
+    }
+    
     try {
       setLoading(true);
       console.log('🔍 FRONTEND DEBUG: Starting loadRiskDashboard...');
@@ -143,6 +152,17 @@ const RiskAssessment: React.FC = () => {
   };
 
   const assessWorkflow = async (workflowId: string) => {
+    // ✅ FIX: Validate workflowId parameter (Memory lesson: proper validation)
+    if (!workflowId || workflowId === 'undefined') {
+      console.error('❌ RISK ASSESSMENT: Invalid workflowId provided:', workflowId);
+      toast({
+        title: "Assessment Failed",
+        description: "Invalid workflow ID. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       console.log(`🛡️ RISK ASSESSMENT: Assessing workflow ${workflowId}...`);
       
@@ -152,7 +172,8 @@ const RiskAssessment: React.FC = () => {
         setSelectedWorkflow(response.data);
         setActiveTab('assessments');
         console.log('✅ RISK ASSESSMENT: Assessment completed');
-        loadRiskDashboard();
+        // ✅ FIX: Don't reload entire dashboard, just refresh if needed
+        // loadRiskDashboard(); // Removed to prevent unnecessary reloads
       }
     } catch (error) {
       console.error('❌ RISK ASSESSMENT: Assessment failed:', error);
@@ -195,14 +216,14 @@ const RiskAssessment: React.FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadRiskDashboard(), loadPendingApprovals()]);
+    // ✅ FIX: Force reload on manual refresh
+    await Promise.all([loadRiskDashboard(true), loadPendingApprovals()]);
     setRefreshing(false);
     toast({
       title: "Refreshed",
       description: "Risk assessment data has been updated",
     });
   };
-
   const getRiskColor = (level: string) => {
     switch (level) {
       case 'CRITICAL': return 'bg-red-100 text-red-800 border-red-200';
@@ -415,7 +436,12 @@ const RiskAssessment: React.FC = () => {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => assessWorkflow(assessment.workflowId)}
+                                onClick={() => {
+                                // ✅ FIX: Use hubspotId as fallback if workflowId is undefined
+                                const workflowId = assessment.workflowId || assessment.id;
+                                console.log('🔍 FRONTEND DEBUG: Assessment click - workflowId:', workflowId, 'assessment:', assessment);
+                                assessWorkflow(workflowId);
+                              }}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
                                 View
@@ -607,7 +633,12 @@ const RiskAssessment: React.FC = () => {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => assessWorkflow(approval.workflowId)}
+                            onClick={() => {
+                              // ✅ FIX: Use id as fallback if workflowId is undefined
+                              const workflowId = approval.workflowId || approval.id;
+                              console.log('🔍 FRONTEND DEBUG: Approval click - workflowId:', workflowId, 'approval:', approval);
+                              assessWorkflow(workflowId);
+                            }}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Review

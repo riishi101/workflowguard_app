@@ -233,7 +233,9 @@ export class RiskAssessmentController {
             // Add to recent assessments
             console.log(`📈 Adding to recent assessments: ${workflow.hubspotId}`);
             riskStats.recentAssessments.push({
-              workflowId: workflow.hubspotId,
+              id: workflow.hubspotId,                    // ✅ FIX: Add id field for fallback
+              workflowId: workflow.hubspotId,            // Keep original for compatibility
+              hubspotId: workflow.hubspotId,             // ✅ FIX: Add explicit hubspotId
               workflowName: workflow.name,
               riskLevel: assessment.riskLevel,
               riskScore: assessment.riskScore,
