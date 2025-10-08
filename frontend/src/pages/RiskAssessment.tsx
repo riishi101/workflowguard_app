@@ -450,25 +450,28 @@ const RiskAssessment: React.FC = () => {
                                 size="sm" 
                                 variant="outline"
                                 onClick={() => {
-                                // ✅ FIX: Try multiple fallback properties for workflowId
-                                const workflowId = assessment.workflowId || assessment.id || assessment.hubspotId || assessment.workflowName;
-                                console.log('🔍 FRONTEND DEBUG: Assessment click - workflowId:', workflowId, 'assessment:', assessment);
+                                // ✅ FIX: Prioritize numeric IDs over workflow names (Memory lesson: never use names as HubSpot IDs)
+                                const numericId = assessment.workflowId || assessment.id || assessment.hubspotId;
+                                const isNumeric = numericId && /^\d+$/.test(numericId.toString());
+                                
+                                console.log('🔍 FRONTEND DEBUG: Assessment click - numericId:', numericId, 'isNumeric:', isNumeric);
                                 console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(assessment));
-                                console.log('🔍 FRONTEND DEBUG: Workflow name for context:', assessment.workflowName);
                                 console.log('🔍 FRONTEND DEBUG: All assessment properties:', {
                                   id: assessment.id,
                                   workflowId: assessment.workflowId,
                                   hubspotId: assessment.hubspotId,
                                   workflowName: assessment.workflowName
                                 });
-                                if (workflowId && workflowId !== 'undefined') {
-                                  assessWorkflow(workflowId);
+                                
+                                if (isNumeric) {
+                                  assessWorkflow(numericId);
                                   setActiveTab('assessments'); // Auto-switch to detailed view
                                 } else {
-                                  console.error('❌ FRONTEND DEBUG: No valid workflowId found in assessment object');
+                                  console.error('❌ FRONTEND DEBUG: No valid numeric workflowId found in assessment object');
+                                  console.error('❌ FRONTEND DEBUG: Available non-numeric fallback:', assessment.workflowName);
                                   toast({
                                     title: "Error",
-                                    description: "Unable to load workflow details - missing workflow ID",
+                                    description: "Unable to load workflow details - missing numeric HubSpot ID",
                                     variant: "destructive",
                                   });
                                 }
@@ -668,18 +671,21 @@ const RiskAssessment: React.FC = () => {
                             size="sm" 
                             variant="outline"
                             onClick={() => {
-                              // ✅ FIX: Try multiple fallback properties for workflowId
-                              const workflowId = approval.workflowId || approval.id || approval.hubspotId || approval.workflowName;
-                              console.log('🔍 FRONTEND DEBUG: Approval click - workflowId:', workflowId, 'approval:', approval);
+                              // ✅ FIX: Prioritize numeric IDs over workflow names (Memory lesson: never use names as HubSpot IDs)
+                              const numericId = approval.workflowId || approval.id || approval.hubspotId;
+                              const isNumeric = numericId && /^\d+$/.test(numericId.toString());
+                              
+                              console.log('🔍 FRONTEND DEBUG: Approval click - numericId:', numericId, 'isNumeric:', isNumeric);
                               console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(approval));
-                              if (workflowId && workflowId !== 'undefined') {
-                                assessWorkflow(workflowId);
+                              if (isNumeric) {
+                                assessWorkflow(numericId);
                                 setActiveTab('assessments'); // Auto-switch to detailed view
                               } else {
-                                console.error('❌ FRONTEND DEBUG: No valid workflowId found in approval object');
+                                console.error('❌ FRONTEND DEBUG: No valid numeric workflowId found in approval object');
+                                console.error('❌ FRONTEND DEBUG: Available non-numeric fallback:', approval.workflowName);
                                 toast({
                                   title: "Error",
-                                  description: "Unable to load workflow details - missing workflow ID",
+                                  description: "Unable to load workflow details - missing numeric HubSpot ID",
                                   variant: "destructive",
                                 });
                               }

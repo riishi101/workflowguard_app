@@ -2196,6 +2196,7 @@ export class WorkflowService {
 
         return {
           id: workflow.hubspotId || workflow.id,
+          hubspotId: workflow.hubspotId, // ✅ FIX: Add explicit hubspotId for risk assessment
           internalId: workflow.id, // Add internal ID for restore operations
           name: workflow.name,
           status: workflow.isDeleted ? 'deleted' : workflow.status || 'active',
