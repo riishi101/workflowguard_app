@@ -16,6 +16,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Response, Request } from 'express';
 import axios from 'axios';
 import { Public } from './public.decorator';
+import { hubspotConfig } from '../config/hubspot.config';
 
 @Controller('auth')
 export class AuthController {
@@ -40,12 +41,13 @@ export class AuthController {
         process.env.HUBSPOT_REDIRECT_URI ||
         'https://api.workflowguard.pro/api/auth/hubspot/callback';
 
-      // Use complete scopes as required by HubSpot app configuration
-      const scopes = 'automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read';
+      // Use scopes from hubspot config to ensure consistency
+      const scopes = hubspotConfig.scopes;
 
       // Debug logging
       console.log('HUBSPOT_CLIENT_ID:', clientId);
       console.log('HUBSPOT_REDIRECT_URI:', redirectUri);
+      console.log('OAUTH_SCOPES:', scopes);
       console.log('Marketplace installation:', marketplace);
 
       if (!clientId) {
@@ -78,8 +80,8 @@ export class AuthController {
       process.env.HUBSPOT_REDIRECT_URI ||
         'http://localhost:3000/auth/hubspot/callback',
     );
-    // Use complete scopes as required by HubSpot app configuration
-    const scopes = encodeURIComponent('automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read');
+    // Use scopes from hubspot config to ensure consistency
+    const scopes = encodeURIComponent(hubspotConfig.scopes);
 
     const authUrl = `https://app.hubspot.com/oauth/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${redirectUri}`;
 
