@@ -276,28 +276,33 @@ class ApiService {
   }
 
   static async compareWorkflowVersions(workflowId: string, versionA: string, versionB: string): Promise<ApiResponse<any>> {
-    try {
-      
     console.log('🚨 API SERVICE: compareWorkflowVersions called');
     console.log('🔍 API SERVICE: Parameters:', { workflowId, versionA, versionB });
     console.log('🔍 API SERVICE: Attempting HubSpot ID endpoint first');
-    // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
+
+    try {
+      // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
       const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}`);
+      console.log('✅ API SERVICE: HubSpot ID endpoint successful');
+      console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;
     } catch (error: any) {
+      console.log('⚠️ API SERVICE: HubSpot ID endpoint failed, trying fallback');
+      console.log('🔍 API SERVICE: Error:', error.response?.status, error.message);
+      
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       if (error.response?.status === 404) {
         try {
-          
-        console.log('⚠️ API SERVICE: HubSpot ID endpoint failed, trying fallback');
-        console.log('🔍 API SERVICE: Fallback URL:', `/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
-          const response = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
+          console.log('🔍 API SERVICE: Fallback URL:', `/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
+          const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
           console.log('✅ API SERVICE: Fallback endpoint successful');
-          return response.data;
+          return fallbackResponse.data;
         } catch (fallbackError) {
+          console.error('❌ API SERVICE: Both endpoints failed:', fallbackError);
           throw fallbackError;
         }
       }
+      console.error('❌ API SERVICE: API call failed:', error);
       throw error;
     }
   }
@@ -311,8 +316,8 @@ class ApiService {
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       if (error.response?.status === 404) {
         try {
-          const response = await apiClient.get(`/api/workflow/${workflowId}/versions`);
-          return response.data;
+          const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}/versions`);
+          return fallbackResponse.data;
         } catch (fallbackError) {
           throw fallbackError;
         }
