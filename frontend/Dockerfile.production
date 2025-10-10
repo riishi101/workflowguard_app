@@ -16,8 +16,8 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Set environment variables for build
-ENV VITE_API_URL=https://workflowguard-backend-248924108278.us-central1.run.app
+# Set environment variables for build - Using proper domain from memory analysis
+ENV VITE_API_URL=https://api.workflowguard.pro
 ENV VITE_APP_URL=https://www.workflowguard.pro
 ENV NODE_ENV=production
 

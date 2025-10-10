@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
-// API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://workflowguard-backend-248924108278.us-central1.run.app';
+// API base URL - Using proper domain from memory analysis
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
 
 // Create axios instance
 const apiClient = axios.create({

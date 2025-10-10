@@ -1,5 +1,5 @@
-// API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'https://workflowguard-backend-248924108278.us-central1.run.app';
+// API Configuration - Using proper domain from memory analysis
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
 
 // API Endpoints
 export const ENDPOINTS = {
