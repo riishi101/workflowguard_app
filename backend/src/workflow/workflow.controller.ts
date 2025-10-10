@@ -339,6 +339,11 @@ export class WorkflowController {
     @Param('versionB') versionB: string,
     @Req() req: any,
   ) {
+    console.log('🚨 CONTROLLER: Compare endpoint called!');
+    console.log('🔍 CONTROLLER: Parameters received:', { hubspotId, versionA, versionB });
+    console.log('🔍 CONTROLLER: User:', req.user?.email);
+    console.log('🔍 CONTROLLER: Request URL:', req.url);
+    
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
     if (!userId) {
