@@ -155,7 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://workflowguard-backend-248924108278.us-central1.run.app';
       const resp = await fetch(`${apiUrl}/api/auth/hubspot/url`, { credentials: 'include' });
       if (!resp.ok) {
         // If backend not configured, show a clear message
