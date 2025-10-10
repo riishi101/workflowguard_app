@@ -57,9 +57,27 @@ export class WorkflowService {
       where: { id: versionB }
     });
 
-    // Decrypt the debug data for logging
-    const decryptedDebugA = debugVersionA?.data ? this.encryptionService.decryptWorkflowData(debugVersionA.data) : null;
-    const decryptedDebugB = debugVersionB?.data ? this.encryptionService.decryptWorkflowData(debugVersionB.data) : null;
+    // Decrypt the debug data for logging (with proper JSON parsing)
+    let decryptedDebugA = null;
+    let decryptedDebugB = null;
+    
+    if (debugVersionA?.data) {
+      try {
+        const parsedDebugA = typeof debugVersionA.data === 'string' ? JSON.parse(debugVersionA.data) : debugVersionA.data;
+        decryptedDebugA = this.encryptionService.decryptWorkflowData(parsedDebugA);
+      } catch (error) {
+        console.error('❌ Failed to decrypt debug Version A:', error);
+      }
+    }
+    
+    if (debugVersionB?.data) {
+      try {
+        const parsedDebugB = typeof debugVersionB.data === 'string' ? JSON.parse(debugVersionB.data) : debugVersionB.data;
+        decryptedDebugB = this.encryptionService.decryptWorkflowData(parsedDebugB);
+      } catch (error) {
+        console.error('❌ Failed to decrypt debug Version B:', error);
+      }
+    }
     
     console.log('🚨 DATABASE VERSION A DATA:', {
       id: debugVersionA?.id,
@@ -75,6 +93,23 @@ export class WorkflowService {
       dataType: typeof debugVersionB?.data,
       dataKeys: debugVersionB?.data ? Object.keys(debugVersionB.data as any) : 'no data',
       sampleData: debugVersionB?.data ? JSON.stringify(debugVersionB.data).substring(0, 200) + '...' : 'no data'
+    });
+    
+    console.log('🔓 DECRYPTED DEBUG DATA:', {
+      versionA: {
+        hasDecryptedData: !!decryptedDebugA,
+        decryptedDataType: typeof decryptedDebugA,
+        decryptedKeys: decryptedDebugA ? Object.keys(decryptedDebugA) : 'no data',
+        hasActions: decryptedDebugA?.actions?.length || 0,
+        workflowName: decryptedDebugA?.name || 'no name'
+      },
+      versionB: {
+        hasDecryptedData: !!decryptedDebugB,
+        decryptedDataType: typeof decryptedDebugB,
+        decryptedKeys: decryptedDebugB ? Object.keys(decryptedDebugB) : 'no data',
+        hasActions: decryptedDebugB?.actions?.length || 0,
+        workflowName: decryptedDebugB?.name || 'no name'
+      }
     });
     
     try {
@@ -137,8 +172,47 @@ export class WorkflowService {
       }
 
       // Enhanced comparison logic with complete workflow data
-      let originalDataA = this.encryptionService.decryptWorkflowData(versionAData.data);
-      let originalDataB = this.encryptionService.decryptWorkflowData(versionBData.data);
+      // CRITICAL FIX: Parse JSON string before decryption (data is stored as JSON.stringify)
+      let parsedDataA = versionAData.data;
+      let parsedDataB = versionBData.data;
+      
+      // Parse JSON if data is stored as string
+      if (typeof parsedDataA === 'string') {
+        try {
+          parsedDataA = JSON.parse(parsedDataA);
+        } catch (error) {
+          console.error('❌ Failed to parse Version A JSON data:', error);
+          parsedDataA = null;
+        }
+      }
+      
+      if (typeof parsedDataB === 'string') {
+        try {
+          parsedDataB = JSON.parse(parsedDataB);
+        } catch (error) {
+          console.error('❌ Failed to parse Version B JSON data:', error);
+          parsedDataB = null;
+        }
+      }
+      
+      // Now decrypt the parsed data
+      let originalDataA = parsedDataA ? this.encryptionService.decryptWorkflowData(parsedDataA) : null;
+      let originalDataB = parsedDataB ? this.encryptionService.decryptWorkflowData(parsedDataB) : null;
+      
+      console.log('🔍 DATA PARSING DEBUG:', {
+        versionA: versionA,
+        versionB: versionB,
+        rawDataAType: typeof versionAData.data,
+        rawDataBType: typeof versionBData.data,
+        parsedDataAType: typeof parsedDataA,
+        parsedDataBType: typeof parsedDataB,
+        decryptedDataAType: typeof originalDataA,
+        decryptedDataBType: typeof originalDataB,
+        hasDecryptedDataA: !!originalDataA,
+        hasDecryptedDataB: !!originalDataB,
+        dataAKeys: originalDataA ? Object.keys(originalDataA) : 'null',
+        dataBKeys: originalDataB ? Object.keys(originalDataB) : 'null'
+      });
       
       // Get userId from the workflow owner
       const workflow = await this.prisma.workflow.findFirst({
