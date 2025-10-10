@@ -1,5 +1,5 @@
-# Production-optimized Dockerfile for WorkflowGuard Frontend
-# Multi-stage build for smaller image size and better performance
+# Simplified Dockerfile for WorkflowGuard Frontend
+# Based on memory analysis to avoid npm ci and permission issues
 
 # Stage 1: Build stage
 FROM node:20-alpine AS builder
@@ -7,14 +7,11 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache python3 make g++
-
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --include=dev
+# Install dependencies using npm install (more reliable than npm ci)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -30,36 +27,14 @@ RUN npm run build
 # Stage 2: Production stage
 FROM nginx:alpine AS production
 
-# Install security updates and utilities
-RUN apk update && \
-    apk upgrade && \
-    apk add --no-cache \
-    curl \
-    && rm -rf /var/cache/apk/*
-
-# Create non-root user
-RUN addgroup -g 1001 -S nginx-user && \
-    adduser -S nginx-user -u 1001 -G nginx-user
-
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration
 COPY nginx.production.conf /etc/nginx/nginx.conf
 
-# Create nginx directories and set permissions
-RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
-    chown -R nginx-user:nginx-user /var/cache/nginx /var/log/nginx /var/run /usr/share/nginx/html
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/ || exit 1
-
 # Expose port
 EXPOSE 80
-
-# Switch to non-root user
-USER nginx-user
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

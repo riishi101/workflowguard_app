@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies using npm ci for reliable builds
-RUN npm ci
+# Install dependencies using npm install (more compatible than npm ci)
+RUN npm install
 
 # Copy source code
 COPY . .
