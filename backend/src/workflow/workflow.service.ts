@@ -615,6 +615,14 @@ export class WorkflowService {
     const markedStepsB = stepsB.map(step => ({ ...step, isRemoved: false, isModified: false, isNew: false }));
 
     let added = 0, removed = 0, modified = 0;
+    // 🔍 DEBUG: Step comparison analysis
+    console.log('🔍 STEP COMPARISON DEBUG:', {
+      stepsACount: stepsA.length,
+      stepsBCount: stepsB.length,
+      stepsAPreview: stepsA.slice(0, 2).map(s => ({ title: s.title, type: s.type })),
+      stepsBPreview: stepsB.slice(0, 2).map(s => ({ title: s.title, type: s.type })),
+      stepsAreIdentical: JSON.stringify(stepsA) === JSON.stringify(stepsB)
+    });
 
     // Mark removed steps (in A but not in B)
     markedStepsA.forEach(stepA => {
