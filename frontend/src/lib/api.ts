@@ -120,6 +120,9 @@ class ApiService {
   static async login(email: string, password: string): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post('/api/auth/login', { email, password });
+      
+      console.log('✅ API SERVICE: HubSpot ID endpoint successful');
+      console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;
     } catch (error) {
       throw error;
@@ -274,14 +277,22 @@ class ApiService {
 
   static async compareWorkflowVersions(workflowId: string, versionA: string, versionB: string): Promise<ApiResponse<any>> {
     try {
-      // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
+      
+    console.log('🚨 API SERVICE: compareWorkflowVersions called');
+    console.log('🔍 API SERVICE: Parameters:', { workflowId, versionA, versionB });
+    console.log('🔍 API SERVICE: Attempting HubSpot ID endpoint first');
+    // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
       const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}`);
       return response.data;
     } catch (error: any) {
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       if (error.response?.status === 404) {
         try {
+          
+        console.log('⚠️ API SERVICE: HubSpot ID endpoint failed, trying fallback');
+        console.log('🔍 API SERVICE: Fallback URL:', `/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
           const response = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
+          console.log('✅ API SERVICE: Fallback endpoint successful');
           return response.data;
         } catch (fallbackError) {
           throw fallbackError;
