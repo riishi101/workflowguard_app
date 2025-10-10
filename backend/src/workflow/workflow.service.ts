@@ -2815,10 +2815,10 @@ export class WorkflowService {
                 workflowId: existingWorkflow.id,
                 versionNumber: nextVersionNumber,
                 data: JSON.stringify(encryptedWorkflowData), // Convert encrypted object to JSON string
-                snapshotType: 'Manual Sync',
+                snapshotType: `Manual Sync - ${changeSummary}`, // Include change summary
                 createdBy: 'System (Sync)',
                 createdAt: new Date(),
-                changeSummary: changeSummary, // Store the calculated change summary
+                // Store change summary in snapshotType to avoid schema changes
               },
             });
 
