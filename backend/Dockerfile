@@ -9,20 +9,17 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install ALL dependencies (dev + prod) to ensure TypeScript compilation works
-RUN npm install
+# Install dependencies using npm ci for reliable builds
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Generate Prisma client BEFORE TypeScript compilation
+# Generate Prisma client
 RUN npx prisma generate
 
-# Use direct TypeScript compiler - bypass all NestJS build complexity
-RUN npx tsc --project tsconfig.json --outDir dist
-
-# Copy any missing files that TypeScript might not handle
-RUN cp -r prisma dist/ 2>/dev/null || true
+# Build using NestJS build system (more reliable than direct tsc)
+RUN npm run build
 
 # Expose port
 EXPOSE 4000

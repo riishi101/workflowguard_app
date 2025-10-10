@@ -28,6 +28,7 @@ async function bootstrap() {
         origin: [
           'https://www.workflowguard.pro',
           'https://workflowguard-frontend-248924108278.us-central1.run.app',
+          'https://workflowguard-backend-248924108278.us-central1.run.app',
           'http://localhost:3000', // for development
           'http://localhost:5173', // for Vite development
         ],
@@ -35,7 +36,6 @@ async function bootstrap() {
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
       },
-      logger: ['error', 'warn', 'debug', 'log', 'verbose'],
     });
     
     console.log('NestFactory created successfully');
