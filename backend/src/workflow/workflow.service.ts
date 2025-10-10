@@ -2782,6 +2782,31 @@ export class WorkflowService {
               ? latestVersion.versionNumber + 1
               : 1;
 
+            // Calculate changes against previous version for proper change summary
+            let previousWorkflowData = null;
+            if (latestVersion && latestVersion.data) {
+              try {
+                // Parse and decrypt previous version data for comparison
+                const parsedPreviousData = typeof latestVersion.data === 'string' ? 
+                  JSON.parse(latestVersion.data) : latestVersion.data;
+                previousWorkflowData = this.encryptionService.decryptWorkflowData(parsedPreviousData);
+                console.log('✅ Successfully retrieved previous version data for change calculation');
+              } catch (error) {
+                console.warn('⚠️ Could not retrieve previous version data for change calculation:', error);
+              }
+            }
+
+            // Calculate actual changes between current and previous data
+            const changes = this.calculateWorkflowChanges(currentWorkflowData, previousWorkflowData);
+            const changeSummary = this.generateWorkflowChangeSummary(changes);
+            
+            console.log('📊 CHANGE CALCULATION RESULT:', {
+              workflowId: hubspotWorkflow.id,
+              changes: changes,
+              changeSummary: changeSummary,
+              hasPreviousData: !!previousWorkflowData
+            });
+
             // Encrypt sensitive data before storing
             const encryptedWorkflowData = this.encryptionService.encryptWorkflowData(currentWorkflowData);
 
@@ -2793,6 +2818,7 @@ export class WorkflowService {
                 snapshotType: 'Manual Sync',
                 createdBy: 'System (Sync)',
                 createdAt: new Date(),
+                changeSummary: changeSummary, // Store the calculated change summary
               },
             });
 
@@ -4110,5 +4136,114 @@ export class WorkflowService {
                       data.enrollmentTriggers?.length > 0;
 
     return hasContent;
+  }
+
+  /**
+   * Calculate changes between current and previous workflow data
+   * Based on memory lessons to avoid "No changes detected" issues
+   */
+  private calculateWorkflowChanges(currentData: any, previousData: any): any {
+    console.log('🔍 CALCULATING WORKFLOW CHANGES:', {
+      hasCurrent: !!currentData,
+      hasPrevious: !!previousData,
+      currentActions: currentData?.actions?.length || 0,
+      previousActions: previousData?.actions?.length || 0
+    });
+
+    if (!currentData) {
+      return { added: 0, modified: 0, removed: 0 };
+    }
+
+    // If no previous data, treat as initial version
+    if (!previousData) {
+      const currentActions = currentData.actions?.length || 0;
+      const currentTriggers = currentData.enrollmentTriggers?.length || 0;
+      console.log('📊 INITIAL VERSION - No previous data to compare');
+      return {
+        added: currentActions + currentTriggers,
+        modified: 0,
+        removed: 0
+      };
+    }
+
+    // Extract actions for comparison
+    const currentActions = currentData.actions || [];
+    const previousActions = previousData.actions || [];
+    const currentTriggers = currentData.enrollmentTriggers || [];
+    const previousTriggers = previousData.enrollmentTriggers || [];
+
+    // Calculate action changes
+    const addedActions = currentActions.filter(action => 
+      !previousActions.find(prevAction => 
+        this.actionsEqual(action, prevAction)
+      )
+    ).length;
+
+    const removedActions = previousActions.filter(action => 
+      !currentActions.find(currAction => 
+        this.actionsEqual(action, currAction)
+      )
+    ).length;
+
+    const modifiedActions = currentActions.filter(action => {
+      const prevAction = previousActions.find(prevAction => 
+        prevAction.id === action.id || prevAction.actionId === action.actionId
+      );
+      return prevAction && !this.actionsEqual(action, prevAction);
+    }).length;
+
+    // Calculate trigger changes
+    const addedTriggers = currentTriggers.length - previousTriggers.length;
+    const triggerChanges = addedTriggers > 0 ? addedTriggers : 0;
+
+    const totalChanges = {
+      added: addedActions + triggerChanges,
+      modified: modifiedActions,
+      removed: removedActions
+    };
+
+    console.log('📊 CHANGE CALCULATION RESULT:', totalChanges);
+    return totalChanges;
+  }
+
+  /**
+   * Generate workflow change summary
+   * Based on memory lessons to provide meaningful change descriptions
+   */
+  private generateWorkflowChangeSummary(changes: any): string {
+    const { added, modified, removed } = changes;
+    const summaries = [];
+    
+    if (added > 0) summaries.push(`${added} step(s) added`);
+    if (modified > 0) summaries.push(`${modified} step(s) modified`);
+    if (removed > 0) summaries.push(`${removed} step(s) removed`);
+    
+    if (summaries.length === 0) {
+      return 'No changes detected';
+    }
+    
+    const summary = summaries.join(', ');
+    console.log('📝 GENERATED CHANGE SUMMARY:', summary);
+    return summary;
+  }
+
+  /**
+   * Compare two actions for equality
+   * Based on memory lessons about action comparison logic
+   */
+  private actionsEqual(action1: any, action2: any): boolean {
+    if (!action1 || !action2) return false;
+    
+    // Compare by ID first
+    if (action1.id && action2.id && action1.id === action2.id) {
+      // Same ID, check if properties changed
+      return JSON.stringify(action1.settings || {}) === JSON.stringify(action2.settings || {}) &&
+             action1.type === action2.type;
+    }
+    
+    // Compare by type and key properties
+    return action1.type === action2.type &&
+           action1.actionType === action2.actionType &&
+           JSON.stringify(action1.settings || {}) === JSON.stringify(action2.settings || {});
   }
 }
