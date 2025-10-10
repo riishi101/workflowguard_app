@@ -48,6 +48,8 @@ export class WorkflowService {
     captureDetailedStepProperties: boolean = true,
   ): Promise<any> {
     console.log('🚨 COMPARE VERSIONS CALLED:', { workflowId, versionA, versionB });
+    console.log('🚨 COMPARE VERSIONS ENTRY POINT:', { workflowId, versionA, versionB });
+    console.log('🔍 COMPARE VERSIONS: Method called successfully');
     
     // CRITICAL DEBUG: Let's see what's actually in the database
     const debugVersionA = await this.prisma.workflowVersion.findUnique({
@@ -330,10 +332,18 @@ export class WorkflowService {
       const workflowDataA = originalDataA as any;
       const workflowDataB = originalDataB as any;
 
+      
+      console.log('🔄 COMPARE VERSIONS: About to transform workflow data to steps');
+      console.log('🔍 COMPARE VERSIONS: Data A exists:', !!workflowDataA);
+      console.log('🔍 COMPARE VERSIONS: Data B exists:', !!workflowDataB);
       // Create enhanced step comparison with proper change marking
       const stepsA = this.transformWorkflowDataToSteps(workflowDataA, 'A');
       const stepsB = this.transformWorkflowDataToSteps(workflowDataB, 'B');
 
+      
+      console.log('🎯 COMPARE VERSIONS: About to call markStepChanges');
+      console.log('🔍 COMPARE VERSIONS: Steps A count:', stepsA.length);
+      console.log('🔍 COMPARE VERSIONS: Steps B count:', stepsB.length);
       // Mark changes between versions
       const { markedStepsA, markedStepsB, changeSummary } = this.markStepChanges(stepsA, stepsB);
 
@@ -409,6 +419,9 @@ export class WorkflowService {
         },
       };
 
+      
+      console.log('✅ COMPARE VERSIONS: Comparison completed successfully');
+      console.log('🔍 COMPARE VERSIONS: Returning enhanced comparison data');
       return enhancedComparison;
     } catch (error) {
       throw new HttpException(
