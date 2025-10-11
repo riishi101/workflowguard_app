@@ -3,8 +3,13 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install system dependencies including build tools for esbuild
+RUN apt-get update && apt-get install -y \
+    curl \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files first for better caching
 COPY package*.json ./
@@ -18,8 +23,9 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build using NestJS build system (more reliable than direct tsc)
-RUN npm run build
+# Build using NestJS build system with increased memory
+# Memory fix: Increase Node.js memory limit for esbuild
+RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
 
 # Expose port
 EXPOSE 4000
