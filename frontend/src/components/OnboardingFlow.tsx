@@ -47,22 +47,15 @@ const OnboardingFlow = () => {
   // If not authenticated, show the onboarding modals
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Debug: Force show a simple modal test */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg max-w-md w-full mx-4">
-          <h2 className="text-2xl font-bold mb-4">Welcome to WorkflowGuard!</h2>
-          <p className="mb-4">This is a test modal to see if modals work at all.</p>
-          <p className="text-sm text-gray-600 mb-4">
-            Debug: modalStep={modalStep}, isAuthenticated={String(isAuthenticated)}, loading={String(loading)}
-          </p>
-          <button 
-            onClick={handleWelcomeComplete}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Continue
-          </button>
-        </div>
-      </div>
+      <WelcomeModal
+        open={modalStep === 'welcome'}
+        onClose={handleWelcomeComplete}
+      />
+      <ConnectHubSpotModal
+        open={modalStep === 'connect'}
+        onClose={() => setModalStep('connect')} // Keep it open if they close it
+        onConnect={handleConnectHubSpot}
+      />
     </div>
   );
 };
