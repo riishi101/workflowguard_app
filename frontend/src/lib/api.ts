@@ -280,19 +280,15 @@ class ApiService {
     console.log('🔍 API SERVICE: Parameters:', { workflowId, versionA, versionB });
     console.log('🔍 API SERVICE: Attempting HubSpot ID endpoint first');
     
-    // Add cache-busting parameters and no-cache headers to force real backend calls
+    // Add cache-busting timestamp parameter to force real backend calls
+    // Note: Removed CORS-problematic headers (Cache-Control, Pragma, Expires)
     const cacheBuster = Date.now();
-    const headers = {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    };
     
     console.log('🔄 API SERVICE: Adding cache-busting parameters:', { cacheBuster });
 
     try {
       // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
-      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`, { headers });
+      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`);
       console.log('✅ API SERVICE: HubSpot ID endpoint successful');
       console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;
@@ -304,7 +300,7 @@ class ApiService {
       if (error.response?.status === 404) {
         try {
           console.log('🔍 API SERVICE: Fallback URL:', `/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
-          const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`, { headers });
+          const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`);
           console.log('✅ API SERVICE: Fallback endpoint successful');
           return fallbackResponse.data;
         } catch (fallbackError) {
