@@ -41,6 +41,9 @@ steps:
       - '--set-secrets=HUBSPOT_REDIRECT_URI=HUBSPOT_REDIRECT_URI:latest'
       - '--set-secrets=RAZORPAY_KEY_ID=RAZORPAY_KEY_ID:latest'
       - '--set-secrets=RAZORPAY_KEY_SECRET=RAZORPAY_KEY_SECRET:latest'
+      - '--set-env-vars=RAZORPAY_PLAN_ID_STARTER_INR=plan_R6RI02CsUCUlDz'
+      - '--set-env-vars=RAZORPAY_PLAN_ID_PROFESSIONAL_INR=plan_R6RKEg5mqJK6Ky'
+      - '--set-env-vars=RAZORPAY_PLAN_ID_ENTERPRISE_INR=plan_R6RKnjqXu0BZsH'
 
   # Deploy frontend service
   - name: 'gcr.io/cloud-builders/gcloud'
