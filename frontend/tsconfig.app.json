@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": false,
 
     /* Type Definitions */
-    "types": ["node", "vite/client", "d3-color"],
+    "types": ["node", "vite/client"],
 
     "baseUrl": ".",
     "paths": {
