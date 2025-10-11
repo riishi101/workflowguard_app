@@ -8,9 +8,19 @@ export class PaymentService {
   private razorpay: any;
 
   constructor(private configService: ConfigService) {
-    // Initialize Razorpay with environment variables
+    // TEMPORARY: Disable Razorpay during production builds to prevent deployment issues
+    // Memory Lesson: Razorpay caused build failures before, isolate payment from core deployment
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ PaymentService - TEMPORARILY DISABLED in production build');
+      console.log('⚠️ PaymentService - Core WorkflowGuard functionality will work normally');
+      console.log('⚠️ PaymentService - Payment features can be re-enabled after successful deployment');
+      this.logger.warn('Payment service temporarily disabled for deployment stability');
+      return;
+    }
+    
+    // Initialize Razorpay with environment variables (development only)
     // Memory Check: Following MISTAKE #1 lesson - Backend-only configuration
-    console.log('💳 PaymentService - Constructor called');
+    console.log('💳 PaymentService - Constructor called (development mode)');
     
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     const keySecret = this.configService.get<string>('RAZORPAY_KEY_SECRET');
@@ -51,7 +61,16 @@ export class PaymentService {
    * Memory Check: Avoiding MISTAKE #4 (Hardcoded Plan IDs) - Dynamic INR plan IDs
    */
   getPaymentConfig() {
-    console.log('💳 PaymentService - getPaymentConfig called');
+    // TEMPORARY: Return disabled state if in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('⚠️ PaymentService - getPaymentConfig called but service is disabled');
+      throw new HttpException(
+        'Payment system is temporarily disabled. Core WorkflowGuard functionality is available.',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+    
+    console.log('💳 PaymentService - getPaymentConfig called (development mode)');
     
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     console.log('💳 PaymentService - KeyId check:', keyId ? keyId.substring(0, 10) + '...' : 'MISSING');
