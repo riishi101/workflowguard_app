@@ -37,17 +37,8 @@ const RootRoute = () => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
   
-  // Debug logging
-  console.log('RootRoute Debug:', {
-    pathname: location.pathname,
-    isAuthenticated,
-    loading,
-    shouldShowOnboarding: location.pathname === '/' && !loading && !isAuthenticated
-  });
-  
   // Show OnboardingFlow on root route if not authenticated
   if (location.pathname === '/' && !loading && !isAuthenticated) {
-    console.log('Rendering OnboardingFlow');
     return <OnboardingFlow />;
   }
   
@@ -60,22 +51,12 @@ const RootRoute = () => {
   return null;
 };
 
-
-import { useEffect } from "react";
-
 const App = () => {
-  // Debug logging
-  console.log('App component rendering');
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background font-sans antialiased">
-            {/* Debug element */}
-            <div className="fixed top-0 left-0 bg-red-500 text-white p-2 text-xs z-50">
-              App is rendering! Check console for debug info.
-            </div>
             <Toaster />
             <Sonner />
             <BrowserRouter>

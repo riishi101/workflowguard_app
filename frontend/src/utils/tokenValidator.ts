@@ -16,11 +16,9 @@ export class TokenValidator {
    * Memory Check: Avoiding 401 errors by ensuring token validity
    */
   static validateToken(): TokenValidationResult {
-    console.log('Validating token...');
     const token = localStorage.getItem('token');
     
     if (!token) {
-      console.log('No token found in localStorage');
       return {
         isValid: false,
         isExpired: false,
@@ -33,7 +31,6 @@ export class TokenValidator {
       // Parse JWT token
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.log('Invalid token format');
         return {
           isValid: false,
           isExpired: false,
@@ -46,8 +43,6 @@ export class TokenValidator {
       const currentTime = Date.now() / 1000;
       const isExpired = payload.exp < currentTime;
 
-      console.log('Token validation result:', { isValid: !isExpired, isExpired, payload });
-
       return {
         isValid: !isExpired,
         isExpired,
@@ -56,7 +51,6 @@ export class TokenValidator {
       };
 
     } catch (error) {
-      console.error('Token parsing error:', error);
       return {
         isValid: false,
         isExpired: false,
@@ -71,11 +65,9 @@ export class TokenValidator {
    * Memory Check: Following MISTAKE #6 lesson - Clear user feedback
    */
   static cleanInvalidToken(): boolean {
-    console.log('Cleaning invalid tokens...');
     const validation = this.validateToken();
     
     if (!validation.isValid) {
-      console.log('Removing invalid token:', validation.error);
       localStorage.removeItem('token');
       
       // Show user-friendly notification
@@ -85,7 +77,6 @@ export class TokenValidator {
       return true;
     }
     
-    console.log('Token is valid, no cleanup needed');
     return false;
   }
 
@@ -94,28 +85,19 @@ export class TokenValidator {
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages
    */
   static debugToken() {
-    console.log('=== Token Debug Information ===');
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('No token found');
       return;
     }
-    
-    console.log('Token exists, length:', token.length);
     
     try {
       const parts = token.split('.');
       if (parts.length === 3) {
         const header = JSON.parse(atob(parts[0]));
         const payload = JSON.parse(atob(parts[1]));
-        console.log('Token header:', header);
-        console.log('Token payload:', payload);
-        console.log('Token expires:', new Date(payload.exp * 1000));
       } else {
-        console.log('Invalid token format');
       }
     } catch (error) {
-      console.error('Error parsing token:', error);
     }
   }
 }

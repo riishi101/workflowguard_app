@@ -417,7 +417,7 @@ const RiskAssessment: React.FC = () => {
                                 size="sm" 
                                 variant="outline"
                                 onClick={() => {
-                                // ✅ FIX: Prioritize numeric IDs over workflow names (Memory lesson: never use names as HubSpot IDs)
+                                // Prioritize numeric IDs over workflow names
                                 const numericId = assessment.workflowId || assessment.id || assessment.hubspotId;
                                 const isNumeric = numericId && /^\d+$/.test(numericId.toString());
                                 
