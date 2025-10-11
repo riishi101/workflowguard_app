@@ -78,7 +78,7 @@ export class AuthController {
     const clientId = process.env.HUBSPOT_CLIENT_ID;
     const redirectUri = encodeURIComponent(
       process.env.HUBSPOT_REDIRECT_URI ||
-        'http://localhost:3000/auth/hubspot/callback',
+        'https://api.workflowguard.pro/api/auth/hubspot/callback',
     );
     // Use scopes from hubspot config to ensure consistency
     const scopes = encodeURIComponent(hubspotConfig.scopes);
