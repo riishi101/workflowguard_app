@@ -12,16 +12,21 @@ const OnboardingFlow = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  console.log('OnboardingFlow rendering:', { modalStep, isAuthenticated, loading });
+
   const handleWelcomeComplete = () => {
+    console.log('Welcome modal completed');
     setModalStep('connect');
   };
 
   const handleConnectHubSpot = () => {
+    console.log('Connecting to HubSpot...');
     // The connectHubSpot function from AuthContext will handle the redirect.
     connectHubSpot();
   };
 
   const handleWorkflowSelectionComplete = () => {
+    console.log('Workflow selection completed');
     navigate('/dashboard');
     toast({
       title: "Setup Complete!",
@@ -30,6 +35,7 @@ const OnboardingFlow = () => {
   };
 
   if (loading) {
+    console.log('Showing loading state');
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
@@ -41,10 +47,12 @@ const OnboardingFlow = () => {
   }
 
   if (isAuthenticated) {
+    console.log('User is authenticated, showing WorkflowSelection');
     return <WorkflowSelection onComplete={handleWorkflowSelectionComplete} />;
   }
 
   // If not authenticated, show the onboarding modals
+  console.log('User not authenticated, showing onboarding modals');
   return (
     <div className="min-h-screen bg-gray-50">
       <WelcomeModal

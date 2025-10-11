@@ -41,11 +41,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (hasInitialized) {
-      
       return;
     }
 
     const initializeAuth = async () => {
+      console.log('Initializing auth context...');
       
       try {
         // Check for token in URL after OAuth callback
@@ -55,8 +55,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const errorParam = urlParams.get('error');
         const isMarketplace = urlParams.get('marketplace') === 'true';
 
+        console.log('URL params:', { successParam, tokenParam, errorParam, isMarketplace });
+
         // Handle OAuth errors
         if (errorParam) {
+          console.error('OAuth error detected:', errorParam);
           
           // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -92,6 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Handle OAuth callback
         if (successParam === 'true' && tokenParam) {
+          console.log('Handling OAuth callback with token');
           
           localStorage.setItem('token', tokenParam);
           
@@ -99,37 +103,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const newUrl = window.location.pathname + 
             (urlParams.get('marketplace') === 'true' ? '?source=marketplace' : '');
           window.history.replaceState({}, document.title, newUrl);
-          
         }
 
         const token = localStorage.getItem('token');
+        console.log('Current token status:', token ? 'Token exists' : 'No token found');
 
         if (token) {
           // Add small delay to ensure token is properly set
           await new Promise(resolve => setTimeout(resolve, 100));
           try {
+            console.log('Fetching current user...');
             const response = await ApiService.getCurrentUser();
+            console.log('Current user response:', response);
+            
             if (response.success && response.data) {
+              console.log('User authenticated successfully:', response.data);
               setUser(response.data);
 
               // Don't redirect here - let the OnboardingFlow handle navigation
               if (successParam === 'true' && tokenParam) {
-                }
+                console.log('OAuth callback completed successfully');
+              }
             } else {
+              console.warn('Invalid user response, removing token');
               localStorage.removeItem('token');
               setUser(null);
             }
           } catch (error: any) {
+            console.error('Error fetching current user:', error);
             localStorage.removeItem('token');
             setUser(null);
           }
         } else {
+          console.log('No token found, setting user to null');
           setUser(null);
         }
       } catch (error) {
+        console.error('Error during auth initialization:', error);
         localStorage.removeItem('token');
         setUser(null);
       } finally {
+        console.log('Auth initialization complete');
         setLoading(false);
         setHasInitialized(true);
       }
@@ -139,14 +153,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [hasInitialized]);
 
   const connectHubSpot = async () => {
-    
+    console.log('Initiating HubSpot connection...');
     const currentUrl = window.location.href;
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';
+      console.log('API URL:', apiUrl);
+      
       const resp = await fetch(`${apiUrl}/api/auth/hubspot/url`, { credentials: 'include' });
+      console.log('HubSpot URL response:', resp.status, resp.statusText);
+      
       if (!resp.ok) {
-        // If backend not configured, show a clear message
+        console.error('HubSpot configuration error');
         
         toast({
           title: 'HubSpot not configured',
@@ -154,10 +172,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
         return;
       }
+      
       const data = await resp.json().catch(() => null as any);
+      console.log('HubSpot URL data:', data);
+      
       if (data && data.url) {
+        console.log('Redirecting to HubSpot OAuth URL');
         window.location.href = data.url as string;
       } else {
+        console.error('No URL in HubSpot response');
         
         toast({
           title: 'Unable to start HubSpot OAuth',
@@ -165,6 +188,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
       }
     } catch (e) {
+      console.error('Network error during HubSpot connection:', e);
       
       toast({
         title: 'Network error',
@@ -174,19 +198,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const testAuthentication = async () => {
-    
+    console.log('Testing authentication...');
     const token = localStorage.getItem('token');
+    console.log('Current token:', token);
     return;
   };
 
   const logout = async () => {
+    console.log('Logging out...');
     
     try {
       // Clear auth state
       setUser(null);
       localStorage.removeItem('token');
-      
+      console.log('Logout successful');
     } catch (error) {
+      console.error('Error during logout:', error);
       
       // Force logout even on error
       setUser(null);
@@ -202,6 +229,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     testAuthentication, // Add this for debugging
   };
+
+  console.log('AuthContext value:', { user, loading, isAuthenticated: !!user });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

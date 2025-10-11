@@ -421,7 +421,6 @@ const RiskAssessment: React.FC = () => {
                                 const numericId = assessment.workflowId || assessment.id || assessment.hubspotId;
                                 const isNumeric = numericId && /^\d+$/.test(numericId.toString());
                                 
-                                );
                                 if (isNumeric) {
                                   assessWorkflow(numericId);
                                   setActiveTab('assessments'); // Auto-switch to detailed view
@@ -644,7 +643,6 @@ const RiskAssessment: React.FC = () => {
                               const numericId = approval.workflowId || approval.id || approval.hubspotId;
                               const isNumeric = numericId && /^\d+$/.test(numericId.toString());
                               
-                              );
                               if (isNumeric) {
                                 assessWorkflow(numericId);
                                 setActiveTab('assessments'); // Auto-switch to detailed view
