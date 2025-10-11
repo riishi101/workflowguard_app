@@ -1,8 +1,11 @@
-# Simplified Dockerfile for WorkflowGuard Frontend
-# Based on memory analysis to avoid npm ci and permission issues
+# Frontend Dockerfile with comprehensive debugging
+# Systematic debugging approach to identify exact failure point
 
 # Stage 1: Build stage
 FROM node:20-alpine AS builder
+
+# Install build tools for potential native dependencies
+RUN apk add --no-cache python3 make g++
 
 # Set working directory
 WORKDIR /app
@@ -10,19 +13,31 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies using npm install (more reliable than npm ci)
-RUN npm install
+# Debug: Show package.json content
+RUN echo "=== FRONTEND PACKAGE.JSON CONTENT ===" && cat package.json
+
+# Install dependencies with verbose output and increased memory
+RUN echo "=== INSTALLING FRONTEND DEPENDENCIES ===" && NODE_OPTIONS="--max-old-space-size=2048" npm install --verbose
 
 # Copy source code
 COPY . .
+
+# Debug: Show directory structure
+RUN echo "=== FRONTEND DIRECTORY STRUCTURE ===" && ls -la src/
 
 # Set environment variables for build - Using proper domain from memory analysis
 ENV VITE_API_URL=https://api.workflowguard.pro
 ENV VITE_APP_URL=https://www.workflowguard.pro
 ENV NODE_ENV=production
 
-# Build the application
-RUN npm run build
+# Debug: Check TypeScript compilation first
+RUN echo "=== CHECKING FRONTEND TYPESCRIPT COMPILATION ===" && npx tsc --noEmit
+
+# Debug: Show build script
+RUN echo "=== FRONTEND BUILD SCRIPT ===" && npm run --silent build --dry-run || echo "Build script check complete"
+
+# Build the application with maximum memory and debugging
+RUN echo "=== STARTING FRONTEND BUILD ===" && NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Stage 2: Production stage
 FROM nginx:alpine AS production
