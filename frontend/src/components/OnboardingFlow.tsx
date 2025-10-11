@@ -60,4 +60,4 @@ const OnboardingFlow = () => {
   );
 };
 
-export default OnboardingFlow; 
+export default OnboardingFlow;
