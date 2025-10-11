@@ -56,19 +56,36 @@ export class PaymentController {
     try {
       console.log('🚨 EMERGENCY TEST - Mock mode for immediate fix');
       
-      // MOCK RESPONSE - Bypass all Razorpay API issues
-      const mockOrderId = `emergency_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
+      // Real Razorpay API call with updated credentials
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const orderOptions = {
+        amount: 159900, // ₹1,599.00 in paise
+        currency: 'INR',
+        receipt: `emergency_${Date.now()}`,
+        notes: {
+          planId: body.planId,
+          userId: req.user?.id || req.user?.sub,
+          test: 'emergency_bypass'
+        }
+      };
+
+      console.log('🚨 EMERGENCY - Creating real order:', orderOptions);
+      const order = await razorpay.orders.create(orderOptions);
       
-      console.log('✅ EMERGENCY - Mock order created successfully:', mockOrderId);
+      console.log('✅ EMERGENCY - Order created successfully:', order.id);
       
       return {
         success: true,
-        orderId: mockOrderId,
-        amount: 159900,
-        currency: 'INR',
-        keyId: mockKeyId,
-        message: 'Emergency test successful - Mock mode active!'
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        message: 'Emergency test successful - Razorpay is working!'
       };
 
     } catch (error) {
@@ -122,22 +139,38 @@ export class PaymentController {
 
       console.log('🌍 MULTI-CURRENCY - Using INR pricing:', { planKey, amount });
 
-      // TEMPORARY MOCK RESPONSE - Bypass Razorpay API issues
-      // This will allow the frontend to open the payment modal
-      console.log('🚨 MOCK MODE - Creating mock order for testing');
+      // Create order directly with Razorpay using updated credentials
+      console.log('🌍 RAZORPAY - Creating real order with updated credentials');
       
-      const mockOrderId = `order_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao'; // Test key for frontend
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const orderOptions = {
+        amount: amount,
+        currency: 'INR',
+        receipt: `order_${userId}_${planId}_${Date.now()}`,
+        notes: {
+          planId,
+          userId,
+          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`
+        }
+      };
+
+      console.log('🌍 RAZORPAY - Creating order with options:', orderOptions);
+      const order = await razorpay.orders.create(orderOptions);
       
       return {
         success: true,
         data: {
-          orderId: mockOrderId,
-          amount: amount,
-          currency: 'INR',
-          keyId: mockKeyId
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID
         },
-        message: `Mock payment order created successfully in INR (Testing Mode)`
+        message: `Payment order created successfully in INR`
       };
 
     } catch (error) {
@@ -310,13 +343,23 @@ export class PaymentController {
     @Get('simple-test')
     async simpleTest() {
       try {
-        // MOCK MODE - Bypass Razorpay API completely
-        const mockOrderId = `test_mock_${Date.now()}`;
+        // Real Razorpay API test with updated credentials
+        const Razorpay = require('razorpay');
+        const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+  
+        const order = await razorpay.orders.create({
+          amount: 159900,
+          currency: 'INR',
+          receipt: `test_${Date.now()}`,
+        });
         
         return {
           success: true,
-          orderId: mockOrderId,
-          message: 'Mock test successful - Payment gateway ready!'
+          orderId: order.id,
+          message: 'Razorpay credentials work perfectly!'
         };
       } catch (error) {
         return {
