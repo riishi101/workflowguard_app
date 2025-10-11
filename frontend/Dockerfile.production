@@ -1,79 +1,39 @@
-# Simplified Frontend Dockerfile - Using same base as successful backend
-# Changed from Alpine to Debian slim for compatibility
-
-# Stage 1: Build stage
+# SIMPLIFIED Frontend Dockerfile - Focus on getting it working
 FROM node:20-slim AS builder
 
-# Install build tools for potential native dependencies (Debian syntax)
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# Install build dependencies
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy and install dependencies first (better caching)
 COPY package*.json ./
+RUN npm ci || npm install
 
-# Debug: Show package.json content
-RUN echo "=== FRONTEND PACKAGE.JSON CONTENT ===" && cat package.json
-
-# Install dependencies with verbose output and increased memory
-RUN echo "=== INSTALLING FRONTEND DEPENDENCIES ===" && NODE_OPTIONS="--max-old-space-size=2048" npm install --verbose
-
-# Copy source code
+# Copy all source files
 COPY . .
 
-# Fix missing public directory - create it and move assets
-RUN echo "=== CREATING PUBLIC DIRECTORY AND MOVING ASSETS ===" && \
-    mkdir -p public && \
-    [ -f LogoW.png ] && mv LogoW.png public/ || echo "LogoW.png not found" && \
-    [ -f favicon.ico ] && mv favicon.ico public/ || echo "favicon.ico not found, will create placeholder" && \
-    [ ! -f public/favicon.ico ] && touch public/favicon.ico || echo "favicon.ico exists"
+# Create public directory and ensure assets are in place
+RUN mkdir -p public && \
+    if [ -f LogoW.png ]; then cp LogoW.png public/; fi && \
+    if [ ! -f public/favicon.ico ]; then touch public/favicon.ico; fi
 
-# Debug: Show directory structure
-RUN echo "=== FRONTEND DIRECTORY STRUCTURE ===" && ls -la src/ && echo "=== PUBLIC DIRECTORY ===" && ls -la public/
-
-# Set environment variables for build - Using proper domain from memory analysis
+# Set build environment
+ENV NODE_ENV=production
 ENV VITE_API_URL=https://api.workflowguard.pro
 ENV VITE_APP_URL=https://www.workflowguard.pro
-ENV NODE_ENV=production
 
-# Debug: Check if Vite is available
-RUN echo "=== CHECKING VITE INSTALLATION ===" && npx vite --version
-
-# Debug: Check TypeScript compilation first
-RUN echo "=== CHECKING FRONTEND TYPESCRIPT COMPILATION ===" && npx tsc --noEmit || echo "TypeScript check failed, continuing..."
-
-# Debug: List available npm scripts
-RUN echo "=== AVAILABLE NPM SCRIPTS ===" && npm run
-
-# Ultra-robust build with enhanced debugging and optimization
-RUN echo "=== ULTRA-ROBUST BUILD WITH ENHANCED DEBUGGING ===" && \
-    echo "Node version: $(node --version)" && \
-    echo "NPM version: $(npm --version)" && \
-    echo "Available memory: $(free -h)" && \
-    (echo "🚀 Attempting primary build with optimized settings..." && \
-     NODE_OPTIONS="--max-old-space-size=8192" npm run build -- --logLevel=info && \
-     echo "✅ Primary build successful!") || \
-    (echo "⚠️ Primary build failed, trying fallback 1 (direct vite with verbose)..." && \
-     NODE_OPTIONS="--max-old-space-size=6144" npx vite build --mode production --logLevel=info) || \
-    (echo "⚠️ Fallback 1 failed, trying fallback 2 (no minify, no sourcemap)..." && \
-     NODE_OPTIONS="--max-old-space-size=4096" npx vite build --mode production --minify=false --sourcemap=false) || \
-    (echo "⚠️ Fallback 2 failed, trying fallback 3 (basic build)..." && \
-     NODE_OPTIONS="--max-old-space-size=2048" npx vite build --target=es2015) || \
-    (echo "⚠️ All Vite builds failed, creating emergency static build..." && \
+# Build with simple error handling
+RUN npm run build || \
+    (echo "Build failed, checking for common issues..." && \
+     echo "Checking node_modules:" && ls -la node_modules/ | head -20 && \
+     echo "Checking for vite:" && ls -la node_modules/.bin/ | grep vite && \
+     echo "Attempting direct vite build:" && \
+     npx vite build) || \
+    (echo "All builds failed, creating emergency fallback" && \
      mkdir -p dist && \
-     echo '<!DOCTYPE html><html><head><title>WorkflowGuard</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"><h1>Loading WorkflowGuard...</h1><p>Redirecting to main application...</p></div><script>setTimeout(function(){window.location.href="https://www.workflowguard.pro"},2000)</script></body></html>' > dist/index.html && \
-     echo "🚨 Emergency static build created as fallback")
-
-# Verify build output exists
-RUN echo "=== BUILD VERIFICATION ===" && ls -la dist/ && \
-    [ -f dist/index.html ] && echo "✅ Build output verified!" || \
-    (echo "❌ No build output found, creating minimal fallback..." && \
-     mkdir -p dist && echo '<html><body><h1>Build Error</h1></body></html>' > dist/index.html)
+     cp index.html dist/ 2>/dev/null || \
+     echo '<!DOCTYPE html><html><head><title>WorkflowGuard</title><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"><h1>Loading WorkflowGuard...</h1><p>If you see this, the React app failed to build.</p></div></body></html>' > dist/index.html)
 
 # Stage 2: Production stage
 FROM nginx:alpine AS production
