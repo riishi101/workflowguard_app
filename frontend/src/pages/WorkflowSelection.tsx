@@ -337,10 +337,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         }));
 
       // Call real API to start protection
-      console.log('Sending workflow data:', selectedWorkflowObjects);
       const response = await ApiService.startWorkflowProtection(selectedWorkflowObjects);
-      
-      console.log('API Response:', response);
 
       if (response && response.success) {
         // Store selected workflows in WorkflowState for backward compatibility

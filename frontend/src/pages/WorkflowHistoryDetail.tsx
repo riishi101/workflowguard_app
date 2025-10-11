@@ -127,7 +127,7 @@ const WorkflowHistoryDetail = () => {
       
       // Determine if this is a HubSpot ID (numeric) or internal UUID
       const isHubSpotId = /^\d+$/.test(workflowId);
-      console.log('Workflow ID type:', { workflowId, isHubSpotId });
+      // Determine workflow ID type for API routing
       
       // Fetch workflow history using appropriate API method
       const versionHistory = await ApiService.getWorkflowHistory(workflowId);
@@ -162,7 +162,7 @@ const WorkflowHistoryDetail = () => {
         }
       } else if (apiVersions && Array.isArray(apiVersions) && apiVersions.length === 0) {
         // Workflow exists but has no versions yet - this is valid
-        console.log('Workflow found but no versions exist yet');
+        // Workflow found but no versions exist yet
         setVersions([]);
         
         // Try to fetch workflow details to show workflow info even without versions

@@ -41,12 +41,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages with clear instructions
    */
   const handlePaymentClick = async () => {
-    // Debug authentication state - Memory Check: Following MISTAKE #6 lessonconsole.log('  - isAuthenticated:', isAuthenticated);
-    console.log('  - user:', user);
-    
     // Use TokenValidator for comprehensive token validation
     const tokenValidation = TokenValidator.validateToken();
-    console.log('  - token validation:', tokenValidation);
     
     if (!tokenValidation.isValid) {TokenValidator.cleanInvalidToken();
       
@@ -68,9 +64,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       return;
     }
 
-    // Debug token before API call
-    const token = localStorage.getItem('token');
-    console.log('🔐 PaymentButton - About to make payment with token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    // Proceeding with payment
 
     await handlePayment();
   };

@@ -157,11 +157,8 @@ const CompareVersions = () => {
   };
 
   const fetchComparisonData = async () => {
-    
-    ,
-      versionBParam: searchParams.get("versionB")
-    });
     if (!workflowId || !versionA || !versionB) {
+      setComparisonLoading(false);
       return;
     }
 
@@ -169,7 +166,7 @@ const CompareVersions = () => {
       setComparisonLoading(true);
       
       const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
-      console.log("Comparison response:", response); // Debug log
+      // Processing comparison response
 
       // Add safety checks for response
       if (!response || !response.data) {
@@ -200,7 +197,7 @@ const CompareVersions = () => {
         },
       };
 
-      console.log("Safe comparison data:", safeComparisonData); // Debug log
+      // Setting comparison data
       setComparisonData(safeComparisonData);
     } catch (err: any) {
       console.error("Failed to fetch comparison data:", err);
