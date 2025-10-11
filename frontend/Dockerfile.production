@@ -1,11 +1,15 @@
-# Frontend Dockerfile with comprehensive debugging
-# Systematic debugging approach to identify exact failure point
+# Simplified Frontend Dockerfile - Using same base as successful backend
+# Changed from Alpine to Debian slim for compatibility
 
 # Stage 1: Build stage
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-# Install build tools for potential native dependencies
-RUN apk add --no-cache python3 make g++
+# Install build tools for potential native dependencies (Debian syntax)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
