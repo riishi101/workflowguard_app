@@ -283,10 +283,11 @@ class ApiService {
     // Add cache-busting timestamp parameter to force real backend calls
     // Note: Removed CORS-problematic headers (Cache-Control, Pragma, Expires)
     const cacheBuster = Date.now();
+    const requestId = Math.random().toString(36).substring(2, 15);
     
-    console.log('🔄 API SERVICE: Adding cache-busting parameters:', { cacheBuster });
+    console.log('🔄 API SERVICE: Adding cache-busting parameters:', { cacheBuster, requestId });
     
-    const compareUrl = `/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`;
+    const compareUrl = `/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}&_r=${requestId}&_force=true`;
     console.log('📞 API SERVICE: EXACT URL BEING CALLED:', compareUrl);
     console.log('📞 API SERVICE: Full URL:', `${apiClient.defaults.baseURL}${compareUrl}`);
 

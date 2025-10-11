@@ -331,6 +331,18 @@ export class WorkflowController {
     }
   }
 
+  @Get('compare-health-check')
+  async compareHealthCheck() {
+    const timestamp = new Date().toISOString();
+    console.log('💚 HEALTH CHECK: Compare endpoint health check called at:', timestamp);
+    return {
+      status: 'healthy',
+      timestamp,
+      message: 'Compare endpoint is responding',
+      deployment: 'latest'
+    };
+  }
+
   @Get('by-hubspot-id/:hubspotId/compare/:versionA/:versionB')
   @UseGuards(JwtAuthGuard, TrialGuard, SubscriptionGuard)
   async compareWorkflowVersionsByHubspotId(
@@ -339,13 +351,19 @@ export class WorkflowController {
     @Param('versionB') versionB: string,
     @Req() req: any,
   ) {
+    const requestId = (req as any).requestId || 'no-middleware-id';
+    const timestamp = new Date().toISOString();
+    
     console.log('🚨 CONTROLLER: Compare endpoint called!');
+    console.log('🔍 CONTROLLER: Request ID:', requestId);
     console.log('🔍 CONTROLLER: Parameters received:', { hubspotId, versionA, versionB });
     console.log('🔍 CONTROLLER: User:', req.user?.email);
     console.log('🔍 CONTROLLER: Request URL:', req.url);
     console.log('🔍 CONTROLLER: Route matched: /by-hubspot-id/:hubspotId/compare/:versionA/:versionB');
     console.log('🔍 CONTROLLER: Method: compareWorkflowVersionsByHubspotId');
-    console.log('🔍 CONTROLLER: Timestamp:', new Date().toISOString());
+    console.log('🔍 CONTROLLER: Timestamp:', timestamp);
+    console.log('🔍 CONTROLLER: Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔍 CONTROLLER: Query params:', req.query);
     
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
