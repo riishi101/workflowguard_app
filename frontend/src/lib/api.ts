@@ -326,10 +326,7 @@ class ApiService {
 
   static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      });
-      
       const response = await apiClient.post('/api/workflow/sync-hubspot');
-      
       return response.data;
     } catch (error: any) {
       throw error;
