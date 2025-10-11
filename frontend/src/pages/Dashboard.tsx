@@ -120,17 +120,12 @@ const Dashboard: React.FC = () => {
 
   const syncHubSpotChanges = async () => {
     setSyncing(true);
-    });
-    
     try {
-      const response = await ApiService.syncHubSpotWorkflows();
-      ? response.data.length : 'Not array',
-        fullResponse: JSON.stringify(response, null, 2)
+      const response = await ApiService.syncHubSpotWorkflows();
+      toast({
+        title: "Sync Complete",
+        description: response.message || "Successfully synced workflow changes from HubSpot.",
       });
-      
-      // Store last response for debugging
-      (window as any).lastSyncResponse = response;
-      
       if (response.success) {
         refreshWorkflows();
         toast({
