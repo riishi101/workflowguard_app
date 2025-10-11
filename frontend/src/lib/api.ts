@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token for auth endpoints or if token is invalid
       if (error.config.url?.includes('/auth') || error.response?.data?.message?.includes('token')) {
-        console.log('🧹 API: Clearing invalid token due to 401 error');
+        // Clearing invalid token due to 401 error
         localStorage.removeItem('token');
       }
       // Don't clear token for non-auth endpoints to avoid infinite loops
@@ -782,17 +782,14 @@ class ApiService {
     try {
       // MULTI-CURRENCY ENDPOINT - Memory Check: Following all memory lessons with enhanced support
       const token = localStorage.getItem('token');
-      console.log('  - planId:', planId);
-      console.log('  - currency:', currency);
-      console.log('  - token exists:', !!token);
-      console.log('  - token preview:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+      // Payment order creation
       
       // Try multi-currency endpoint first
       try {
         const response = await apiClient.post('/api/payment/create-order-multicurrency', { planId, currency });
         return response.data;
       } catch (multiCurrencyError: any) {
-        console.log('  - error:', multiCurrencyError.response?.status, multiCurrencyError.response?.data);
+        // Multi-currency endpoint failed, trying fallback
         
         // Fallback to emergency endpoint (INR only)
         const response = await apiClient.post('/api/payment/emergency-test', { planId });
@@ -815,10 +812,7 @@ class ApiService {
         }
       }
     } catch (error: any) {
-      console.log('  - status:', error.response?.status);
-      console.log('  - statusText:', error.response?.statusText);
-      console.log('  - data:', error.response?.data);
-      console.log('  - headers sent:', error.config?.headers);
+      // Payment order creation failed
       throw error;
     }
   }
