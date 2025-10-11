@@ -1,4 +1,4 @@
-# Ultra-simple Node.js build - avoiding all complex build chains
+# Simplified Node.js build for debugging
 FROM node:20-slim
 
 WORKDIR /app
@@ -14,18 +14,26 @@ RUN apt-get update && apt-get install -y \
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install dependencies using npm install (more compatible than npm ci)
-RUN npm install
+# Debug: Show package.json content
+RUN echo "=== PACKAGE.JSON CONTENT ===" && cat package.json
+
+# Install dependencies with verbose output
+RUN npm install --verbose
 
 # Copy source code
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
+# Debug: Show directory structure
+RUN echo "=== DIRECTORY STRUCTURE ===" && ls -la src/
 
-# Build using NestJS build system with increased memory
-# Memory fix: Increase Node.js memory limit for esbuild
-RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
+# Generate Prisma client with debugging
+RUN echo "=== GENERATING PRISMA CLIENT ===" && npx prisma generate
+
+# Debug: Check TypeScript compilation first
+RUN echo "=== CHECKING TYPESCRIPT COMPILATION ===" && npx tsc --noEmit --project tsconfig.json
+
+# Build using NestJS build system with maximum memory and debugging
+RUN echo "=== STARTING NESTJS BUILD ===" && NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Expose port
 EXPOSE 4000
