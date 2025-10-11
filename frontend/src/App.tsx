@@ -37,8 +37,17 @@ const RootRoute = () => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
   
+  // Debug logging
+  console.log('RootRoute Debug:', {
+    pathname: location.pathname,
+    isAuthenticated,
+    loading,
+    shouldShowOnboarding: location.pathname === '/' && !loading && !isAuthenticated
+  });
+  
   // Show OnboardingFlow on root route if not authenticated
   if (location.pathname === '/' && !loading && !isAuthenticated) {
+    console.log('Rendering OnboardingFlow');
     return <OnboardingFlow />;
   }
   
@@ -55,14 +64,21 @@ const RootRoute = () => {
 import { useEffect } from "react";
 
 const App = () => {
-  // No need for token handling here, it's all in AuthContext now
+  // Debug logging
+  console.log('App component rendering');
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Sonner />
-          <BrowserRouter>
+          <div className="min-h-screen bg-background font-sans antialiased">
+            {/* Debug element */}
+            <div className="fixed top-0 left-0 bg-red-500 text-white p-2 text-xs z-50">
+              App is rendering! Check console for debug info.
+            </div>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<RootRoute />} />
               <Route path="/dashboard" element={<ProtectedRoute><TrialAccessGuard><Dashboard /></TrialAccessGuard></ProtectedRoute>} />
@@ -85,13 +101,14 @@ const App = () => {
               <Route path="/help/troubleshooting" element={<ProtectedRoute><TrialAccessGuard><Troubleshooting /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/help/api-docs" element={<ProtectedRoute><TrialAccessGuard><ApiDocs /></TrialAccessGuard></ProtectedRoute>} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/privacy-policy" element={<ProtectedRoute><PrivacyPolicy /></ProtectedRoute>} />
+              <Route path="/contact" element={<ProtectedRoute><ContactUs /></ProtectedRoute>} />
               <Route path="/setup-guide" element={<ProtectedRoute><TrialAccessGuard><SetupGuide /></TrialAccessGuard></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </div>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
