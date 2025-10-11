@@ -285,10 +285,14 @@ class ApiService {
     const cacheBuster = Date.now();
     
     console.log('🔄 API SERVICE: Adding cache-busting parameters:', { cacheBuster });
+    
+    const compareUrl = `/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`;
+    console.log('📞 API SERVICE: EXACT URL BEING CALLED:', compareUrl);
+    console.log('📞 API SERVICE: Full URL:', `${apiClient.defaults.baseURL}${compareUrl}`);
 
     try {
       // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
-      const response = await apiClient.get(`/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`);
+      const response = await apiClient.get(compareUrl);
       console.log('✅ API SERVICE: HubSpot ID endpoint successful');
       console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;

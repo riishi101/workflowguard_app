@@ -343,6 +343,9 @@ export class WorkflowController {
     console.log('🔍 CONTROLLER: Parameters received:', { hubspotId, versionA, versionB });
     console.log('🔍 CONTROLLER: User:', req.user?.email);
     console.log('🔍 CONTROLLER: Request URL:', req.url);
+    console.log('🔍 CONTROLLER: Route matched: /by-hubspot-id/:hubspotId/compare/:versionA/:versionB');
+    console.log('🔍 CONTROLLER: Method: compareWorkflowVersionsByHubspotId');
+    console.log('🔍 CONTROLLER: Timestamp:', new Date().toISOString());
     
     let userId = req.user?.sub || req.user?.id || req.user?.userId;
 
