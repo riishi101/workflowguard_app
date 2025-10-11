@@ -41,18 +41,14 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages with clear instructions
    */
   const handlePaymentClick = async () => {
-    // Debug authentication state - Memory Check: Following MISTAKE #6 lesson
-    console.log('🔐 PaymentButton Debug - Authentication State:');
-    console.log('  - isAuthenticated:', isAuthenticated);
+    // Debug authentication state - Memory Check: Following MISTAKE #6 lessonconsole.log('  - isAuthenticated:', isAuthenticated);
     console.log('  - user:', user);
     
     // Use TokenValidator for comprehensive token validation
     const tokenValidation = TokenValidator.validateToken();
     console.log('  - token validation:', tokenValidation);
     
-    if (!tokenValidation.isValid) {
-      console.log('❌ PaymentButton - Invalid token:', tokenValidation.error);
-      TokenValidator.cleanInvalidToken();
+    if (!tokenValidation.isValid) {TokenValidator.cleanInvalidToken();
       
       toast({
         title: tokenValidation.isExpired ? "Session Expired" : "Authentication Error",
@@ -64,9 +60,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       return;
     }
     
-    if (!isAuthenticated || !user) {
-      console.log('❌ PaymentButton - User not authenticated, showing error');
-      toast({
+    if (!isAuthenticated || !user) {toast({
         title: "Authentication Required",
         description: "Please log in to upgrade your subscription.",
         variant: "destructive"

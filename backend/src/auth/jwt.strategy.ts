@@ -19,29 +19,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
-    console.log('🔑 JwtStrategy - validate called with payload:', payload);
-
-    try {
-      const user = await this.authService.validateJwtPayload(payload);
-      console.log(
-        '🔑 JwtStrategy - validateJwtPayload result:',
-        user ? { id: user.id, email: user.email } : null,
-      );
-
-      if (!user) {
-        console.log('❌ JwtStrategy - No user found for payload');
-        return null;
-      }
-
-      console.log('✅ JwtStrategy - Returning validated user:', {
-        id: user.id,
-        email: user.email,
-      });
-      return user;
-    } catch (error) {
-      console.log('❌ JwtStrategy - Error during validation:', error);
-      return null;
+  async validate(payload: { sub: string; email: string }) {try {
+      const user = await this.authService.validateJwtPayload(payload);if (!user) {return null;
+      }return user;
+    } catch (error) {return null;
     }
   }
 }

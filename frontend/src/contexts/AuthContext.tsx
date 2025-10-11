@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
 
-
   useEffect(() => {
     if (hasInitialized) {
       
@@ -55,8 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const tokenParam = urlParams.get('token');
         const errorParam = urlParams.get('error');
         const isMarketplace = urlParams.get('marketplace') === 'true';
-
-        
 
         // Handle OAuth errors
         if (errorParam) {
@@ -106,35 +103,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         const token = localStorage.getItem('token');
-        
 
         if (token) {
-          console.log('🔍 AuthContext: Token found, validating user...');
           // Add small delay to ensure token is properly set
           await new Promise(resolve => setTimeout(resolve, 100));
           try {
             const response = await ApiService.getCurrentUser();
-            console.log('✅ AuthContext: User validation successful:', response.data?.email);
-
             if (response.success && response.data) {
               setUser(response.data);
 
               // Don't redirect here - let the OnboardingFlow handle navigation
               if (successParam === 'true' && tokenParam) {
-                console.log('🎉 AuthContext: OAuth callback successful');
-              }
+                }
             } else {
-              console.log('❌ AuthContext: Invalid user response, clearing token');
               localStorage.removeItem('token');
               setUser(null);
             }
           } catch (error: any) {
-            console.error('❌ AuthContext: User validation failed:', error.response?.status, error.response?.data?.message);
             localStorage.removeItem('token');
             setUser(null);
           }
         } else {
-          console.log('🔍 AuthContext: No token found');
           setUser(null);
         }
       } catch (error) {
@@ -152,7 +141,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const connectHubSpot = async () => {
     
     const currentUrl = window.location.href;
-    
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'https://api.workflowguard.pro';

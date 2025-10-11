@@ -158,25 +158,17 @@ const CompareVersions = () => {
 
   const fetchComparisonData = async () => {
     
-    console.log('🚨 FRONTEND: fetchComparisonData called');
-    console.log('🔍 FRONTEND: Parameters:', { workflowId, versionA, versionB });
-    console.log('🔍 FRONTEND: URL search params:', {
-      versionAParam: searchParams.get("versionA"),
+    ,
       versionBParam: searchParams.get("versionB")
     });
     if (!workflowId || !versionA || !versionB) {
-      console.log('❌ FRONTEND: Missing parameters, returning early');
       return;
     }
 
     try {
       setComparisonLoading(true);
       
-      console.log('📡 FRONTEND: About to call ApiService.compareWorkflowVersions');
-      console.log('🔍 FRONTEND: API call parameters:', { workflowId, versionA, versionB });
       const response = await ApiService.compareWorkflowVersions(workflowId, versionA, versionB);
-      console.log('✅ FRONTEND: API call completed, response received');
-
       console.log("Comparison response:", response); // Debug log
 
       // Add safety checks for response
@@ -238,8 +230,6 @@ const CompareVersions = () => {
   const handleRefresh = () => {
     fetchVersions();
   };
-
-
 
   const handleBackToHistory = () => {
     navigate(`/workflow-history/${workflowId}`);
@@ -445,7 +435,6 @@ const CompareVersions = () => {
           )}
         </div>
       </ContentSection>
-
 
       {/* Comparison Content */}
       <ContentSection>

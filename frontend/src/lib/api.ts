@@ -35,13 +35,6 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // Enhanced error handling following Memory lessons
-    console.log('🔍 API Error Interceptor:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      method: error.config?.method,
-      message: error.response?.data?.message
-    });
-
     if (error.response?.status === 401) {
       // Clear token for auth endpoints or if token is invalid
       if (error.config.url?.includes('/auth') || error.response?.data?.message?.includes('token')) {
@@ -121,8 +114,6 @@ class ApiService {
     try {
       const response = await apiClient.post('/api/auth/login', { email, password });
       
-      console.log('✅ API SERVICE: HubSpot ID endpoint successful');
-      console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;
     } catch (error) {
       throw error;
@@ -162,17 +153,9 @@ class ApiService {
     }
 
     try {
-      console.log('🔍 API: Fetching protected workflows...');
       const response = await apiClient.get('/api/workflow/protected', { headers });
-      console.log('✅ API: Protected workflows fetched:', response.data?.data?.length || 0, 'workflows');
       return response.data;
     } catch (error: any) {
-      console.error('❌ API: Failed to fetch protected workflows:', {
-        status: error.response?.status,
-        message: error.response?.data?.message,
-        url: error.config?.url
-      });
-      
       // Enhanced error messages following Memory lessons
       if (error.response?.status === 401) {
         throw new Error('Authentication required. Please log in again.');
@@ -276,44 +259,26 @@ class ApiService {
   }
 
   static async compareWorkflowVersions(workflowId: string, versionA: string, versionB: string): Promise<ApiResponse<any>> {
-    console.log('🚨 API SERVICE: compareWorkflowVersions called');
-    console.log('🔍 API SERVICE: Parameters:', { workflowId, versionA, versionB });
-    console.log('🔍 API SERVICE: Attempting HubSpot ID endpoint first');
-    
     // Add cache-busting timestamp parameter to force real backend calls
     // Note: Removed CORS-problematic headers (Cache-Control, Pragma, Expires)
     const cacheBuster = Date.now();
     const requestId = Math.random().toString(36).substring(2, 15);
     
-    console.log('🔄 API SERVICE: Adding cache-busting parameters:', { cacheBuster, requestId });
-    
     const compareUrl = `/api/workflow/by-hubspot-id/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}&_r=${requestId}&_force=true`;
-    console.log('📞 API SERVICE: EXACT URL BEING CALLED:', compareUrl);
-    console.log('📞 API SERVICE: Full URL:', `${apiClient.defaults.baseURL}${compareUrl}`);
-
     try {
       // Try HubSpot ID endpoint first (for workflows from WorkflowSelection)
       const response = await apiClient.get(compareUrl);
-      console.log('✅ API SERVICE: HubSpot ID endpoint successful');
-      console.log('🔍 API SERVICE: Response data:', response.data);
       return response.data;
     } catch (error: any) {
-      console.log('⚠️ API SERVICE: HubSpot ID endpoint failed, trying fallback');
-      console.log('🔍 API SERVICE: Error:', error.response?.status, error.message);
-      
       // If HubSpot ID endpoint fails, try original endpoint (for internal IDs)
       if (error.response?.status === 404) {
         try {
-          console.log('🔍 API SERVICE: Fallback URL:', `/api/workflow/${workflowId}/compare/${versionA}/${versionB}`);
           const fallbackResponse = await apiClient.get(`/api/workflow/${workflowId}/compare/${versionA}/${versionB}?_t=${cacheBuster}`);
-          console.log('✅ API SERVICE: Fallback endpoint successful');
           return fallbackResponse.data;
         } catch (fallbackError) {
-          console.error('❌ API SERVICE: Both endpoints failed:', fallbackError);
           throw fallbackError;
         }
       }
-      console.error('❌ API SERVICE: API call failed:', error);
       throw error;
     }
   }
@@ -361,62 +326,25 @@ class ApiService {
 
   static async syncHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      console.log('🔍 API SERVICE: Starting sync request...');
-      console.log('🔍 API SERVICE: Request details:', {
-        url: '/api/workflow/sync-hubspot',
-        method: 'POST',
-        baseURL: apiClient.defaults.baseURL,
-        timeout: apiClient.defaults.timeout,
-        hasAuthHeader: !!localStorage.getItem('token')
       });
       
       const response = await apiClient.post('/api/workflow/sync-hubspot');
       
-      console.log('✅ API SERVICE: Sync request completed');
-      console.log('🔍 API SERVICE: Response status:', response.status);
-      console.log('🔍 API SERVICE: Response data:', response.data);
-      
       return response.data;
     } catch (error: any) {
-      console.error('🔴 API SERVICE: Sync request failed:', error);
-      console.error('🔍 API SERVICE: Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          baseURL: error.config?.baseURL
-        }
-      });
       throw error;
     }
   }
 
   static async getHubSpotWorkflows(): Promise<ApiResponse<any>> {
     try {
-      console.log('🔍 API: Fetching HubSpot workflows...');
       const response = await apiClient.get('/api/workflow/hubspot');
-      console.log('✅ API: HubSpot workflows fetched successfully:', response.data?.data?.length || 0, 'workflows');
-      
       // Enhanced debugging for empty results (Memory compliance check)
       if (response.data?.data?.length === 0) {
-        console.log('⚠️ API: Zero workflows returned - debugging response structure:');
-        console.log('📊 Full Response:', response.data);
-        console.log('📊 Response Success:', response.data?.success);
-        console.log('📊 Response Message:', response.data?.message);
-        console.log('📊 Response Data Type:', typeof response.data?.data);
-        console.log('📊 Response Data:', response.data?.data);
-      }
+        }
       
       return response.data;
     } catch (error: any) {
-      console.error('❌ API: Failed to fetch HubSpot workflows:', {
-        status: error.response?.status,
-        message: error.response?.data?.message,
-        url: error.config?.url
-      });
-      
       // Enhanced error messages following Memory lessons
       if (error.response?.status === 401) {
         throw new Error('Authentication failed. Please reconnect your HubSpot account.');
@@ -742,8 +670,6 @@ class ApiService {
     }
   }
 
-
-
   static async getAuditLogs(filters?: any): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.get('/api/audit-logs', { params: filters });
@@ -789,8 +715,6 @@ class ApiService {
       throw error;
     }
   }
-
-
 
   // Subscription and billing
   static async getSubscription(): Promise<ApiResponse<any>> {
@@ -861,7 +785,6 @@ class ApiService {
     try {
       // MULTI-CURRENCY ENDPOINT - Memory Check: Following all memory lessons with enhanced support
       const token = localStorage.getItem('token');
-      console.log('🌍 MULTI-CURRENCY - createPaymentOrder called:');
       console.log('  - planId:', planId);
       console.log('  - currency:', currency);
       console.log('  - token exists:', !!token);
@@ -870,17 +793,12 @@ class ApiService {
       // Try multi-currency endpoint first
       try {
         const response = await apiClient.post('/api/payment/create-order-multicurrency', { planId, currency });
-        console.log('✅ MULTI-CURRENCY - createPaymentOrder success:', response.status);
         return response.data;
       } catch (multiCurrencyError: any) {
-        console.log('⚠️ MULTI-CURRENCY - Failed, falling back to emergency endpoint');
         console.log('  - error:', multiCurrencyError.response?.status, multiCurrencyError.response?.data);
         
         // Fallback to emergency endpoint (INR only)
-        console.log('🚨 FALLBACK - Using emergency endpoint');
         const response = await apiClient.post('/api/payment/emergency-test', { planId });
-        console.log('✅ FALLBACK - Emergency endpoint success:', response.status);
-        
         // Transform emergency response to match expected frontend format
         const emergencyData = response.data;
         if (emergencyData.success) {
@@ -894,14 +812,12 @@ class ApiService {
             },
             message: emergencyData.message || 'Payment order created successfully (fallback to INR)'
           };
-          console.log('✅ FALLBACK - Response transformed:', transformedResponse);
           return transformedResponse;
         } else {
           throw new Error(emergencyData.message || 'Emergency endpoint failed');
         }
       }
     } catch (error: any) {
-      console.log('❌ PAYMENT - All endpoints failed:');
       console.log('  - status:', error.response?.status);
       console.log('  - statusText:', error.response?.statusText);
       console.log('  - data:', error.response?.data);
@@ -929,10 +845,8 @@ class ApiService {
       };
       
       const detectedCurrency = currencyMap[locale] || 'USD';
-      console.log('🌍 CURRENCY - Detected:', detectedCurrency, 'from locale:', locale);
       return detectedCurrency;
     } catch (error) {
-      console.log('⚠️ CURRENCY - Detection failed, defaulting to USD');
       return 'USD';
     }
   }
@@ -1030,8 +944,6 @@ class ApiService {
       throw error;
     }
   }
-
-
 
   // Webhook Management APIs
   static async getUserWebhooks(): Promise<ApiResponse<any>> {
@@ -1156,13 +1068,9 @@ class ApiService {
 
   static async exportDeletedWorkflow(workflowId: string): Promise<ApiResponse<any>> {
     try {
-      console.log('🔍 API: Exporting workflow with ID:', workflowId);
       const response = await apiClient.get(`/api/workflow/${workflowId}/export-deleted`);
-      console.log('✅ API: Export successful for workflow:', workflowId);
       return response.data;
     } catch (error: any) {
-      console.error('❌ API: Export failed for workflow:', workflowId, 'Error:', error.response?.status, error.response?.data);
-      
       // Enhanced error messages following memory lessons (avoid generic errors)
       if (error.response?.status === 404) {
         throw new Error(`Workflow not found or not accessible. Please ensure the workflow is deleted and you have permission to export it.`);
@@ -1179,25 +1087,10 @@ class ApiService {
   // Risk Assessment Methods
   static async getRiskDashboard(): Promise<ApiResponse<any>> {
     try {
-      console.log('🔍 API DEBUG: Starting getRiskDashboard request...');
-      console.log('🔍 API DEBUG: Making request to /api/risk-assessment/dashboard');
-      
       const response = await apiClient.get('/api/risk-assessment/dashboard');
-      
-      console.log('🔍 API DEBUG: Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data
-      });
       
       return response.data;
     } catch (error) {
-      console.error('🔍 API DEBUG: Request failed:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
       throw error;
     }
   }

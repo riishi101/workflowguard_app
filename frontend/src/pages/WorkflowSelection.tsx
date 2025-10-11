@@ -74,50 +74,31 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   // Fetch workflows from HubSpot
   const fetchWorkflows = async () => {
     // Check if user is authenticated before making API call
-    if (!isAuthenticated) {
-      console.log('🔍 WorkflowSelection: User not authenticated, showing connection message');
-      setError('Please connect your HubSpot account first to view workflows.');
+    if (!isAuthenticated) {setError('Please connect your HubSpot account first to view workflows.');
       setWorkflows([]);
       setLoading(false);
       return;
-    }
-
-    console.log('🔍 WorkflowSelection: Starting workflow fetch for user:', user?.email);
-
-
-    // Ensure minimum loading time to prevent too quick completion
+    }// Ensure minimum loading time to prevent too quick completion
     const minLoadingTime = 2000; // 2 seconds minimum
     const startTime = Date.now();
 
     try {
       setLoading(true);
       setError(null);
-      
-      
-      
+
       // Try to get real data from HubSpot API
       
       const apiStartTime = Date.now();
       
       const response = await ApiService.getHubSpotWorkflows();
       
-      const apiEndTime = Date.now();
-      console.log('✅ WorkflowSelection: API call completed in', apiEndTime - apiStartTime, 'ms');
-      
-      // Validate the response structure
-      if (!response || !response.success) {
-        console.error('❌ WorkflowSelection: Invalid response structure:', response);
-        throw new Error(response?.message || 'Invalid response structure from HubSpot API');
+      const apiEndTime = Date.now();// Validate the response structure
+      if (!response || !response.success) {throw new Error(response?.message || 'Invalid response structure from HubSpot API');
       }
       
       // Extract workflows from the response data
-      const workflows = response.data || [];
-      console.log('🔍 WorkflowSelection: Received', workflows.length, 'workflows from API');
-      
-      if (workflows.length > 0) {
-        
-        
-        
+      const workflows = response.data || [];if (workflows.length > 0) {
+
         // Validate workflow structure
         const validWorkflows = workflows.map(workflow => {
           
@@ -340,8 +321,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
         description: "Configuring WorkflowGuard for your selected workflows.",
       });
 
-      
-
       // Transform selected workflows for API
       const selectedWorkflowObjects = workflows
         .filter(workflow => selectedWorkflows.includes(workflow.id))
@@ -356,8 +335,6 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
           contacts: workflow.contacts,
           isProtected: workflow.isProtected || false
         }));
-
-      
 
       // Call real API to start protection
       console.log('Sending workflow data:', selectedWorkflowObjects);
@@ -505,8 +482,7 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
   };
 
   useEffect(() => {
-    
-    
+
     workflows.forEach(workflow => {
       
     });
@@ -987,5 +963,4 @@ const WorkflowSelection = ({ onComplete }: WorkflowSelectionProps) => {
 };
 
 export default WorkflowSelection;
-
 

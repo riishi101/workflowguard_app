@@ -94,33 +94,19 @@ const RiskAssessment: React.FC = () => {
   const loadRiskDashboard = async (force = false) => {
     // ✅ FIX: Prevent unnecessary reloads but allow initial load (Memory lesson: avoid race conditions)
     if (loading && !force && riskStats !== null) {
-      console.log('🔍 FRONTEND DEBUG: Dashboard already loaded with data, skipping...');
       return;
     }
     
     // Allow loading if no data exists yet
     if (loading && !force && riskStats === null) {
-      console.log('🔍 FRONTEND DEBUG: Dashboard loading but no data yet, allowing...');
-    }
+      }
     
     try {
       setLoading(true);
-      console.log('🔍 FRONTEND DEBUG: Starting loadRiskDashboard...');
-      console.log('🔍 FRONTEND DEBUG: Current user:', user);
-      console.log('🛡️ RISK DASHBOARD: Loading dashboard data...');
-      
-      console.log('🔍 FRONTEND DEBUG: Calling ApiService.getRiskDashboard()...');
       const response = await ApiService.getRiskDashboard();
-      console.log('🔍 FRONTEND DEBUG: API Response received:', response);
-      
       if (response.success) {
-        console.log('🔍 FRONTEND DEBUG: Response data:', response.data);
         setRiskStats(response.data);
-        console.log('✅ RISK DASHBOARD: Data loaded successfully');
-        console.log('🔍 FRONTEND DEBUG: RiskStats state updated:', response.data);
-      } else {
-        console.error('🔍 FRONTEND DEBUG: Response not successful:', response);
-        console.error('❌ RISK DASHBOARD: Failed to load data:', response.message);
+        } else {
         toast({
           title: "Error",
           description: "Failed to load risk assessment data",
@@ -128,20 +114,12 @@ const RiskAssessment: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('🔍 FRONTEND DEBUG: Catch block error:', error);
-      console.error('🔍 FRONTEND DEBUG: Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      console.error('❌ RISK DASHBOARD: Error loading dashboard:', error);
       toast({
         title: "Error",
         description: "Failed to connect to risk assessment service",
         variant: "destructive",
       });
     } finally {
-      console.log('🔍 FRONTEND DEBUG: Setting loading to false');
       setLoading(false);
     }
   };
@@ -154,14 +132,12 @@ const RiskAssessment: React.FC = () => {
         setPendingApprovals(response.data);
       }
     } catch (error) {
-      console.error('❌ PENDING APPROVALS: Error loading:', error);
-    }
+      }
   };
 
   const assessWorkflow = async (workflowId: string) => {
     // ✅ FIX: Validate workflowId parameter (Memory lesson: proper validation)
     if (!workflowId || workflowId === 'undefined') {
-      console.error('❌ RISK ASSESSMENT: Invalid workflowId provided:', workflowId);
       toast({
         title: "Assessment Failed",
         description: "Invalid workflow ID. Please try again.",
@@ -171,25 +147,17 @@ const RiskAssessment: React.FC = () => {
     }
     
     try {
-      console.log(`🛡️ RISK ASSESSMENT: Assessing workflow ${workflowId}...`);
-      
       // ✅ FIX: Set loading state using consistent Dashboard pattern
       setAssessmentLoading(true);
       
       const response = await ApiService.assessWorkflow(workflowId, true);
       
-      console.log('🔍 RISK ASSESSMENT DEBUG: API Response:', response);
-      console.log('🔍 RISK ASSESSMENT DEBUG: Response data:', response.data);
-      
       if (response.success) {
         setSelectedWorkflow(response.data);
         setActiveTab('assessments');
-        console.log('✅ RISK ASSESSMENT: Assessment completed for workflow:', workflowId);
-        console.log('✅ RISK ASSESSMENT: Selected workflow updated:', response.data?.workflowName || 'Unknown');
         // ✅ FIX: Don't reload entire dashboard, just refresh if needed
       }
     } catch (error) {
-      console.error('❌ RISK ASSESSMENT: Assessment failed:', error);
       toast({
         title: "Assessment Failed",
         description: "Failed to assess workflow. Please try again.",
@@ -203,8 +171,6 @@ const RiskAssessment: React.FC = () => {
 
   const approveRisk = async (assessmentId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
-      console.log(`🛡️ RISK APPROVAL: ${status} assessment ${assessmentId}`);
-      
       const response = await ApiService.approveRiskAssessment(
         assessmentId, 
         status, 
@@ -212,7 +178,6 @@ const RiskAssessment: React.FC = () => {
       );
       
       if (response.success) {
-        console.log('✅ RISK APPROVAL: Status updated successfully');
         toast({
           title: "Success",
           description: `Risk assessment ${status.toLowerCase()} successfully`,
@@ -221,7 +186,6 @@ const RiskAssessment: React.FC = () => {
         loadRiskDashboard();
       }
     } catch (error) {
-      console.error('❌ RISK APPROVAL: Failed to update status:', error);
       toast({
         title: "Error",
         description: "Failed to update approval status",
@@ -457,21 +421,11 @@ const RiskAssessment: React.FC = () => {
                                 const numericId = assessment.workflowId || assessment.id || assessment.hubspotId;
                                 const isNumeric = numericId && /^\d+$/.test(numericId.toString());
                                 
-                                console.log('🔍 FRONTEND DEBUG: Assessment click - numericId:', numericId, 'isNumeric:', isNumeric);
-                                console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(assessment));
-                                console.log('🔍 FRONTEND DEBUG: All assessment properties:', {
-                                  id: assessment.id,
-                                  workflowId: assessment.workflowId,
-                                  hubspotId: assessment.hubspotId,
-                                  workflowName: assessment.workflowName
-                                });
-                                
+                                );
                                 if (isNumeric) {
                                   assessWorkflow(numericId);
                                   setActiveTab('assessments'); // Auto-switch to detailed view
                                 } else {
-                                  console.error('❌ FRONTEND DEBUG: No valid numeric workflowId found in assessment object');
-                                  console.error('❌ FRONTEND DEBUG: Available non-numeric fallback:', assessment.workflowName);
                                   toast({
                                     title: "Error",
                                     description: "Unable to load workflow details - missing numeric HubSpot ID",
@@ -690,14 +644,11 @@ const RiskAssessment: React.FC = () => {
                               const numericId = approval.workflowId || approval.id || approval.hubspotId;
                               const isNumeric = numericId && /^\d+$/.test(numericId.toString());
                               
-                              console.log('🔍 FRONTEND DEBUG: Approval click - numericId:', numericId, 'isNumeric:', isNumeric);
-                              console.log('🔍 FRONTEND DEBUG: Available properties:', Object.keys(approval));
+                              );
                               if (isNumeric) {
                                 assessWorkflow(numericId);
                                 setActiveTab('assessments'); // Auto-switch to detailed view
                               } else {
-                                console.error('❌ FRONTEND DEBUG: No valid numeric workflowId found in approval object');
-                                console.error('❌ FRONTEND DEBUG: Available non-numeric fallback:', approval.workflowName);
                                 toast({
                                   title: "Error",
                                   description: "Unable to load workflow details - missing numeric HubSpot ID",

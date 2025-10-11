@@ -43,7 +43,6 @@ export class TokenValidator {
       const currentTime = Date.now() / 1000;
       const isExpired = payload.exp < currentTime;
 
-      console.log('🔐 TokenValidator - Token analysis:');
       console.log('  - payload:', { sub: payload.sub, email: payload.email, exp: payload.exp });
       console.log('  - current time:', currentTime);
       console.log('  - expires at:', payload.exp);
@@ -58,7 +57,6 @@ export class TokenValidator {
       };
 
     } catch (error) {
-      console.log('❌ TokenValidator - Error parsing token:', error);
       return {
         isValid: false,
         isExpired: false,
@@ -81,7 +79,6 @@ export class TokenValidator {
       
       // Show user-friendly notification
       if (window.location.pathname !== '/') {
-        console.log('🔄 TokenValidator - Redirecting to login due to invalid token');
         // Don't redirect immediately to avoid loops, let AuthContext handle it
       }
       return true;
@@ -95,8 +92,6 @@ export class TokenValidator {
    * Memory Check: Following MISTAKE #6 lesson - Specific error messages
    */
   static debugToken(): void {
-    console.log('🔍 TokenValidator - Debug Information:');
-    
     const token = localStorage.getItem('token');
     console.log('  - Token exists:', !!token);
     
@@ -128,37 +123,24 @@ export class TokenValidator {
   try {
     const { ApiService } = await import('../lib/api');
     
-    console.log('📋 Testing getHubSpotWorkflows...');
     const workflows = await ApiService.getHubSpotWorkflows();
-    console.log('✅ Workflows result:', workflows);
-    
     // Enhanced debugging for Memory compliance
     if (workflows?.data?.length === 0) {
-      console.log('🔍 ZERO WORKFLOWS DEBUG:');
       console.log('- Check if HubSpot account has active workflows');
       console.log('- Verify HubSpot OAuth scopes include workflow permissions');
       console.log('- Check backend database connection (Memory 6a80c641)');
       console.log('- Verify parameter order in backend calls (Memory 3af4ea2c)');
       console.log('');
-      console.log('🎯 LIKELY CAUSES:');
       console.log('1. HubSpot account has no workflows created');
       console.log('2. All workflows are in DRAFT status (not ACTIVE)');
       console.log('3. OAuth scopes missing workflow read permissions');
       console.log('4. Backend connecting to wrong database (Memory 6a80c641)');
     }
     
-    console.log('🛡️ Testing getProtectedWorkflows...');
     const protectedWorkflows = await ApiService.getProtectedWorkflows();
-    console.log('✅ Protected workflows result:', protectedWorkflows);
-    
     // Test backend health
-    console.log('🏥 Testing backend health...');
     const user = await ApiService.getCurrentUser();
-    console.log('✅ Current user (backend connectivity):', user);
-    
-  } catch (error) {
-    console.error('❌ API Test failed:', error);
-    console.log('🔍 ERROR ANALYSIS:');
+    } catch (error) {
     console.log('- Status:', error.response?.status);
     console.log('- Message:', error.response?.data?.message);
     console.log('- URL:', error.config?.url);
@@ -170,68 +152,49 @@ export class TokenValidator {
   try {
     const { ApiService } = await import('../lib/api');
     const user = await ApiService.getCurrentUser();
-    console.log('✅ Current user:', user);
-  } catch (error) {
-    console.error('❌ Auth test failed:', error);
-  }
+    } catch (error) {
+    }
 };
 
 // Memory-based diagnostic function
 (window as any).diagnoseWorkflowIssue = async () => {
-  console.log('🔍 WORKFLOW ISSUE DIAGNOSIS (Memory-based)');
   console.log('=====================================');
   
   try {
     const { ApiService } = await import('../lib/api');
     
     // Test 1: Authentication
-    console.log('1️⃣ Testing Authentication...');
     const user = await ApiService.getCurrentUser();
-    console.log('✅ User authenticated:', user?.data?.email);
-    
     // Test 2: HubSpot Workflows
-    console.log('2️⃣ Testing HubSpot Workflow Fetch...');
     const workflows = await ApiService.getHubSpotWorkflows();
-    console.log('📊 Workflow count:', workflows?.data?.length || 0);
-    
     // Test 3: Memory compliance checks
-    console.log('3️⃣ Memory Compliance Checks:');
     console.log('- Database Connection (Memory 6a80c641): Backend should use Neon, not local PostgreSQL');
     console.log('- Parameter Order (Memory 3af4ea2c): Should be getWorkflowById(userId, workflowId)');
     console.log('- API Endpoints (Memory 1abf712b): Should use /api prefix');
     
     // Test 4: Raw API call (Memory 1abf712b compliance - use full URL)
-    console.log('4️⃣ Raw API Test...');
     const token = localStorage.getItem('token');
     const apiBaseUrl = 'https://api.workflowguard.pro';
     const response = await fetch(`${apiBaseUrl}/api/workflow/hubspot`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    console.log('📡 Raw API Status:', response.status, response.statusText);
     const rawData = await response.json();
-    console.log('📡 Raw API Response:', rawData);
-    
-  } catch (error) {
-    console.error('❌ Diagnosis failed:', error);
-  }
+    } catch (error) {
+    }
 };
 
 // HubSpot account verification function
 (window as any).checkHubSpotAccount = () => {
-  console.log('🔍 HUBSPOT ACCOUNT VERIFICATION:');
   console.log('=====================================');
   console.log('');
-  console.log('📋 MANUAL CHECKS NEEDED:');
   console.log('1. Log into your HubSpot account');
   console.log('2. Go to Automation > Workflows');
   console.log('3. Check if you have any workflows created');
   console.log('4. Verify workflows are ACTIVE (not DRAFT)');
   console.log('');
-  console.log('🔑 OAUTH SCOPES CHECK:');
   console.log('- Automation scope required for workflow access');
   console.log('- Marketing automation permissions needed');
   console.log('');
-  console.log('🎯 COMMON SOLUTIONS:');
   console.log('1. Create a test workflow in HubSpot');
   console.log('2. Activate any draft workflows');
   console.log('3. Reconnect HubSpot with proper scopes');
@@ -240,9 +203,7 @@ export class TokenValidator {
 
 // Enhanced HubSpot Trial Account Diagnostic
 (window as any).diagnoseTrialLimitations = async () => {
-  console.log('🔍 HUBSPOT TRIAL ACCOUNT LIMITATIONS DIAGNOSIS');
   console.log('=====================================');
-  console.log('🚨 CONFIRMED: 4 workflows exist in HubSpot UI but API returns 0');
   console.log('');
   
   try {
@@ -250,69 +211,51 @@ export class TokenValidator {
     const apiBaseUrl = 'https://api.workflowguard.pro';
     
     // Test 1: Check HubSpot account type
-    console.log('1️⃣ Testing HubSpot Account Type...');
     const accountTest = await fetch(`${apiBaseUrl}/api/auth/hubspot/account-info`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     
     if (accountTest.ok) {
       const accountData = await accountTest.json();
-      console.log('📋 HubSpot Account Info:', accountData);
       console.log('  - Account Type:', accountData.accountType || 'Unknown');
       console.log('  - Trial Status:', accountData.trialStatus || 'Unknown');
     } else {
-      console.log('⚠️ Account info check failed:', accountTest.status);
-    }
+      }
     
     // Test 2: Check OAuth scopes
-    console.log('2️⃣ Testing OAuth Scopes...');
     const scopeTest = await fetch(`${apiBaseUrl}/api/auth/hubspot/token-info`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     
     if (scopeTest.ok) {
       const scopeData = await scopeTest.json();
-      console.log('📋 OAuth Token Info:', scopeData);
-      
       const scopes = scopeData.scopes || [];
-      console.log('🔍 Available Scopes:', scopes);
-      
       // Check for workflow-related scopes
       const workflowScopes = ['automation', 'workflows', 'marketing-automation'];
-      console.log('🎯 Workflow Scope Analysis:');
       workflowScopes.forEach(scope => {
         const hasScope = scopes.includes(scope);
-        console.log(`  - ${scope}: ${hasScope ? '✅ Available' : '❌ Missing'}`);
       });
       
     } else {
-      console.log('⚠️ OAuth scopes check failed:', scopeTest.status);
-    }
+      }
     
     // Test 3: Direct HubSpot API call with detailed error analysis
-    console.log('3️⃣ Direct HubSpot Workflows API Test...');
     const workflowTest = await fetch(`${apiBaseUrl}/api/workflow/hubspot-debug`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     
     if (workflowTest.ok) {
       const workflowData = await workflowTest.json();
-      console.log('📡 HubSpot Workflows Debug Response:', workflowData);
-    } else {
-      console.log('❌ HubSpot Workflows API Failed:', workflowTest.status);
+      } else {
       const errorText = await workflowTest.text();
-      console.log('📄 Error Details:', errorText);
-    }
+      }
     
     // Analysis and recommendations
     console.log('');
-    console.log('🎯 TRIAL ACCOUNT ANALYSIS:');
     console.log('- UI Message: "Workflows will no longer be accessible once your trial ends"');
     console.log('- Behavior: Workflows visible in UI but not accessible via API');
     console.log('- Root Cause: HubSpot restricts workflow API access for trial accounts');
     console.log('');
-    console.log('🔧 RECOMMENDED SOLUTIONS:');
-    console.log('1. 🏆 UPGRADE HUBSPOT ACCOUNT to Professional/Enterprise');
     console.log('   - Removes all trial limitations');
     console.log('   - Enables full workflow API access');
     console.log('   - Immediate solution');
@@ -322,16 +265,13 @@ export class TokenValidator {
     console.log('   - Reconnect with explicit automation permissions');
     console.log('   - May not work for trial accounts');
     console.log('');
-    console.log('3. 📞 CONTACT HUBSPOT SUPPORT');
     console.log('   - Ask about workflow API access for trial accounts');
     console.log('   - Request temporary API access for testing');
     
   } catch (error) {
-    console.error('❌ Trial limitations diagnosis failed:', error);
-  }
+    }
 };
 
-console.log('🔐 TokenValidator loaded - Available console commands:');
 console.log('  - debugToken() - Show detailed token information');
 console.log('  - validateToken() - Validate current token');
 console.log('  - cleanToken() - Remove invalid token');

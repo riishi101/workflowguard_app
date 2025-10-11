@@ -431,15 +431,7 @@ export class AuthController {
         'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
       });
 
-      const userId = (req.user as any)?.sub || (req.user as any)?.id;
-      console.log('🔍 /api/auth/me - User from JWT:', {
-        userId,
-        user: req.user,
-      });
-
-      if (!userId) {
-        console.log('❌ /api/auth/me - No userId found in JWT payload');
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      const userId = (req.user as any)?.sub || (req.user as any)?.id;if (!userId) {throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
       const user = await this.prisma.user.findUnique({

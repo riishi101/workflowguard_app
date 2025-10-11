@@ -46,12 +46,7 @@ export class WorkflowService {
     versionA: string,
     versionB: string,
     captureDetailedStepProperties: boolean = true,
-  ): Promise<any> {
-    console.log('🚨 COMPARE VERSIONS CALLED:', { workflowId, versionA, versionB });
-    console.log('🚨 COMPARE VERSIONS ENTRY POINT:', { workflowId, versionA, versionB });
-    console.log('🔍 COMPARE VERSIONS: Method called successfully');
-    
-    // CRITICAL DEBUG: Let's see what's actually in the database
+  ): Promise<any> {
     const debugVersionA = await this.prisma.workflowVersion.findUnique({
       where: { id: versionA }
     });
@@ -68,7 +63,6 @@ export class WorkflowService {
         const parsedDebugA = typeof debugVersionA.data === 'string' ? JSON.parse(debugVersionA.data) : debugVersionA.data;
         decryptedDebugA = this.encryptionService.decryptWorkflowData(parsedDebugA);
       } catch (error) {
-        console.error('❌ Failed to decrypt debug Version A:', error);
       }
     }
     
@@ -77,42 +71,8 @@ export class WorkflowService {
         const parsedDebugB = typeof debugVersionB.data === 'string' ? JSON.parse(debugVersionB.data) : debugVersionB.data;
         decryptedDebugB = this.encryptionService.decryptWorkflowData(parsedDebugB);
       } catch (error) {
-        console.error('❌ Failed to decrypt debug Version B:', error);
       }
     }
-    
-    console.log('🚨 DATABASE VERSION A DATA:', {
-      id: debugVersionA?.id,
-      hasData: !!debugVersionA?.data,
-      dataType: typeof debugVersionA?.data,
-      dataKeys: debugVersionA?.data ? Object.keys(debugVersionA.data as any) : 'no data',
-      sampleData: debugVersionA?.data ? JSON.stringify(debugVersionA.data).substring(0, 200) + '...' : 'no data'
-    });
-    
-    console.log('🚨 DATABASE VERSION B DATA:', {
-      id: debugVersionB?.id,
-      hasData: !!debugVersionB?.data,
-      dataType: typeof debugVersionB?.data,
-      dataKeys: debugVersionB?.data ? Object.keys(debugVersionB.data as any) : 'no data',
-      sampleData: debugVersionB?.data ? JSON.stringify(debugVersionB.data).substring(0, 200) + '...' : 'no data'
-    });
-    
-    console.log('🔓 DECRYPTED DEBUG DATA:', {
-      versionA: {
-        hasDecryptedData: !!decryptedDebugA,
-        decryptedDataType: typeof decryptedDebugA,
-        decryptedKeys: decryptedDebugA ? Object.keys(decryptedDebugA) : 'no data',
-        hasActions: decryptedDebugA?.actions?.length || 0,
-        workflowName: decryptedDebugA?.name || 'no name'
-      },
-      versionB: {
-        hasDecryptedData: !!decryptedDebugB,
-        decryptedDataType: typeof decryptedDebugB,
-        decryptedKeys: decryptedDebugB ? Object.keys(decryptedDebugB) : 'no data',
-        hasActions: decryptedDebugB?.actions?.length || 0,
-        workflowName: decryptedDebugB?.name || 'no name'
-      }
-    });
     
     try {
       // First, resolve the workflowId - it might be a HubSpot ID or WorkflowGuard UUID
@@ -183,7 +143,6 @@ export class WorkflowService {
         try {
           parsedDataA = JSON.parse(parsedDataA);
         } catch (error) {
-          console.error('❌ Failed to parse Version A JSON data:', error);
           parsedDataA = null;
         }
       }
@@ -192,7 +151,6 @@ export class WorkflowService {
         try {
           parsedDataB = JSON.parse(parsedDataB);
         } catch (error) {
-          console.error('❌ Failed to parse Version B JSON data:', error);
           parsedDataB = null;
         }
       }
@@ -200,22 +158,6 @@ export class WorkflowService {
       // Now decrypt the parsed data
       let originalDataA = parsedDataA ? this.encryptionService.decryptWorkflowData(parsedDataA) : null;
       let originalDataB = parsedDataB ? this.encryptionService.decryptWorkflowData(parsedDataB) : null;
-      
-      console.log('🔍 DATA PARSING DEBUG:', {
-        versionA: versionA,
-        versionB: versionB,
-        rawDataAType: typeof versionAData.data,
-        rawDataBType: typeof versionBData.data,
-        parsedDataAType: typeof parsedDataA,
-        parsedDataBType: typeof parsedDataB,
-        decryptedDataAType: typeof originalDataA,
-        decryptedDataBType: typeof originalDataB,
-        hasDecryptedDataA: !!originalDataA,
-        hasDecryptedDataB: !!originalDataB,
-        dataAKeys: originalDataA ? Object.keys(originalDataA) : 'null',
-        dataBKeys: originalDataB ? Object.keys(originalDataB) : 'null'
-      });
-      
       // Get userId from the workflow owner
       const workflow = await this.prisma.workflow.findFirst({
         where: { id: actualWorkflowId }
@@ -228,89 +170,35 @@ export class WorkflowService {
       // CRITICAL FIX: If stored data is incomplete, fetch fresh detailed data from HubSpot
       // Use the enhanced validation method
       if (userId && !this.validateWorkflowDataCompleteness(originalDataA)) {
-        console.log('🔧 Version A has incomplete data, fetching fresh from HubSpot...');
         try {
           const freshDataA = await this.hubspotService.getWorkflowByIdWithRetry(userId, workflowId);
           if (freshDataA && this.validateWorkflowDataCompleteness(freshDataA)) {
             originalDataA = freshDataA as any;
-            console.log('✅ Successfully fetched complete Version A data');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version A data: Incomplete or no data returned');
           }
         } catch (error) {
-          console.warn('⚠️ Could not fetch fresh Version A data:', error.message);
         }
       }
 
       // Check if Version B data is incomplete
       if (userId && !this.validateWorkflowDataCompleteness(originalDataB)) {
-        console.log('🔧 Version B has incomplete data, fetching fresh from HubSpot...');
         try {
           const freshDataB = await this.hubspotService.getWorkflowByIdWithRetry(userId, workflowId);
           if (freshDataB && this.validateWorkflowDataCompleteness(freshDataB)) {
             originalDataB = freshDataB as any;
-            console.log('✅ Successfully fetched complete Version B data');
           } else {
-            console.warn('⚠️ Could not fetch fresh Version B data: Incomplete or no data returned');
           }
         } catch (error) {
-          console.warn('⚠️ Could not fetch fresh Version B data:', error.message);
         }
       }
 
       // Enhanced logging for debugging
-      console.log('🔍 Workflow comparison debug info:', {
-        workflowId,
-        versionA,
-        versionB,
-        userId,
-        hasStoredDataA: !!originalDataA,
-        hasStoredDataB: !!originalDataB,
-        dataACompleteness: this.validateWorkflowDataCompleteness(originalDataA),
-        dataBCompleteness: this.validateWorkflowDataCompleteness(originalDataB),
-        willFetchFreshData: !this.validateWorkflowDataCompleteness(originalDataA) || !this.validateWorkflowDataCompleteness(originalDataB)
-      });
-
-      console.log('🔍 Comparing workflow versions:', {
-        versionAId: versionAData.id,
-        versionBId: versionBData.id,
-        dataAKeys: originalDataA ? Object.keys(originalDataA) : 'No data',
-        dataBKeys: originalDataB ? Object.keys(originalDataB) : 'No data',
-      });
-
       const dataA = originalDataA as any;
       const dataB = originalDataB as any;
-
-      console.log('🔍 DEBUG: Version A data structure:', {
-        hasActions: !!dataA?.actions,
-        actionsLength: dataA?.actions?.length || 0,
-        hasEnrollmentTriggers: !!dataA?.enrollmentTriggers,
-        triggersLength: dataA?.enrollmentTriggers?.length || 0,
-        sampleAction: dataA?.actions?.[0] ? {
-          type: dataA.actions[0].type,
-          actionType: dataA.actions[0].actionType,
-          keys: Object.keys(dataA.actions[0])
-        } : 'No actions'
-      });
-
-      console.log('🔍 DEBUG: Version B data structure:', {
-        hasActions: !!dataB?.actions,
-        actionsLength: dataB?.actions?.length || 0,
-        hasEnrollmentTriggers: !!dataB?.enrollmentTriggers,
-        triggersLength: dataB?.enrollmentTriggers?.length || 0,
-        sampleAction: dataB?.actions?.[0] ? {
-          type: dataB.actions[0].type,
-          actionType: dataB.actions[0].actionType,
-          keys: Object.keys(dataB.actions[0])
-        } : 'No actions'
-      });
 
       const differences = this.findWorkflowDifferences(originalDataA, originalDataB);
 
       // Transform version data for frontend display with enhanced details
-      console.log('🚨 ABOUT TO TRANSFORM WORKFLOW DATA TO STEPS');
-      console.log('🚨 originalDataA type:', typeof originalDataA, 'keys:', originalDataA ? Object.keys(originalDataA) : 'null');
-      console.log('🚨 originalDataB type:', typeof originalDataB, 'keys:', originalDataB ? Object.keys(originalDataB) : 'null');
       
       const transformedVersionA = {
         ...versionAData,
@@ -321,55 +209,14 @@ export class WorkflowService {
         ...versionBData,
         steps: this.transformWorkflowDataToSteps(originalDataB, 'B'),
       };
-
-      console.log('🔍 Transformed versions:', {
-        versionA: { id: transformedVersionA.id, stepsCount: transformedVersionA.steps?.length },
-        versionB: { id: transformedVersionB.id, stepsCount: transformedVersionB.steps?.length },
-        differencesCount: differences.length,
-      });
-
       // Enhanced comparison with proper change detection
       const workflowDataA = originalDataA as any;
       const workflowDataB = originalDataB as any;
-
-      
-      console.log('🔄 COMPARE VERSIONS: About to transform workflow data to steps');
-      console.log('🔍 COMPARE VERSIONS: Data A exists:', !!workflowDataA);
-      console.log('🔍 COMPARE VERSIONS: Data B exists:', !!workflowDataB);
       // Create enhanced step comparison with proper change marking
       const stepsA = this.transformWorkflowDataToSteps(workflowDataA, 'A');
       const stepsB = this.transformWorkflowDataToSteps(workflowDataB, 'B');
-
-      
-      console.log('🎯 COMPARE VERSIONS: About to call markStepChanges');
-      console.log('🔍 COMPARE VERSIONS: Steps A count:', stepsA.length);
-      console.log('🔍 COMPARE VERSIONS: Steps B count:', stepsB.length);
       // Mark changes between versions
-      const { markedStepsA, markedStepsB, changeSummary } = this.markStepChanges(stepsA, stepsB);
-
-      console.log('🔍 Change detection results:', {
-        stepsA: markedStepsA.length,
-        stepsB: markedStepsB.length,
-        added: changeSummary.added,
-        removed: changeSummary.removed,
-        modified: changeSummary.modified,
-      });
-
-      // CRITICAL DEBUG: Log what we're about to return to frontend
-      console.log('🚨 STEPS DATA BEFORE RETURN:', {
-        versionA: {
-          stepsCount: markedStepsA.length,
-          firstStepTitle: markedStepsA[0]?.title,
-          firstStepType: markedStepsA[0]?.type,
-          sampleStep: markedStepsA[0] ? JSON.stringify(markedStepsA[0]).substring(0, 200) : 'no steps'
-        },
-        versionB: {
-          stepsCount: markedStepsB.length,
-          firstStepTitle: markedStepsB[0]?.title,
-          firstStepType: markedStepsB[0]?.type,
-          sampleStep: markedStepsB[0] ? JSON.stringify(markedStepsB[0]).substring(0, 200) : 'no steps'
-        }
-      });
+      const { markedStepsA, markedStepsB, changeSummary } = this.markStepChanges(stepsA, stepsB);
       
       // Enhance steps with detailed property information for better comparison
       if (captureDetailedStepProperties) {
@@ -418,10 +265,6 @@ export class WorkflowService {
           summary: changeSummary,
         },
       };
-
-      
-      console.log('✅ COMPARE VERSIONS: Comparison completed successfully');
-      console.log('🔍 COMPARE VERSIONS: Returning enhanced comparison data');
       return enhancedComparison;
     } catch (error) {
       throw new HttpException(
@@ -628,14 +471,6 @@ export class WorkflowService {
     const markedStepsB = stepsB.map(step => ({ ...step, isRemoved: false, isModified: false, isNew: false }));
 
     let added = 0, removed = 0, modified = 0;
-    // 🔍 DEBUG: Step comparison analysis
-    console.log('🔍 STEP COMPARISON DEBUG:', {
-      stepsACount: stepsA.length,
-      stepsBCount: stepsB.length,
-      stepsAPreview: stepsA.slice(0, 2).map(s => ({ title: s.title, type: s.type })),
-      stepsBPreview: stepsB.slice(0, 2).map(s => ({ title: s.title, type: s.type })),
-      stepsAreIdentical: JSON.stringify(stepsA) === JSON.stringify(stepsB)
-    });
 
     // Mark removed steps (in A but not in B)
     markedStepsA.forEach(stepA => {
@@ -896,18 +731,8 @@ export class WorkflowService {
     const steps = [];
 
     try {
-      console.log('🔍 Transforming workflow data to steps:', {
-        workflowData: workflowData ? 'Present' : 'Null',
-        hasActions: !!workflowData?.actions?.length,
-        hasEnrollmentTriggers: !!workflowData?.enrollmentTriggers?.length,
-        hasGoals: !!workflowData?.goals?.length,
-        workflowName: workflowData?.name,
-        workflowId: workflowData?.id,
-      });
-
       // Handle enrollment triggers first (they appear at the beginning)
       if (workflowData?.enrollmentTriggers && Array.isArray(workflowData.enrollmentTriggers)) {
-        console.log(`📝 Processing ${workflowData.enrollmentTriggers.length} enrollment triggers for version ${version}`);
         workflowData.enrollmentTriggers.forEach((trigger: any, index: number) => {
           const triggerTitle = this.getTriggerTitle(trigger);
           const triggerDescription = this.getTriggerDescription(trigger);
@@ -937,7 +762,6 @@ export class WorkflowService {
 
       // Handle workflow actions (main workflow steps)
       if (workflowData?.actions && Array.isArray(workflowData.actions)) {
-        console.log(`📝 Processing ${workflowData.actions.length} actions for version ${version}`);
         console.log('🔍 DEBUG: First action data:', JSON.stringify(workflowData.actions[0], null, 2));
       console.log('🔍 DEBUG: Complete workflow data structure:', {
         workflowKeys: Object.keys(workflowData),
@@ -968,49 +792,21 @@ export class WorkflowService {
             hasFields: !!action.fields,
             fieldsKeys: action.fields ? Object.keys(action.fields) : [],
             rawActionKeys: Object.keys(action)
-          });
-          
-          // ENHANCED: Log fields structure for SINGLE_CONNECTION debugging
+          });
           if (action.type === 'SINGLE_CONNECTION' && action.fields) {
-            console.log(`🔍 SINGLE_CONNECTION Fields Debug:`, {
-              actionTypeId: action.actionTypeId,
-              fieldsStructure: action.fields,
-              propertyName: action.fields.property_name,
-              value: action.fields.value,
-              associations: action.fields.associations
-            });
           }
           
           // CRITICAL: Test contextJson parsing specifically
           if (action.type === 'UNSUPPORTED_ACTION' && action.contextJson) {
-            console.log('🚨 UNSUPPORTED_ACTION with contextJson detected:', {
-              originalType: action.type,
-              contextJson: action.contextJson,
-              contextJsonType: typeof action.contextJson
-            });
             try {
               const parsedContext = JSON.parse(action.contextJson);
-              console.log('🚨 Parsed contextJson successfully:', {
-                parsedActionType: parsedContext.actionType,
-                parsedSubject: parsedContext.subject,
-                parsedBody: parsedContext.body
-              });
             } catch (error) {
-              console.error('🚨 Failed to parse contextJson:', error);
             }
           }
           
           const stepType = this.getStepType(action);
           const stepTitle = this.getActionTitle(action);
           const stepDescription = this.getActionDescription(action);
-          
-          console.log(`🔍 DEBUG: Generated titles for action ${index}:`, {
-            originalType: action.type || action.actionType,
-            generatedTitle: stepTitle,
-            generatedDescription: stepDescription,
-            stepType: stepType
-          });
-
           steps.push({
             id: action.id || action.actionId || `${version}-action-${index}`,
             title: stepTitle,
@@ -1049,7 +845,6 @@ export class WorkflowService {
 
       // Handle alternative step structure
       else if (workflowData?.steps && Array.isArray(workflowData.steps)) {
-        console.log(`📝 Processing ${workflowData.steps.length} steps`);
         workflowData.steps.forEach((step: any, index: number) => {
           steps.push({
             id: step.id || `step-${index}`,
@@ -1071,7 +866,6 @@ export class WorkflowService {
 
       // Handle goals as final steps
       if (workflowData?.goals && Array.isArray(workflowData.goals)) {
-        console.log(`📝 Processing ${workflowData.goals.length} goals`);
         workflowData.goals.forEach((goal: any, index: number) => {
           steps.push({
             id: goal.id || `goal-${index}`,
@@ -1094,7 +888,6 @@ export class WorkflowService {
 
       // If no detailed steps found but we have basic workflow info
       if (steps.length === 0 && workflowData?.name) {
-        console.log('📝 Creating basic workflow step from metadata');
         steps.push({
           id: 'workflow-basic',
           title: workflowData.name,
@@ -1115,7 +908,6 @@ export class WorkflowService {
 
       // Final fallback for completely unknown data
       if (steps.length === 0) {
-        console.log('📝 Creating fallback step for unknown workflow data');
         steps.push({
           id: 'unsupported-workflow',
           title: 'Workflow Details Unavailable',
@@ -1131,10 +923,7 @@ export class WorkflowService {
           },
         });
       }
-
-      console.log(`✅ Transformation complete. Created ${steps.length} steps`);
     } catch (error) {
-      console.error('❌ Error transforming workflow data to steps:', error);
       // Return a fallback step with error details
       steps.push({
         id: 'error-step',
@@ -1185,28 +974,9 @@ export class WorkflowService {
         
         // Merge context data with action for better parsing
         actionData = { ...action, ...contextData };
-        
-        console.log('🔧 Parsed contextJson:', {
-          originalType: action.type,
-          parsedType: actionType,
-          hasSubject: !!contextData.subject,
-          hasPropertyName: !!contextData.propertyName,
-          hasConditions: !!(contextData.conditions && contextData.conditions.length > 0)
-        });
       } catch (error) {
-        console.warn('⚠️ Failed to parse contextJson:', error);
       }
-    }
-
-    // ENHANCED: Handle HubSpot-specific action types for Compare Versions
-    console.log('🔧 getActionTitle DEBUG:', {
-      actionType,
-      hasActionTypeId: !!actionData.actionTypeId,
-      actionTypeId: actionData.actionTypeId,
-      hasFields: !!actionData.fields,
-      fieldsKeys: actionData.fields ? Object.keys(actionData.fields) : []
-    });
-    
+    }
     // Handle SINGLE_CONNECTION type (common HubSpot wrapper)
     if (actionType === 'SINGLE_CONNECTION' && actionData.actionTypeId) {
       const typeId = actionData.actionTypeId;
@@ -1390,7 +1160,6 @@ export class WorkflowService {
     return operatorMap[operator] || operator || 'equals';
   }
 
-
   private getTriggerTitle(trigger: any): string {
     if (!trigger) return 'Unknown Trigger';
 
@@ -1429,7 +1198,6 @@ export class WorkflowService {
 
     return `${triggerType} trigger`;
   }
-
 
   async getWorkflowVersions(
     workflowId: string,
@@ -1542,15 +1310,6 @@ export class WorkflowService {
           }),
         },
       });
-
-      console.log('✅ Created initial version for workflow:', {
-        workflowId: workflow.id,
-        workflowName: workflow.name,
-        hubspotId: workflow.hubspotId,
-        versionId: initialVersion.id,
-        dataSource: workflowData ? 'hubspot' : 'minimal',
-      });
-
       return initialVersion;
     } catch (error) {
       console.error('Failed to create initial version:', error);
@@ -1694,43 +1453,27 @@ export class WorkflowService {
     userId: string,
     selectedWorkflowObjects: any[],
   ): Promise<any> {
-    console.log('🚀 START PROTECTION - Starting for user:', userId, 'workflows:', workflowIds);
-    console.log('🚀 START PROTECTION - Selected workflow objects:', JSON.stringify(selectedWorkflowObjects, null, 2));
     
     if (!userId) {
-      console.error('❌ START PROTECTION - User ID is missing');
       throw new HttpException('User ID is required', HttpStatus.BAD_REQUEST);
     }
 
     if (!workflowIds || workflowIds.length === 0) {
-      console.error('❌ START PROTECTION - No workflow IDs provided');
       throw new HttpException('At least one workflow ID is required', HttpStatus.BAD_REQUEST);
     }
 
     try {
       // Validate user exists
-      console.log('🔍 START PROTECTION - Validating user exists:', userId);
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
       if (!user) {
-        console.error('❌ START PROTECTION - User not found:', userId);
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
-      console.log('✅ START PROTECTION - User validated successfully:', user.email);
-
       // Check workflow limits before proceeding
-      console.log('🔍 START PROTECTION - Checking workflow limits for', workflowIds.length, 'workflows');
       try {
         await this.checkWorkflowLimits(userId, workflowIds.length);
-        console.log('✅ START PROTECTION - Workflow limits check passed');
       } catch (limitError) {
-        console.error('❌ START PROTECTION - Workflow limits check failed:', {
-          error: limitError.message,
-          userId,
-          requestedCount: workflowIds.length,
-          errorType: limitError.constructor.name
-        });
         throw limitError;
       }
 
@@ -1738,7 +1481,6 @@ export class WorkflowService {
     const errors: Array<{ workflowId: string; error: string }> = [];
 
       // Validate workflow data before proceeding
-      console.log('🔍 START PROTECTION - Validating workflow data');
       if (selectedWorkflowObjects && selectedWorkflowObjects.length > 0) {
         // Ensure each workflow has at least id and hubspotId
         const invalidWorkflows = selectedWorkflowObjects.filter(
@@ -1758,26 +1500,14 @@ export class WorkflowService {
       // Fetch HubSpot workflows OUTSIDE the transaction to avoid conflicts
       let hubspotWorkflows: any[] = [];
       try {
-        console.log('🔍 START PROTECTION - Fetching HubSpot workflows');
         hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
-        console.log('✅ START PROTECTION - HubSpot workflows fetched:', hubspotWorkflows.length);
       } catch (hubspotError) {
-        console.warn(
-          '⚠️ START PROTECTION - Could not fetch HubSpot workflows, proceeding with minimal data:',
-          hubspotError.message,
-        );
       }
 
       // Use transaction with timeout to ensure data consistency
-      console.log('🔍 START PROTECTION - Starting database transaction with 60s timeout');
       try {
         await this.prisma.$transaction(async (tx) => {
-          console.log('🔍 START PROTECTION - Inside transaction, processing', workflowIds.length, 'workflows');
-          console.log('🔍 START PROTECTION - Transaction started successfully');
-        
         for (const workflowId of workflowIds) {
-          console.log('🔄 START PROTECTION - Processing workflow:', workflowId);
-
           // Find the workflow object from selectedWorkflowObjects
           const workflowObj = selectedWorkflowObjects?.find(
             (w: any) => w.id === workflowId || w.hubspotId === workflowId,
@@ -1785,13 +1515,6 @@ export class WorkflowService {
           const hubspotId = String(workflowObj?.hubspotId || workflowObj?.id || workflowId);
 
           // Create or update workflow
-          console.log('🔄 START PROTECTION - Upserting workflow:', {
-            hubspotId,
-            name: workflowObj?.name,
-            status: workflowObj?.status,
-            userId
-          });
-          
           const workflow = await tx.workflow.upsert({
             where: {
               hubspotId: hubspotId,
@@ -1809,14 +1532,6 @@ export class WorkflowService {
               ownerId: userId,
             },
           });
-          
-          console.log('✅ START PROTECTION - Workflow upserted successfully:', {
-            id: workflow.id,
-            hubspotId: workflow.hubspotId,
-            name: workflow.name,
-            ownerId: workflow.ownerId
-          });
-
           // Get the workflow with versions to check if any exist
           const workflowWithVersions = await tx.workflow.findUnique({
             where: { id: workflow.id },
@@ -1825,8 +1540,6 @@ export class WorkflowService {
 
           // Ensure workflow has at least one version (only create if none exist)
           if (!workflowWithVersions?.versions?.length) {
-            console.log('🔄 START PROTECTION - Creating initial version for workflow:', workflowId);
-
             // Fetch detailed HubSpot data with enrollment triggers
             let workflowData = hubspotWorkflows.find(
               (w) => String(w.id) === hubspotId,
@@ -1838,27 +1551,13 @@ export class WorkflowService {
             } else {
               // Fallback: fetch detailed data directly from HubSpot
               try {
-                console.log('🔍 Fetching detailed workflow data for enrollment triggers:', hubspotId);
                 const detailedData = await this.hubspotService.getWorkflowById(userId, hubspotId);
                 if (detailedData) {
                   workflowData = detailedData;
-                  console.log('✅ Got detailed workflow data with triggers:', {
-                    hasEnrollmentTriggers: !!detailedData.enrollmentTriggers?.length,
-                    triggersCount: detailedData.enrollmentTriggers?.length || 0
-                  });
                 }
               } catch (detailError) {
-                console.warn('⚠️ Could not fetch detailed workflow data:', detailError.message);
               }
             }
-
-            console.log('🔍 START PROTECTION - HubSpot data found:', {
-              workflowId,
-              hasWorkflowData: !!workflowData,
-              workflowDataKeys: workflowData ? Object.keys(workflowData) : 'none',
-              hubspotId
-            });
-
             // CRITICAL FIX: Enhanced data sanitization with bulletproof error handling
             const sanitizeForJSON = (data: any): any => {
               if (!data || typeof data !== 'object') {
@@ -1897,7 +1596,6 @@ export class WorkflowService {
                     }
                     // Skip everything else
                   } catch (error) {
-                    console.warn(`⚠️ Failed to sanitize field ${key}:`, error);
                     // Continue without this field rather than failing
                   }
                 }
@@ -1931,9 +1629,7 @@ export class WorkflowService {
               if (!testSerialization || testSerialization === 'null') {
                 throw new Error('Data serialization resulted in null or empty string');
               }
-              console.log('✅ Data serialization test passed, size:', testSerialization.length);
             } catch (serializationError) {
-              console.error('❌ CRITICAL: Data serialization test failed:', serializationError);
               // Fallback to minimal safe data
               const fallbackData = {
                 hubspotId: String(hubspotId || ''),
@@ -1953,16 +1649,7 @@ export class WorkflowService {
               };
               // Replace with fallback
               Object.assign(initialVersionData, fallbackData);
-              console.log('🔄 Using fallback data for workflow:', workflow.id);
             }
-
-            console.log('🔍 START PROTECTION - Creating initial version with SANITIZED data:', {
-              workflowId: workflow.id,
-              dataKeys: Object.keys(initialVersionData),
-              hasWorkflowData: !!workflowData,
-              sanitizedDataSample: JSON.stringify(initialVersionData).substring(0, 200) + '...'
-            });
-
             // CRITICAL FIX: Safe encryption with comprehensive error handling
             let finalVersionData = initialVersionData;
             let encryptionAttempted = false;
@@ -1971,12 +1658,9 @@ export class WorkflowService {
               if (this.encryptionService && typeof this.encryptionService.encryptWorkflowData === 'function') {
                 finalVersionData = this.encryptionService.encryptWorkflowData(initialVersionData);
                 encryptionAttempted = true;
-                console.log('✅ Workflow data encrypted successfully for workflow:', workflow.id);
               } else {
-                console.warn('⚠️ Encryption service not available, using unencrypted data');
               }
             } catch (encryptionError) {
-              console.warn('⚠️ Encryption failed, using unencrypted data for workflow:', workflow.id, encryptionError.message);
               finalVersionData = initialVersionData; // Fallback to original data
             }
 
@@ -1998,14 +1682,8 @@ export class WorkflowService {
               
               // Check size limits (SQLite has limits)
               if (dataToStore.length > 1000000) { // 1MB limit
-                console.warn('⚠️ Data size is very large:', dataToStore.length, 'characters');
               }
-              
-              console.log('✅ Final data validation passed, size:', dataToStore.length, 'encrypted:', encryptionAttempted);
-              
             } catch (finalError) {
-              console.error('❌ CRITICAL: Final data preparation failed:', finalError);
-              
               // Ultimate fallback - create minimal safe data
               const ultimateFallback = {
                 hubspotId: String(hubspotId || ''),
@@ -2022,7 +1700,6 @@ export class WorkflowService {
               };
               
               dataToStore = JSON.stringify(ultimateFallback);
-              console.log('🆘 Using ultimate fallback data for workflow:', workflow.id);
             }
 
             // Create the initial version with bulletproof data
@@ -2035,13 +1712,6 @@ export class WorkflowService {
                 data: dataToStore, // Now guaranteed to be a valid JSON string
               },
             });
-
-            console.log('✅ Created initial version for workflow:', {
-              workflowId: workflow.id,
-              versionId: initialVersion.id,
-              versionNumber: initialVersion.versionNumber,
-            });
-
             // Create audit log
             await tx.auditLog.create({
               data: {
@@ -2060,30 +1730,15 @@ export class WorkflowService {
 
             // Add version to workflow object (for TypeScript compatibility)
             (workflow as any).versions = [initialVersion];
-
-            console.log('✅ Created initial version for workflow:', {
-              workflowId: workflow.id,
-              workflowName: workflow.name,
-              versionId: initialVersion.id,
-              versionNumber: initialVersion.versionNumber,
-              dataSource: workflowData ? 'hubspot' : 'minimal',
-            });
           }
 
           protectedWorkflows.push(workflow);
         }
-        console.log('✅ START PROTECTION - Transaction completed successfully');
-        console.log('🔍 START PROTECTION - Transaction summary:', {
-          processedWorkflows: protectedWorkflows.length,
-          errorCount: errors.length,
-          workflowIds: protectedWorkflows.map(w => ({ id: w.id, hubspotId: w.hubspotId }))
-        });
       }, {
         timeout: 60000, // 60 second timeout for complex operations
       });
       
       // Verify workflows are actually in database after transaction
-      console.log('🔍 START PROTECTION - Post-transaction verification...');
       const verificationWorkflows = await this.prisma.workflow.findMany({
         where: { ownerId: userId },
         select: { id: true, hubspotId: true, name: true, ownerId: true }
@@ -2111,14 +1766,6 @@ export class WorkflowService {
           HttpStatus.PARTIAL_CONTENT,
         );
       }
-      
-      console.log('🎉 START PROTECTION - All workflows protected successfully');
-      console.log('🎉 START PROTECTION - Returning result:', {
-        success: true,
-        protectedCount: protectedWorkflows.length,
-        errorCount: errors.length
-      });
-      
       return {
         success: true,
         message: `Successfully protected ${protectedWorkflows.length} workflows`,
@@ -2129,14 +1776,6 @@ export class WorkflowService {
       
     } catch (txError) {
       // Handle transaction-specific errors
-      console.error('❌ START PROTECTION - Transaction error:', {
-        error: txError.message,
-        code: txError.code,
-        meta: txError.meta,
-        userId,
-        errorType: txError.constructor.name
-      });
-      
       // Rethrow with better error message for transaction errors
       throw new HttpException(
         {
@@ -2149,17 +1788,6 @@ export class WorkflowService {
     }
     
     } catch (error) {
-      console.error('❌ START PROTECTION - Critical error in startWorkflowProtection:', {
-        error: error.message,
-        stack: error.stack,
-        userId,
-        workflowIds,
-        selectedWorkflowObjects: selectedWorkflowObjects?.length || 0,
-        errorType: error.constructor.name,
-        prismaError: error?.code || 'N/A',
-        httpStatus: error?.status || 'N/A'
-      });
-      
       // Return a more graceful error response instead of crashing
       throw new HttpException(
         {
@@ -2190,21 +1818,15 @@ export class WorkflowService {
     userId: string,
     requestedCount: number,
   ): Promise<void> {
-    console.log('🔍 WORKFLOW LIMITS - Checking limits for user:', userId, 'requested:', requestedCount);
     try {
       // Get current protected workflows count
-      console.log('🔍 WORKFLOW LIMITS - Getting current protected workflows');
       const currentWorkflows = await this.getProtectedWorkflows(userId);
       const currentCount = currentWorkflows.length;
-      console.log('🔍 WORKFLOW LIMITS - Current protected workflows count:', currentCount);
-
       // Get user subscription and limits
-      console.log('🔍 WORKFLOW LIMITS - Getting user subscription');
       let subscription;
       try {
         subscription = await this.subscriptionService.getUserSubscription(userId);
       } catch (subscriptionError) {
-        console.warn('⚠️ WORKFLOW LIMITS - Subscription service error, using trial defaults:', subscriptionError.message);
         // Default to trial limits if subscription service fails
         subscription = {
           planName: 'Trial',
@@ -2213,13 +1835,6 @@ export class WorkflowService {
         };
       }
       const workflowLimit = subscription.limits.workflows;
-      console.log('🔍 WORKFLOW LIMITS - Subscription details:', {
-        planName: subscription.planName,
-        workflowLimit,
-        currentCount,
-        requestedCount
-      });
-
       // Check if adding requested workflows would exceed limit
       const totalAfterAddition = currentCount + requestedCount;
 
@@ -2239,31 +1854,19 @@ export class WorkflowService {
       }
     } catch (error) {
       if (error instanceof HttpException) {
-        console.log('🔍 WORKFLOW LIMITS - HttpException thrown:', error.message);
         throw error;
       }
-
-      console.error('❌ WORKFLOW LIMITS - Error checking workflow limits:', {
-        error: error.message,
-        stack: error.stack,
-        userId,
-        requestedCount,
-        errorType: error.constructor.name
-      });
       // Don't throw an error here that would prevent workflow protection
       // Just log it and continue
     }
   }
 
   async getProtectedWorkflows(userId: string): Promise<any[]> {
-    console.log('🔍 GET PROTECTED - Fetching workflows for userId:', userId);
     if (!userId) {
-      console.warn('⚠️ GET PROTECTED - No userId provided');
       return [];
     }
 
     try {
-      console.log('🔍 GET PROTECTED - Querying database for workflows');
       const workflows = await this.prisma.workflow.findMany({
         where: { ownerId: userId },
         include: {
@@ -2279,10 +1882,6 @@ export class WorkflowService {
         orderBy: { updatedAt: 'desc' },
       });
 
-      console.log('🔍 GET PROTECTED - Database query result:', {
-        count: workflows.length,
-        workflowIds: workflows.map(w => ({ id: w.id, hubspotId: w.hubspotId, name: w.name }))
-      });
 
       // Transform database records to match Dashboard expectations
       return workflows.map((workflow: any) => {
@@ -2350,7 +1949,6 @@ export class WorkflowService {
       'migrationStatus',
       'hubspotCreatedAt',
       'hubspotUpdatedAt',
-
 
       'internalUpdatedAt',
       'systemUpdatedAt',
@@ -2507,9 +2105,7 @@ export class WorkflowService {
     // CRITICAL FIX: Normalize BEFORE extracting core data
     // This ensures timestamp fields within actions/enrollmentTriggers are removed
     const normalizedCurrent = this.normalizeWorkflowData(current);
-    const normalizedPrevious = this.normalizeWorkflowData(previous);
-    
-    // DEBUG: Log normalization results (with error handling)
+    const normalizedPrevious = this.normalizeWorkflowData(previous);
     try {
       console.log(`🧽 NORMALIZATION DEBUG:`, {
         workflowName: current?.name || 'Unknown',
@@ -2523,7 +2119,6 @@ export class WorkflowService {
         previousFetchedAt: previous?._metadata?.fetchedAt
       });
     } catch (normalizationError) {
-      console.log(`⚠️ NORMALIZATION DEBUG ERROR:`, normalizationError.message);
     }
     
     // Now extract core fields from already normalized data
@@ -2540,57 +2135,25 @@ export class WorkflowService {
       (currentCore.actions?.length || 0) !== (previousCore.actions?.length || 0) ||
       (currentCore.enrollmentTriggers?.length || 0) !== (previousCore.enrollmentTriggers?.length || 0)
     );
-
-    console.log(`🛡️ BULLETPROOF COMPARISON for workflow:`, {
-      workflowName: currentCore.name || 'Unknown',
-      hasChanges,
-      comparisonMethod: 'FUNCTIONAL_ELEMENTS_ONLY',
-      nameChanged: currentCore.name !== previousCore.name,
-      enabledChanged: currentCore.enabled !== previousCore.enabled,
-      actionsCountChanged: (currentCore.actions?.length || 0) !== (previousCore.actions?.length || 0),
-      triggersCountChanged: (currentCore.enrollmentTriggers?.length || 0) !== (previousCore.enrollmentTriggers?.length || 0),
-      currentActionsCount: currentCore.actions?.length || 0,
-      previousActionsCount: previousCore.actions?.length || 0,
-      currentTriggersCount: currentCore.enrollmentTriggers?.length || 0,
-      previousTriggersCount: previousCore.enrollmentTriggers?.length || 0,
-      falsePositiveFix: 'EMERGENCY_FUNCTIONAL_CHECK_APPLIED'
-    });
-
     // If changes detected, log the actual differences for debugging
     if (hasChanges) {
-      console.log(`🚨 FALSE POSITIVE DETECTED - CRITICAL DEBUG:`, {
-        workflowName: current?.name || 'Unknown',
-        currentStringPreview: currentString.substring(0, 500) + '...',
-        previousStringPreview: previousString.substring(0, 500) + '...',
-        lengthDifference: currentString.length - previousString.length,
-        currentStringLength: currentString.length,
-        previousStringLength: previousString.length,
-        exactCurrentString: currentString, // Full string for analysis
-        exactPreviousString: previousString // Full string for analysis
-      });
-      
       // CRITICAL: Log the exact fields causing differences (with error handling)
       try {
-        console.log(`🔍 FIELD-BY-FIELD COMPARISON:`);
         const allKeys = new Set([...Object.keys(currentCore || {}), ...Object.keys(previousCore || {})]);
         allKeys.forEach(key => {
           try {
             const currentValue = JSON.stringify(currentCore[key] || null);
             const previousValue = JSON.stringify(previousCore[key] || null);
             if (currentValue !== previousValue) {
-              console.log(`  ❌ FIELD '${key}' DIFFERS:`);
               console.log(`    Current:  ${currentValue.substring(0, 200)}...`);
               console.log(`    Previous: ${previousValue.substring(0, 200)}...`);
             }
           } catch (fieldError) {
-            console.log(`  ⚠️ FIELD '${key}' ERROR:`, fieldError.message);
           }
         });
       } catch (comparisonError) {
-        console.log(`⚠️ FIELD COMPARISON ERROR:`, comparisonError.message);
       }
     } else {
-      console.log(`✅ NO FUNCTIONAL CHANGES DETECTED - Version creation blocked by emergency fix`);
     }
 
     return hasChanges;
@@ -2598,23 +2161,11 @@ export class WorkflowService {
 
   async syncHubSpotWorkflows(userId: string): Promise<any[]> {
     try {
-      console.log(`🔄 SYNC STARTED for user: ${userId}`);
-      
-      console.log(`📡 Fetching HubSpot workflows for user: ${userId}`);
       const hubspotWorkflows = await this.hubspotService.getWorkflows(userId);
-      console.log(`📊 Found ${hubspotWorkflows.length} HubSpot workflows`);
-
       const syncedWorkflows = [];
-      console.log(
-        `🔄 Starting sync loop for ${hubspotWorkflows.length} workflows`,
-      );
-
       await this._handleDeletedWorkflows(userId, hubspotWorkflows);
 
       for (const hubspotWorkflow of hubspotWorkflows) {
-        console.log(
-          `📝 Checking workflow: ${hubspotWorkflow.id} - ${hubspotWorkflow.name}`,
-        );
         const existingWorkflow = await this.prisma.workflow.findFirst({
           where: {
             hubspotId: String(hubspotWorkflow.id),
@@ -2684,33 +2235,22 @@ export class WorkflowService {
                 ? JSON.parse(latestVersion.data) 
                 : latestVersion.data;
             } catch (parseError) {
-              console.log(`⚠️ JSON PARSE ERROR for workflow ${hubspotWorkflow.id}:`, parseError.message);
               parsedStoredData = latestVersion.data;
             }
             
             let decryptedStoredData;
             try {
               decryptedStoredData = this.encryptionService.decryptWorkflowData(parsedStoredData);
-              console.log(`✅ DECRYPTION SUCCESS for workflow ${hubspotWorkflow.id}`);
             } catch (decryptionError) {
-              console.log(`🚨 DECRYPTION FAILED for workflow ${hubspotWorkflow.id}:`, decryptionError.message);
-              console.log(`🔄 FALLBACK: Using raw stored data as-is`);
               // Fallback: use the raw stored data if decryption fails
               decryptedStoredData = parsedStoredData;
             }
             
             // If decryption still resulted in empty/null data, skip comparison
             if (!decryptedStoredData || Object.keys(decryptedStoredData).length === 0) {
-              console.log(`⚠️ STORED DATA IS EMPTY for workflow ${hubspotWorkflow.id} - SKIPPING VERSION CHECK`);
-              console.log(`🔄 This workflow will be treated as having no previous version`);
               decryptedStoredData = null; // Explicitly set to null for clear comparison
             }
             
-            console.log(`🔓 DECRYPTED DATA for workflow ${hubspotWorkflow.id}:`, {
-              decryptedDataType: typeof decryptedStoredData,
-              decryptedDataKeys: Object.keys(decryptedStoredData || {}),
-              decryptedDataPreview: JSON.stringify(decryptedStoredData).substring(0, 100) + '...'
-            });
             
             console.log(`🔍 DETAILED COMPARISON for workflow ${hubspotWorkflow.id}:`, {
               currentDataKeys: Object.keys(currentWorkflowData || {}),
@@ -2732,20 +2272,8 @@ export class WorkflowService {
             // Only create versions for actual structural changes
             // Skip metadata-only differences like timestamps, fetchedAt, etc.
             if (!shouldCreateVersion) {
-              console.log(
-                `🔍 Structure comparison for workflow ${hubspotWorkflow.id}: NO structural changes detected`,
-                {
-                  structureChanged: false,
-                  skipReason: 'No functional workflow changes found',
-                  latestVersionNumber: latestVersion.versionNumber,
-                },
-              );
-              
               // Do NOT create versions for metadata-only changes
               // This prevents unnecessary version creation on every sync
-              console.log(
-                `✅ Workflow ${hubspotWorkflow.id}: Skipping version creation - no functional changes`,
-              );
             }
 
             console.log(`🚨 CRITICAL DEBUG - Workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}) comparison result:`, {
@@ -2791,14 +2319,8 @@ export class WorkflowService {
           });
 
           // Create new version if content changed
-          console.log(`📝 VERSION CREATION CHECK for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name}):`, {
-            shouldCreateVersion,
-            hasCurrentWorkflowData: !!currentWorkflowData,
-            willCreateVersion: shouldCreateVersion && !!currentWorkflowData
-          });
           
           if (shouldCreateVersion && currentWorkflowData) {
-            console.log(`🆕 CREATING NEW VERSION for workflow ${hubspotWorkflow.id} (${hubspotWorkflow.name})`);
             const nextVersionNumber = latestVersion
               ? latestVersion.versionNumber + 1
               : 1;
@@ -2811,23 +2333,13 @@ export class WorkflowService {
                 const parsedPreviousData = typeof latestVersion.data === 'string' ? 
                   JSON.parse(latestVersion.data) : latestVersion.data;
                 previousWorkflowData = this.encryptionService.decryptWorkflowData(parsedPreviousData);
-                console.log('✅ Successfully retrieved previous version data for change calculation');
               } catch (error) {
-                console.warn('⚠️ Could not retrieve previous version data for change calculation:', error);
               }
             }
 
             // Calculate actual changes between current and previous data
             const changes = this.calculateWorkflowChanges(currentWorkflowData, previousWorkflowData);
             const changeSummary = this.generateWorkflowChangeSummary(changes);
-            
-            console.log('📊 CHANGE CALCULATION RESULT:', {
-              workflowId: hubspotWorkflow.id,
-              changes: changes,
-              changeSummary: changeSummary,
-              hasPreviousData: !!previousWorkflowData
-            });
-
             // Encrypt sensitive data before storing
             const encryptedWorkflowData = this.encryptionService.encryptWorkflowData(currentWorkflowData);
 
@@ -3071,22 +2583,12 @@ export class WorkflowService {
           HttpStatus.NOT_FOUND,
         );
       }
-
-      console.log('🔍 Download request:', {
-        workflowId,
-        versionId,
-        hasData: !!version.data,
-        dataType: typeof version.data,
-        dataKeys: version.data ? Object.keys(version.data as any) : 'no data',
-      });
-
       // Decrypt the workflow data before returning
       const decryptedData = this.encryptionService.decryptWorkflowData(version.data);
 
       // Return the decrypted workflow data for download
       return decryptedData;
     } catch (error) {
-      console.error('❌ Error downloading workflow version:', error);
       throw new HttpException(
         `Failed to download workflow version: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -3143,7 +2645,6 @@ export class WorkflowService {
       );
     }
   }
-
 
   async exportWorkflow(workflowId: string): Promise<any> {
     try {
@@ -3268,10 +2769,6 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      console.log(
-        `📤 Exporting deleted workflow ${workflowId} for user ${userId}`,
-      );
-
       // 🔍 DEBUG: First check if workflow exists at all (regardless of deletion status)
       const anyWorkflow = await this.prisma.workflow.findFirst({
         where: {
@@ -3280,7 +2777,6 @@ export class WorkflowService {
         },
       });
       
-      console.log('🔍 DEBUG: Workflow found (any status):', !!anyWorkflow, 'isDeleted:', anyWorkflow?.isDeleted);
 
       // Try to find by WorkflowGuard UUID first, then by HubSpot ID
       let workflow = await this.prisma.workflow.findFirst({
@@ -3317,7 +2813,6 @@ export class WorkflowService {
       // 🔧 FIX: If still not found with isDeleted=true, try without deletion filter
       // This handles cases where frontend shows as deleted but DB isn't marked as deleted
       if (!workflow && anyWorkflow) {
-        console.log('🔧 FALLBACK: Workflow exists but not marked as deleted, allowing export anyway');
         workflow = await this.prisma.workflow.findFirst({
           where: {
             id: workflowId,
@@ -3355,14 +2850,11 @@ export class WorkflowService {
       const isOldBackup = backupAge > (7 * 24 * 60 * 60 * 1000); // Older than 7 days
 
       if (!hasEnrollmentTriggers && isOldBackup) {
-        console.log('🔄 Backup data incomplete, creating fresh backup with enrollment triggers...');
         try {
           const freshBackup = await this.createFreshBackup(workflow.id, userId);
           latestBackup = freshBackup;
           workflowData = this.encryptionService.decryptWorkflowData(freshBackup.data);
-          console.log('✅ Created fresh backup with complete data');
         } catch (error) {
-          console.warn('⚠️ Could not create fresh backup, using existing data:', error.message);
         }
       }
 
@@ -3421,7 +2913,6 @@ export class WorkflowService {
 
       return exportData;
     } catch (error) {
-      console.error('❌ Error exporting deleted workflow:', error);
       throw new HttpException(
         `Failed to export workflow: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -3450,7 +2941,6 @@ export class WorkflowService {
       configuration: triggerSet,
     }));
   }
-
 
   private getActionConfiguration(action: any): any {
     if (!action) return {};
@@ -3734,19 +3224,12 @@ export class WorkflowService {
     portalId: string,
     hubspotWorkflowId: string,
   ): Promise<void> {
-    console.log(
-      `🔄 Handling workflow update for portalId: ${portalId}, workflowId: ${hubspotWorkflowId}`,
-    );
-
     // 1. Find the user associated with the portal
     const user = await this.prisma.user.findFirst({
       where: { hubspotPortalId: portalId },
     });
 
     if (!user) {
-      console.warn(
-        `⚠️ No user found for portalId: ${portalId}. Skipping workflow update.`,
-      );
       return;
     }
 
@@ -3759,9 +3242,6 @@ export class WorkflowService {
     });
 
     if (!workflow) {
-      console.log(
-        `ℹ️ Workflow ${hubspotWorkflowId} is not protected for user ${user.id}. Skipping backup.`,
-      );
       return;
     }
 
@@ -3774,9 +3254,6 @@ export class WorkflowService {
       );
 
       if (!hubspotWorkflowData) {
-        console.warn(
-          `⚠️ Could not fetch workflow data for ${hubspotWorkflowId} from HubSpot.`,
-        );
         return;
       }
 
@@ -3797,10 +3274,6 @@ export class WorkflowService {
         `✅ Successfully created automated backup for workflow ${workflow.id} (HubSpot ID: ${hubspotWorkflowId})`,
       );
     } catch (error) {
-      console.error(
-        `❌ Error handling workflow update for workflowId ${hubspotWorkflowId}:`,
-        error,
-      );
       // Do not re-throw error to prevent HubSpot from retrying indefinitely
     }
   }
@@ -3813,10 +3286,6 @@ export class WorkflowService {
     portalId: string,
     hubspotWorkflowId: string,
   ): Promise<void> {
-    console.log(
-      `🗑️ Handling workflow deletion for portalId: ${portalId}, workflowId: ${hubspotWorkflowId}`,
-    );
-
     try {
       // 1. Find the user associated with the portal
       const user = await this.prisma.user.findFirst({
@@ -3824,9 +3293,6 @@ export class WorkflowService {
       });
 
       if (!user) {
-        console.warn(
-          `⚠️ No user found for portalId: ${portalId}. Skipping workflow deletion handling.`,
-        );
         return;
       }
 
@@ -3845,9 +3311,6 @@ export class WorkflowService {
       });
 
       if (!workflow) {
-        console.log(
-          `ℹ️ Workflow ${hubspotWorkflowId} is not protected for user ${user.id}. Skipping deletion handling.`,
-        );
         return;
       }
 
@@ -3892,10 +3355,6 @@ export class WorkflowService {
         `✅ Successfully handled workflow deletion for ${workflow.id} (HubSpot ID: ${hubspotWorkflowId})`,
       );
     } catch (error) {
-      console.error(
-        `❌ Error handling workflow deletion for workflowId ${hubspotWorkflowId}:`,
-        error,
-      );
       // Do not re-throw error to prevent HubSpot from retrying indefinitely
     }
   }
@@ -3908,10 +3367,6 @@ export class WorkflowService {
     userId: string,
   ): Promise<any> {
     try {
-      console.log(
-        `🔄 Attempting to restore deleted workflow ${workflowId} for user ${userId}`,
-      );
-
       // 1. Find the deleted workflow
       const workflow = await this.prisma.workflow.findFirst({
         where: {
@@ -4002,11 +3457,6 @@ export class WorkflowService {
           }),
         },
       });
-
-      console.log(
-        `✅ Successfully restored workflow ${workflow.id} with new HubSpot ID: ${restoredWorkflow.id}`,
-      );
-
       return {
         success: true,
         message: 'Workflow successfully restored to HubSpot',
@@ -4014,10 +3464,6 @@ export class WorkflowService {
         hubspotWorkflow: restoredWorkflow,
       };
     } catch (error) {
-      console.error(
-        `❌ Error restoring deleted workflow ${workflowId}:`,
-        error,
-      );
       throw new HttpException(
         `Failed to restore deleted workflow: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -4136,7 +3582,6 @@ export class WorkflowService {
                              actionKeys.every(key => basicProperties.includes(key));
 
     if (hasOnlyBasicProps) {
-      console.log('🔍 Detected incomplete action data - only basic properties:', actionKeys);
       return true;
     }
 
@@ -4164,13 +3609,6 @@ export class WorkflowService {
    * Based on memory lessons to avoid "No changes detected" issues
    */
   private calculateWorkflowChanges(currentData: any, previousData: any): any {
-    console.log('🔍 CALCULATING WORKFLOW CHANGES:', {
-      hasCurrent: !!currentData,
-      hasPrevious: !!previousData,
-      currentActions: currentData?.actions?.length || 0,
-      previousActions: previousData?.actions?.length || 0
-    });
-
     if (!currentData) {
       return { added: 0, modified: 0, removed: 0 };
     }
@@ -4179,7 +3617,6 @@ export class WorkflowService {
     if (!previousData) {
       const currentActions = currentData.actions?.length || 0;
       const currentTriggers = currentData.enrollmentTriggers?.length || 0;
-      console.log('📊 INITIAL VERSION - No previous data to compare');
       return {
         added: currentActions + currentTriggers,
         modified: 0,
@@ -4222,8 +3659,6 @@ export class WorkflowService {
       modified: modifiedActions,
       removed: removedActions
     };
-
-    console.log('📊 CHANGE CALCULATION RESULT:', totalChanges);
     return totalChanges;
   }
 
@@ -4244,7 +3679,6 @@ export class WorkflowService {
     }
     
     const summary = summaries.join(', ');
-    console.log('📝 GENERATED CHANGE SUMMARY:', summary);
     return summary;
   }
 
