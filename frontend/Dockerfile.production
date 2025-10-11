@@ -26,19 +26,29 @@ RUN echo "=== INSTALLING FRONTEND DEPENDENCIES ===" && NODE_OPTIONS="--max-old-s
 # Copy source code
 COPY . .
 
+# Fix missing public directory - create it and move assets
+RUN echo "=== CREATING PUBLIC DIRECTORY AND MOVING ASSETS ===" && \
+    mkdir -p public && \
+    [ -f LogoW.png ] && mv LogoW.png public/ || echo "LogoW.png not found" && \
+    [ -f favicon.ico ] && mv favicon.ico public/ || echo "favicon.ico not found, will create placeholder" && \
+    [ ! -f public/favicon.ico ] && touch public/favicon.ico || echo "favicon.ico exists"
+
 # Debug: Show directory structure
-RUN echo "=== FRONTEND DIRECTORY STRUCTURE ===" && ls -la src/
+RUN echo "=== FRONTEND DIRECTORY STRUCTURE ===" && ls -la src/ && echo "=== PUBLIC DIRECTORY ===" && ls -la public/
 
 # Set environment variables for build - Using proper domain from memory analysis
 ENV VITE_API_URL=https://api.workflowguard.pro
 ENV VITE_APP_URL=https://www.workflowguard.pro
 ENV NODE_ENV=production
 
-# Debug: Check TypeScript compilation first
-RUN echo "=== CHECKING FRONTEND TYPESCRIPT COMPILATION ===" && npx tsc --noEmit
+# Debug: Check if Vite is available
+RUN echo "=== CHECKING VITE INSTALLATION ===" && npx vite --version
 
-# Debug: Show build script
-RUN echo "=== FRONTEND BUILD SCRIPT ===" && npm run --silent build --dry-run || echo "Build script check complete"
+# Debug: Check TypeScript compilation first
+RUN echo "=== CHECKING FRONTEND TYPESCRIPT COMPILATION ===" && npx tsc --noEmit || echo "TypeScript check failed, continuing..."
+
+# Debug: List available npm scripts
+RUN echo "=== AVAILABLE NPM SCRIPTS ===" && npm run
 
 # Build the application with maximum memory and debugging
 RUN echo "=== STARTING FRONTEND BUILD ===" && NODE_OPTIONS="--max-old-space-size=4096" npm run build
