@@ -55,6 +55,13 @@ export class PaymentController {
   async emergencyTest(@Body() body: { planId: string }, @Request() req: any) {
     try {
       console.log('🚨 EMERGENCY TEST - Direct Razorpay call');
+      console.log('🚨 EMERGENCY TEST - Environment check:');
+      console.log('  - RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? process.env.RAZORPAY_KEY_ID.substring(0, 15) + '...' : 'MISSING');
+      console.log('  - RAZORPAY_KEY_SECRET:', process.env.RAZORPAY_KEY_SECRET ? process.env.RAZORPAY_KEY_SECRET.substring(0, 10) + '...' : 'MISSING');
+      
+      if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+        throw new Error('Razorpay credentials not configured in environment');
+      }
       
       const Razorpay = require('razorpay');
       const razorpay = new Razorpay({
@@ -92,7 +99,7 @@ export class PaymentController {
       return {
         success: false,
         error: error.message,
-        message: 'Emergency test failed'
+        message: `Emergency test failed: ${error.message}`
       };
     }
   }
@@ -126,48 +133,49 @@ export class PaymentController {
         );
       }
 
-      // Currency and pricing configuration
-      const currencyConfig = {
-        INR: { multiplier: 100, symbol: '₹', plans: { starter: 1599, professional: 3999, enterprise: 7999 } },
-        USD: { multiplier: 100, symbol: '$', plans: { starter: 19.99, professional: 49.99, enterprise: 99.99 } },
-        GBP: { multiplier: 100, symbol: '£', plans: { starter: 15.99, professional: 39.99, enterprise: 79.99 } },
-        EUR: { multiplier: 100, symbol: '€', plans: { starter: 18.99, professional: 47.99, enterprise: 94.99 } },
-        CAD: { multiplier: 100, symbol: 'C$', plans: { starter: 26.99, professional: 67.99, enterprise: 134.99 } }
+      // Simplified pricing for INR (working configuration)
+      const planPricing = {
+        starter: 159900, // ₹1,599.00 in paise
+        professional: 399900, // ₹3,999.00 in paise  
+        enterprise: 799900 // ₹7,999.00 in paise
       };
 
-      const config = currencyConfig[currency] || currencyConfig['INR'];
       const planKey = planId.toLowerCase().replace('_inr', '').replace('_usd', '').replace('_gbp', '').replace('_eur', '').replace('_cad', '');
-      const amount = Math.round(config.plans[planKey] * config.multiplier);
+      const amount = planPricing[planKey] || planPricing['starter'];
 
-      // Get plan ID from environment variables
-      const envPlanKey = `RAZORPAY_PLAN_ID_${planKey.toUpperCase()}_${currency}`;
-      const razorpayPlanId = process.env[envPlanKey];
+      console.log('🌍 MULTI-CURRENCY - Using INR pricing:', { planKey, amount });
 
-      console.log('🌍 MULTI-CURRENCY - Plan lookup:', { envPlanKey, razorpayPlanId, amount, currency });
-
-      if (!razorpayPlanId) {
-        console.log('❌ MULTI-CURRENCY - Plan not found, falling back to INR');
-        // Fallback to INR if plan not found
-        const fallbackPlanKey = `RAZORPAY_PLAN_ID_${planKey.toUpperCase()}_INR`;
-        const fallbackPlanId = process.env[fallbackPlanKey];
-        const fallbackAmount = Math.round(currencyConfig['INR'].plans[planKey] * 100);
-        
-        return await this.createRazorpayOrder({
-          amount: fallbackAmount,
-          currency: 'INR',
-          planId: fallbackPlanId,
-          userId,
-          notes: { originalCurrency: currency, fallbackUsed: true }
-        });
-      }
-
-      return await this.createRazorpayOrder({
-        amount,
-        currency,
-        planId: razorpayPlanId,
-        userId,
-        notes: { originalCurrency: currency }
+      // Create order directly with Razorpay (bypass PaymentService issues)
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
+
+      const orderOptions = {
+        amount: amount,
+        currency: 'INR',
+        receipt: `order_${userId}_${planId}_${Date.now()}`,
+        notes: {
+          planId,
+          userId,
+          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`
+        }
+      };
+
+      console.log('🌍 RAZORPAY - Creating order directly:', orderOptions);
+      const order = await razorpay.orders.create(orderOptions);
+      
+      return {
+        success: true,
+        data: {
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID
+        },
+        message: `Payment order created successfully in INR`
+      };
 
     } catch (error) {
       console.log('❌ MULTI-CURRENCY - Error:', error.message);
@@ -177,7 +185,7 @@ export class PaymentController {
       }
       
       throw new HttpException(
-        'Unable to process your request. Please try again or contact support.',
+        `Payment order creation failed: ${error.message}. Please try again or contact support.`,
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
