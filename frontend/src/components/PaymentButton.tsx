@@ -208,7 +208,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
                 // Close on overlay click
                 overlay.addEventListener('click', (e) => {
                   if (e.target === overlay) {
-                    modal.querySelector('#mockPayCancel')?.click();
+                    (modal.querySelector('#mockPayCancel') as HTMLButtonElement)?.click();
                   }
                 });
               };
