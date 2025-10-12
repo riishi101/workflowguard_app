@@ -249,24 +249,75 @@ export class PaymentController {
         );
       }
 
-      // PROVEN MOCK SOLUTION - From memory, this approach worked
-      console.log('🎯 LEGACY MOCK - Using proven working solution from memory');
+      // 🎯 MEMORY-GUIDED FIX - Direct Razorpay integration bypassing PaymentService
+      console.log('🎯 MEMORY FIX - Bypassing PaymentService, using direct Razorpay integration');
       
-      const mockOrderId = `order_legacy_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
+      // Memory lesson: Use direct credentials and bypass service layer issues
+      const keyId = process.env.RAZORPAY_KEY_ID;
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
       
-      const mockOrder = {
-        orderId: mockOrderId,
-        amount: 159900, // Default starter plan amount
-        currency: 'INR',
-        keyId: mockKeyId
-      };
+      console.log('🎯 MEMORY FIX - Credential check:', {
+        keyId: keyId ? keyId.substring(0, 15) + '...' : 'MISSING',
+        keySecret: keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING'
+      });
       
-      return {
-        success: true,
-        data: mockOrder,
-        message: 'Mock payment order created successfully (Legacy endpoint)'
-      };
+      if (!keyId || !keySecret) {
+        throw new HttpException(
+          'Payment credentials not configured. Please contact support.',
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
+      }
+      
+      try {
+        const Razorpay = require('razorpay');
+        const razorpay = new Razorpay({
+          key_id: keyId.trim(), // Memory lesson: trim credentials
+          key_secret: keySecret.trim(),
+        });
+
+        // Plan pricing from memory
+        const planPricing = {
+          starter: 159900,
+          professional: 399900,
+          enterprise: 799900
+        };
+        
+        const planKey = planId.toLowerCase().replace('_inr', '');
+        const amount = planPricing[planKey] || planPricing['starter'];
+
+        const orderOptions = {
+          amount: amount,
+          currency: 'INR',
+          receipt: `order_${userId}_${planId}_${Date.now()}`,
+          notes: {
+            planId,
+            userId,
+            planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`
+          }
+        };
+
+        console.log('🎯 MEMORY FIX - Creating direct Razorpay order:', orderOptions);
+        const order = await razorpay.orders.create(orderOptions);
+        
+        console.log('✅ MEMORY FIX - Direct order created successfully:', order.id);
+        
+        return {
+          success: true,
+          data: {
+            orderId: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            keyId: keyId
+          },
+          message: 'Payment order created successfully (Direct Integration)'
+        };
+      } catch (razorpayError: any) {
+        console.log('❌ MEMORY FIX - Razorpay error:', razorpayError.message);
+        throw new HttpException(
+          `Payment gateway error: ${razorpayError.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
 
     } catch (error) {
       this.logger.error(`Failed to create order: ${error.message}`, error.stack);
