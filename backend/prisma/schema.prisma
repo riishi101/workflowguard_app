@@ -25,6 +25,7 @@ model User {
   auditLogs             AuditLog[]
   notificationSettings  NotificationSettings?
   overages              Overage[]
+  paymentTransactions   PaymentTransaction[]
   subscription          Subscription?
   supportReplies        SupportReply[]
   supportTickets        SupportTicket[]
@@ -186,4 +187,76 @@ model SupportReply {
   updatedAt  DateTime      @updatedAt
   ticket     SupportTicket @relation(fields: [ticketId], references: [id])
   user       User          @relation(fields: [userId], references: [id])
+}
+
+model PaymentTransaction {
+  id                    String   @id @default(uuid())
+  userId                String
+  planId                String
+  
+  // Razorpay Integration
+  razorpayOrderId       String   @unique
+  razorpayPaymentId     String?  @unique
+  razorpaySignature     String?
+  
+  // Payment Details
+  amount                Int      // Amount in smallest currency unit (paise/cents)
+  currency              String   @default("INR")
+  status                String   // pending, success, failed, refunded
+  
+  // Payment Method Details
+  paymentMethod         String?  // card, upi, netbanking, wallet
+  cardLast4             String?
+  cardNetwork           String?  // visa, mastercard, etc.
+  bankName              String?
+  
+  // Business Logic
+  planName              String
+  subscriptionId        String?
+  
+  // Audit Trail
+  ipAddress             String?
+  userAgent             String?
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  paidAt                DateTime?
+  failedAt              DateTime?
+  refundedAt            DateTime?
+  
+  // Error Handling
+  errorCode             String?
+  errorDescription      String?
+  
+  // Relations
+  user                  User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([razorpayOrderId])
+}
+
+model PaymentRefund {
+  id                    String   @id @default(uuid())
+  paymentTransactionId  String
+  
+  // Razorpay Refund Details
+  razorpayRefundId      String   @unique
+  amount                Int      // Refund amount in smallest currency unit
+  currency              String   @default("INR")
+  status                String   // pending, processed, failed
+  
+  // Refund Details
+  reason                String?
+  notes                 String?
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  processedAt           DateTime?
+  
+  @@index([paymentTransactionId])
+  @@index([status])
 }

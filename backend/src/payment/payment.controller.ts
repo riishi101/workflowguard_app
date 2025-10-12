@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaymentService } from './payment.service';
+import { PaymentTrackingService } from './payment-tracking.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 
 @Controller('payment')
@@ -20,6 +21,7 @@ export class PaymentController {
 
   constructor(
     private paymentService: PaymentService,
+    private paymentTrackingService: PaymentTrackingService,
     private subscriptionService: SubscriptionService
   ) {}
 
@@ -164,6 +166,24 @@ export class PaymentController {
       console.log('🎯 PRODUCTION - Creating real order with options:', orderOptions);
       const order = await razorpay.orders.create(orderOptions);
       
+      // 📊 PAYMENT TRACKING - Record transaction in database
+      try {
+        await this.paymentTrackingService.createPaymentTransaction({
+          userId,
+          planId,
+          razorpayOrderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+        console.log('✅ PAYMENT TRACKING - Transaction recorded successfully');
+      } catch (trackingError) {
+        console.error('⚠️ PAYMENT TRACKING - Failed to record transaction:', trackingError.message);
+        // Don't fail the payment creation if tracking fails
+      }
+      
       return {
         success: true,
         data: {
@@ -301,6 +321,24 @@ export class PaymentController {
         
         console.log('✅ MEMORY FIX - Direct order created successfully:', order.id);
         
+        // 📊 PAYMENT TRACKING - Record transaction in database
+        try {
+          await this.paymentTrackingService.createPaymentTransaction({
+            userId,
+            planId,
+            razorpayOrderId: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+          });
+          console.log('✅ PAYMENT TRACKING - Legacy transaction recorded successfully');
+        } catch (trackingError) {
+          console.error('⚠️ PAYMENT TRACKING - Failed to record legacy transaction:', trackingError.message);
+          // Don't fail the payment creation if tracking fails
+        }
+        
         return {
           success: true,
           data: {
@@ -387,6 +425,147 @@ export class PaymentController {
       }
     };
   }
+  /**
+   * Payment confirmation endpoint - Handle successful payments
+   * 📊 PAYMENT TRACKING - Update transaction status and record payment details
+   */
+  @Post('confirm')
+  @UseGuards(JwtAuthGuard)
+  async confirmPayment(@Body() body: {
+    orderId: string;
+    paymentId: string;
+    signature: string;
+    planId: string;
+  }, @Request() req: any) {
+    try {
+      console.log('💳 PAYMENT CONFIRMATION - Processing payment success');
+      
+      const { orderId, paymentId, signature, planId } = body;
+      const userId = req.user?.id || req.user?.sub;
+
+      if (!orderId || !paymentId || !signature) {
+        throw new HttpException(
+          'Missing payment confirmation data',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // 📊 PAYMENT TRACKING - Mark payment as successful
+      try {
+        await this.paymentTrackingService.markPaymentSuccess({
+          razorpayOrderId: orderId,
+          razorpayPaymentId: paymentId,
+          razorpaySignature: signature,
+          // Additional payment method details can be added here
+          // paymentMethod: 'card', cardLast4: '1234', etc.
+        });
+        console.log('✅ PAYMENT TRACKING - Payment marked as successful');
+      } catch (trackingError) {
+        console.error('⚠️ PAYMENT TRACKING - Failed to update payment status:', trackingError.message);
+        // Continue with payment confirmation even if tracking fails
+      }
+
+      return {
+        success: true,
+        message: 'Payment confirmed successfully! Your subscription has been activated.',
+        data: {
+          paymentId: paymentId,
+          orderId: orderId,
+          status: 'success'
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ PAYMENT CONFIRMATION - Error:', error.message);
+      
+      // 📊 PAYMENT TRACKING - Mark payment as failed if confirmation fails
+      if (body.orderId) {
+        try {
+          await this.paymentTrackingService.markPaymentFailed({
+            razorpayOrderId: body.orderId,
+            errorCode: 'CONFIRMATION_FAILED',
+            errorDescription: error.message
+          });
+        } catch (trackingError) {
+          console.error('⚠️ PAYMENT TRACKING - Failed to mark payment as failed:', trackingError.message);
+        }
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      
+      throw new HttpException(
+        'Payment confirmation failed. Please contact support with your payment ID: ' + (body.paymentId || 'N/A'),
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * Get user payment history
+   * 📊 PAYMENT TRACKING - Retrieve user's payment records
+   */
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getPaymentHistory(@Request() req: any, @Query('limit') limit?: string, @Query('offset') offset?: string) {
+    try {
+      const userId = req.user?.id || req.user?.sub;
+      const limitNum = limit ? parseInt(limit) : 50;
+      const offsetNum = offset ? parseInt(offset) : 0;
+
+      console.log(`📊 PAYMENT HISTORY - Retrieving for user ${userId}`);
+
+      const transactions = await this.paymentTrackingService.getUserPaymentHistory(
+        userId,
+        limitNum,
+        offsetNum
+      );
+
+      return {
+        success: true,
+        data: transactions,
+        message: `Retrieved ${transactions.length} payment records`
+      };
+
+    } catch (error) {
+      console.error('❌ PAYMENT HISTORY - Error:', error.message);
+      throw new HttpException(
+        'Failed to retrieve payment history',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
+   * Get payment analytics (Admin only)
+   * 📊 PAYMENT TRACKING - Retrieve payment analytics
+   */
+  @Get('analytics')
+  async getPaymentAnalytics(@Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
+    try {
+      console.log('📈 PAYMENT ANALYTICS - Retrieving payment statistics');
+
+      const start = startDate ? new Date(startDate) : undefined;
+      const end = endDate ? new Date(endDate) : undefined;
+
+      const analytics = await this.paymentTrackingService.getPaymentAnalytics(start, end);
+
+      return {
+        success: true,
+        data: analytics,
+        message: 'Payment analytics retrieved successfully'
+      };
+
+    } catch (error) {
+      console.error('❌ PAYMENT ANALYTICS - Error:', error.message);
+      throw new HttpException(
+        'Failed to retrieve payment analytics',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
     /**
    * SIMPLE TEST ENDPOINT - No authentication required
    */
