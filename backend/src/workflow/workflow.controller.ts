@@ -556,9 +556,23 @@ export class WorkflowController {
         userId
       });
 
+      // Handle "latest" version ID by resolving to actual latest version
+      let resolvedVersionId = versionId;
+      if (versionId === 'latest') {
+        const latestVersion = await this.workflowService.getLatestWorkflowVersion(workflowId, userId);
+        if (!latestVersion) {
+          throw new HttpException(
+            'No versions found for this workflow',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+        resolvedVersionId = latestVersion.id;
+        console.log('🔽 DOWNLOAD - Resolved "latest" to version ID:', resolvedVersionId);
+      }
+
       const versionData = await this.workflowService.downloadWorkflowVersion(
         workflowId,
-        versionId,
+        resolvedVersionId,
       );
 
       // Parse the data if it's a string to ensure proper JSON format

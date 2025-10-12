@@ -2596,6 +2596,42 @@ export class WorkflowService {
     }
   }
 
+  async getLatestWorkflowVersion(workflowId: string, userId: string): Promise<any> {
+    try {
+      // First verify the workflow belongs to the user
+      const workflow = await this.prisma.workflow.findFirst({
+        where: {
+          hubspotId: workflowId,
+          ownerId: userId,
+        },
+      });
+
+      if (!workflow) {
+        throw new HttpException(
+          'Workflow not found or access denied',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Get the latest version for this workflow
+      const latestVersion = await this.prisma.workflowVersion.findFirst({
+        where: {
+          workflowId: workflow.id,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return latestVersion;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get latest workflow version: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async getWorkflowStats(userId: string): Promise<any> {
     try {
       // Get workflows with version counts
