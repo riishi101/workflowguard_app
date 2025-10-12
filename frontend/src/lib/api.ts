@@ -807,19 +807,19 @@ class ApiService {
   }
 
   static async createPaymentOrder(planId: string, currency: string = 'INR'): Promise<ApiResponse<any>> {
+    // 🔧 FIX: Move currency detection outside try block to fix scope issue
+    const detectedCurrency = this.detectUserCurrency();
+    const finalCurrency = currency || detectedCurrency;
+    
+    console.log('🌍 CURRENCY DETECTION - User location:', {
+      detectedCurrency,
+      requestedCurrency: currency,
+      finalCurrency
+    });
+    
     try {
       // 🎯 REAL RAZORPAY ORDERS - Use backend to create actual orders
       console.log('🎯 REAL RAZORPAY - Creating actual payment order via backend');
-      
-      // Detect user's location and currency for multi-currency support
-      const detectedCurrency = this.detectUserCurrency();
-      const finalCurrency = currency || detectedCurrency;
-      
-      console.log(' CURRENCY DETECTION - User location:', {
-        detectedCurrency,
-        requestedCurrency: currency,
-        finalCurrency
-      });
       
       // Try multi-currency endpoint first, then fallback to legacy
       try {
@@ -827,29 +827,29 @@ class ApiService {
           planId, 
           currency: finalCurrency 
         });
-        console.log(' REAL RAZORPAY - Multi-currency order created:', response.data);
+        console.log('✅ REAL RAZORPAY - Multi-currency order created:', response.data);
         return response.data;
       } catch (multiError: any) {
-        console.log(' REAL RAZORPAY - Multi-currency failed, trying legacy endpoint');
+        console.log('⚠️ REAL RAZORPAY - Multi-currency failed, trying legacy endpoint');
         
         // Fallback to legacy endpoint for INR
         const response = await apiClient.post('/api/payment/create-order', { planId });
-        console.log(' REAL RAZORPAY - Legacy order created:', response.data);
+        console.log('✅ REAL RAZORPAY - Legacy order created:', response.data);
         return response.data;
       }
       
     } catch (error: any) {
       console.error('Real Razorpay order creation failed:', error);
       
-      // EMERGENCY FRONTEND SOLUTION - Create order directly when backend fails
-      console.log(' EMERGENCY - Creating payment order via frontend Razorpay API');
+      // 🎆 EMERGENCY FRONTEND SOLUTION - Create order directly when backend fails
+      console.log('🎆 EMERGENCY - Creating payment order via frontend Razorpay API');
       
       try {
         const emergencyOrder = await this.createEmergencyRazorpayOrder(planId, finalCurrency);
-        console.log(' EMERGENCY - Frontend order created successfully:', emergencyOrder);
+        console.log('✅ EMERGENCY - Frontend order created successfully:', emergencyOrder);
         return emergencyOrder;
       } catch (emergencyError: any) {
-        console.error(' EMERGENCY - Frontend order creation failed:', emergencyError);
+        console.error('❌ EMERGENCY - Frontend order creation failed:', emergencyError);
         
         if (error.response?.status === 500) {
           throw new Error('Payment service temporarily unavailable. Please try again in a few moments.');
