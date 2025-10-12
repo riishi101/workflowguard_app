@@ -32,10 +32,10 @@ export class PaymentController {
    * Memory Check: Following MISTAKE #4 lesson - Dynamic INR plan IDs
    */
   @Get('config')
-  async getPaymentConfig() {
+  async getPaymentConfig(@Query('currency') currency?: string) {
     try {
-      console.log('🔍 PaymentController - getPaymentConfig called');
-      const config = this.paymentService.getPaymentConfig();
+      console.log('🌍 PaymentController - getPaymentConfig called for currency:', currency || 'INR');
+      const config = this.paymentService.getPaymentConfig(currency || 'INR');
       
       return {
         success: true,
@@ -612,6 +612,115 @@ export class PaymentController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+  }
+
+  /**
+   * Razorpay webhook endpoint for payment confirmations
+   * 🔒 WEBHOOK SECURITY - Verify webhook signature
+   */
+  @Post('webhook')
+  async handleWebhook(@Body() body: any, @Request() req: any) {
+    try {
+      console.log('🔔 WEBHOOK - Razorpay webhook received');
+      
+      const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+      const signature = req.headers['x-razorpay-signature'];
+      
+      if (!webhookSecret) {
+        console.error('❌ WEBHOOK - Webhook secret not configured');
+        throw new HttpException('Webhook not configured', HttpStatus.SERVICE_UNAVAILABLE);
+      }
+
+      // Verify webhook signature
+      const crypto = require('crypto');
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(JSON.stringify(body))
+        .digest('hex');
+
+      if (signature !== expectedSignature) {
+        console.error('❌ WEBHOOK - Invalid signature');
+        throw new HttpException('Invalid webhook signature', HttpStatus.UNAUTHORIZED);
+      }
+
+      console.log('✅ WEBHOOK - Signature verified, processing event:', body.event);
+
+      // Handle different webhook events
+      switch (body.event) {
+        case 'payment.captured':
+          await this.handlePaymentCaptured(body.payload.payment.entity);
+          break;
+        case 'payment.failed':
+          await this.handlePaymentFailed(body.payload.payment.entity);
+          break;
+        case 'order.paid':
+          await this.handleOrderPaid(body.payload.order.entity);
+          break;
+        default:
+          console.log(`🔔 WEBHOOK - Unhandled event: ${body.event}`);
+      }
+
+      return { success: true, message: 'Webhook processed successfully' };
+
+    } catch (error) {
+      console.error('❌ WEBHOOK - Error processing webhook:', error.message);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('Webhook processing failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Handle successful payment capture
+   */
+  private async handlePaymentCaptured(payment: any) {
+    console.log('💳 WEBHOOK - Payment captured:', payment.id);
+    
+    if (this.paymentTrackingService) {
+      try {
+        await this.paymentTrackingService.markPaymentSuccess({
+          razorpayOrderId: payment.order_id,
+          razorpayPaymentId: payment.id,
+          razorpaySignature: '', // Signature not available in webhook
+          paymentMethod: payment.method,
+          cardLast4: payment.card?.last4,
+          cardNetwork: payment.card?.network,
+          bankName: payment.bank
+        });
+        console.log('✅ WEBHOOK - Payment tracking updated for successful payment');
+      } catch (error) {
+        console.error('⚠️ WEBHOOK - Failed to update payment tracking:', error.message);
+      }
+    }
+  }
+
+  /**
+   * Handle failed payment
+   */
+  private async handlePaymentFailed(payment: any) {
+    console.log('❌ WEBHOOK - Payment failed:', payment.id);
+    
+    if (this.paymentTrackingService) {
+      try {
+        await this.paymentTrackingService.markPaymentFailed({
+          razorpayOrderId: payment.order_id,
+          errorCode: payment.error_code,
+          errorDescription: payment.error_description
+        });
+        console.log('✅ WEBHOOK - Payment tracking updated for failed payment');
+      } catch (error) {
+        console.error('⚠️ WEBHOOK - Failed to update payment tracking:', error.message);
+      }
+    }
+  }
+
+  /**
+   * Handle order paid event
+   */
+  private async handleOrderPaid(order: any) {
+    console.log('✅ WEBHOOK - Order paid:', order.id);
+    // Additional order processing logic can be added here
   }
 
     /**

@@ -46,12 +46,11 @@ export class PaymentService {
   }
 
   /**
-   * Get payment configuration for frontend
-   * Memory Check: Avoiding MISTAKE #1 (Environment Variable Chaos) - Backend-only config
-   * Memory Check: Avoiding MISTAKE #4 (Hardcoded Plan IDs) - Dynamic INR plan IDs
+   * Get payment configuration for frontend - COMPLETE MULTI-CURRENCY SUPPORT
+   * Memory Check: Following production credentials setup with all currencies
    */
-  getPaymentConfig() {
-    console.log('💳 PaymentService - getPaymentConfig called');
+  getPaymentConfig(currency: string = 'INR') {
+    console.log('🌍 PaymentService - getPaymentConfig called for currency:', currency);
     
     const keyId = this.configService.get<string>('RAZORPAY_KEY_ID');
     console.log('💳 PaymentService - KeyId check:', keyId ? keyId.substring(0, 10) + '...' : 'MISSING');
@@ -64,26 +63,30 @@ export class PaymentService {
       );
     }
 
-    // Memory Check: Following MISTAKE #4 lesson - Dynamic plan IDs from environment, using INR
-    const starterPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_STARTER_INR');
-    const professionalPlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_PROFESSIONAL_INR');
-    const enterprisePlanId = this.configService.get<string>('RAZORPAY_PLAN_ID_ENTERPRISE_INR');
+    // Get plan IDs for the specified currency
+    const currencyUpper = currency.toUpperCase();
+    const starterPlanId = this.configService.get<string>(`RAZORPAY_PLAN_ID_STARTER_${currencyUpper}`);
+    const professionalPlanId = this.configService.get<string>(`RAZORPAY_PLAN_ID_PROFESSIONAL_${currencyUpper}`);
+    const enterprisePlanId = this.configService.get<string>(`RAZORPAY_PLAN_ID_ENTERPRISE_${currencyUpper}`);
     
-    console.log('💳 PaymentService - Plan IDs check (INR):');
-    console.log('  - STARTER_INR:', starterPlanId || 'MISSING');
-    console.log('  - PROFESSIONAL_INR:', professionalPlanId || 'MISSING');
-    console.log('  - ENTERPRISE_INR:', enterprisePlanId || 'MISSING');
+    console.log(`💳 PaymentService - Plan IDs check (${currencyUpper}):`);
+    console.log(`  - STARTER_${currencyUpper}:`, starterPlanId || 'MISSING');
+    console.log(`  - PROFESSIONAL_${currencyUpper}:`, professionalPlanId || 'MISSING');
+    console.log(`  - ENTERPRISE_${currencyUpper}:`, enterprisePlanId || 'MISSING');
+
+    // Currency-specific pricing
+    const pricing = this.getCurrencyPricing(currency);
 
     return {
       keyId,
-      currency: 'INR',
+      currency: currencyUpper,
       plans: {
         starter: {
           id: 'starter',
           razorpayPlanId: starterPlanId,
           name: 'Starter Plan',
-          price: 159900, // ₹1,599.00 in paise
-          currency: 'INR',
+          price: pricing.starter,
+          currency: currencyUpper,
           description: 'Perfect for small teams',
           features: ['10 workflows', '30 days history', 'Basic support']
         },
@@ -91,8 +94,8 @@ export class PaymentService {
           id: 'professional', 
           razorpayPlanId: professionalPlanId,
           name: 'Professional Plan',
-          price: 399900, // ₹3,999.00 in paise
-          currency: 'INR',
+          price: pricing.professional,
+          currency: currencyUpper,
           description: 'Best for growing businesses',
           features: ['35 workflows', '90 days history', 'Priority support', 'Advanced features']
         },
@@ -100,13 +103,48 @@ export class PaymentService {
           id: 'enterprise',
           razorpayPlanId: enterprisePlanId,
           name: 'Enterprise Plan', 
-          price: 799900, // ₹7,999.00 in paise
-          currency: 'INR',
+          price: pricing.enterprise,
+          currency: currencyUpper,
           description: 'For large organizations',
           features: ['Unlimited workflows', '365 days history', '24/7 support', 'All features']
         }
       }
     };
+  }
+
+  /**
+   * Get currency-specific pricing in smallest unit (paise/cents)
+   */
+  private getCurrencyPricing(currency: string) {
+    const pricing = {
+      'INR': {
+        starter: 159900,      // ₹1,599.00 in paise
+        professional: 399900, // ₹3,999.00 in paise  
+        enterprise: 799900    // ₹7,999.00 in paise
+      },
+      'USD': {
+        starter: 1999,        // $19.99 in cents
+        professional: 4999,   // $49.99 in cents
+        enterprise: 9999      // $99.99 in cents
+      },
+      'GBP': {
+        starter: 1599,        // £15.99 in pence
+        professional: 3999,   // £39.99 in pence
+        enterprise: 7999      // £79.99 in pence
+      },
+      'EUR': {
+        starter: 1799,        // €17.99 in cents
+        professional: 4499,   // €44.99 in cents
+        enterprise: 8999      // €89.99 in cents
+      },
+      'CAD': {
+        starter: 2499,        // C$24.99 in cents
+        professional: 6499,   // C$64.99 in cents
+        enterprise: 12999     // C$129.99 in cents
+      }
+    };
+
+    return pricing[currency.toUpperCase()] || pricing['INR'];
   }
 
   /**
