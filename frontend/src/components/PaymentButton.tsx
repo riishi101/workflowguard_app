@@ -70,39 +70,29 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   };
 
   /**
-   * 🚨 EMERGENCY MOCK CHECKOUT - Complete bypass of Razorpay script
-   * Memory lesson: When real Razorpay validation fails, implement complete mock
+   * 🎯 PRODUCTION READY - Load real Razorpay script
+   * Production-grade Razorpay integration for real payments
    */
   const loadRazorpayScript = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      // Mock Razorpay object for complete bypass
-      if (!window.Razorpay) {
-        window.Razorpay = function(options: any) {
-          return {
-            open: () => {
-              console.log('🎯 MOCK RAZORPAY - Opening mock payment modal');
-              
-              // Simulate successful payment after 2 seconds
-              setTimeout(() => {
-                console.log('✅ MOCK RAZORPAY - Simulating successful payment');
-                
-                // Call the success handler with mock payment data
-                if (options.handler) {
-                  options.handler({
-                    razorpay_payment_id: `pay_mock_${Date.now()}`,
-                    razorpay_order_id: options.order_id,
-                    razorpay_signature: `mock_signature_${Date.now()}`
-                  });
-                }
-              }, 2000);
-            },
-            on: () => {
-              // Mock event handler
-            }
-          };
-        };
+    return new Promise((resolve, reject) => {
+      if (window.Razorpay) {
+        console.log('🎯 PRODUCTION - Razorpay script already loaded');
+        resolve(true);
+        return;
       }
-      resolve(true);
+
+      console.log('🎯 PRODUCTION - Loading real Razorpay checkout script');
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => {
+        console.log('✅ PRODUCTION - Razorpay script loaded successfully');
+        resolve(true);
+      };
+      script.onerror = () => {
+        console.error('❌ PRODUCTION - Failed to load Razorpay script');
+        reject(new Error('Failed to load payment gateway. Please check your internet connection and try again.'));
+      };
+      document.body.appendChild(script);
     });
   };
 
@@ -215,18 +205,18 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         }
       };
 
-      // Step 6: Open Mock Razorpay checkout
+      // Step 6: Open Real Razorpay checkout
       toast({
         title: 'Opening Payment Gateway...',
-        description: 'Please wait while we prepare your payment (Mock Mode)',
+        description: 'Redirecting to secure Razorpay checkout',
       });
 
+      console.log('🎯 PRODUCTION - Opening real Razorpay checkout with options:', razorpayOptions);
       const rzp = new window.Razorpay(razorpayOptions);
       rzp.open();
 
-      // Mock payment doesn't have real failure events, but keep for compatibility
       rzp.on('payment.failed', function (response: any) {
-        console.error('Payment failed:', response);
+        console.error('🎯 PRODUCTION - Payment failed:', response);
         toast({
           title: 'Payment Failed',
           description: response.error?.description || 'Payment was unsuccessful. Please try again.',

@@ -771,71 +771,41 @@ class ApiService {
   // Fresh Razorpay Integration - Memory-Guided Implementation
   static async getPaymentConfig(): Promise<ApiResponse<any>> {
     try {
-      // 🚨 EMERGENCY FRONTEND FIX - Return mock config
-      console.log('🎯 EMERGENCY FRONTEND FIX - Using mock payment config');
+      // 🎯 PRODUCTION READY - Real Razorpay API call
+      console.log('🎯 PRODUCTION - Fetching real payment config from backend');
       
-      const mockConfig = {
-        success: true,
-        data: {
-          keyId: 'rzp_test_1DP5mmOlF5G5ag', // Updated to working test key
-          plans: {
-            starter: { amount: 159900, currency: 'INR' },
-            professional: { amount: 399900, currency: 'INR' },
-            enterprise: { amount: 799900, currency: 'INR' }
-          }
-        },
-        message: 'Mock payment config loaded (Frontend Emergency Fix)'
-      };
-      
-      console.log('✅ EMERGENCY FRONTEND FIX - Mock config created:', mockConfig);
-      return mockConfig;
+      const response = await apiClient.get('/api/payment/config');
+      console.log('✅ PRODUCTION - Real payment config loaded:', response.data);
+      return response.data;
       
     } catch (error) {
-      // Fallback - should never happen
-      console.error('Emergency frontend config fix failed:', error);
-      throw new Error('Payment configuration unavailable. Please try again later.');
+      console.error('Production payment config failed:', error);
+      throw error;
     }
   }
 
   static async createPaymentOrder(planId: string, currency: string = 'INR'): Promise<ApiResponse<any>> {
     try {
-      // 🚨 EMERGENCY FRONTEND FIX - Bypass backend deployment issues
-      // Memory lesson: When backend deployment fails, fix frontend directly
-      console.log('🎯 EMERGENCY FRONTEND FIX - Using guaranteed mock solution');
+      // 🎯 PRODUCTION READY - Real backend API call
+      console.log('🎯 PRODUCTION - Creating real payment order via backend');
       
-      // Mock payment order - guaranteed to work
-      const mockOrderId = `order_frontend_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_1DP5mmOlF5G5ag'; // Updated to working test key
-      
-      // Plan pricing (in paise for INR)
-      const planPricing: { [key: string]: number } = {
-        starter: 159900,     // ₹1,599.00
-        professional: 399900, // ₹3,999.00  
-        enterprise: 799900   // ₹7,999.00
-      };
-      
-      const planKey = planId.toLowerCase().replace('_inr', '').replace('_usd', '').replace('_gbp', '').replace('_eur', '').replace('_cad', '');
-      const amount = planPricing[planKey] || planPricing['starter'];
-      
-      // Return guaranteed successful mock response
-      const mockResponse = {
-        success: true,
-        data: {
-          orderId: mockOrderId,
-          amount: amount,
-          currency: 'INR',
-          keyId: mockKeyId
-        },
-        message: 'Mock payment order created successfully (Frontend Emergency Fix)'
-      };
-      
-      console.log('✅ EMERGENCY FRONTEND FIX - Mock order created:', mockResponse);
-      return mockResponse;
+      // Try multi-currency endpoint first
+      try {
+        const response = await apiClient.post('/api/payment/create-order-multicurrency', { planId, currency });
+        console.log('✅ PRODUCTION - Real payment order created:', response.data);
+        return response.data;
+      } catch (multiCurrencyError: any) {
+        console.log('⚠️ PRODUCTION - Multi-currency failed, trying legacy endpoint');
+        
+        // Fallback to legacy endpoint
+        const response = await apiClient.post('/api/payment/create-order', { planId });
+        console.log('✅ PRODUCTION - Legacy payment order created:', response.data);
+        return response.data;
+      }
       
     } catch (error: any) {
-      // Fallback error - should never happen with mock response
-      console.error('Emergency frontend fix failed:', error);
-      throw new Error('Payment system temporarily unavailable. Please try again later.');
+      console.error('Production payment order creation failed:', error);
+      throw error;
     }
   }
 
@@ -871,27 +841,16 @@ class ApiService {
     planId: string;
   }): Promise<ApiResponse<any>> {
     try {
-      // 🚨 EMERGENCY FRONTEND FIX - Mock payment confirmation
-      console.log('🎯 EMERGENCY FRONTEND FIX - Using mock payment confirmation');
+      // 🎯 PRODUCTION READY - Real payment confirmation
+      console.log('🎯 PRODUCTION - Confirming real payment via backend');
       
-      const mockConfirmation = {
-        success: true,
-        data: {
-          paymentId: paymentData.paymentId,
-          orderId: paymentData.orderId,
-          planId: paymentData.planId,
-          status: 'confirmed'
-        },
-        message: `Payment confirmed successfully! Welcome to ${paymentData.planId} plan! (Mock Mode)`
-      };
-      
-      console.log('✅ EMERGENCY FRONTEND FIX - Mock confirmation:', mockConfirmation);
-      return mockConfirmation;
+      const response = await apiClient.post('/api/payment/confirm', paymentData);
+      console.log('✅ PRODUCTION - Real payment confirmed:', response.data);
+      return response.data;
       
     } catch (error) {
-      // Fallback - should never happen
-      console.error('Emergency frontend confirmation fix failed:', error);
-      throw new Error('Payment confirmation failed. Please contact support.');
+      console.error('Production payment confirmation failed:', error);
+      throw error;
     }
   }
 

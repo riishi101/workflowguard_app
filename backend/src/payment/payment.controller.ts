@@ -56,21 +56,38 @@ export class PaymentController {
     try {
       console.log('🚨 EMERGENCY TEST - Mock mode for immediate fix');
       
-      // PROVEN MOCK SOLUTION - From memory, this worked
-      console.log('🎯 EMERGENCY MOCK - Using proven working solution from memory');
+      // 🎯 PRODUCTION READY - Real emergency test with live credentials
+      console.log('🎯 PRODUCTION - Emergency test with real Razorpay API');
       
-      const mockOrderId = `emergency_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const orderOptions = {
+        amount: 159900, // ₹1,599.00 in paise
+        currency: 'INR',
+        receipt: `emergency_${Date.now()}`,
+        notes: {
+          planId: body.planId,
+          userId: req.user?.id || req.user?.sub,
+          test: 'emergency_production'
+        }
+      };
+
+      console.log('🎯 PRODUCTION - Creating real emergency order:', orderOptions);
+      const order = await razorpay.orders.create(orderOptions);
       
-      console.log('✅ EMERGENCY - Mock order created successfully:', mockOrderId);
+      console.log('✅ PRODUCTION - Emergency order created successfully:', order.id);
       
       return {
         success: true,
-        orderId: mockOrderId,
-        amount: 159900,
-        currency: 'INR',
-        keyId: mockKeyId,
-        message: 'Emergency test successful - Mock mode active!'
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        message: 'Emergency test successful - Production Razorpay working!'
       };
 
     } catch (error) {
@@ -124,21 +141,38 @@ export class PaymentController {
 
       console.log('🌍 MULTI-CURRENCY - Using INR pricing:', { planKey, amount });
 
-      // PROVEN MOCK SOLUTION - From memory, this approach worked
-      console.log('🎯 MOCK MODE - Using proven working solution from memory');
+      // 🎯 PRODUCTION READY - Real Razorpay order creation
+      console.log('🎯 PRODUCTION - Creating real Razorpay order with live credentials');
       
-      const mockOrderId = `order_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const orderOptions = {
+        amount: amount,
+        currency: 'INR',
+        receipt: `order_${userId}_${planId}_${Date.now()}`,
+        notes: {
+          planId,
+          userId,
+          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`
+        }
+      };
+
+      console.log('🎯 PRODUCTION - Creating real order with options:', orderOptions);
+      const order = await razorpay.orders.create(orderOptions);
       
       return {
         success: true,
         data: {
-          orderId: mockOrderId,
-          amount: amount,
-          currency: 'INR',
-          keyId: mockKeyId
+          orderId: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          keyId: process.env.RAZORPAY_KEY_ID
         },
-        message: `Mock payment order created successfully in INR (Testing Mode)`
+        message: `Payment order created successfully in INR`
       };
 
     } catch (error) {
