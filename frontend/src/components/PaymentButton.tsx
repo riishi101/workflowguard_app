@@ -70,161 +70,29 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   };
 
   /**
-   * 🌍 COMPLETE MOCK CHECKOUT - Simulate entire payment flow
-   * Avoids all external API validation issues with mock order IDs
+   * 🎯 REAL RAZORPAY GATEWAY - Load actual Razorpay checkout script
+   * User requested real payment gateway instead of mock simulation
    */
   const loadRazorpayScript = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      console.log('🌍 MOCK CHECKOUT - Creating complete payment simulation');
-      
-      // Create complete mock Razorpay object
-      if (!window.Razorpay) {
-        window.Razorpay = function(options: any) {
-          return {
-            open: () => {
-              console.log('🌍 MOCK CHECKOUT - Opening simulated payment modal');
-              console.log('💰 Payment Details:', {
-                amount: options.amount,
-                currency: options.currency,
-                description: options.description,
-                orderId: options.order_id
-              });
-              
-              // Show custom payment modal simulation
-              const showMockPaymentModal = () => {
-                // Create modal overlay
-                const overlay = document.createElement('div');
-                overlay.style.cssText = `
-                  position: fixed;
-                  top: 0;
-                  left: 0;
-                  width: 100%;
-                  height: 100%;
-                  background: rgba(0, 0, 0, 0.7);
-                  z-index: 10000;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                `;
-                
-                // Create modal content
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                  background: white;
-                  padding: 30px;
-                  border-radius: 12px;
-                  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                  max-width: 400px;
-                  width: 90%;
-                  text-align: center;
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                `;
-                
-                // Format amount for display
-                const formatAmount = (amount: number, currency: string) => {
-                  const symbols = { INR: '₹', USD: '$', GBP: '£', EUR: '€', CAD: 'C$' };
-                  const symbol = symbols[currency] || currency;
-                  const value = (amount / 100).toFixed(2);
-                  return `${symbol}${value}`;
-                };
-                
-                modal.innerHTML = `
-                  <div style="margin-bottom: 20px;">
-                    <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
-                      <svg width="30" height="30" fill="white" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                    </div>
-                    <h2 style="margin: 0 0 10px; color: #1f2937; font-size: 24px; font-weight: 600;">Payment Simulation</h2>
-                    <p style="margin: 0 0 20px; color: #6b7280; font-size: 16px;">WorkflowGuard ${options.description}</p>
-                    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                      <div style="font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 5px;">
-                        ${formatAmount(options.amount, options.currency)}
-                      </div>
-                      <div style="color: #6b7280; font-size: 14px;">
-                        ${options.currency} • Order: ${options.order_id}
-                      </div>
-                    </div>
-                  </div>
-                  <div style="display: flex; gap: 10px;">
-                    <button id="mockPaySuccess" style="
-                      flex: 1;
-                      background: #10b981;
-                      color: white;
-                      border: none;
-                      padding: 12px 20px;
-                      border-radius: 8px;
-                      font-size: 16px;
-                      font-weight: 600;
-                      cursor: pointer;
-                      transition: background 0.2s;
-                    ">Simulate Success</button>
-                    <button id="mockPayCancel" style="
-                      flex: 1;
-                      background: #6b7280;
-                      color: white;
-                      border: none;
-                      padding: 12px 20px;
-                      border-radius: 8px;
-                      font-size: 16px;
-                      font-weight: 600;
-                      cursor: pointer;
-                      transition: background 0.2s;
-                    ">Cancel</button>
-                  </div>
-                `;
-                
-                overlay.appendChild(modal);
-                document.body.appendChild(overlay);
-                
-                // Handle success
-                modal.querySelector('#mockPaySuccess')?.addEventListener('click', () => {
-                  console.log('✅ MOCK CHECKOUT - Simulating successful payment');
-                  document.body.removeChild(overlay);
-                  
-                  // Call success handler with mock payment data
-                  if (options.handler) {
-                    setTimeout(() => {
-                      options.handler({
-                        razorpay_payment_id: `pay_mock_${Date.now()}`,
-                        razorpay_order_id: options.order_id,
-                        razorpay_signature: `mock_signature_${Date.now()}`
-                      });
-                    }, 500);
-                  }
-                });
-                
-                // Handle cancel
-                modal.querySelector('#mockPayCancel')?.addEventListener('click', () => {
-                  console.log('⚠️ MOCK CHECKOUT - Payment cancelled by user');
-                  document.body.removeChild(overlay);
-                  
-                  // Call modal dismiss handler
-                  if (options.modal?.ondismiss) {
-                    options.modal.ondismiss();
-                  }
-                });
-                
-                // Close on overlay click
-                overlay.addEventListener('click', (e) => {
-                  if (e.target === overlay) {
-                    (modal.querySelector('#mockPayCancel') as HTMLButtonElement)?.click();
-                  }
-                });
-              };
-              
-              // Show modal after short delay for realism
-              setTimeout(showMockPaymentModal, 300);
-            },
-            on: () => {
-              // Mock event handler
-            }
-          };
-        };
+    return new Promise((resolve, reject) => {
+      if (window.Razorpay) {
+        console.log('🎯 REAL RAZORPAY - Script already loaded');
+        resolve(true);
+        return;
       }
-      
-      console.log('✅ MOCK CHECKOUT - Complete payment simulation ready');
-      resolve(true);
+
+      console.log('🎯 REAL RAZORPAY - Loading actual checkout script');
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => {
+        console.log('✅ REAL RAZORPAY - Script loaded successfully');
+        resolve(true);
+      };
+      script.onerror = () => {
+        console.error('❌ REAL RAZORPAY - Failed to load script');
+        reject(new Error('Failed to load payment gateway. Please check your internet connection and try again.'));
+      };
+      document.body.appendChild(script);
     });
   };
 
