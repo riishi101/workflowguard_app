@@ -144,100 +144,58 @@ export class PaymentController {
 
       console.log('🌍 MULTI-CURRENCY - Using INR pricing:', { planKey, amount });
 
-      // 🔧 CREDENTIAL FIX - Validate and use proper Razorpay credentials
-      console.log('🔧 CREDENTIAL FIX - Checking Razorpay credentials for authentication');
+      // 🔧 MULTI-CURRENCY FIX - Use PaymentService for proper credential handling
+      console.log('🌍 MULTI-CURRENCY - Using PaymentService for order creation');
       
-      const keyId = process.env.RAZORPAY_KEY_ID;
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      
-      console.log('🔧 CREDENTIAL CHECK:', {
-        keyId: keyId ? keyId.substring(0, 15) + '...' : 'MISSING',
-        keySecret: keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING',
-        keyType: keyId?.startsWith('rzp_live_') ? 'LIVE' : keyId?.startsWith('rzp_test_') ? 'TEST' : 'UNKNOWN'
-      });
-      
-      if (!keyId || !keySecret) {
-        throw new HttpException(
-          'Payment credentials not configured properly. Please contact support.',
-          HttpStatus.SERVICE_UNAVAILABLE
-        );
-      }
-      
-      const Razorpay = require('razorpay');
-      const razorpay = new Razorpay({
-        key_id: keyId.trim(),
-        key_secret: keySecret.trim(),
-      });
-
-      const orderOptions = {
-        amount: amount,
-        currency: 'INR',
-        receipt: `order_${userId}_${planId}_${Date.now()}`,
-        notes: {
-          planId,
-          userId,
-          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`
-        }
-      };
-
-      console.log('🔧 CREDENTIAL FIX - Creating order with validated credentials:', orderOptions);
-      
-      let order;
       try {
-        order = await razorpay.orders.create(orderOptions);
-        console.log('✅ CREDENTIAL FIX - Order created successfully:', order.id);
-      } catch (razorpayError: any) {
-        console.error('❌ RAZORPAY ERROR - Authentication failed:', {
-          message: razorpayError.message,
-          statusCode: razorpayError.statusCode,
-          error: razorpayError.error
-        });
+        const order = await this.paymentService.createOrder(planId, userId);
+        console.log('✅ MULTI-CURRENCY - Order created successfully via PaymentService:', order.orderId);
         
-        if (razorpayError.statusCode === 401) {
-          throw new HttpException(
-            'Payment gateway authentication failed. Please verify your Razorpay credentials.',
-            HttpStatus.UNAUTHORIZED
-          );
+        // 📊 PAYMENT TRACKING - Record transaction in database (OPTIONAL)
+        if (this.paymentTrackingService) {
+          try {
+            await this.paymentTrackingService.createPaymentTransaction({
+              userId,
+              planId,
+              razorpayOrderId: order.orderId,
+              amount: order.amount,
+              currency: order.currency,
+              planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+              ipAddress: req.ip,
+              userAgent: req.headers['user-agent']
+            });
+            console.log('✅ PAYMENT TRACKING - Multi-currency transaction recorded successfully');
+          } catch (trackingError) {
+            console.error('⚠️ PAYMENT TRACKING - Failed to record multi-currency transaction:', trackingError.message);
+            // Don't fail the payment creation if tracking fails
+          }
+        } else {
+          console.log('⚠️ PAYMENT TRACKING - Service not available, skipping multi-currency tracking');
+        }
+        
+        return {
+          success: true,
+          data: {
+            orderId: order.orderId,
+            amount: order.amount,
+            currency: order.currency,
+            keyId: this.paymentService.getPaymentConfig().keyId
+          },
+          message: `Multi-currency payment order created successfully in ${order.currency}`
+        };
+        
+      } catch (serviceError: any) {
+        console.error('❌ MULTI-CURRENCY - PaymentService error:', serviceError.message);
+        
+        if (serviceError instanceof HttpException) {
+          throw serviceError;
         }
         
         throw new HttpException(
-          `Payment gateway error: ${razorpayError.message}`,
+          `Multi-currency payment order creation failed: ${serviceError.message}`,
           HttpStatus.INTERNAL_SERVER_ERROR
         );
       }
-      
-      // 📊 PAYMENT TRACKING - Record transaction in database (OPTIONAL)
-      if (this.paymentTrackingService) {
-        try {
-          await this.paymentTrackingService.createPaymentTransaction({
-            userId,
-            planId,
-            razorpayOrderId: order.id,
-            amount: order.amount,
-            currency: order.currency,
-            planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent']
-          });
-          console.log('✅ PAYMENT TRACKING - Transaction recorded successfully');
-        } catch (trackingError) {
-          console.error('⚠️ PAYMENT TRACKING - Failed to record transaction:', trackingError.message);
-          // Don't fail the payment creation if tracking fails
-        }
-      } else {
-        console.log('⚠️ PAYMENT TRACKING - Service not available, skipping tracking');
-      }
-      
-      return {
-        success: true,
-        data: {
-          orderId: order.id,
-          amount: order.amount,
-          currency: order.currency,
-          keyId: process.env.RAZORPAY_KEY_ID
-        },
-        message: `Payment order created successfully in INR`
-      };
 
     } catch (error) {
       console.log('❌ MULTI-CURRENCY - Error:', error.message);
