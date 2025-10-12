@@ -8,7 +8,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Query
+  Query,
+  Optional
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PaymentService } from './payment.service';
@@ -21,7 +22,7 @@ export class PaymentController {
 
   constructor(
     private paymentService: PaymentService,
-    private paymentTrackingService: PaymentTrackingService,
+    @Optional() private paymentTrackingService: PaymentTrackingService,
     private subscriptionService: SubscriptionService
   ) {}
 
@@ -166,22 +167,26 @@ export class PaymentController {
       console.log('🎯 PRODUCTION - Creating real order with options:', orderOptions);
       const order = await razorpay.orders.create(orderOptions);
       
-      // 📊 PAYMENT TRACKING - Record transaction in database
-      try {
-        await this.paymentTrackingService.createPaymentTransaction({
-          userId,
-          planId,
-          razorpayOrderId: order.id,
-          amount: order.amount,
-          currency: order.currency,
-          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent']
-        });
-        console.log('✅ PAYMENT TRACKING - Transaction recorded successfully');
-      } catch (trackingError) {
-        console.error('⚠️ PAYMENT TRACKING - Failed to record transaction:', trackingError.message);
-        // Don't fail the payment creation if tracking fails
+      // 📊 PAYMENT TRACKING - Record transaction in database (OPTIONAL)
+      if (this.paymentTrackingService) {
+        try {
+          await this.paymentTrackingService.createPaymentTransaction({
+            userId,
+            planId,
+            razorpayOrderId: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+            ipAddress: req.ip,
+            userAgent: req.headers['user-agent']
+          });
+          console.log('✅ PAYMENT TRACKING - Transaction recorded successfully');
+        } catch (trackingError) {
+          console.error('⚠️ PAYMENT TRACKING - Failed to record transaction:', trackingError.message);
+          // Don't fail the payment creation if tracking fails
+        }
+      } else {
+        console.log('⚠️ PAYMENT TRACKING - Service not available, skipping tracking');
       }
       
       return {
@@ -321,22 +326,26 @@ export class PaymentController {
         
         console.log('✅ MEMORY FIX - Direct order created successfully:', order.id);
         
-        // 📊 PAYMENT TRACKING - Record transaction in database
-        try {
-          await this.paymentTrackingService.createPaymentTransaction({
-            userId,
-            planId,
-            razorpayOrderId: order.id,
-            amount: order.amount,
-            currency: order.currency,
-            planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
-            ipAddress: req.ip,
-            userAgent: req.headers['user-agent']
-          });
-          console.log('✅ PAYMENT TRACKING - Legacy transaction recorded successfully');
-        } catch (trackingError) {
-          console.error('⚠️ PAYMENT TRACKING - Failed to record legacy transaction:', trackingError.message);
-          // Don't fail the payment creation if tracking fails
+        // 📊 PAYMENT TRACKING - Record transaction in database (OPTIONAL)
+        if (this.paymentTrackingService) {
+          try {
+            await this.paymentTrackingService.createPaymentTransaction({
+              userId,
+              planId,
+              razorpayOrderId: order.id,
+              amount: order.amount,
+              currency: order.currency,
+              planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+              ipAddress: req.ip,
+              userAgent: req.headers['user-agent']
+            });
+            console.log('✅ PAYMENT TRACKING - Legacy transaction recorded successfully');
+          } catch (trackingError) {
+            console.error('⚠️ PAYMENT TRACKING - Failed to record legacy transaction:', trackingError.message);
+            // Don't fail the payment creation if tracking fails
+          }
+        } else {
+          console.log('⚠️ PAYMENT TRACKING - Service not available, skipping legacy tracking');
         }
         
         return {
