@@ -777,7 +777,7 @@ class ApiService {
       const mockConfig = {
         success: true,
         data: {
-          keyId: 'rzp_test_WZ6bDf1LKaABao',
+          keyId: 'rzp_test_1DP5mmOlF5G5ag', // Updated to working test key
           plans: {
             starter: { amount: 159900, currency: 'INR' },
             professional: { amount: 399900, currency: 'INR' },
@@ -805,7 +805,7 @@ class ApiService {
       
       // Mock payment order - guaranteed to work
       const mockOrderId = `order_frontend_mock_${Date.now()}`;
-      const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
+      const mockKeyId = 'rzp_test_1DP5mmOlF5G5ag'; // Updated to working test key
       
       // Plan pricing (in paise for INR)
       const planPricing: { [key: string]: number } = {
