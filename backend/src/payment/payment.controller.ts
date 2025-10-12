@@ -144,13 +144,29 @@ export class PaymentController {
 
       console.log('🌍 MULTI-CURRENCY - Using INR pricing:', { planKey, amount });
 
-      // 🎯 PRODUCTION READY - Real Razorpay order creation
-      console.log('🎯 PRODUCTION - Creating real Razorpay order with live credentials');
+      // 🔧 CREDENTIAL FIX - Validate and use proper Razorpay credentials
+      console.log('🔧 CREDENTIAL FIX - Checking Razorpay credentials for authentication');
+      
+      const keyId = process.env.RAZORPAY_KEY_ID;
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      
+      console.log('🔧 CREDENTIAL CHECK:', {
+        keyId: keyId ? keyId.substring(0, 15) + '...' : 'MISSING',
+        keySecret: keySecret ? keySecret.substring(0, 10) + '...' : 'MISSING',
+        keyType: keyId?.startsWith('rzp_live_') ? 'LIVE' : keyId?.startsWith('rzp_test_') ? 'TEST' : 'UNKNOWN'
+      });
+      
+      if (!keyId || !keySecret) {
+        throw new HttpException(
+          'Payment credentials not configured properly. Please contact support.',
+          HttpStatus.SERVICE_UNAVAILABLE
+        );
+      }
       
       const Razorpay = require('razorpay');
       const razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        key_id: keyId.trim(),
+        key_secret: keySecret.trim(),
       });
 
       const orderOptions = {
@@ -164,8 +180,31 @@ export class PaymentController {
         }
       };
 
-      console.log('🎯 PRODUCTION - Creating real order with options:', orderOptions);
-      const order = await razorpay.orders.create(orderOptions);
+      console.log('🔧 CREDENTIAL FIX - Creating order with validated credentials:', orderOptions);
+      
+      let order;
+      try {
+        order = await razorpay.orders.create(orderOptions);
+        console.log('✅ CREDENTIAL FIX - Order created successfully:', order.id);
+      } catch (razorpayError: any) {
+        console.error('❌ RAZORPAY ERROR - Authentication failed:', {
+          message: razorpayError.message,
+          statusCode: razorpayError.statusCode,
+          error: razorpayError.error
+        });
+        
+        if (razorpayError.statusCode === 401) {
+          throw new HttpException(
+            'Payment gateway authentication failed. Please verify your Razorpay credentials.',
+            HttpStatus.UNAUTHORIZED
+          );
+        }
+        
+        throw new HttpException(
+          `Payment gateway error: ${razorpayError.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
       
       // 📊 PAYMENT TRACKING - Record transaction in database (OPTIONAL)
       if (this.paymentTrackingService) {
