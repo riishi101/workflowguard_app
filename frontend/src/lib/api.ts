@@ -771,11 +771,17 @@ class ApiService {
   // Fresh Razorpay Integration - Memory-Guided Implementation
   static async getPaymentConfig(): Promise<ApiResponse<any>> {
     try {
-      // 🎯 PRODUCTION READY - Real Razorpay API call
+      // 🎯 PRODUCTION READY - Real Razorpay API call with key trimming
       console.log('🎯 PRODUCTION - Fetching real payment config from backend');
       
       const response = await apiClient.get('/api/payment/config');
-      console.log('✅ PRODUCTION - Real payment config loaded:', response.data);
+      
+      // Fix: Trim any \r\n characters from keyId
+      if (response.data?.data?.keyId) {
+        response.data.data.keyId = response.data.data.keyId.trim();
+      }
+      
+      console.log('✅ PRODUCTION - Real payment config loaded (key trimmed):', response.data);
       return response.data;
       
     } catch (error) {
@@ -844,7 +850,7 @@ class ApiService {
       };
       
       const mockOrderId = `order_${finalCurrency.toLowerCase()}_${Date.now()}`;
-      const keyId = razorpayKeys[finalCurrency] || razorpayKeys['INR'];
+      const keyId = (razorpayKeys[finalCurrency] || razorpayKeys['INR']).trim(); // Fix: Trim \r\n characters
       
       // Format amount for display
       const displayAmount = this.formatCurrencyAmount(amount, finalCurrency);
