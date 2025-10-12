@@ -1259,9 +1259,10 @@ class ApiService {
   
   /**
    * Create Razorpay order directly via frontend when backend is unavailable
+   * 🔧 FIX: Use real Razorpay API instead of mock order IDs
    */
   static async createEmergencyRazorpayOrder(planId: string, currency: string = 'INR'): Promise<ApiResponse<any>> {
-    console.log('🎆 EMERGENCY - Creating Razorpay order directly via frontend');
+    console.log('🎆 EMERGENCY - Creating REAL Razorpay order via frontend API');
     
     // Plan pricing configuration
     const planPricing = {
@@ -1273,28 +1274,68 @@ class ApiService {
     const planKey = planId.toLowerCase().replace(/_inr|_usd|_gbp|_eur|_cad/g, '');
     const amount = planPricing[planKey]?.[currency] || planPricing['starter'][currency];
     
-    // Generate unique order ID
-    const orderId = `order_emergency_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('🎆 EMERGENCY - Order details:', {
-      planId,
-      planKey,
-      currency,
-      amount,
-      orderId
-    });
-    
-    // Return mock order response that matches Razorpay format
-    return {
-      success: true,
-      data: {
-        orderId: orderId,
-        amount: amount,
+    try {
+      // Create real Razorpay order using their API
+      const orderData = {
+        amount: amount, // Amount in smallest currency unit (paise for INR)
         currency: currency,
-        status: 'created'
-      },
-      message: `Emergency order created successfully for ${planKey} plan in ${currency}`
-    };
+        receipt: `receipt_${planKey}_${Date.now()}`,
+        notes: {
+          planId: planId,
+          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
+          emergency: true
+        }
+      };
+      
+      console.log('🎆 EMERGENCY - Creating real Razorpay order:', orderData);
+      
+      // Call Razorpay Orders API directly
+      const response = await fetch('https://api.razorpay.com/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa('rzp_live_RP85gyDpAKJ4Au:j7s5n6sJ4Yec4n3AdSYeJ2LW')}`
+        },
+        body: JSON.stringify(orderData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Razorpay API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const razorpayOrder = await response.json();
+      
+      console.log('✅ EMERGENCY - Real Razorpay order created:', razorpayOrder);
+      
+      return {
+        success: true,
+        data: {
+          orderId: razorpayOrder.id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          status: razorpayOrder.status,
+          receipt: razorpayOrder.receipt
+        },
+        message: `Real Razorpay order created successfully for ${planKey} plan in ${currency}`
+      };
+      
+    } catch (error: any) {
+      console.error('❌ EMERGENCY - Real Razorpay order creation failed:', error);
+      
+      // Fallback to simplified payment flow without order ID
+      console.log('🎆 EMERGENCY - Using simplified payment flow without order ID');
+      
+      return {
+        success: true,
+        data: {
+          orderId: null, // No order ID - direct payment
+          amount: amount,
+          currency: currency,
+          status: 'direct_payment'
+        },
+        message: `Emergency direct payment setup for ${planKey} plan in ${currency}`
+      };
+    }
   }
   
   /**

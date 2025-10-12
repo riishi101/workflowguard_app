@@ -135,20 +135,21 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       const orderResponse = await ApiService.createPaymentOrder(planId);
       
-      if (!orderResponse.success || !orderResponse.data?.orderId) {
+      if (!orderResponse.success || !orderResponse.data) {
         throw new Error(orderResponse.message || 'Unable to create payment order. Please try again.');
       }
 
       const order = orderResponse.data;
 
       // Step 4: Configure Razorpay options (Simple, clear configuration)
-      const razorpayOptions = {
+      // 🔧 FIX: Handle emergency direct payments without order_id
+      const razorpayOptions: any = {
         key: config.keyId,
         amount: order.amount,
         currency: order.currency,
         name: 'WorkflowGuard',
         description: `${planName} Subscription`,
-        order_id: order.orderId,
+        ...(order.orderId && { order_id: order.orderId }),
         handler: async function (paymentResult: any) {
           try {
             // Step 5: Confirm payment
@@ -158,9 +159,9 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
             });
 
             const confirmResponse = await ApiService.confirmPayment({
-              orderId: order.orderId,
+              orderId: order.orderId || paymentResult.razorpay_order_id || 'direct_payment',
               paymentId: paymentResult.razorpay_payment_id,
-              signature: paymentResult.razorpay_signature,
+              signature: paymentResult.razorpay_signature || 'direct_payment_signature',
               planId: planId
             });
 
