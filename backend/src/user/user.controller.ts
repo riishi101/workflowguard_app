@@ -492,8 +492,8 @@ export class UserController {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Get portal-level information
-      const portalInfo = await this.userService.getPortalInfo(user.hubspotPortalId);
+      // Get trial status
+      const trialStatus = await this.subscriptionService.getTrialStatus(userId);
       
       return {
         success: true,
@@ -504,11 +504,13 @@ export class UserController {
           },
           portal: {
             id: user.hubspotPortalId,
-            totalUsers: portalInfo.totalUsers,
-            primaryUser: portalInfo.primaryUser,
           },
-          subscription: portalInfo.subscription,
-          trial: portalInfo.trial,
+          subscription: user.subscription ? {
+            planId: user.subscription.planId,
+            status: user.subscription.status,
+            createdAt: user.subscription.createdAt,
+          } : null,
+          trial: trialStatus,
         },
       };
     } catch (error) {

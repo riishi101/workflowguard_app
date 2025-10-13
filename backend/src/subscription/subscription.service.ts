@@ -168,7 +168,7 @@ export class SubscriptionService {
         try {
           // ENHANCED: Check if portal is eligible for trial
           if (user.hubspotPortalId) {
-            const isEligible = await this.userService.validateTrialEligibility(user.hubspotPortalId);
+            const isEligible = await this.validateTrialEligibility(user.hubspotPortalId);
             if (!isEligible) {
               console.warn(`Portal ${user.hubspotPortalId} already has a trial/subscription`);
               throw new HttpException(
@@ -669,6 +669,40 @@ export class SubscriptionService {
     } catch (error) {
       this.logger.error(`Failed to get invoice for user ${userId}, invoice ${invoiceId}:`, error);
       throw new HttpException('Failed to get invoice', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Validate if a HubSpot portal is eligible for a trial
+   * Prevents trial abuse by checking if portal already has active subscription
+   */
+  async validateTrialEligibility(hubspotPortalId: string): Promise<boolean> {
+    if (!hubspotPortalId) {
+      return false;
+    }
+
+    try {
+      // Check if any user from this portal already has a trial or active subscription
+      const existingUser = await this.prisma.user.findFirst({
+        where: { 
+          hubspotPortalId,
+          subscription: {
+            OR: [
+              { status: 'trial' },
+              { status: 'active' },
+              { status: 'past_due' },
+            ]
+          }
+        },
+        include: { subscription: true },
+      });
+
+      // Portal is eligible for trial if no existing subscription found
+      return !existingUser;
+    } catch (error) {
+      this.logger.error(`Failed to validate trial eligibility for portal ${hubspotPortalId}:`, error);
+      // Default to false (not eligible) for security
+      return false;
     }
   }
 }
