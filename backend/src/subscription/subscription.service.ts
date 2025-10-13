@@ -5,12 +5,9 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PLAN_CONFIG } from '../plan-config';
-import { UserService } from '../user/user.service';
 
 @Injectable()
 export class SubscriptionService {
@@ -18,8 +15,6 @@ export class SubscriptionService {
 
   constructor(
     private prisma: PrismaService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
   ) {}
 
   async getUserSubscription(userId: string) {
