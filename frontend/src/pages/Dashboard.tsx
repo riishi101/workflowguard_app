@@ -320,14 +320,19 @@ const Dashboard: React.FC = () => {
       console.log('📤 EXPORT: API response received:', {
         success: response.success,
         hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : 'no data'
+        dataKeys: response.data ? Object.keys(response.data) : 'no data',
+        fullResponse: response
       });
       
-      if (!response.data) {
-        throw new Error('No export data received from server');
+      // Handle both direct data and wrapped response formats
+      const exportData = response.data || response;
+      
+      if (!exportData || (typeof exportData === 'object' && Object.keys(exportData).length === 0)) {
+        console.error('📤 EXPORT: Empty or invalid export data:', exportData);
+        throw new Error('No export data received from server. The workflow may not have backup data available.');
       }
       
-      setExportData(response.data);
+      setExportData(exportData);
       setShowExportModal(true);
       toast({
         title: "Success",

@@ -2925,6 +2925,9 @@ export class WorkflowService {
       }
 
       // Format data for easy manual recreation
+      console.log('🔍 EXPORT SERVICE: Creating export data structure');
+      console.log('🔍 EXPORT SERVICE: workflowData keys:', workflowData ? Object.keys(workflowData) : 'no workflowData');
+      
       const exportData = {
         workflowInfo: {
           name: workflowData?.name || workflow.name,
@@ -2977,6 +2980,9 @@ export class WorkflowService {
         },
       });
 
+      console.log('🔍 EXPORT SERVICE: Final export data keys:', Object.keys(exportData));
+      console.log('🔍 EXPORT SERVICE: Export data size:', JSON.stringify(exportData).length);
+      
       return exportData;
     } catch (error) {
       throw new HttpException(

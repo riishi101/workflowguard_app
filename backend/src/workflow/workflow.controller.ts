@@ -255,7 +255,13 @@ export class WorkflowController {
         userId,
       );
       console.log('✅ EXPORT CONTROLLER: Export successful for workflow:', workflowId);
-      return exportData;
+      console.log('🔍 EXPORT CONTROLLER: Export data keys:', Object.keys(exportData));
+      
+      return {
+        success: true,
+        data: exportData,
+        message: 'Workflow exported successfully'
+      };
     } catch (error) {
       console.error('❌ EXPORT CONTROLLER: Export failed for workflow:', workflowId, 'Error:', error.message);
       this.logger.error(`Error exporting deleted workflow ${workflowId}:`, error);
