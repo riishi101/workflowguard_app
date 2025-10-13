@@ -2897,7 +2897,7 @@ export class WorkflowService {
         }
         
         // Try to decrypt if data appears to be encrypted
-        if (parsedData && typeof parsedData === 'object' && parsedData.iv) {
+        if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData) && (parsedData as any).iv) {
           workflowData = this.encryptionService.decryptWorkflowData(parsedData);
           console.log('✅ EXPORT SERVICE: Successfully decrypted workflow data');
         } else {
