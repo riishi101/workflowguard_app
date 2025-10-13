@@ -50,55 +50,24 @@ export class PaymentController {
   }
 
   /**
-   * EMERGENCY TEST ENDPOINT - Bypass all checks for immediate testing
-   * Memory Check: Following all memory lessons while providing guaranteed working solution
+   * PRODUCTION: Health check endpoint for payment system
    */
-  @Post('emergency-test')
-  @UseGuards(JwtAuthGuard)
-  async emergencyTest(@Body() body: { planId: string }, @Request() req: any) {
+  @Get('health')
+  async healthCheck() {
     try {
-      console.log('🚨 EMERGENCY TEST - Mock mode for immediate fix');
-      
-      // 🎯 PRODUCTION READY - Real emergency test with live credentials
-      console.log('🎯 PRODUCTION - Emergency test with real Razorpay API');
-      
-      const Razorpay = require('razorpay');
-      const razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-      });
-
-      const orderOptions = {
-        amount: 159900, // ₹1,599.00 in paise
-        currency: 'INR',
-        receipt: `emergency_${Date.now()}`,
-        notes: {
-          planId: body.planId,
-          userId: req.user?.id || req.user?.sub,
-          test: 'emergency_production'
-        }
-      };
-
-      console.log('🎯 PRODUCTION - Creating real emergency order:', orderOptions);
-      const order = await razorpay.orders.create(orderOptions);
-      
-      console.log('✅ PRODUCTION - Emergency order created successfully:', order.id);
-      
+      const testResult = await this.paymentService.testRazorpayConnection();
       return {
         success: true,
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        keyId: process.env.RAZORPAY_KEY_ID,
-        message: 'Emergency test successful - Production Razorpay working!'
+        status: 'healthy',
+        message: 'Payment system is operational',
+        data: testResult
       };
-
     } catch (error) {
-      console.log('❌ EMERGENCY - Failed:', error);
       return {
         success: false,
-        error: error.message,
-        message: `Emergency test failed: ${error.message}`
+        status: 'unhealthy',
+        message: 'Payment system has issues',
+        error: error.message
       };
     }
   }
@@ -211,33 +180,6 @@ export class PaymentController {
     }
   }
 
-  /**
-   * MOCK Helper method - Memory lesson applied: Use proven mock solution
-   */
-  private async createRazorpayOrder(options: {
-    amount: number;
-    currency: string;
-    planId: string;
-    userId: string;
-    notes: any;
-  }) {
-    // PROVEN MOCK SOLUTION - From memory, this approach worked
-    console.log('🎯 MOCK HELPER - Using proven working solution from memory');
-    
-    const mockOrderId = `order_mock_${Date.now()}`;
-    const mockKeyId = 'rzp_test_WZ6bDf1LKaABao';
-    
-    return {
-      success: true,
-      data: {
-        orderId: mockOrderId,
-        amount: options.amount,
-        currency: options.currency,
-        keyId: mockKeyId
-      },
-      message: `Mock payment order created successfully in ${options.currency}`
-    };
-  }
 
   /**
    * Create payment order (LEGACY - kept for backward compatibility)
@@ -681,28 +623,4 @@ export class PaymentController {
     // Additional order processing logic can be added here
   }
 
-    /**
-   * SIMPLE TEST ENDPOINT - No authentication required
-   */
-    @Get('simple-test')
-    async simpleTest() {
-      try {
-        // PROVEN MOCK SOLUTION - From memory, this worked
-        console.log('🎯 SIMPLE TEST MOCK - Using proven working solution from memory');
-        
-        const mockOrderId = `test_mock_${Date.now()}`;
-        
-        return {
-          success: true,
-          orderId: mockOrderId,
-          message: 'Mock test successful - Payment gateway ready!'
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: error.message,
-          message: 'Test failed'
-        };
-      }
-    }
 }

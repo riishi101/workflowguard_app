@@ -785,24 +785,8 @@ class ApiService {
       return response.data;
       
     } catch (error) {
-      console.error('Production payment config failed, using emergency frontend config:', error);
-      
-      // 🎆 EMERGENCY FRONTEND SOLUTION - Direct Razorpay config when backend fails
-      console.log('🎆 EMERGENCY - Using frontend payment config bypass');
-      
-      return {
-        success: true,
-        data: {
-          keyId: 'rzp_live_RP85gyDpAKJ4Au', // Live Razorpay key
-          currency: 'INR',
-          plans: {
-            starter: { amount: 159900, currency: 'INR' },
-            professional: { amount: 399900, currency: 'INR' },
-            enterprise: { amount: 799900, currency: 'INR' }
-          }
-        },
-        message: 'Emergency payment configuration loaded successfully'
-      };
+      console.error('Payment configuration failed:', error);
+      throw new Error('Payment system is currently unavailable. Please try again later or contact support.');
     }
   }
 
@@ -839,25 +823,14 @@ class ApiService {
       }
       
     } catch (error: any) {
-      console.error('Real Razorpay order creation failed:', error);
+      console.error('Payment order creation failed:', error);
       
-      // 🎆 EMERGENCY FRONTEND SOLUTION - Create order directly when backend fails
-      console.log('🎆 EMERGENCY - Creating payment order via frontend Razorpay API');
-      
-      try {
-        const emergencyOrder = await this.createEmergencyRazorpayOrder(planId, finalCurrency);
-        console.log('✅ EMERGENCY - Frontend order created successfully:', emergencyOrder);
-        return emergencyOrder;
-      } catch (emergencyError: any) {
-        console.error('❌ EMERGENCY - Frontend order creation failed:', emergencyError);
-        
-        if (error.response?.status === 500) {
-          throw new Error('Payment service temporarily unavailable. Please try again in a few moments.');
-        } else if (error.response?.status === 401) {
-          throw new Error('Authentication required. Please log in and try again.');
-        } else {
-          throw new Error('Unable to process payment at this time. Please contact support if the issue persists.');
-        }
+      if (error.response?.status === 500) {
+        throw new Error('Payment service temporarily unavailable. Please try again in a few moments.');
+      } else if (error.response?.status === 401) {
+        throw new Error('Authentication required. Please log in and try again.');
+      } else {
+        throw new Error('Unable to process payment at this time. Please contact support if the issue persists.');
       }
     }
   }
@@ -937,38 +910,14 @@ class ApiService {
       }
       
     } catch (error: any) {
-      console.error('Real Razorpay confirmation failed:', error);
+      console.error('Payment confirmation failed:', error);
       
-      // EMERGENCY FRONTEND SOLUTION - Verify payment directly with Razorpay
-      console.log(' EMERGENCY - Using frontend payment verification');
-      
-      try {
-        const emergencyVerification = await this.verifyEmergencyPayment(paymentData);
-        console.log(' EMERGENCY - Payment verified via frontend:', emergencyVerification);
-        return emergencyVerification;
-      } catch (emergencyError: any) {
-        console.error(' EMERGENCY - Frontend verification failed:', emergencyError);
-        
-        // Final fallback - assume payment is successful if we have payment ID
-        if (paymentData.paymentId) {
-          console.log(' EMERGENCY - Using final confirmation fallback');
-          
-          return {
-            success: true,
-            message: 'Payment processed successfully! Your subscription has been activated.',
-            data: {
-              paymentId: paymentData.paymentId,
-              orderId: paymentData.orderId,
-              status: 'success'
-            }
-          };
-        } else if (error.response?.status === 400) {
-          throw new Error('Invalid payment data. Please try again.');
-        } else if (error.response?.status === 401) {
-          throw new Error('Authentication required. Please log in and try again.');
-        } else {
-          throw new Error('Payment verification failed. Please contact support with your payment ID: ' + paymentData.paymentId);
-        }
+      if (error.response?.status === 400) {
+        throw new Error('Invalid payment data. Please try again.');
+      } else if (error.response?.status === 401) {
+        throw new Error('Authentication required. Please log in and try again.');
+      } else {
+        throw new Error('Payment verification failed. Please contact support with your payment ID: ' + paymentData.paymentId);
       }
     }
   }
@@ -1255,162 +1204,6 @@ class ApiService {
     }
   }
 
-  // 🎆 EMERGENCY FRONTEND METHODS - Direct Razorpay integration when backend fails
-  
-  /**
-   * Create Razorpay order directly via frontend when backend is unavailable
-   * 🔧 FIX: Use real Razorpay API instead of mock order IDs
-   */
-  static async createEmergencyRazorpayOrder(planId: string, currency: string = 'INR'): Promise<ApiResponse<any>> {
-    console.log('🎆 EMERGENCY - Creating REAL Razorpay order via frontend API');
-    
-    // Plan pricing configuration
-    const planPricing = {
-      starter: { INR: 159900, USD: 1999, GBP: 1599, EUR: 1899, CAD: 2699 },
-      professional: { INR: 399900, USD: 4999, GBP: 3999, EUR: 4699, CAD: 6699 },
-      enterprise: { INR: 799900, USD: 9999, GBP: 7999, EUR: 9399, CAD: 13399 }
-    };
-    
-    const planKey = planId.toLowerCase().replace(/_inr|_usd|_gbp|_eur|_cad/g, '');
-    const amount = planPricing[planKey]?.[currency] || planPricing['starter'][currency];
-    
-    try {
-      // Create real Razorpay order using their API
-      const orderData = {
-        amount: amount, // Amount in smallest currency unit (paise for INR)
-        currency: currency,
-        receipt: `receipt_${planKey}_${Date.now()}`,
-        notes: {
-          planId: planId,
-          planName: `${planKey.charAt(0).toUpperCase() + planKey.slice(1)} Plan`,
-          emergency: true
-        }
-      };
-      
-      console.log('🎆 EMERGENCY - Creating real Razorpay order:', orderData);
-      
-      // Call Razorpay Orders API directly
-      const response = await fetch('https://api.razorpay.com/v1/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa('rzp_live_RP85gyDpAKJ4Au:j7s5n6sJ4Yec4n3AdSYeJ2LW')}`
-        },
-        body: JSON.stringify(orderData)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Razorpay API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const razorpayOrder = await response.json();
-      
-      console.log('✅ EMERGENCY - Real Razorpay order created:', razorpayOrder);
-      
-      return {
-        success: true,
-        data: {
-          orderId: razorpayOrder.id,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
-          status: razorpayOrder.status,
-          receipt: razorpayOrder.receipt
-        },
-        message: `Real Razorpay order created successfully for ${planKey} plan in ${currency}`
-      };
-      
-    } catch (error: any) {
-      console.error('❌ EMERGENCY - Real Razorpay order creation failed:', error);
-      
-      // Fallback to simplified payment flow without order ID
-      console.log('🎆 EMERGENCY - Using simplified payment flow without order ID');
-      
-      return {
-        success: true,
-        data: {
-          orderId: null, // No order ID - direct payment
-          amount: amount,
-          currency: currency,
-          status: 'direct_payment'
-        },
-        message: `Emergency direct payment setup for ${planKey} plan in ${currency}`
-      };
-    }
-  }
-  
-  /**
-   * Verify payment directly when backend confirmation fails
-   */
-  static async verifyEmergencyPayment(paymentData: {
-    orderId: string;
-    paymentId: string;
-    signature: string;
-    planId: string;
-  }): Promise<ApiResponse<any>> {
-    console.log('🎆 EMERGENCY - Verifying payment via frontend');
-    
-    // In a real emergency scenario, you would:
-    // 1. Store payment details in localStorage for later sync
-    // 2. Send notification to admin about manual verification needed
-    // 3. Provide user with payment confirmation
-    
-    // Store payment for later backend sync
-    const emergencyPayment = {
-      ...paymentData,
-      timestamp: new Date().toISOString(),
-      status: 'emergency_verified',
-      needsBackendSync: true
-    };
-    
-    // Store in localStorage for later sync
-    const existingPayments = JSON.parse(localStorage.getItem('emergencyPayments') || '[]');
-    existingPayments.push(emergencyPayment);
-    localStorage.setItem('emergencyPayments', JSON.stringify(existingPayments));
-    
-    console.log('🎆 EMERGENCY - Payment stored for later sync:', emergencyPayment);
-    
-    return {
-      success: true,
-      message: 'Payment verified successfully! Your subscription has been activated.',
-      data: {
-        paymentId: paymentData.paymentId,
-        orderId: paymentData.orderId,
-        status: 'emergency_verified',
-        needsSync: true
-      }
-    };
-  }
-  
-  /**
-   * Sync emergency payments with backend when it becomes available
-   */
-  static async syncEmergencyPayments(): Promise<void> {
-    try {
-      const emergencyPayments = JSON.parse(localStorage.getItem('emergencyPayments') || '[]');
-      
-      if (emergencyPayments.length === 0) {
-        return;
-      }
-      
-      console.log('🔄 SYNC - Attempting to sync emergency payments:', emergencyPayments.length);
-      
-      for (const payment of emergencyPayments) {
-        try {
-          await apiClient.post('/api/payment/emergency-sync', payment);
-          console.log('✅ SYNC - Payment synced successfully:', payment.paymentId);
-        } catch (syncError) {
-          console.error('❌ SYNC - Failed to sync payment:', payment.paymentId, syncError);
-          // Keep payment in storage for next sync attempt
-        }
-      }
-      
-      // Clear synced payments (in production, only clear successfully synced ones)
-      localStorage.removeItem('emergencyPayments');
-      
-    } catch (error) {
-      console.error('🔄 SYNC - Emergency payment sync failed:', error);
-    }
-  }
 
   // Currency formatting helper
   static formatCurrencyAmount(amount: number, currency: string): string {

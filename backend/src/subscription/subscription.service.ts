@@ -98,11 +98,7 @@ export class SubscriptionService {
           versionHistory: 0, // update if you track this
         },
         email: user.email, // Add user email for frontend schema compliance
-        paymentMethod: {
-          brand: 'Visa', // Mock payment method data
-          last4: '4242',
-          exp: '12/25',
-        },
+        paymentMethod: await this.getLatestPaymentMethod(userId),
       };
     } catch (error) {
       // Log the error but don't throw an exception that would break the workflow
@@ -138,9 +134,9 @@ export class SubscriptionService {
         },
         email: 'unknown@example.com',
         paymentMethod: {
-          brand: 'Visa',
-          last4: '4242',
-          exp: '12/25',
+          brand: 'Trial',
+          last4: 'N/A',
+          exp: 'N/A',
         },
       };
     }
@@ -428,6 +424,50 @@ export class SubscriptionService {
   }
 
   /**
+   * Get latest payment method from user's successful transactions
+   * PRODUCTION READY: Real payment method integration
+   */
+  private async getLatestPaymentMethod(userId: string): Promise<{
+    brand: string;
+    last4: string;
+    exp: string;
+  }> {
+    try {
+      const latestPayment = await this.prisma.paymentTransaction.findFirst({
+        where: {
+          userId,
+          status: 'success',
+          cardLast4: { not: null },
+          cardNetwork: { not: null }
+        },
+        orderBy: { paidAt: 'desc' }
+      });
+
+      if (latestPayment && latestPayment.cardLast4 && latestPayment.cardNetwork) {
+        return {
+          brand: latestPayment.cardNetwork.charAt(0).toUpperCase() + latestPayment.cardNetwork.slice(1),
+          last4: latestPayment.cardLast4,
+          exp: 'Hidden' // For security, don't expose expiry
+        };
+      }
+
+      // Fallback for users without payment history
+      return {
+        brand: 'No Payment Method',
+        last4: 'N/A',
+        exp: 'N/A'
+      };
+    } catch (error) {
+      console.error('Error fetching payment method:', error);
+      return {
+        brand: 'Error',
+        last4: 'N/A',
+        exp: 'N/A'
+      };
+    }
+  }
+
+  /**
    * Get plan price based on plan ID and currency
    */
   private getPlanPrice(planId: string, currency: string = 'INR'): number {
@@ -459,33 +499,57 @@ export class SubscriptionService {
 
   /**
    * Get billing history for a user
-   * Memory Check: Following MISTAKE #6 lesson - Specific error messages
+   * PRODUCTION READY: Real PaymentTransaction integration with fallback
    */
   async getBillingHistory(userId: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: { subscription: true },
+        include: { 
+          subscription: true,
+          paymentTransactions: {
+            orderBy: { createdAt: 'desc' },
+            take: 50, // Limit to recent 50 transactions
+            where: {
+              status: { in: ['success', 'refunded'] } // Only show completed payments
+            }
+          }
+        },
       });
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // Return mock billing history for now - will be implemented with actual payment tracking
-      const mockBillingHistory = [
+      // PRODUCTION: Use real payment transactions if available
+      if (user.paymentTransactions && user.paymentTransactions.length > 0) {
+        return user.paymentTransactions.map(transaction => ({
+          id: transaction.razorpayPaymentId || transaction.id,
+          date: transaction.paidAt?.toISOString() || transaction.createdAt.toISOString(),
+          amount: transaction.amount / 100, // Convert from paise to rupees
+          currency: transaction.currency,
+          status: transaction.status === 'success' ? 'paid' : transaction.status,
+          planName: transaction.planName,
+          description: `${transaction.planName} - Monthly subscription`,
+          paymentMethod: transaction.paymentMethod,
+          razorpayPaymentId: transaction.razorpayPaymentId
+        }));
+      }
+
+      // FALLBACK: Return single mock entry only if no real transactions exist
+      const fallbackBillingHistory = [
         {
-          id: 'pay_1',
-          date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          amount: user.subscription?.planId === 'professional' ? 49 : user.subscription?.planId === 'enterprise' ? 99 : 19,
+          id: 'trial_entry',
+          date: user.subscription?.createdAt?.toISOString() || new Date().toISOString(),
+          amount: 0,
           currency: 'INR',
-          status: 'paid',
+          status: 'trial',
           planName: user.subscription?.planId === 'professional' ? 'Professional Plan' : user.subscription?.planId === 'enterprise' ? 'Enterprise Plan' : 'Starter Plan',
-          description: 'Monthly subscription payment',
+          description: 'Trial period - No payment required',
         },
       ];
 
-      return mockBillingHistory;
+      return fallbackBillingHistory;
     } catch (error) {
       this.logger.error(`Failed to get billing history for user ${userId}:`, error);
       throw new HttpException('Failed to retrieve billing history', HttpStatus.INTERNAL_SERVER_ERROR);
