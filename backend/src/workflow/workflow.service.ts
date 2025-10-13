@@ -2804,6 +2804,7 @@ export class WorkflowService {
     workflowId: string,
     userId: string,
   ): Promise<any> {
+    console.log('🚀 EXPORT SERVICE: Starting export for workflow:', workflowId, 'user:', userId);
     try {
       // 🔍 DEBUG: First check if workflow exists at all (regardless of deletion status)
       const anyWorkflow = await this.prisma.workflow.findFirst({
@@ -2878,7 +2879,36 @@ export class WorkflowService {
       }
 
       let latestBackup = workflow.versions[0];
-      let workflowData = latestBackup.data as any;
+      console.log('🔍 EXPORT SERVICE: Processing backup data for workflow:', workflowId);
+      
+      // Parse and decrypt workflow data safely
+      let workflowData: any;
+      try {
+        // Check if data needs to be parsed from JSON string
+        let parsedData = latestBackup.data;
+        if (typeof parsedData === 'string') {
+          try {
+            parsedData = JSON.parse(parsedData);
+            console.log('✅ EXPORT SERVICE: Successfully parsed JSON data');
+          } catch (parseError) {
+            console.error('❌ EXPORT SERVICE: Failed to parse JSON data:', parseError.message);
+            throw new Error(`Invalid JSON data in backup: ${parseError.message}`);
+          }
+        }
+        
+        // Try to decrypt if data appears to be encrypted
+        if (parsedData && typeof parsedData === 'object' && parsedData.iv) {
+          workflowData = this.encryptionService.decryptWorkflowData(parsedData);
+          console.log('✅ EXPORT SERVICE: Successfully decrypted workflow data');
+        } else {
+          workflowData = parsedData;
+          console.log('✅ EXPORT SERVICE: Using unencrypted workflow data');
+        }
+      } catch (decryptError) {
+        console.error('❌ EXPORT SERVICE: Failed to decrypt workflow data:', decryptError.message);
+        // Fallback to raw data if decryption fails
+        workflowData = latestBackup.data;
+      }
 
       // Check if backup data is incomplete (missing enrollment triggers)
       const hasEnrollmentTriggers = workflowData?.enrollmentTriggers && workflowData.enrollmentTriggers.length > 0;

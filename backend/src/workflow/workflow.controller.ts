@@ -249,15 +249,18 @@ export class WorkflowController {
     }
 
     try {
+      console.log('🔍 EXPORT CONTROLLER: Starting export for workflow:', workflowId, 'user:', userId);
       const exportData = await this.workflowService.exportDeletedWorkflow(
-        userId,
         workflowId,
+        userId,
       );
+      console.log('✅ EXPORT CONTROLLER: Export successful for workflow:', workflowId);
       return exportData;
     } catch (error) {
-      this.logger.error(`Error exporting deleted workflow:`, error);
+      console.error('❌ EXPORT CONTROLLER: Export failed for workflow:', workflowId, 'Error:', error.message);
+      this.logger.error(`Error exporting deleted workflow ${workflowId}:`, error);
       throw new HttpException(
-        'Failed to export deleted workflow',
+        `Failed to export deleted workflow: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
