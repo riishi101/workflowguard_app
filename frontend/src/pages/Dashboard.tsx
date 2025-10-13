@@ -315,7 +315,18 @@ const Dashboard: React.FC = () => {
         ? workflow.internalId 
         : workflow.id;
       
+      console.log('📤 EXPORT: Calling API with workflowId:', workflowIdToUse);
       const response = await ApiService.exportDeletedWorkflow(workflowIdToUse);
+      console.log('📤 EXPORT: API response received:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : 'no data'
+      });
+      
+      if (!response.data) {
+        throw new Error('No export data received from server');
+      }
+      
       setExportData(response.data);
       setShowExportModal(true);
       toast({
@@ -334,18 +345,61 @@ const Dashboard: React.FC = () => {
   };
 
   const downloadExportData = () => {
-    if (!exportData || !selectedWorkflow) return;
+    console.log('💾 DOWNLOAD: Starting download process');
+    console.log('💾 DOWNLOAD: exportData exists:', !!exportData);
+    console.log('💾 DOWNLOAD: selectedWorkflow exists:', !!selectedWorkflow);
     
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${selectedWorkflow.name}-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (!exportData || !selectedWorkflow) {
+      console.error('❌ DOWNLOAD: Missing required data');
+      toast({
+        title: "Download Error",
+        description: "Export data is not available. Please try exporting again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const dataStr = JSON.stringify(exportData, null, 2);
+      console.log('💾 DOWNLOAD: JSON string created, length:', dataStr.length);
+      
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      console.log('💾 DOWNLOAD: Blob created, size:', dataBlob.size);
+      
+      const url = URL.createObjectURL(dataBlob);
+      
+      // Sanitize filename to handle special characters
+      const sanitizedName = selectedWorkflow.name.replace(/[^a-z0-9\s\-_]/gi, '').replace(/\s+/g, '_');
+      const fileName = `${sanitizedName}-export-${new Date().toISOString().split('T')[0]}.json`;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.style.display = 'none';
+      
+      console.log('💾 DOWNLOAD: Triggering download for:', fileName);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ DOWNLOAD: Download triggered successfully');
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${fileName}`,
+        variant: "default",
+      });
+      
+    } catch (error: any) {
+      console.error('❌ DOWNLOAD: Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: `Failed to download file: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
