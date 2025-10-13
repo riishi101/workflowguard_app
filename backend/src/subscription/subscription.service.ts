@@ -5,14 +5,22 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PLAN_CONFIG } from '../plan-config';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => UserService))
+    private userService: UserService,
+  ) {}
 
   async getUserSubscription(userId: string) {
     try {
@@ -155,9 +163,21 @@ export class SubscriptionService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      // If user doesn't have a subscription, create a trial subscription
+      // If user doesn't have a subscription, create a trial subscription with portal validation
       if (!user.subscription) {
         try {
+          // ENHANCED: Check if portal is eligible for trial
+          if (user.hubspotPortalId) {
+            const isEligible = await this.userService.validateTrialEligibility(user.hubspotPortalId);
+            if (!isEligible) {
+              console.warn(`Portal ${user.hubspotPortalId} already has a trial/subscription`);
+              throw new HttpException(
+                'This HubSpot account already has an active trial or subscription. Only one trial per company is allowed.',
+                HttpStatus.FORBIDDEN
+              );
+            }
+          }
+
           await this.prisma.subscription.create({
             data: {
               userId: user.id,
@@ -166,7 +186,7 @@ export class SubscriptionService {
               trialEndDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 21 days
             },
           });
-          console.log('Trial subscription created for user:', user.id);
+          console.log('Trial subscription created for user:', user.id, 'Portal:', user.hubspotPortalId);
 
           // Refetch user with subscription
           user = await this.prisma.user.findUnique({

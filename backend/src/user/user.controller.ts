@@ -11,15 +11,20 @@ import {
   HttpException,
   HttpStatus,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly subscriptionService: SubscriptionService,
+  ) {}
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
@@ -413,6 +418,102 @@ export class UserController {
     } catch (error) {
       throw new HttpException(
         `Failed to delete account: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('trial-status')
+  async getTrialStatusByPortalId(@Query('portalId') portalId: string) {
+    try {
+      if (!portalId) {
+        throw new HttpException('Portal ID is required', HttpStatus.BAD_REQUEST);
+      }
+
+      // Find user by HubSpot portal ID
+      const user = await this.userService.findByHubSpotPortalId(portalId);
+      if (!user) {
+        return {
+          success: false,
+          message: `No user found with HubSpot Portal ID: ${portalId}`,
+          data: null,
+        };
+      }
+
+      // Get trial status
+      const trialStatus = await this.subscriptionService.getTrialStatus(user.id);
+      
+      return {
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            hubspotPortalId: user.hubspotPortalId,
+            createdAt: user.createdAt,
+          },
+          trial: {
+            isTrialActive: trialStatus.isTrialActive,
+            isTrialExpired: trialStatus.isTrialExpired,
+            trialDaysRemaining: trialStatus.trialDaysRemaining,
+            trialEndDate: trialStatus.trialEndDate,
+          },
+          subscription: user.subscription ? {
+            planId: user.subscription.planId,
+            status: user.subscription.status,
+            createdAt: user.subscription.createdAt,
+          } : null,
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get trial status: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('portal-info')
+  @UseGuards(JwtAuthGuard)
+  async getPortalInfo(@Req() req: any) {
+    try {
+      let userId = req.user?.sub || req.user?.id || req.user?.userId;
+      if (!userId) {
+        userId = req.headers['x-user-id'];
+      }
+
+      if (!userId) {
+        throw new HttpException('User ID not found', HttpStatus.UNAUTHORIZED);
+      }
+
+      const user = await this.userService.findOneWithSubscription(userId);
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Get portal-level information
+      const portalInfo = await this.userService.getPortalInfo(user.hubspotPortalId);
+      
+      return {
+        success: true,
+        data: {
+          user: {
+            email: user.email,
+            name: user.name,
+          },
+          portal: {
+            id: user.hubspotPortalId,
+            totalUsers: portalInfo.totalUsers,
+            primaryUser: portalInfo.primaryUser,
+          },
+          subscription: portalInfo.subscription,
+          trial: portalInfo.trial,
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get portal info: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

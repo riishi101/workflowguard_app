@@ -44,6 +44,101 @@ export class UserService {
     });
   }
 
+  async findByHubSpotPortalId(hubspotPortalId: string) {
+    return this.prisma.user.findUnique({
+      where: { hubspotPortalId },
+      include: {
+        subscription: true,
+        workflows: true,
+      },
+    });
+  }
+
+  async getPortalInfo(hubspotPortalId: string) {
+    if (!hubspotPortalId) {
+      throw new HttpException('HubSpot Portal ID is required', HttpStatus.BAD_REQUEST);
+    }
+
+    // Get all users for this portal
+    const users = await this.prisma.user.findMany({
+      where: { hubspotPortalId },
+      include: {
+        subscription: true,
+      },
+      orderBy: { createdAt: 'asc' }, // First user is primary
+    });
+
+    if (users.length === 0) {
+      throw new HttpException('No users found for this portal', HttpStatus.NOT_FOUND);
+    }
+
+    const primaryUser = users[0]; // First registered user is primary
+    const subscription = primaryUser.subscription;
+
+    // Calculate trial info if subscription exists
+    let trialInfo = null;
+    if (subscription) {
+      const now = new Date();
+      const trialEndDate = subscription.trialEndDate;
+      const isTrialActive = trialEndDate && trialEndDate > now;
+      const isTrialExpired = trialEndDate && trialEndDate <= now;
+      
+      let trialDaysRemaining = 0;
+      if (isTrialActive && trialEndDate) {
+        const diffTime = trialEndDate.getTime() - now.getTime();
+        trialDaysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      trialInfo = {
+        isTrialActive,
+        isTrialExpired,
+        trialDaysRemaining,
+        trialEndDate: trialEndDate?.toISOString(),
+      };
+    }
+
+    return {
+      totalUsers: users.length,
+      primaryUser: {
+        id: primaryUser.id,
+        email: primaryUser.email,
+        name: primaryUser.name,
+        createdAt: primaryUser.createdAt,
+      },
+      subscription: subscription ? {
+        planId: subscription.planId,
+        status: subscription.status,
+        createdAt: subscription.createdAt,
+        trialEndDate: subscription.trialEndDate,
+      } : null,
+      trial: trialInfo,
+    };
+  }
+
+  async validateTrialEligibility(hubspotPortalId: string): Promise<boolean> {
+    if (!hubspotPortalId) {
+      return false;
+    }
+
+    // Check if any user from this portal already has a trial or active subscription
+    const existingUser = await this.prisma.user.findFirst({
+      where: { 
+        hubspotPortalId,
+        subscription: {
+          OR: [
+            { status: 'trial' },
+            { status: 'active' },
+            { status: 'past_due' },
+          ]
+        }
+      },
+      include: { subscription: true },
+    });
+
+    // Portal is eligible for trial if no existing subscription found
+    return !existingUser;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     return this.prisma.user.update({
       where: { id },
